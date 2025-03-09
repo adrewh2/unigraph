@@ -73,6 +73,7 @@ import {
   RenderingConfig,
   RenderingManager__DisplayMode,
 } from "./controllers/RenderingManager";
+import { loadMermaidTextToSceneGraph } from './core/converters/mermaidjs/mermaidGraphConverter';
 import {
   attachRepulsiveForce,
   bindEventsToGraphInstance,
@@ -1078,6 +1079,19 @@ const AppContent: React.FC<{ defaultGraph?: string; svgUrl?: string }> = ({ defa
     readOnly: true,
   });
 
+  const [showMermaidInput, setShowMermaidInput] = useState(false);
+  const [mermaidText, setMermaidText] = useState("");
+
+  const handleLoadMermaidText = useCallback(async () => {
+    try {
+      const sceneGraph = await loadMermaidTextToSceneGraph(mermaidText);
+      handleLoadSceneGraph(sceneGraph);
+      setShowMermaidInput(false);
+    } catch (error) {
+      console.error("Failed to load Mermaid text:", error);
+    }
+  }, [mermaidText, handleLoadSceneGraph]);
+
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
       setShowPathAnalysis,
@@ -1107,6 +1121,7 @@ const AppContent: React.FC<{ defaultGraph?: string; svgUrl?: string }> = ({ defa
       showSceneGraphDetailView: (readOnly: boolean) => {
         setShowSceneGraphDetailView({ show: true, readOnly });
       },
+      setShowMermaidInput: () => setShowMermaidInput(true),
     };
     return new MenuConfig(
       menuConfigCallbacks,
@@ -2011,6 +2026,20 @@ const AppContent: React.FC<{ defaultGraph?: string; svgUrl?: string }> = ({ defa
             }
             darkMode={isDarkMode}
           />
+        )}
+        {showMermaidInput && (
+          <div className="overlay">
+            <div className="mermaid-input-dialog">
+              <textarea
+                value={mermaidText}
+                onChange={(e) => setMermaidText(e.target.value)}
+                placeholder="Enter MermaidJS diagram text here..."
+                style={{ width: "100%", height: "200px" }}
+              />
+              <button onClick={handleLoadMermaidText}>Load</button>
+              <button onClick={() => setShowMermaidInput(false)}>Cancel</button>
+            </div>
+          </div>
         )}
       </div>
     </AppContextProvider>

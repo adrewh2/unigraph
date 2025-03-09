@@ -150,6 +150,7 @@ export interface IMenuConfigCallbacks {
   handleLoadLayout: (positions: NodePositionData) => void;
   showImportSvgFromUrlDialog: () => void;
   showSceneGraphDetailView: (readOnly: boolean) => void;
+  setShowMermaidInput: (show: boolean) => void;
 }
 
 export class MenuConfig {
@@ -221,6 +222,9 @@ export class MenuConfig {
             submenu: {
               Graph: {
                 submenu: {
+                  Mermaid: {
+                    action: () => this.callbacks.setShowMermaidInput(true),
+                  },
                   Dot: {
                     action: () =>
                       document.getElementById("import-dot-input")?.click(),
