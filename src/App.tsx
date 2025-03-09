@@ -2034,7 +2034,7 @@ const AppContent: React.FC<{ defaultGraph?: string; svgUrl?: string }> = ({ defa
                 value={mermaidText}
                 onChange={(e) => setMermaidText(e.target.value)}
                 placeholder="Enter MermaidJS diagram text here..."
-                style={{ width: "100%", height: "200px" }}
+                style={{ width: "100%", height: "500px" }}
               />
               <button onClick={handleLoadMermaidText}>Load</button>
               <button onClick={() => setShowMermaidInput(false)}>Cancel</button>
