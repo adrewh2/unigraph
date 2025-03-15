@@ -49,9 +49,6 @@ The difference in naming conventions—**snake_case** for Ceph and **CamelCase**
 
 Even though Ceph is designed for S3 compatibility, it may internally store and process lifecycle policies in snake_case for consistency with the rest of its codebase. It likely translates between the two formats when interfacing with S3 clients
 
-### _**The Unigraph model would be a functional data class to act as a standard published library. The true power of this common model is when there many services that must interoperate. In the worst case where N services each have a unique model implementation, they have to handle message conversions for N-1 services**_
-
-<br>
 The true power of a **shared model** lies in its ability to **reduce the complexity of interoperability from O(N²) to O(N), or even O(1)**. Instead of each of the N services in a mesh writing N-1 message adaptors, each service only needs to implement one at most, or none if they use the Unigraph model out of the box. (One reason to adapt from the Unigraph model and not use it directly is if the implementing system is incomplete, and does not want to misrepresent itself by using a complete Unigraph model in its code when features aren't supported).
 
 Let's assume we have **five different services in a mesh network** that work with the same common model, like the GS1 standard for product and shipment tracking. For the sake of simplicity, lets assume they all have different serialization conventions for their apis. More complex examples could involve different representation formats that manifest from specific implementations and different supported features per service.
@@ -70,7 +67,7 @@ For `N = 5` services:
 
 Unigraph models would exist as published package libraries with semantic versioning, and have code generation for many languages. FastAPI is a related technology that has multi-language codegen for messaging apis based on yaml-defined schemas, but Unigraph wants to take things further by creating model definitions with functional behaviors and semantic layering.
 
-### **_Unigraph models are more than static data classes, they can have functional behaviors and complex semantic definitions. For example, a python dataclass has field members and maybe comments, but it doesn’t describe how fields relate to each other. There can be complex field interdependencies that could make a model configuration invalid. The power of Unigraph models are their ability to include validation check logic, and other higher-order logic that can drive system behavior or integrate into the semantic web._**
+### **_Unigraph is a solution to building models that are structurally and semantically typed, and functional_**
 
 | Feature                  | Python Dataclass    | Unigraph Model |
 | ------------------------ | ------------------- | -------------- |
@@ -84,7 +81,7 @@ Unigraph models would exist as published package libraries with semantic version
 | Rule Execution Model     | ❌ No               | ✅ Yes         |
 | Multi-language Libraries | ❌ No               | ✅ Yes         |
 
-Behavior definitions in Unigraph models unlock an entire semantic layer of reasoning that goes beyond just validation. They allow policies and attributes to self-describe their relationships in a larger ontology, even when those relationships extend beyond the immediate scope of a single service.
+Behavior definitions in Unigraph models unlock an entire semantic layer of reasoning that goes beyond just validation. They allow attributes to self-describe their relationships in a larger ontology, even when those relationships extend beyond the immediate scope of a single service.
 
 **Pydantic models** handle **runtime validation** at the **individual object level**, ensuring **type correctness, required fields, and format validation**. However, they **lack a connection to the broader semantic web**, meaning:
 
@@ -100,7 +97,7 @@ On the other hand, Unigraph models can be **embedded within the semantic web**, 
 
 ## _**Unigraph as a Data Discovery and Marketplace Ecosystem**_
 
-### Unigraph isn't just a powerful **semantic reasoning system**—it can also serve as the foundation for **a decentralized data discovery and marketplace ecosystem**. By connecting **structured knowledge, metadata, and behavioral models**, Unigraph enables:
+### Unigraph can also serve as the foundation for **a decentralized data discovery and marketplace ecosystem**. By connecting **structured knowledge, metadata, and behavioral models**, Unigraph enables:
 
 - **Seamless discovery of structured data across diverse domains**
 - **Composable and interoperable data models that can evolve dynamically and safely with semantic versioning**
