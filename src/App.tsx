@@ -1045,6 +1045,54 @@ const AppContent: React.FC<{
     return actions;
   }, [handleSetActiveView]);
 
+  const handleImportFileToSceneGraph = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        const content = e.target?.result as string;
+        let sceneGraph: SceneGraph | undefined;
+
+        try {
+          switch (fileExtension) {
+            case "json":
+              sceneGraph = deserializeSceneGraphFromJson(content);
+              break;
+            case "graphml":
+              sceneGraph = await deserializeGraphmlToSceneGraph(content);
+              break;
+            case "svg":
+              sceneGraph = deserializeSvgToSceneGraph(content);
+              break;
+            case "dot":
+              sceneGraph = deserializeDotToSceneGraph(content);
+              break;
+            default:
+              console.error(
+                `Unsupported file type: ${fileExtension || file.type}`
+              );
+              return; //@todo: add banner error message
+          }
+
+          if (sceneGraph) {
+            handleLoadSceneGraph(sceneGraph);
+          } else {
+            throw new Error("Unable to load file to SceneGraph");
+          }
+        } catch (error) {
+          console.error(`Error importing file: ${error}`);
+        }
+      };
+
+      reader.readAsText(file);
+    },
+    [currentSceneGraph, handleLoadSceneGraph]
+  );
+
   const handleImportConfig = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -1056,72 +1104,6 @@ const AppContent: React.FC<{
       }
     },
     [currentSceneGraph]
-  );
-
-  const handleImportDot = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const dotContent = e.target?.result as string;
-          const sceneGraph = deserializeDotToSceneGraph(dotContent);
-          handleLoadSceneGraph(sceneGraph);
-        };
-        reader.readAsText(file);
-      }
-    },
-    []
-  );
-
-  const handleImportGraphml = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const graphmlContent = e.target?.result as string;
-          const sceneGraph =
-            await deserializeGraphmlToSceneGraph(graphmlContent);
-          handleLoadSceneGraph(sceneGraph);
-        };
-        reader.readAsText(file);
-      }
-    },
-    []
-  );
-
-  const handleImportJson = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const jsonContent = e.target?.result as string;
-          const sceneGraph = deserializeSceneGraphFromJson(jsonContent);
-          console.log("content", jsonContent, sceneGraph);
-          handleLoadSceneGraph(sceneGraph);
-        };
-        reader.readAsText(file);
-      }
-    },
-    []
-  );
-
-  const handleImportSvg = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const svgContent = e.target?.result as string;
-          const sceneGraph = deserializeSvgToSceneGraph(svgContent);
-          handleLoadSceneGraph(sceneGraph);
-        };
-        reader.readAsText(file);
-      }
-    },
-    [handleLoadSceneGraph]
   );
 
   const applyNewLayout = useCallback(
@@ -1201,10 +1183,7 @@ const AppContent: React.FC<{
     const menuConfigCallbacks: IMenuConfigCallbacks = {
       setShowPathAnalysis,
       handleImportConfig,
-      handleImportDot,
-      handleImportGraphml,
-      handleImportJson,
-      handleImportSvg,
+      handleImportFileToSceneGraph,
       handleFitToView,
       GraphMenuActions,
       SimulationMenuActions,
@@ -1919,30 +1898,10 @@ const AppContent: React.FC<{
         />
         <input
           type="file"
-          id="import-dot-input"
+          id="import-file-to-scenegraph-input"
           style={{ display: "none" }}
-          onChange={handleImportDot}
-        />
-        <input
-          type="file"
-          id="import-graphml-input"
-          style={{ display: "none" }}
-          accept=".graphml"
-          onChange={handleImportGraphml}
-        />
-        <input
-          type="file"
-          id="import-json-input"
-          style={{ display: "none" }}
-          accept=".json"
-          onChange={handleImportJson}
-        />
-        <input
-          type="file"
-          id="import-svg-input"
-          style={{ display: "none" }}
-          accept=".svg"
-          onChange={handleImportSvg}
+          onChange={handleImportFileToSceneGraph}
+          accept=".json,.graphml,.svg,.dot"
         />
         <div
           style={{
