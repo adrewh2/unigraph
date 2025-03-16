@@ -28,3 +28,9 @@ jobs:
           files: ./coverage/*.xml
           flags: unigraph
           name: codecov-umbrella
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
