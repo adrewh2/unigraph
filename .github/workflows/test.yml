@@ -19,9 +19,12 @@ jobs:
         run: npm install
 
       - name: Run tests
-        run: npx jest --coverage
+        run: JEST_JUNIT_CLASSNAME="{filepath}" npx jest --coverage --reporters=jest-junit
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/*.xml
+          flags: unigraph
+          name: codecov-umbrella
