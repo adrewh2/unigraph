@@ -133,6 +133,9 @@ export class Graph {
   }
 
   getEdge(id: EdgeId): Edge {
+    if (!this.edges.has(id)) {
+      throw Error("Unable to find edge with id: " + id);
+    }
     return this.edges.get(id);
   }
 
