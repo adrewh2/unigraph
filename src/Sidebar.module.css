@@ -88,6 +88,8 @@
   margin-top: 4px;
   align-items: center; /* Center the content */
   width: 100%; /* Use full width */
+  max-height: calc(100vh - 200px); /* Leave space for header and footer */
+  overflow-y: auto;
 }
 
 .submenuItem {
@@ -180,4 +182,28 @@
 
 .footerText {
   font-size: 1rem;
+}
+
+/* Add styles for options panel container */
+.optionsPanelContainer {
+  width: 100%;
+  padding: 8px;
+  overflow-y: auto;
+  max-height: 100%;
+  box-sizing: border-box;
+}
+
+/* Style the legend containers inside sidebar */
+.optionsPanelContainer :global(.options-panel-container) {
+  margin: 0;
+  padding: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebarContent {
+  padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
 }

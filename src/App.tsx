@@ -1938,7 +1938,7 @@ const AppContent: React.FC<{
     return (
       <Sidebar
         position="right"
-        title="Legends"
+        title="Controls"
         menuItems={createDefaultRightMenus(renderLegends)}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
