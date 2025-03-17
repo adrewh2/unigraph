@@ -80,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {item.content ||
                     item.subMenus?.map((subMenu, idx) => (
                       <div key={idx} className={styles.submenuItem}>
-                        {subMenu.content || (
+                        {subMenu.customRender || subMenu.content || (
                           <button
                             onClick={subMenu.onClick}
                             className={styles.submenuButton}

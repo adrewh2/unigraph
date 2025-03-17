@@ -101,13 +101,14 @@
 
 .submenuButton {
   width: 100%;
-  padding: 0;
-  background: white;
+  padding: 4px 8px;
+  background: none;
   border: none;
+  color: white;
   cursor: pointer;
   text-align: center;
   transition: background-color 0.2s;
-  font-size: 1rem;
+  font-size: 0.875rem;
 }
 
 .submenuButton:hover {
@@ -115,8 +116,12 @@
 }
 
 .layoutButton {
-  padding: 4px 8px;
-  display: block;
+  width: 100%;
+  padding: 2px 8px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
   text-decoration: none;
   font-size: 1rem;
   border-radius: 4px;
@@ -124,8 +129,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  width: 200px; /* Ensure the width is set properly */
-  /* box-sizing: border-box; Include padding and border in the element's total width and height */
 }
 
 .layoutButton.active {

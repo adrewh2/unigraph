@@ -5,11 +5,13 @@ import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "../core/layouts/GraphologyLayoutEngine";
 import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutEngine";
 import { PresetLayoutType } from "../core/layouts/LayoutEngine";
+import styles from "../Sidebar.module.css";
 
 export interface SubMenuItem {
   label: string;
   onClick?: () => void;
   content?: React.ReactNode;
+  customRender?: React.ReactNode;
 }
 
 export interface MenuItem {
@@ -26,6 +28,23 @@ const allLayoutLabels = [
   ...Object.values(CustomLayoutType),
   ...Object.values(PresetLayoutType),
 ];
+
+const LayoutButton = ({
+  layout,
+  onClick,
+  isActive,
+}: {
+  layout: string;
+  onClick: () => void;
+  isActive: boolean;
+}) => (
+  <button
+    className={`${styles.layoutButton} ${isActive ? styles.active : ""}`}
+    onClick={onClick}
+  >
+    {layout}
+  </button>
+);
 
 export const createDefaultLeftMenus = ({
   sceneGraph,
@@ -63,8 +82,14 @@ export const createDefaultLeftMenus = ({
     label: "Layouts",
     subMenus: allLayoutLabels.map((layout: string) => ({
       label: layout,
-      onClick: () => onLayoutChange(layout),
-      isActive: !physicsMode && activeLayout === layout,
+      customRender: (
+        <LayoutButton
+          key={layout}
+          layout={layout}
+          onClick={() => onLayoutChange(layout)}
+          isActive={!physicsMode && activeLayout === layout}
+        />
+      ),
     })),
   },
   {
