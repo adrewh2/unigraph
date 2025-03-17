@@ -57,7 +57,7 @@ export const createDefaultLeftMenus = ({
 }: any) => [
   {
     id: "project",
-    icon: <Home size={20} />,
+    icon: <Home size={20} className={styles.menuIcon} />,
     label: "Project",
     subMenus: [
       {
@@ -72,13 +72,19 @@ export const createDefaultLeftMenus = ({
         ),
       },
       { label: "Overview", onClick: () => console.log("Overview clicked") },
-      { label: "Analytics", onClick: () => console.log("Analytics clicked") },
-      { label: "Statistics", onClick: () => console.log("Statistics clicked") },
+      {
+        label: "Analytics",
+        onClick: () => console.log("Analytics clicked"),
+      },
+      {
+        label: "Statistics",
+        onClick: () => console.log("Statistics clicked"),
+      },
     ],
   },
   {
     id: "layouts",
-    icon: <Share2 size={20} />,
+    icon: <Share2 size={20} className={styles.menuIcon} />,
     label: "Layouts",
     subMenus: allLayoutLabels.map((layout: string) => ({
       label: layout,

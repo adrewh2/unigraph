@@ -8,7 +8,7 @@
   color: white;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
+  transition: all 0.3s ease;
   overflow: hidden;
 }
 
@@ -69,12 +69,15 @@
 
 .menuIcon {
   flex-shrink: 0;
+  transition: margin 0.3s ease;
 }
 
 .menuText {
   margin-left: 12px;
   flex: 1;
   white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 .submenu {

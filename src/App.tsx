@@ -1819,6 +1819,7 @@ const AppContent: React.FC<{
     [currentSceneGraph, setSelectedNode]
   );
 
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
   const renderLeftSideBar = useMemo(() => {
     return (
       <Sidebar
@@ -1834,11 +1835,11 @@ const AppContent: React.FC<{
           onApplyForceGraphConfig: handleApplyForceGraphConfig,
           initialForceGraphConfig:
             currentSceneGraph.getForceGraphRenderConfig(),
-          position: sidebarPosition, // Pass position prop
-          sceneGraph: currentSceneGraph, // Pass sceneGraph prop
+          sceneGraph: currentSceneGraph,
         })}
-        isOpen={true}
-        onToggle={() => {}}
+        isOpen={isLeftSidebarOpen}
+        onToggle={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
+        isDarkMode={isDarkMode}
       />
     );
   }, [
@@ -1849,6 +1850,7 @@ const AppContent: React.FC<{
     currentSceneGraph,
     handleApplyForceGraphConfig,
     isDarkMode,
+    isLeftSidebarOpen,
     sidebarPosition,
   ]);
 
