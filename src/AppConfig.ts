@@ -27,9 +27,9 @@ export const DEFAULT_APP_CONFIG = (): AppConfig => {
     activeView: "ForceGraph3d",
     activeSceneGraph: "AcademicsKG",
     windows: {
-      showLegendBars: false,
-      showOptionsPanel: false,
-      showGraphLayoutToolbar: false,
+      showLegendBars: true,
+      showOptionsPanel: true,
+      showGraphLayoutToolbar: true,
       showEntityDataCard: false,
     },
     forceGraph3dOptions: {

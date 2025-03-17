@@ -54,7 +54,10 @@ import ReactFlowPanel from "./components/simulations/ReactFlowPanel";
 import SolarSystem from "./components/simulations/solarSystemSimulation";
 import UniAppToolbar from "./components/UniAppToolbar";
 import YasguiPanel from "./components/YasguiPanel";
-import { createDefaultLeftMenus } from "./configs/sidebarMenuConfig";
+import {
+  createDefaultLeftMenus,
+  createDefaultRightMenus,
+} from "./configs/sidebarMenuConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -1245,7 +1248,7 @@ const AppContent: React.FC<{
     );
   }, [isOptionsPanelVisible, layoutMode, handleLayoutModeChange, isDarkMode]);
 
-  const renderOptionsPanel = useCallback(() => {
+  const _renderOptionsPanel = useCallback(() => {
     if (!isLegendVisible && !isOptionsPanelVisible) {
       return undefined;
     }
@@ -1923,6 +1926,25 @@ const AppContent: React.FC<{
     );
   }, [appConfig.activeView, currentSceneGraph]);
 
+  const renderRightSideBar = useMemo(() => {
+    const renderLegends = () => (
+      <>
+        {renderNodeLegend}
+        {renderEdgeLegend}
+      </>
+    );
+
+    return (
+      <Sidebar
+        position="right"
+        title="Legends"
+        menuItems={createDefaultRightMenus(renderLegends)}
+        defaultIsOpen={true}
+        isDarkMode={isDarkMode}
+      />
+    );
+  }, [renderNodeLegend, renderEdgeLegend, isDarkMode]);
+
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
       <div
@@ -1964,24 +1986,14 @@ const AppContent: React.FC<{
             <FaExpand size={"3rem"} color={isDarkMode ? "white" : "black"} />
           </button>
         </div>
-
         {renderLeftSideBar}
+        {renderRightSideBar} {/* Add right sidebar */}
+        {/* Remove the existing options panel div */}
         <div>
           <div
             style={{
-              position: "fixed",
-              right: "0px",
-              zIndex: 1000,
-              padding: "10px",
-              borderRadius: "5px",
-            }}
-          >
-            {renderOptionsPanel()}
-          </div>
-          <div
-            style={{
               position: "relative",
-              width: "100vw", // Changed from 100% to 100vw
+              width: "100vw",
               height: "100vh",
               margin: 0,
               padding: 0,

@@ -1,4 +1,4 @@
-import { BookOpen, Github, Home, Settings2, Share2 } from "lucide-react";
+import { BookOpen, Github, Home, List, Settings2, Share2 } from "lucide-react";
 import React from "react";
 import ForceGraphRenderConfigEditor from "../components/force-graph/ForceGraphRenderConfigEditor";
 import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
@@ -112,7 +112,17 @@ export const createDefaultLeftMenus = ({
   },
 ];
 
-export const createDefaultRightMenus = () => [
+export const createDefaultRightMenus = (
+  renderLegends: () => React.ReactNode
+) => [
+  {
+    id: "legends",
+    icon: <List size={20} className={styles.menuIcon} />,
+    label: "Legends",
+    content: (
+      <div className={styles.optionsPanelContainer}>{renderLegends()}</div>
+    ),
+  },
   {
     id: "documentation",
     icon: <BookOpen size={20} />,
