@@ -112,6 +112,7 @@ import { getAllGraphs, sceneGraphs } from "./data/graphs/sceneGraphLib";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
+import Sidebar from "./Sidebar";
 
 export type ObjectOf<T> = { [key: string]: T };
 
@@ -1928,6 +1929,8 @@ const AppContent: React.FC<{
             <FaExpand size={"3rem"} color={isDarkMode ? "white" : "black"} />
           </button>
         </div>
+
+        <Sidebar />
         <div>
           <div
             style={{
