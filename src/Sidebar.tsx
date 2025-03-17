@@ -43,176 +43,170 @@ const Sidebar = () => {
   };
 
   return (
-    <div style={styles.container}>
-      {/* Sidebar */}
-      <div
-        style={{
-          ...styles.sidebar,
-          width: isOpen ? "250px" : "60px",
-        }}
-      >
-        {/* Sidebar Header */}
-        <div style={styles.sidebarHeader}>
-          {isOpen && <h1 style={styles.sidebarTitle}>App Name</h1>}
-          <button
-            onClick={toggleSidebar}
-            style={styles.toggleButton}
-            aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-          >
-            {isOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-
-        {/* Sidebar Menu */}
-        <div style={styles.menuContainer}>
-          <nav style={styles.nav}>
-            {/* Dashboard Menu */}
-            <div style={styles.menuItem}>
-              <button
-                style={styles.menuButton}
-                onClick={() => isOpen && toggleMenu("dashboard")}
-              >
-                <Home size={20} style={styles.menuIcon} />
-                {isOpen && (
-                  <>
-                    <span style={styles.menuText}>Dashboard</span>
-                    {expandedMenus.dashboard ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </>
-                )}
-              </button>
-              {isOpen && expandedMenus.dashboard && (
-                <div style={styles.submenu}>
-                  <a href="#" style={styles.submenuItem}>
-                    Overview
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Analytics
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Statistics
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Management Menu */}
-            <div style={styles.menuItem}>
-              <button
-                style={styles.menuButton}
-                onClick={() => isOpen && toggleMenu("management")}
-              >
-                <Users size={20} style={styles.menuIcon} />
-                {isOpen && (
-                  <>
-                    <span style={styles.menuText}>Management</span>
-                    {expandedMenus.management ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </>
-                )}
-              </button>
-              {isOpen && expandedMenus.management && (
-                <div style={styles.submenu}>
-                  <a href="#" style={styles.submenuItem}>
-                    Users
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Teams
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Roles
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Reports Menu */}
-            <div style={styles.menuItem}>
-              <button
-                style={styles.menuButton}
-                onClick={() => isOpen && toggleMenu("reports")}
-              >
-                <FileText size={20} style={styles.menuIcon} />
-                {isOpen && (
-                  <>
-                    <span style={styles.menuText}>Reports</span>
-                    {expandedMenus.reports ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </>
-                )}
-              </button>
-              {isOpen && expandedMenus.reports && (
-                <div style={styles.submenu}>
-                  <a href="#" style={styles.submenuItem}>
-                    Monthly
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Quarterly
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Annual
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Communications Menu */}
-            <div style={styles.menuItem}>
-              <button
-                style={styles.menuButton}
-                onClick={() => isOpen && toggleMenu("communications")}
-              >
-                <Mail size={20} style={styles.menuIcon} />
-                {isOpen && (
-                  <>
-                    <span style={styles.menuText}>Communications</span>
-                    {expandedMenus.communications ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </>
-                )}
-              </button>
-              {isOpen && expandedMenus.communications && (
-                <div style={styles.submenu}>
-                  <a href="#" style={styles.submenuItem}>
-                    Inbox
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Messages
-                  </a>
-                  <a href="#" style={styles.submenuItem}>
-                    Notifications
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* Settings (no submenu) */}
-            <button style={styles.menuButton}>
-              <Settings size={20} style={styles.menuIcon} />
-              {isOpen && <span style={styles.menuText}>Settings</span>}
-            </button>
-          </nav>
-        </div>
+    <div
+      style={{
+        ...styles.sidebar,
+        width: isOpen ? "250px" : "60px",
+        position: "fixed",
+        top: "50px", // Adjust this value to match the height of the UniAppToolbar
+        left: 0,
+        height: "calc(100vh - 50px)", // Adjust this value to match the height of the UniAppToolbar
+        zIndex: 1000,
+      }}
+    >
+      {/* Sidebar Header */}
+      <div style={styles.sidebarHeader}>
+        {isOpen && <h1 style={styles.sidebarTitle}>App Name</h1>}
+        <button
+          onClick={toggleSidebar}
+          style={styles.toggleButton}
+          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+        >
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
       </div>
-      Main Content
-      <div style={styles.mainContent}>
-        <h1 style={styles.mainTitle}>Main Content</h1>
-        <p>
-          Your main content goes here. Try clicking the menu items in the
-          sidebar!
-        </p>
+
+      {/* Sidebar Menu */}
+      <div style={styles.menuContainer}>
+        <nav style={styles.nav}>
+          {/* Dashboard Menu */}
+          <div style={styles.menuItem}>
+            <button
+              style={styles.menuButton}
+              onClick={() => isOpen && toggleMenu("dashboard")}
+            >
+              <Home size={20} style={styles.menuIcon} />
+              {isOpen && (
+                <>
+                  <span style={styles.menuText}>Dashboard</span>
+                  {expandedMenus.dashboard ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </>
+              )}
+            </button>
+            {isOpen && expandedMenus.dashboard && (
+              <div style={styles.submenu}>
+                <a href="#" style={styles.submenuItem}>
+                  Overview
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Analytics
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Statistics
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Management Menu */}
+          <div style={styles.menuItem}>
+            <button
+              style={styles.menuButton}
+              onClick={() => isOpen && toggleMenu("management")}
+            >
+              <Users size={20} style={styles.menuIcon} />
+              {isOpen && (
+                <>
+                  <span style={styles.menuText}>Management</span>
+                  {expandedMenus.management ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </>
+              )}
+            </button>
+            {isOpen && expandedMenus.management && (
+              <div style={styles.submenu}>
+                <a href="#" style={styles.submenuItem}>
+                  Users
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Teams
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Roles
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Reports Menu */}
+          <div style={styles.menuItem}>
+            <button
+              style={styles.menuButton}
+              onClick={() => isOpen && toggleMenu("reports")}
+            >
+              <FileText size={20} style={styles.menuIcon} />
+              {isOpen && (
+                <>
+                  <span style={styles.menuText}>Reports</span>
+                  {expandedMenus.reports ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </>
+              )}
+            </button>
+            {isOpen && expandedMenus.reports && (
+              <div style={styles.submenu}>
+                <a href="#" style={styles.submenuItem}>
+                  Monthly
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Quarterly
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Annual
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Communications Menu */}
+          <div style={styles.menuItem}>
+            <button
+              style={styles.menuButton}
+              onClick={() => isOpen && toggleMenu("communications")}
+            >
+              <Mail size={20} style={styles.menuIcon} />
+              {isOpen && (
+                <>
+                  <span style={styles.menuText}>Communications</span>
+                  {expandedMenus.communications ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </>
+              )}
+            </button>
+            {isOpen && expandedMenus.communications && (
+              <div style={styles.submenu}>
+                <a href="#" style={styles.submenuItem}>
+                  Inbox
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Messages
+                </a>
+                <a href="#" style={styles.submenuItem}>
+                  Notifications
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Settings (no submenu) */}
+          <button style={styles.menuButton}>
+            <Settings size={20} style={styles.menuIcon} />
+            {isOpen && <span style={styles.menuText}>Settings</span>}
+          </button>
+        </nav>
       </div>
     </div>
   );
