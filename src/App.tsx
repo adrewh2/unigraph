@@ -1940,6 +1940,8 @@ const AppContent: React.FC<{
             appConfig.activeView === "ForceGraph3d"
           }
           isDarkMode={isDarkMode}
+          onApplyForceGraphConfig={handleApplyForceGraphConfig}
+          initialForceGraphConfig={currentSceneGraph.getForceGraphRenderConfig()}
         />
         <div>
           <div

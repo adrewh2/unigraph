@@ -1,4 +1,3 @@
-/* eslint-disable unused-imports/no-unused-vars */
 import {
   ChevronDown,
   ChevronRight,
@@ -11,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useState } from "react";
+import ForceGraphRenderConfigEditor from "./components/force-graph/ForceGraphRenderConfigEditor";
 import { CustomLayoutType } from "./core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "./core/layouts/GraphologyLayoutEngine";
 import { GraphvizLayoutType } from "./core/layouts/GraphvizLayoutEngine";
@@ -23,7 +23,8 @@ type MenuId =
   | "management"
   | "reports"
   | "communications"
-  | "layouts";
+  | "layouts"
+  | "forceGraphSettings";
 
 // Define menu state type
 interface MenuState {
@@ -32,6 +33,7 @@ interface MenuState {
   reports: boolean;
   communications: boolean;
   layouts: boolean;
+  forceGraphSettings: boolean;
 }
 
 interface SidebarProps {
@@ -39,6 +41,8 @@ interface SidebarProps {
   activeLayout: string;
   physicsMode: boolean;
   isDarkMode: boolean;
+  onApplyForceGraphConfig: (config: any) => void;
+  initialForceGraphConfig: any;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -46,6 +50,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeLayout,
   physicsMode,
   isDarkMode,
+  onApplyForceGraphConfig,
+  initialForceGraphConfig,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<MenuState>({
@@ -54,6 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     reports: false,
     communications: false,
     layouts: false,
+    forceGraphSettings: false,
   });
 
   const toggleSidebar = () => {
@@ -262,6 +269,35 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {layout}
                   </button>
                 ))}
+              </div>
+            )}
+          </div>
+
+          {/* ForceGraph Settings Menu */}
+          <div className={styles.menuItem}>
+            <button
+              className={styles.menuButton}
+              onClick={() => isOpen && toggleMenu("forceGraphSettings")}
+            >
+              <Settings size={20} className={styles.menuIcon} />
+              {isOpen && (
+                <>
+                  <span className={styles.menuText}>ForceGraph Settings</span>
+                  {expandedMenus.forceGraphSettings ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </>
+              )}
+            </button>
+            {isOpen && expandedMenus.forceGraphSettings && (
+              <div className={styles.submenu}>
+                <ForceGraphRenderConfigEditor
+                  onApply={onApplyForceGraphConfig}
+                  isDarkMode={isDarkMode}
+                  initialConfig={initialForceGraphConfig}
+                />
               </div>
             )}
           </div>
