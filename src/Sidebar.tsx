@@ -1,12 +1,9 @@
 import {
   ChevronDown,
   ChevronRight,
-  FileText,
   Home,
-  Mail,
   Menu,
   Settings,
-  Users,
   X,
 } from "lucide-react";
 import React, { useState } from "react";
@@ -18,13 +15,7 @@ import { PresetLayoutType } from "./core/layouts/LayoutEngine";
 import styles from "./Sidebar.module.css";
 
 // Define menu ID type
-type MenuId =
-  | "dashboard"
-  | "management"
-  | "reports"
-  | "communications"
-  | "layouts"
-  | "forceGraphSettings";
+type MenuId = "dashboard" | "layouts" | "forceGraphSettings";
 
 // Define menu state type
 interface MenuState {
@@ -142,106 +133,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
           </div>
-
-          {/* Management Menu */}
-          <div className={styles.menuItem}>
-            <button
-              className={styles.menuButton}
-              onClick={() => isOpen && toggleMenu("management")}
-            >
-              <Users size={20} className={styles.menuIcon} />
-              {isOpen && (
-                <>
-                  <span className={styles.menuText}>Management</span>
-                  {expandedMenus.management ? (
-                    <ChevronDown size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
-                </>
-              )}
-            </button>
-            {isOpen && expandedMenus.management && (
-              <div className={styles.submenu}>
-                <a href="#" className={styles.submenuItem}>
-                  Users
-                </a>
-                <a href="#" className={styles.submenuItem}>
-                  Teams
-                </a>
-                <a href="#" className={styles.submenuItem}>
-                  Roles
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* Reports Menu */}
-          <div className={styles.menuItem}>
-            <button
-              className={styles.menuButton}
-              onClick={() => isOpen && toggleMenu("reports")}
-            >
-              <FileText size={20} className={styles.menuIcon} />
-              {isOpen && (
-                <>
-                  <span className={styles.menuText}>Reports</span>
-                  {expandedMenus.reports ? (
-                    <ChevronDown size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
-                </>
-              )}
-            </button>
-            {isOpen && expandedMenus.reports && (
-              <div className={styles.submenu}>
-                <a href="#" className={styles.submenuItem}>
-                  Monthly
-                </a>
-                <a href="#" className={styles.submenuItem}>
-                  Quarterly
-                </a>
-                <a href="#" className={styles.submenuItem}>
-                  Annual
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* Communications Menu */}
-          <div className={styles.menuItem}>
-            <button
-              className={styles.menuButton}
-              onClick={() => isOpen && toggleMenu("communications")}
-            >
-              <Mail size={20} className={styles.menuIcon} />
-              {isOpen && (
-                <>
-                  <span className={styles.menuText}>Communications</span>
-                  {expandedMenus.communications ? (
-                    <ChevronDown size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
-                </>
-              )}
-            </button>
-            {isOpen && expandedMenus.communications && (
-              <div className={styles.submenu}>
-                <a href="#" className={styles.submenuItem}>
-                  Inbox
-                </a>
-                <a href="#" className={styles.submenuItem}>
-                  Messages
-                </a>
-                <a href="#" className={styles.submenuItem}>
-                  Notifications
-                </a>
-              </div>
-            )}
-          </div>
-
           {/* Layouts Menu */}
           <div className={styles.menuItem}>
             <button
