@@ -213,7 +213,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Footer */}
       <div className={styles.sidebarFooter}>
         <a
-          href="https://your-documentation-link.com"
+          href="https://aesgraph.github.io/unigraph/"
           target="_blank"
           rel="noopener noreferrer"
           className={styles.footerLink}
