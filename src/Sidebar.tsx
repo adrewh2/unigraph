@@ -10,9 +10,18 @@ import {
   X,
 } from "lucide-react";
 import React, { useState } from "react";
+import { CustomLayoutType } from "./core/layouts/CustomLayoutEngine";
+import { GraphologyLayoutType } from "./core/layouts/GraphologyLayoutEngine";
+import { GraphvizLayoutType } from "./core/layouts/GraphvizLayoutEngine";
+import { PresetLayoutType } from "./core/layouts/LayoutEngine";
 
 // Define menu ID type
-type MenuId = "dashboard" | "management" | "reports" | "communications";
+type MenuId =
+  | "dashboard"
+  | "management"
+  | "reports"
+  | "communications"
+  | "layouts";
 
 // Define menu state type
 interface MenuState {
@@ -20,15 +29,30 @@ interface MenuState {
   management: boolean;
   reports: boolean;
   communications: boolean;
+  layouts: boolean;
 }
 
-const Sidebar = () => {
+interface SidebarProps {
+  onLayoutChange: (layout: string) => void;
+  activeLayout: string;
+  physicsMode: boolean;
+  isDarkMode: boolean;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  onLayoutChange,
+  activeLayout,
+  physicsMode,
+  // eslint-disable-next-line unused-imports/no-unused-vars
+  isDarkMode,
+}) => {
   const [isOpen, setIsOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<MenuState>({
     dashboard: true,
     management: false,
     reports: false,
     communications: false,
+    layouts: false,
   });
 
   const toggleSidebar = () => {
@@ -41,6 +65,13 @@ const Sidebar = () => {
       [menuId]: !prev[menuId],
     }));
   };
+
+  const allLayoutLabels = [
+    ...Object.values(GraphvizLayoutType),
+    ...Object.values(GraphologyLayoutType),
+    ...Object.values(CustomLayoutType),
+    ...Object.values(PresetLayoutType),
+  ];
 
   return (
     <div
@@ -201,11 +232,39 @@ const Sidebar = () => {
             )}
           </div>
 
-          {/* Settings (no submenu) */}
-          <button style={styles.menuButton}>
-            <Settings size={20} style={styles.menuIcon} />
-            {isOpen && <span style={styles.menuText}>Settings</span>}
-          </button>
+          {/* Layouts Menu */}
+          <div style={styles.menuItem}>
+            <button
+              style={styles.menuButton}
+              onClick={() => isOpen && toggleMenu("layouts")}
+            >
+              <Settings size={20} style={styles.menuIcon} />
+              {isOpen && (
+                <>
+                  <span style={styles.menuText}>Layouts</span>
+                  {expandedMenus.layouts ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </>
+              )}
+            </button>
+            {isOpen && expandedMenus.layouts && (
+              <div style={styles.submenu}>
+                {allLayoutLabels.map((layout) => (
+                  <button
+                    key={layout}
+                    className={`layout-button ${!physicsMode && activeLayout === layout ? "active" : ""}`}
+                    onClick={() => onLayoutChange(layout)}
+                    style={styles.submenuItem}
+                  >
+                    {layout}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
       </div>
     </div>

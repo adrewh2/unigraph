@@ -1930,7 +1930,17 @@ const AppContent: React.FC<{
           </button>
         </div>
 
-        <Sidebar />
+        <Sidebar
+          onLayoutChange={(layout: string) =>
+            applyNewLayout(layout as LayoutEngineOption)
+          }
+          activeLayout={activeLayout}
+          physicsMode={
+            appConfig.forceGraph3dOptions.layout === "Physics" &&
+            appConfig.activeView === "ForceGraph3d"
+          }
+          isDarkMode={isDarkMode}
+        />
         <div>
           <div
             style={{
