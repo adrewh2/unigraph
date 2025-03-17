@@ -88,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Sidebar Header */}
       <div className={styles.sidebarHeader}>
-        {isOpen && <h1 className={styles.sidebarTitle}>App Name</h1>}
+        {isOpen && <h1 className={styles.sidebarTitle}>Unigraph</h1>}
         <button
           onClick={toggleSidebar}
           className={styles.toggleButton}

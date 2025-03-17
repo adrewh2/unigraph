@@ -26,9 +26,9 @@
   margin: 0;
 }
 
-toggleButton {
+.toggleButton {
   padding: 4px;
-  background-color: transparent;
+  background-color: transparent; /* Ensure the background is clear */
   border: none;
   border-radius: 4px;
   color: white;
