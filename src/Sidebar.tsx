@@ -43,6 +43,7 @@ interface SidebarProps {
   isDarkMode: boolean;
   onApplyForceGraphConfig: (config: any) => void;
   initialForceGraphConfig: any;
+  position: "left" | "right"; // Add position prop
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -52,6 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onApplyForceGraphConfig,
   initialForceGraphConfig,
+  position, // Add position prop
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<MenuState>({
@@ -88,7 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         width: isOpen ? "250px" : "60px",
         position: "fixed",
         top: "50px", // Adjust this value to match the height of the UniAppToolbar
-        left: 0,
+        [position]: 0, // Use position prop to determine left or right
         height: "calc(100vh - 50px)", // Adjust this value to match the height of the UniAppToolbar
         zIndex: 1000,
       }}

@@ -181,6 +181,7 @@ const AppContent: React.FC<{
   showGraphLayoutToolbar?: string;
   showRenderConfigOptions?: string;
   showToolbar?: string;
+  sidebarPosition?: "left" | "right"; // Add sidebarPosition prop
 }> = ({
   defaultGraph,
   svgUrl,
@@ -191,6 +192,7 @@ const AppContent: React.FC<{
   showGraphLayoutToolbar,
   showRenderConfigOptions,
   showToolbar,
+  sidebarPosition = "left", // Default to "left"
 }) => {
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -1942,6 +1944,7 @@ const AppContent: React.FC<{
           isDarkMode={isDarkMode}
           onApplyForceGraphConfig={handleApplyForceGraphConfig}
           initialForceGraphConfig={currentSceneGraph.getForceGraphRenderConfig()}
+          position={sidebarPosition} // Pass position prop
         />
         <div>
           <div
@@ -2169,6 +2172,7 @@ interface AppProps {
   showGraphLayoutToolbar?: string;
   showRenderConfigOptions?: string;
   showToolbar?: string;
+  sidebarPosition?: "left" | "right"; // Add sidebarPosition prop
 }
 
 const App: React.FC<AppProps> = ({
@@ -2181,6 +2185,7 @@ const App: React.FC<AppProps> = ({
   showGraphLayoutToolbar,
   showRenderConfigOptions,
   showToolbar,
+  sidebarPosition,
 }) => {
   return (
     <MousePositionProvider>
@@ -2194,6 +2199,7 @@ const App: React.FC<AppProps> = ({
         showGraphLayoutToolbar={showGraphLayoutToolbar}
         showRenderConfigOptions={showRenderConfigOptions}
         showToolbar={showToolbar}
+        sidebarPosition={sidebarPosition} // Pass sidebarPosition prop
       />
     </MousePositionProvider>
   );
