@@ -1,8 +1,8 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { BookOpen, ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { MenuItem } from "./configs/sidebarMenuConfig";
 import styles from "./Sidebar.module.css";
+import { SubMenuItem } from "./configs/sidebarMenuConfig";
 
 interface SidebarProps {
   position: "left" | "right";
@@ -12,6 +12,16 @@ interface SidebarProps {
   onToggle?: () => void;
   isDarkMode?: boolean;
   content?: React.ReactNode; // Add this prop
+}
+
+interface MenuItem {
+  id: string;
+  icon: React.ReactNode;
+  label: string;
+  content?: React.ReactNode;
+  subMenus?: SubMenuItem[];
+  hideHeader?: boolean;
+  alwaysExpanded?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -81,23 +91,25 @@ const Sidebar: React.FC<SidebarProps> = ({
           <nav className={styles.nav}>
             {menuItems.map((item) => (
               <div key={item.id} className={styles.menuItem}>
-                <button
-                  className={styles.menuButton}
-                  onClick={() => toggleMenu(item.id)}
-                >
-                  {item.icon}
-                  {isOpen && (
-                    <>
-                      <span className={styles.menuText}>{item.label}</span>
-                      {expandedMenus[item.id] ? (
-                        <ChevronDown size={16} />
-                      ) : (
-                        <ChevronRight size={16} />
-                      )}
-                    </>
-                  )}
-                </button>
-                {isOpen && expandedMenus[item.id] && (
+                {!item.hideHeader && (
+                  <button
+                    className={styles.menuButton}
+                    onClick={() => toggleMenu(item.id)}
+                  >
+                    {item.icon}
+                    {isOpen && (
+                      <>
+                        <span className={styles.menuText}>{item.label}</span>
+                        {expandedMenus[item.id] ? (
+                          <ChevronDown size={16} />
+                        ) : (
+                          <ChevronRight size={16} />
+                        )}
+                      </>
+                    )}
+                  </button>
+                )}
+                {isOpen && (expandedMenus[item.id] || item.alwaysExpanded) && (
                   <div className={styles.submenu}>
                     {item.content ||
                       item.subMenus?.map((subMenu, idx) => (

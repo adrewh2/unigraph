@@ -1915,7 +1915,7 @@ const AppContent: React.FC<{
   }, [appConfig.activeView, currentSceneGraph]);
 
   const renderRightSideBar = useMemo(() => {
-    const renderLegends = () => (
+    const renderContent = () => (
       <>
         {renderLayoutModeRadio()}
         {renderNodeLegend}
@@ -1927,12 +1927,27 @@ const AppContent: React.FC<{
       <Sidebar
         position="right"
         title="Controls"
-        menuItems={createDefaultRightMenus(renderLegends)}
+        menuItems={createDefaultRightMenus(
+          renderContent,
+          appConfig.activeView === "ForceGraph3d",
+          appConfig.forceGraph3dOptions.layout,
+          (layout: string) =>
+            setSelectedForceGraph3dLayoutMode(layout as ForceGraph3dLayoutMode),
+          isDarkMode
+        )}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
       />
     );
-  }, [renderLayoutModeRadio, renderNodeLegend, renderEdgeLegend, isDarkMode]);
+  }, [
+    renderLayoutModeRadio,
+    renderNodeLegend,
+    renderEdgeLegend,
+    appConfig.activeView,
+    appConfig.forceGraph3dOptions.layout,
+    setSelectedForceGraph3dLayoutMode,
+    isDarkMode,
+  ]);
 
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
