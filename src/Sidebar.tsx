@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   ChevronDown,
   ChevronRight,
   Home,
@@ -6,7 +7,7 @@ import {
   Settings2,
   Share2,
   X,
-} from "lucide-react";
+} from "lucide-react"; // Import the BookOpen icon
 import React, { useState } from "react";
 import ForceGraphRenderConfigEditor from "./components/force-graph/ForceGraphRenderConfigEditor";
 import { CustomLayoutType } from "./core/layouts/CustomLayoutEngine";
@@ -48,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onApplyForceGraphConfig,
   initialForceGraphConfig,
   position,
-  sceneGraph, // Add sceneGraph prop
+  sceneGraph,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<MenuState>({
@@ -207,6 +208,19 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
         </nav>
+      </div>
+
+      {/* Sidebar Footer */}
+      <div className={styles.sidebarFooter}>
+        <a
+          href="https://your-documentation-link.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.footerLink}
+        >
+          <BookOpen size={20} className={styles.footerIcon} />
+          {isOpen && <span className={styles.footerText}>Documentation</span>}
+        </a>
       </div>
     </div>
   );
