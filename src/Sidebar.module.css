@@ -97,15 +97,20 @@ toggleButton {
 .layoutButton {
   padding: 4px 8px;
   display: block;
-  color: white;
   text-decoration: none;
-  font-size: 0.75rem;
+  font-size: 1rem;
   border-radius: 4px;
   transition: background-color 0.2s;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  width: 200px; /* Ensure the width is set properly */
+  /* box-sizing: border-box; Include padding and border in the element's total width and height */
+}
+
+.layoutButton.active {
+  background-color: #2676f7; /* Highlight active layout button */
+  color: white;
 }
 
 .mainContent {

@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-vars */
 import {
   ChevronDown,
   ChevronRight,
@@ -44,7 +45,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   onLayoutChange,
   activeLayout,
   physicsMode,
-  // eslint-disable-next-line unused-imports/no-unused-vars
   isDarkMode,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -256,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {allLayoutLabels.map((layout) => (
                   <button
                     key={layout}
-                    className={`layout-button ${!physicsMode && activeLayout === layout ? "active" : ""}`}
+                    className={`${styles.layoutButton} ${!physicsMode && activeLayout === layout ? styles.active : ""}`}
                     onClick={() => onLayoutChange(layout)}
                   >
                     {layout}
