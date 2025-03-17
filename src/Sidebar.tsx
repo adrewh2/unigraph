@@ -11,6 +11,7 @@ interface SidebarProps {
   defaultIsOpen?: boolean;
   onToggle?: () => void;
   isDarkMode?: boolean;
+  content?: React.ReactNode; // Add this prop
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -20,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   defaultIsOpen = true,
   onToggle,
   isDarkMode,
+  content,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultIsOpen);
   const [expandedMenus, setExpandedMenus] = useState<{
@@ -73,45 +75,49 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className={styles.menuContainer}>
-        <nav className={styles.nav}>
-          {menuItems.map((item) => (
-            <div key={item.id} className={styles.menuItem}>
-              <button
-                className={styles.menuButton}
-                onClick={() => toggleMenu(item.id)}
-              >
-                {item.icon}
-                {isOpen && (
-                  <>
-                    <span className={styles.menuText}>{item.label}</span>
-                    {expandedMenus[item.id] ? (
-                      <ChevronDown size={16} />
-                    ) : (
-                      <ChevronRight size={16} />
-                    )}
-                  </>
+        {content ? ( // Add this condition
+          <div className={styles.sidebarContent}>{content}</div>
+        ) : (
+          <nav className={styles.nav}>
+            {menuItems.map((item) => (
+              <div key={item.id} className={styles.menuItem}>
+                <button
+                  className={styles.menuButton}
+                  onClick={() => toggleMenu(item.id)}
+                >
+                  {item.icon}
+                  {isOpen && (
+                    <>
+                      <span className={styles.menuText}>{item.label}</span>
+                      {expandedMenus[item.id] ? (
+                        <ChevronDown size={16} />
+                      ) : (
+                        <ChevronRight size={16} />
+                      )}
+                    </>
+                  )}
+                </button>
+                {isOpen && expandedMenus[item.id] && (
+                  <div className={styles.submenu}>
+                    {item.content ||
+                      item.subMenus?.map((subMenu, idx) => (
+                        <div key={idx} className={styles.submenuItem}>
+                          {subMenu.customRender || subMenu.content || (
+                            <button
+                              onClick={subMenu.onClick}
+                              className={styles.submenuButton}
+                            >
+                              {subMenu.label}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                  </div>
                 )}
-              </button>
-              {isOpen && expandedMenus[item.id] && (
-                <div className={styles.submenu}>
-                  {item.content ||
-                    item.subMenus?.map((subMenu, idx) => (
-                      <div key={idx} className={styles.submenuItem}>
-                        {subMenu.customRender || subMenu.content || (
-                          <button
-                            onClick={subMenu.onClick}
-                            className={styles.submenuButton}
-                          >
-                            {subMenu.label}
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>
+              </div>
+            ))}
+          </nav>
+        )}
       </div>
 
       <div className={styles.sidebarFooter}>

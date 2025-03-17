@@ -1929,6 +1929,7 @@ const AppContent: React.FC<{
   const renderRightSideBar = useMemo(() => {
     const renderLegends = () => (
       <>
+        {renderLayoutModeRadio()}
         {renderNodeLegend}
         {renderEdgeLegend}
       </>
@@ -1943,7 +1944,7 @@ const AppContent: React.FC<{
         isDarkMode={isDarkMode}
       />
     );
-  }, [renderNodeLegend, renderEdgeLegend, isDarkMode]);
+  }, [renderLayoutModeRadio, renderNodeLegend, renderEdgeLegend, isDarkMode]);
 
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>

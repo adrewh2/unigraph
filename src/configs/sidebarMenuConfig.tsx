@@ -1,4 +1,4 @@
-import { BookOpen, Github, Home, List, Settings2, Share2 } from "lucide-react";
+import { Home, List, Settings2, Share2 } from "lucide-react";
 import React from "react";
 import ForceGraphRenderConfigEditor from "../components/force-graph/ForceGraphRenderConfigEditor";
 import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
@@ -122,29 +122,5 @@ export const createDefaultRightMenus = (
     content: (
       <div className={styles.optionsPanelContainer}>{renderLegends()}</div>
     ),
-  },
-  {
-    id: "documentation",
-    icon: <BookOpen size={20} />,
-    label: "Documentation",
-    subMenus: [
-      {
-        label: "View Docs",
-        onClick: () =>
-          window.open("https://aesgraph.github.io/unigraph/", "_blank"),
-      },
-    ],
-  },
-  {
-    id: "github",
-    icon: <Github size={20} />,
-    label: "GitHub",
-    subMenus: [
-      {
-        label: "View Source",
-        onClick: () =>
-          window.open("https://github.com/aesigraph/unigraph", "_blank"),
-      },
-    ],
   },
 ];
