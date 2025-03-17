@@ -191,6 +191,10 @@
   overflow-y: auto;
   max-height: 100%;
   box-sizing: border-box;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Style the legend containers inside sidebar */
@@ -201,9 +205,38 @@
   box-sizing: border-box;
 }
 
-.sidebarContent {
-  padding: 16px;
+.optionsPanelContainer :global(.legend-container) {
   width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.optionsPanelContainer :global(.legend-header) {
+  width: 100%;
+  padding: 8px;
+  margin: 0;
+}
+
+.optionsPanelContainer :global(.legend-content) {
+  width: 100%;
+  padding: 4px 8px;
+}
+
+.optionsPanelContainer :global(.legend-row) {
+  width: 100%;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebarContent {
+  padding: 8px;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
