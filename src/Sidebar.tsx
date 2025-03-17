@@ -1,6 +1,6 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { BookOpen, ChevronDown, ChevronRight, Menu, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MenuItem } from "./configs/sidebarMenuConfig";
 import styles from "./Sidebar.module.css";
 
@@ -8,8 +8,8 @@ interface SidebarProps {
   position: "left" | "right";
   title?: string;
   menuItems: MenuItem[];
-  isOpen: boolean;
-  onToggle: () => void;
+  defaultIsOpen?: boolean;
+  onToggle?: () => void;
   isDarkMode?: boolean;
 }
 
@@ -17,20 +17,37 @@ const Sidebar: React.FC<SidebarProps> = ({
   position,
   title = "Unigraph",
   menuItems,
-  isOpen,
+  defaultIsOpen = true,
   onToggle,
   isDarkMode,
 }) => {
+  const [isOpen, setIsOpen] = useState(defaultIsOpen);
   const [expandedMenus, setExpandedMenus] = useState<{
     [key: string]: boolean;
   }>({});
 
-  const toggleMenu = (menuId: string) => {
-    setExpandedMenus((prev) => ({
-      ...prev,
-      [menuId]: !prev[menuId],
-    }));
+  const toggleSidebar = () => {
+    setIsOpen((prev) => !prev);
+    onToggle?.();
   };
+
+  const toggleMenu = (menuId: string) => {
+    if (!isOpen) {
+      setIsOpen(true);
+      setExpandedMenus((prev) => ({ ...prev, [menuId]: true }));
+    } else {
+      setExpandedMenus((prev) => ({
+        ...prev,
+        [menuId]: !prev[menuId],
+      }));
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      setExpandedMenus({});
+    }
+  }, [isOpen]);
 
   return (
     <div
@@ -47,7 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className={styles.sidebarHeader}>
         {isOpen && <h1 className={styles.sidebarTitle}>{title}</h1>}
         <button
-          onClick={onToggle}
+          onClick={toggleSidebar}
           className={styles.toggleButton}
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
@@ -97,7 +114,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Sidebar Footer */}
       <div className={styles.sidebarFooter}>
         <a
           href="https://aesgraph.github.io/unigraph/"
