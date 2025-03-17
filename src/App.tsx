@@ -25,7 +25,6 @@ import ContextMenu, { ContextMenuItem } from "./components/common/ContextMenu";
 import EntityDataDisplayCard from "./components/common/EntityDataDisplayCard";
 import EntityJsonEditorDialog from "./components/common/EntityJsonEditorDialog";
 import EntityTabDialog from "./components/common/EntityTabDialog";
-import GraphLayoutToolbar from "./components/common/GraphLayoutToolbar";
 import { GraphEntityType } from "./components/common/GraphSearch";
 import LayoutManager from "./components/common/LayoutManager";
 import LayoutModeRadio from "./components/common/LayoutModeRadio";
@@ -365,7 +364,7 @@ const AppContent: React.FC<{
     return appConfig.windows.showOptionsPanel;
   }, [appConfig]);
 
-  const isGraphLayoutPanelVisible = useMemo(() => {
+  const _isGraphLayoutPanelVisible = useMemo(() => {
     if (appConfig.activeView === "Yasgui") {
       return false;
     }
@@ -934,9 +933,6 @@ const AppContent: React.FC<{
   );
 
   const renderNodeLegend = useMemo(() => {
-    if (!isLegendVisible) {
-      return null;
-    }
     const statistics =
       currentSceneGraph.getDisplayConfig().mode === "type"
         ? graphStatistics?.nodeTypeToCount
@@ -958,7 +954,6 @@ const AppContent: React.FC<{
     );
   }, [
     nodeConfig,
-    isLegendVisible,
     isDarkMode,
     graphStatistics,
     currentSceneGraph,
@@ -970,9 +965,6 @@ const AppContent: React.FC<{
   ]);
 
   const renderEdgeLegend = useMemo(() => {
-    if (!isLegendVisible) {
-      return null;
-    }
     const statistics =
       currentSceneGraph.getDisplayConfig().mode === "type"
         ? graphStatistics?.edgeTypeToCount
@@ -992,7 +984,6 @@ const AppContent: React.FC<{
     );
   }, [
     edgeConfig,
-    isLegendVisible,
     isDarkMode,
     graphStatistics,
     handleEdgeColorChange,
@@ -1236,9 +1227,6 @@ const AppContent: React.FC<{
   }, [currentSceneGraph]);
 
   const renderLayoutModeRadio = useCallback(() => {
-    if (!isOptionsPanelVisible) {
-      return undefined;
-    }
     return (
       <LayoutModeRadio
         layoutMode={layoutMode}
@@ -1246,7 +1234,7 @@ const AppContent: React.FC<{
         isDarkMode={isDarkMode}
       />
     );
-  }, [isOptionsPanelVisible, layoutMode, handleLayoutModeChange, isDarkMode]);
+  }, [layoutMode, handleLayoutModeChange, isDarkMode]);
 
   const _renderOptionsPanel = useCallback(() => {
     if (!isLegendVisible && !isOptionsPanelVisible) {
@@ -1706,7 +1694,7 @@ const AppContent: React.FC<{
     []
   );
 
-  const renderForceGraphRenderConfigEditor = useCallback(() => {
+  const _renderForceGraphRenderConfigEditor = useCallback(() => {
     if (appConfig.activeView !== "ForceGraph3d") {
       return null;
     }
@@ -2015,32 +2003,6 @@ const AppContent: React.FC<{
               getSimulation(appConfig.activeView)}
           </div>
         </div>
-        {isGraphLayoutPanelVisible &&
-          !(appConfig.activeView in simulations) && (
-            <GraphLayoutToolbar
-              activeLayout={activeLayout}
-              onLayoutChange={(layoutType: LayoutEngineOption) =>
-                applyNewLayout(layoutType)
-              }
-              isDarkMode={isDarkMode}
-              physicsMode={
-                appConfig.forceGraph3dOptions.layout === "Physics" &&
-                appConfig.activeView === "ForceGraph3d"
-              }
-            />
-          )}
-        {appConfig.forceGraph3dOptions.showOptionsPanel && (
-          <div
-            style={{
-              zIndex: "3000",
-              position: "absolute",
-              top: "5rem",
-              left: "1rem",
-            }}
-          >
-            {renderForceGraphRenderConfigEditor()}
-          </div>
-        )}
         {appConfig.windows.showEntityDataCard &&
           currentSceneGraph.getAppState().hoveredNodes.size > 0 && (
             <EntityDataDisplayCard
