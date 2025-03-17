@@ -123,7 +123,7 @@
   color: white;
   cursor: pointer;
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 1.2rem;
   border-radius: 4px;
   transition: background-color 0.2s;
   white-space: nowrap;
@@ -131,9 +131,17 @@
   text-overflow: ellipsis;
 }
 
+.layoutButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .layoutButton.active {
   background-color: #2676f7; /* Highlight active layout button */
   color: white;
+}
+
+.layoutButton.active:hover {
+  background-color: #3684ff;
 }
 
 .mainContent {
