@@ -99,6 +99,22 @@
   text-align: center; /* Center text */
 }
 
+.submenuButton {
+  width: 100%;
+  padding: 2px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s;
+  font-size: 0.875rem;
+}
+
+.submenuButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .layoutButton {
   padding: 4px 8px;
   display: block;

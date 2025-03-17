@@ -54,6 +54,7 @@ import ReactFlowPanel from "./components/simulations/ReactFlowPanel";
 import SolarSystem from "./components/simulations/solarSystemSimulation";
 import UniAppToolbar from "./components/UniAppToolbar";
 import YasguiPanel from "./components/YasguiPanel";
+import { createDefaultLeftMenus } from "./configs/sidebarMenuConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -1818,6 +1819,39 @@ const AppContent: React.FC<{
     [currentSceneGraph, setSelectedNode]
   );
 
+  const renderLeftSideBar = useMemo(() => {
+    return (
+      <Sidebar
+        position={sidebarPosition}
+        menuItems={createDefaultLeftMenus({
+          onLayoutChange: (layout: string) =>
+            applyNewLayout(layout as LayoutEngineOption),
+          activeLayout: activeLayout,
+          physicsMode:
+            appConfig.forceGraph3dOptions.layout === "Physics" &&
+            appConfig.activeView === "ForceGraph3d",
+          isDarkMode,
+          onApplyForceGraphConfig: handleApplyForceGraphConfig,
+          initialForceGraphConfig:
+            currentSceneGraph.getForceGraphRenderConfig(),
+          position: sidebarPosition, // Pass position prop
+          sceneGraph: currentSceneGraph, // Pass sceneGraph prop
+        })}
+        isOpen={true}
+        onToggle={() => {}}
+      />
+    );
+  }, [
+    activeLayout,
+    appConfig.activeView,
+    appConfig.forceGraph3dOptions.layout,
+    applyNewLayout,
+    currentSceneGraph,
+    handleApplyForceGraphConfig,
+    isDarkMode,
+    sidebarPosition,
+  ]);
+
   const getContextMenuItems = useCallback(
     (nodeId: NodeId | undefined): ContextMenuItem[] => {
       if (nodeId) {
@@ -1932,21 +1966,7 @@ const AppContent: React.FC<{
           </button>
         </div>
 
-        <Sidebar
-          onLayoutChange={(layout: string) =>
-            applyNewLayout(layout as LayoutEngineOption)
-          }
-          activeLayout={activeLayout}
-          physicsMode={
-            appConfig.forceGraph3dOptions.layout === "Physics" &&
-            appConfig.activeView === "ForceGraph3d"
-          }
-          isDarkMode={isDarkMode}
-          onApplyForceGraphConfig={handleApplyForceGraphConfig}
-          initialForceGraphConfig={currentSceneGraph.getForceGraphRenderConfig()}
-          position={sidebarPosition} // Pass position prop
-          sceneGraph={currentSceneGraph} // Pass sceneGraph prop
-        />
+        {renderLeftSideBar}
         <div>
           <div
             style={{
