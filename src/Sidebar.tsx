@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <div
       className={styles.sidebar}
       style={{
-        width: isOpen ? "250px" : "60px",
+        width: isOpen ? "200px" : "60px", // Adjust width to a fixed, narrower width
         position: "fixed",
         top: "50px", // Adjust this value to match the height of the UniAppToolbar
         [position]: 0, // Use position prop to determine left or right
