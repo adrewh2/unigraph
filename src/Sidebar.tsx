@@ -61,6 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const toggleMenu = (menuId: MenuId) => {
+    setIsOpen(true);
     setExpandedMenus((prev) => ({
       ...prev,
       [menuId]: !prev[menuId],
@@ -105,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={styles.menuItem}>
             <button
               className={styles.menuButton}
-              onClick={() => isOpen && toggleMenu("dashboard")}
+              onClick={() => toggleMenu("dashboard")}
             >
               <Home size={20} className={styles.menuIcon} />
               {isOpen && (
@@ -137,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={styles.menuItem}>
             <button
               className={styles.menuButton}
-              onClick={() => isOpen && toggleMenu("layouts")}
+              onClick={() => toggleMenu("layouts")}
             >
               <Settings size={20} className={styles.menuIcon} />
               {isOpen && (
@@ -170,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={styles.menuItem}>
             <button
               className={styles.menuButton}
-              onClick={() => isOpen && toggleMenu("forceGraphSettings")}
+              onClick={() => toggleMenu("forceGraphSettings")}
             >
               <Settings size={20} className={styles.menuIcon} />
               {isOpen && (
