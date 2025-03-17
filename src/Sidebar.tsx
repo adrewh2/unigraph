@@ -271,6 +271,7 @@ const styles = {
     cursor: "pointer",
     transition: "background-color 0.2s",
     textAlign: "left" as const,
+    justifyContent: "center", // Center the content
   },
   menuIcon: {
     flexShrink: 0,
