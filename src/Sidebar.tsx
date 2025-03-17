@@ -1,5 +1,5 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { BookOpen, ChevronDown, ChevronRight, Menu, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/sidebarMenuConfig";
@@ -12,6 +12,7 @@ interface SidebarProps {
   onToggle?: () => void;
   isDarkMode?: boolean;
   content?: React.ReactNode; // Add this prop
+  footer?: React.ReactNode;
 }
 
 interface MenuItem {
@@ -32,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggle,
   isDarkMode,
   content,
+  footer,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultIsOpen);
   const [expandedMenus, setExpandedMenus] = useState<{
@@ -132,17 +134,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className={styles.sidebarFooter}>
-        <a
-          href="https://aesgraph.github.io/unigraph/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.footerLink}
-        >
-          <BookOpen size={20} className={styles.footerIcon} />
-          {isOpen && <span className={styles.footerText}>Documentation</span>}
-        </a>
-      </div>
+      {footer && <div className={styles.sidebarFooter}>{footer}</div>}
     </div>
   );
 };

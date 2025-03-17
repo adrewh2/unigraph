@@ -1,4 +1,4 @@
-import { Home, List, Settings2, Share2 } from "lucide-react";
+import { BookOpen, Home, List, Settings2, Share2 } from "lucide-react";
 import React from "react";
 import { ForceGraph3dLayoutMode } from "../AppConfig";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
@@ -148,3 +148,18 @@ export const createDefaultRightMenus = (
     ),
   },
 ];
+
+export const footerContent = () => {
+  const footerContent = (
+    <a
+      href="https://aesgraph.github.io/unigraph/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className={styles.footerLink}
+    >
+      <BookOpen size={20} className={styles.footerIcon} />
+      <span className={styles.footerText}>Documentation</span>
+    </a>
+  );
+  return footerContent;
+};

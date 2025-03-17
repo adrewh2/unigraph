@@ -56,6 +56,7 @@ import YasguiPanel from "./components/YasguiPanel";
 import {
   createDefaultLeftMenus,
   createDefaultRightMenus,
+  footerContent,
 } from "./configs/sidebarMenuConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
@@ -1827,8 +1828,9 @@ const AppContent: React.FC<{
             currentSceneGraph.getForceGraphRenderConfig(),
           sceneGraph: currentSceneGraph,
         })}
-        defaultIsOpen={true} // Changed from isOpen
+        defaultIsOpen={true}
         isDarkMode={isDarkMode}
+        footer={footerContent()}
       />
     );
   }, [
