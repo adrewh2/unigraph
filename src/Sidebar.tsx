@@ -127,7 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             {isOpen && expandedMenus.project && (
               <div className={styles.submenu}>
                 <div className={styles.submenuItem}>
-                  Loaded Graph:
+                  Loaded Graph
                   <br></br>
                   <span>
                     <strong>{sceneGraph.getMetadata().name}</strong>
