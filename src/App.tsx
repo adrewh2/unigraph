@@ -1945,6 +1945,7 @@ const AppContent: React.FC<{
           onApplyForceGraphConfig={handleApplyForceGraphConfig}
           initialForceGraphConfig={currentSceneGraph.getForceGraphRenderConfig()}
           position={sidebarPosition} // Pass position prop
+          sceneGraph={currentSceneGraph} // Pass sceneGraph prop
         />
         <div>
           <div

@@ -13,6 +13,7 @@ import { CustomLayoutType } from "./core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "./core/layouts/GraphologyLayoutEngine";
 import { GraphvizLayoutType } from "./core/layouts/GraphvizLayoutEngine";
 import { PresetLayoutType } from "./core/layouts/LayoutEngine";
+import { SceneGraph } from "./core/model/SceneGraph";
 import styles from "./Sidebar.module.css";
 
 // Define menu ID type
@@ -36,6 +37,7 @@ interface SidebarProps {
   onApplyForceGraphConfig: (config: any) => void;
   initialForceGraphConfig: any;
   position: "left" | "right"; // Add position prop
+  sceneGraph: SceneGraph; // Add sceneGraph prop
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -45,7 +47,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onApplyForceGraphConfig,
   initialForceGraphConfig,
-  position, // Add position prop
+  position,
+  sceneGraph, // Add sceneGraph prop
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<MenuState>({
@@ -103,7 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar Menu */}
       <div className={styles.menuContainer}>
         <nav className={styles.nav}>
-          {/* Dashboard Menu */}
+          {/* Project Menu */}
           <div className={styles.menuItem}>
             <button
               className={styles.menuButton}
@@ -123,6 +126,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             </button>
             {isOpen && expandedMenus.project && (
               <div className={styles.submenu}>
+                <div className={styles.submenuItem}>
+                  Loaded Graph:
+                  <br></br>
+                  <span>
+                    <strong>{sceneGraph.getMetadata().name}</strong>
+                  </span>
+                </div>
                 <a href="#" className={styles.submenuItem}>
                   Overview
                 </a>
