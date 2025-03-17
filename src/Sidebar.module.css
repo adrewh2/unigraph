@@ -81,18 +81,18 @@
   padding-left: 0; /* Remove left padding */
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px; /* Reduce gap between submenu items */
   margin-top: 4px;
   align-items: center; /* Center the content */
   width: 100%; /* Use full width */
 }
 
 .submenuItem {
-  padding: 8px;
+  /* padding: 8px; */
   display: block;
   color: white;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 1rem;
   border-radius: 4px;
   transition: background-color 0.2s;
   width: 100%; /* Ensure submenu items use full width */
@@ -101,14 +101,13 @@
 
 .submenuButton {
   width: 100%;
-  padding: 2px;
-  background: none;
+  padding: 0;
+  background: white;
   border: none;
-  color: white;
   cursor: pointer;
   text-align: center;
   transition: background-color 0.2s;
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .submenuButton:hover {
