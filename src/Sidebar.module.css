@@ -77,11 +77,13 @@
 }
 
 .submenu {
-  padding-left: 40px;
+  padding-left: 0; /* Remove left padding */
   display: flex;
   flex-direction: column;
   gap: 4px;
   margin-top: 4px;
+  align-items: center; /* Center the content */
+  width: 100%; /* Use full width */
 }
 
 .submenuItem {
@@ -92,6 +94,8 @@
   font-size: 0.875rem;
   border-radius: 4px;
   transition: background-color 0.2s;
+  width: 100%; /* Ensure submenu items use full width */
+  text-align: center; /* Center text */
 }
 
 .layoutButton {
