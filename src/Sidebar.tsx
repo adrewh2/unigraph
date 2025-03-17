@@ -3,7 +3,8 @@ import {
   ChevronRight,
   Home,
   Menu,
-  Settings,
+  Settings2,
+  Share2,
   X,
 } from "lucide-react";
 import React, { useState } from "react";
@@ -15,11 +16,11 @@ import { PresetLayoutType } from "./core/layouts/LayoutEngine";
 import styles from "./Sidebar.module.css";
 
 // Define menu ID type
-type MenuId = "dashboard" | "layouts" | "forceGraphSettings";
+type MenuId = "project" | "layouts" | "forceGraphSettings";
 
 // Define menu state type
 interface MenuState {
-  dashboard: boolean;
+  project: boolean;
   management: boolean;
   reports: boolean;
   communications: boolean;
@@ -48,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<MenuState>({
-    dashboard: true,
+    project: true,
     management: false,
     reports: false,
     communications: false,
@@ -106,13 +107,13 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className={styles.menuItem}>
             <button
               className={styles.menuButton}
-              onClick={() => toggleMenu("dashboard")}
+              onClick={() => toggleMenu("project")}
             >
               <Home size={20} className={styles.menuIcon} />
               {isOpen && (
                 <>
-                  <span className={styles.menuText}>Dashboard</span>
-                  {expandedMenus.dashboard ? (
+                  <span className={styles.menuText}>Project</span>
+                  {expandedMenus.project ? (
                     <ChevronDown size={16} />
                   ) : (
                     <ChevronRight size={16} />
@@ -120,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </>
               )}
             </button>
-            {isOpen && expandedMenus.dashboard && (
+            {isOpen && expandedMenus.project && (
               <div className={styles.submenu}>
                 <a href="#" className={styles.submenuItem}>
                   Overview
@@ -140,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               className={styles.menuButton}
               onClick={() => toggleMenu("layouts")}
             >
-              <Settings size={20} className={styles.menuIcon} />
+              <Share2 size={20} className={styles.menuIcon} />
               {isOpen && (
                 <>
                   <span className={styles.menuText}>Layouts</span>
@@ -173,7 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               className={styles.menuButton}
               onClick={() => toggleMenu("forceGraphSettings")}
             >
-              <Settings size={20} className={styles.menuIcon} />
+              <Settings2 size={20} className={styles.menuIcon} />
               {isOpen && (
                 <>
                   <span className={styles.menuText}>ForceGraph Settings</span>
