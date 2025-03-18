@@ -14,6 +14,7 @@ interface SidebarProps {
   content?: React.ReactNode;
   footer?: React.ReactNode | ((isOpen: boolean) => React.ReactNode);
   minimal?: boolean;
+  style?: React.CSSProperties;
 }
 
 interface MenuItem {
@@ -36,6 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   content,
   footer,
   minimal = false,
+  style = {},
 }) => {
   const [isOpen, setIsOpen] = useState(defaultIsOpen);
   const [expandedMenus, setExpandedMenus] = useState<{
@@ -91,6 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         [position]: 0,
         height: "calc(100vh - 50px)",
         zIndex: 1000,
+        ...style,
       }}
     >
       <div className={styles.sidebarHeader}>

@@ -1631,6 +1631,10 @@ const AppContent: React.FC<{
     }
     return (
       <UniAppToolbar
+        style={{
+          height: "40px",
+          minHeight: "40px",
+        }}
         config={menuConfig}
         sceneGraph={currentSceneGraph}
         activeView={appConfig.activeView}
@@ -1828,6 +1832,10 @@ const AppContent: React.FC<{
             currentSceneGraph.getForceGraphRenderConfig(),
           sceneGraph: currentSceneGraph,
         })}
+        style={{
+          top: "40px", // Match UniAppToolbar height
+          height: "calc(100vh - 40px)", // Subtract UniAppToolbar height
+        }}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
         footer={footerContent}
@@ -1937,6 +1945,10 @@ const AppContent: React.FC<{
             setSelectedForceGraph3dLayoutMode(layout as ForceGraph3dLayoutMode),
           isDarkMode
         )}
+        style={{
+          top: "40px", // Match UniAppToolbar height
+          height: "calc(100vh - 40px)", // Subtract UniAppToolbar height
+        }}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
         minimal={true}
