@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { FaExpand } from "react-icons/fa";
 import { toDot } from "ts-graphviz";
 import { v4 as uuidv4 } from "uuid";
 import "./App.css";
@@ -41,6 +40,7 @@ import ForceGraphRenderConfigEditor from "./components/force-graph/ForceGraphRen
 import ImageGalleryV2 from "./components/imageView/ImageGalleryV2";
 import ImageGalleryV3 from "./components/imageView/ImageGalleryV3";
 import ImportSvgFromUrlDialog from "./components/ImportSvgFromUrlDialog";
+import Workspace from "./components/layout/Workspace";
 import ImageGallery from "./components/lumina/galleryTestbed/ImageGallery";
 import ImageBoxCreator from "./components/lumina/ImageBoxCreator";
 import Lumina from "./components/lumina/Lumina";
@@ -51,13 +51,8 @@ import SceneGraphTitle from "./components/SceneGraphTitle";
 import GravitySimulation3 from "./components/simulations/GravitySimulation3";
 import ReactFlowPanel from "./components/simulations/ReactFlowPanel";
 import SolarSystem from "./components/simulations/solarSystemSimulation";
-import UniAppToolbar from "./components/UniAppToolbar";
 import YasguiPanel from "./components/YasguiPanel";
-import {
-  createDefaultLeftMenus,
-  createDefaultRightMenus,
-  footerContent,
-} from "./configs/sidebarMenuConfig";
+
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -116,7 +111,6 @@ import { getAllGraphs, sceneGraphs } from "./data/graphs/sceneGraphLib";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
-import Sidebar from "./Sidebar";
 
 export type ObjectOf<T> = { [key: string]: T };
 
@@ -185,7 +179,6 @@ const AppContent: React.FC<{
   showGraphLayoutToolbar?: string;
   showRenderConfigOptions?: string;
   showToolbar?: string;
-  sidebarPosition?: "left" | "right"; // Add sidebarPosition prop
 }> = ({
   defaultGraph,
   svgUrl,
@@ -196,7 +189,6 @@ const AppContent: React.FC<{
   showGraphLayoutToolbar,
   showRenderConfigOptions,
   showToolbar,
-  sidebarPosition = "left", // Default to "left"
 }) => {
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -337,10 +329,6 @@ const AppContent: React.FC<{
   const [appConfig, setAppConfig] = useState<AppConfig>({
     ...DEFAULT_APP_CONFIG(),
   });
-
-  const activeLayout = useMemo(() => {
-    return appConfig.activeLayout;
-  }, [appConfig]);
 
   const [selectedSimulation, setSelectedSimulation] =
     useState<string>("Lumina");
@@ -1625,42 +1613,6 @@ const AppContent: React.FC<{
     [appConfig.activeView, setMousePosition]
   );
 
-  const renderUniappToolbar = React.useMemo(() => {
-    if (showToolbar === "false") {
-      return null;
-    }
-    return (
-      <UniAppToolbar
-        style={{
-          height: "40px",
-          minHeight: "40px",
-        }}
-        config={menuConfig}
-        sceneGraph={currentSceneGraph}
-        activeView={appConfig.activeView}
-        onViewChange={handleSetActiveView}
-        simulationList={Object.keys(simulations)}
-        selectedSimulation={selectedSimulation}
-        isDarkMode={isDarkMode}
-        onSelectResult={handleSelectResult}
-        onSearchResult={handleSearchResult}
-        onHighlight={handleHighlight}
-      />
-    );
-  }, [
-    showToolbar,
-    menuConfig,
-    currentSceneGraph,
-    appConfig.activeView,
-    handleSetActiveView,
-    simulations,
-    selectedSimulation,
-    isDarkMode,
-    handleSelectResult,
-    handleSearchResult,
-    handleHighlight,
-  ]);
-
   const _handleNodeMouseEnter = useCallback(
     (event: React.MouseEvent, nodeId: string) => {
       setHoveredNode(nodeId);
@@ -1815,43 +1767,6 @@ const AppContent: React.FC<{
     [currentSceneGraph, setSelectedNode]
   );
 
-  const renderLeftSideBar = useMemo(() => {
-    return (
-      <Sidebar
-        position={sidebarPosition}
-        menuItems={createDefaultLeftMenus({
-          onLayoutChange: (layout: string) =>
-            applyNewLayout(layout as LayoutEngineOption),
-          activeLayout: activeLayout,
-          physicsMode:
-            appConfig.forceGraph3dOptions.layout === "Physics" &&
-            appConfig.activeView === "ForceGraph3d",
-          isDarkMode,
-          onApplyForceGraphConfig: handleApplyForceGraphConfig,
-          initialForceGraphConfig:
-            currentSceneGraph.getForceGraphRenderConfig(),
-          sceneGraph: currentSceneGraph,
-        })}
-        style={{
-          top: "40px", // Match UniAppToolbar height
-          height: "calc(100vh - 40px)", // Subtract UniAppToolbar height
-        }}
-        defaultIsOpen={true}
-        isDarkMode={isDarkMode}
-        footer={footerContent}
-      />
-    );
-  }, [
-    activeLayout,
-    appConfig.activeView,
-    appConfig.forceGraph3dOptions.layout,
-    applyNewLayout,
-    currentSceneGraph,
-    handleApplyForceGraphConfig,
-    isDarkMode,
-    sidebarPosition,
-  ]);
-
   const getContextMenuItems = useCallback(
     (nodeId: NodeId | undefined): ContextMenuItem[] => {
       if (nodeId) {
@@ -1924,46 +1839,6 @@ const AppContent: React.FC<{
     );
   }, [appConfig.activeView, currentSceneGraph]);
 
-  const renderRightSideBar = useMemo(() => {
-    const renderContent = () => (
-      <>
-        {renderLayoutModeRadio()}
-        {renderNodeLegend}
-        {renderEdgeLegend}
-      </>
-    );
-
-    return (
-      <Sidebar
-        position="right"
-        title="Controls"
-        menuItems={createDefaultRightMenus(
-          renderContent,
-          appConfig.activeView === "ForceGraph3d",
-          appConfig.forceGraph3dOptions.layout,
-          (layout: string) =>
-            setSelectedForceGraph3dLayoutMode(layout as ForceGraph3dLayoutMode),
-          isDarkMode
-        )}
-        style={{
-          top: "40px", // Match UniAppToolbar height
-          height: "calc(100vh - 40px)", // Subtract UniAppToolbar height
-        }}
-        defaultIsOpen={true}
-        isDarkMode={isDarkMode}
-        minimal={true}
-      />
-    );
-  }, [
-    renderLayoutModeRadio,
-    renderNodeLegend,
-    renderEdgeLegend,
-    appConfig.activeView,
-    appConfig.forceGraph3dOptions.layout,
-    setSelectedForceGraph3dLayoutMode,
-    isDarkMode,
-  ]);
-
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
       <div
@@ -1971,53 +1846,27 @@ const AppContent: React.FC<{
         style={{ margin: 0, padding: 0 }}
         onMouseMove={handleMouseMove}
       >
-        {renderUniappToolbar}
-        <input
-          type="file"
-          id="import-config-input"
-          style={{ display: "none" }}
-          onChange={handleImportConfig}
-        />
-        <input
-          type="file"
-          id="import-file-to-scenegraph-input"
-          style={{ display: "none" }}
-          onChange={handleImportFileToSceneGraph}
-          accept=".json,.graphml,.svg,.dot"
-        />
-        <div
-          style={{
-            position: "fixed",
-            bottom: "1rem",
-            right: "1rem",
-            zIndex: 1000,
-          }}
+        <Workspace
+          menuConfig={menuConfig}
+          currentSceneGraph={currentSceneGraph}
+          appConfig={appConfig}
+          isDarkMode={isDarkMode}
+          selectedSimulation={selectedSimulation}
+          simulations={simulations}
+          onViewChange={handleSetActiveView}
+          onSelectResult={handleSelectResult}
+          onSearchResult={handleSearchResult}
+          onHighlight={handleHighlight}
+          onApplyForceGraphConfig={handleApplyForceGraphConfig}
+          setSelectedForceGraph3dLayoutMode={setSelectedForceGraph3dLayoutMode}
+          applyNewLayout={applyNewLayout}
+          renderLayoutModeRadio={renderLayoutModeRadio}
+          renderNodeLegend={renderNodeLegend}
+          renderEdgeLegend={renderEdgeLegend}
+          showToolbar={showToolbar ? showToolbar === "true" : true}
         >
-          <button
-            onClick={() => handleFitToView(appConfig.activeView)}
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-            }}
-          >
-            <FaExpand size={"3rem"} color={isDarkMode ? "white" : "black"} />
-          </button>
-        </div>
-        {renderLeftSideBar}
-        {renderRightSideBar} {/* Add right sidebar */}
-        {/* Remove the existing options panel div */}
-        <div>
-          <div
-            style={{
-              position: "relative",
-              width: "100vw",
-              height: "100vh",
-              margin: 0,
-              padding: 0,
-            }}
-          >
+          {/* Main content */}
+          <div style={{ height: "100%", position: "relative" }}>
             {maybeRenderGraphviz}
             {maybeRenderForceGraph3D}
             {maybeRenderReactFlow}
@@ -2032,7 +1881,7 @@ const AppContent: React.FC<{
             {appConfig.activeView in simulations &&
               getSimulation(appConfig.activeView)}
           </div>
-        </div>
+        </Workspace>
         {appConfig.windows.showEntityDataCard &&
           currentSceneGraph.getAppState().hoveredNodes.size > 0 && (
             <EntityDataDisplayCard
@@ -2210,7 +2059,6 @@ const App: React.FC<AppProps> = ({
   showGraphLayoutToolbar,
   showRenderConfigOptions,
   showToolbar,
-  sidebarPosition,
 }) => {
   return (
     <MousePositionProvider>
@@ -2224,7 +2072,6 @@ const App: React.FC<AppProps> = ({
         showGraphLayoutToolbar={showGraphLayoutToolbar}
         showRenderConfigOptions={showRenderConfigOptions}
         showToolbar={showToolbar}
-        sidebarPosition={sidebarPosition} // Pass sidebarPosition prop
       />
     </MousePositionProvider>
   );
