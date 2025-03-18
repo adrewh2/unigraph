@@ -7,7 +7,7 @@
 }
 
 .toolbar {
-  flex: 0 0 auto;
+  height: 40px;
   z-index: 1100;
 }
 
@@ -16,6 +16,7 @@
   display: flex;
   position: relative;
   overflow: hidden;
+  height: calc(100vh - var(--toolbar-height, 0px));
 }
 
 .main {

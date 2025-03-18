@@ -10,6 +10,8 @@
   flex-direction: column;
   transition: all 0.3s ease;
   overflow: hidden;
+  height: 100%;
+  width: var(--sidebar-width, 200px);
 }
 
 .sidebarHeader {
@@ -250,8 +252,8 @@
 }
 
 .minimalTab {
-  position: fixed;
-  top: 15%;
+  position: absolute;
+  top: calc(15% + var(--toolbar-height, 0px));
   transform: translateY(-50%);
   width: 24px;
   height: 60px;

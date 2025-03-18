@@ -88,11 +88,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       className={styles.sidebar}
       style={{
         width: isOpen ? "200px" : minimal ? "0px" : "60px",
-        position: "fixed",
-        top: "50px",
-        [position]: 0,
-        height: "calc(100vh - 50px)",
-        zIndex: 1000,
         ...style,
       }}
     >

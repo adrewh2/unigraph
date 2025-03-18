@@ -90,6 +90,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
       <div className={styles.content}>
         <Sidebar
           position="left"
+          style={{
+            height: "100%",
+            top: 0,
+          }}
           menuItems={createDefaultLeftMenus({
             onLayoutChange: (layout: LayoutEngineOption) =>
               applyNewLayout(layout),
@@ -112,6 +116,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
         <Sidebar
           position="right"
+          style={{
+            height: "100%",
+            top: 0,
+          }}
           title="Controls"
           menuItems={createDefaultRightMenus(
             () => (
