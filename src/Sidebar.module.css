@@ -251,7 +251,7 @@
 
 .minimalTab {
   position: fixed;
-  top: 50%;
+  top: 15%;
   transform: translateY(-50%);
   width: 24px;
   height: 60px;
