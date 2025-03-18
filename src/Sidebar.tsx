@@ -1,5 +1,5 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/sidebarMenuConfig";
@@ -11,8 +11,9 @@ interface SidebarProps {
   defaultIsOpen?: boolean;
   onToggle?: () => void;
   isDarkMode?: boolean;
-  content?: React.ReactNode; // Add this prop
+  content?: React.ReactNode;
   footer?: React.ReactNode | ((isOpen: boolean) => React.ReactNode);
+  minimal?: boolean;
 }
 
 interface MenuItem {
@@ -34,6 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   content,
   footer,
+  minimal = false,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultIsOpen);
   const [expandedMenus, setExpandedMenus] = useState<{
@@ -63,11 +65,27 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isOpen]);
 
+  if (minimal && !isOpen) {
+    return (
+      <button
+        onClick={() => setIsOpen(true)}
+        className={`${styles.minimalTab} ${styles[position]}`}
+        aria-label="Open sidebar"
+      >
+        {position === "left" ? (
+          <ChevronRight size={16} />
+        ) : (
+          <ChevronLeft size={16} />
+        )}
+      </button>
+    );
+  }
+
   return (
     <div
       className={styles.sidebar}
       style={{
-        width: isOpen ? "200px" : "60px",
+        width: isOpen ? "200px" : minimal ? "0px" : "60px",
         position: "fixed",
         top: "50px",
         [position]: 0,
@@ -87,7 +105,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className={styles.menuContainer}>
-        {content ? ( // Add this condition
+        {content ? (
           <div className={styles.sidebarContent}>{content}</div>
         ) : (
           <nav className={styles.nav}>

@@ -248,3 +248,34 @@
   flex-direction: column;
   gap: 8px;
 }
+
+.minimalTab {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 60px;
+  background-color: #1f2937;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  color: white;
+  transition: background-color 0.2s;
+  z-index: 1000;
+}
+
+.minimalTab:hover {
+  background-color: #374151;
+}
+
+.minimalTab.left {
+  left: 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.minimalTab.right {
+  right: 0;
+  border-radius: 4px 0 0 4px;
+}

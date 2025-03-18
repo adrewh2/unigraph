@@ -1939,6 +1939,7 @@ const AppContent: React.FC<{
         )}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
+        minimal={true}
       />
     );
   }, [
