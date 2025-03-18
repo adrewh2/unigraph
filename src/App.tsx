@@ -1830,7 +1830,7 @@ const AppContent: React.FC<{
         })}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
-        footer={footerContent()}
+        footer={footerContent}
       />
     );
   }, [

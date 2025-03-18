@@ -149,17 +149,14 @@ export const createDefaultRightMenus = (
   },
 ];
 
-export const footerContent = () => {
-  const footerContent = (
-    <a
-      href="https://aesgraph.github.io/unigraph/"
-      target="_blank"
-      rel="noopener noreferrer"
-      className={styles.footerLink}
-    >
-      <BookOpen size={20} className={styles.footerIcon} />
-      <span className={styles.footerText}>Documentation</span>
-    </a>
-  );
-  return footerContent;
-};
+export const footerContent = (isOpen: boolean) => (
+  <a
+    href="https://aesgraph.github.io/unigraph/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className={styles.footerLink}
+  >
+    <BookOpen size={20} className={styles.footerIcon} />
+    {isOpen && <span className={styles.footerText}>Documentation</span>}
+  </a>
+);

@@ -12,7 +12,7 @@ interface SidebarProps {
   onToggle?: () => void;
   isDarkMode?: boolean;
   content?: React.ReactNode; // Add this prop
-  footer?: React.ReactNode;
+  footer?: React.ReactNode | ((isOpen: boolean) => React.ReactNode);
 }
 
 interface MenuItem {
@@ -134,7 +134,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {footer && <div className={styles.sidebarFooter}>{footer}</div>}
+      {footer && typeof footer === "function" ? (
+        <div className={styles.sidebarFooter}>{footer(isOpen)}</div>
+      ) : (
+        footer && <div className={styles.sidebarFooter}>{footer}</div>
+      )}
     </div>
   );
 };
