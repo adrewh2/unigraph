@@ -6,12 +6,13 @@ import "./index.css";
 
 const getToggleOptionValue = (
   params: URLSearchParams,
-  key: string
+  key: string,
+  defaultValue = true
 ): boolean => {
   if (params.get(key) != null) {
     return params.get(key) === "true";
   }
-  return true; //default to true
+  return defaultValue; //default to true
 };
 
 const rootElement = document.getElementById("root");
@@ -26,7 +27,7 @@ if (rootElement) {
   let showToolbar = getToggleOptionValue(urlParams, "showToolbar");
   let showLeftSidebar = getToggleOptionValue(urlParams, "showLeftSidebar");
   let showRightSidebar = getToggleOptionValue(urlParams, "showRightSidebar");
-  const hideWorkspace = getToggleOptionValue(urlParams, "hideWorkspace");
+  const hideWorkspace = getToggleOptionValue(urlParams, "hideWorkspace", false);
   if (hideWorkspace) {
     showToolbar = false;
     showLeftSidebar = false;
