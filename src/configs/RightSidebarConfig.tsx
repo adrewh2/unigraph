@@ -64,7 +64,7 @@ export const rightFooterContent = (
   if (!actions) return null;
 
   return (
-    <div className={styles.footerButtonGroup}>
+    <div className={`${styles.footerButtonGroup} ${styles.footerButtonColumn}`}>
       <button className={styles.footerButton} onClick={actions.onViewEntities}>
         View Entities
       </button>
