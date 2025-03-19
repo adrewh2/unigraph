@@ -9,6 +9,8 @@ import Sidebar from "../../Sidebar";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
+const sidebarDisabledViews = ["Yasgui", "Gallery", "Simulation"];
+
 interface WorkspaceProps {
   menuConfig: IMenuConfig;
   currentSceneGraph: any;
@@ -104,6 +106,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
     if (!showLeftSidebar) {
       return null;
     }
+    if (sidebarDisabledViews.includes(appConfig.activeView)) {
+      return null;
+    }
     return (
       <Sidebar
         position="left"
@@ -154,6 +159,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
   const renderRightSideBar = useMemo(() => {
     if (!showRightSidebar) {
+      return null;
+    }
+    if (sidebarDisabledViews.includes(appConfig.activeView)) {
       return null;
     }
     return (
