@@ -23,9 +23,15 @@ if (rootElement) {
   const activeView = urlParams.get("view") ?? undefined;
   const activeLayout = urlParams.get("layout") ?? undefined;
 
-  const showToolbar = getToggleOptionValue(urlParams, "showToolbar");
-  const showLeftSidebar = getToggleOptionValue(urlParams, "showLeftSidebar");
-  const showRightSidebar = getToggleOptionValue(urlParams, "showRightSidebar");
+  let showToolbar = getToggleOptionValue(urlParams, "showToolbar");
+  let showLeftSidebar = getToggleOptionValue(urlParams, "showLeftSidebar");
+  let showRightSidebar = getToggleOptionValue(urlParams, "showRightSidebar");
+  const hideWorkspace = getToggleOptionValue(urlParams, "hideWorkspace");
+  if (hideWorkspace) {
+    showToolbar = false;
+    showLeftSidebar = false;
+    showRightSidebar = false;
+  }
 
   root.render(
     <App
