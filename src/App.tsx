@@ -174,21 +174,17 @@ const AppContent: React.FC<{
   svgUrl?: string;
   defaultActiveView?: string;
   defaultActiveLayout?: string;
-  showOptionsPanel?: string;
-  showLegendBars?: string;
-  showGraphLayoutToolbar?: string;
-  showRenderConfigOptions?: string;
-  showToolbar?: string;
+  showToolbar?: boolean;
+  showLeftSidebar?: boolean;
+  showRightSidebar?: boolean;
 }> = ({
   defaultGraph,
   svgUrl,
   defaultActiveView,
   defaultActiveLayout,
-  showOptionsPanel,
-  showLegendBars,
-  showGraphLayoutToolbar,
-  showRenderConfigOptions,
   showToolbar,
+  showLeftSidebar,
+  showRightSidebar,
 }) => {
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -245,36 +241,13 @@ const AppContent: React.FC<{
           layout: defaultActiveLayout
             ? "Layout"
             : config.forceGraph3dOptions.layout,
-          showOptionsPanel:
-            showRenderConfigOptions !== undefined
-              ? showRenderConfigOptions === "true"
-              : config.forceGraph3dOptions.showOptionsPanel,
         },
         windows: {
           ...config.windows,
-          showLegendBars:
-            showLegendBars !== undefined
-              ? showLegendBars === "true"
-              : config.windows.showLegendBars,
-          showGraphLayoutToolbar:
-            showGraphLayoutToolbar !== undefined
-              ? showGraphLayoutToolbar === "true"
-              : config.windows.showGraphLayoutToolbar,
-          showOptionsPanel:
-            showOptionsPanel !== undefined
-              ? showOptionsPanel === "true"
-              : config.forceGraph3dOptions.showOptionsPanel,
         },
       };
     },
-    [
-      defaultActiveLayout,
-      defaultActiveView,
-      showGraphLayoutToolbar,
-      showLegendBars,
-      showOptionsPanel,
-      showRenderConfigOptions,
-    ]
+    [defaultActiveLayout, defaultActiveView]
   );
 
   const handleSetAppConfig = useCallback(
@@ -409,14 +382,6 @@ const AppContent: React.FC<{
       handleSetActiveLayout(defaultActiveLayout as LayoutEngineOption);
     }
 
-    console.log(
-      "here",
-      showOptionsPanel,
-      showLegendBars,
-      showGraphLayoutToolbar,
-      showRenderConfigOptions
-    );
-
     handleSetAppConfig(appConfig);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -424,10 +389,6 @@ const AppContent: React.FC<{
     svgUrl,
     defaultActiveView,
     defaultActiveLayout,
-    showOptionsPanel,
-    showLegendBars,
-    showGraphLayoutToolbar,
-    showRenderConfigOptions,
     // appConfig // we don't want to trigger this effect when appConfig changes, this is an initialization function for url query params. need to fix
   ]);
 
@@ -1864,7 +1825,9 @@ const AppContent: React.FC<{
           showPathAnalysis={() => setShowPathAnalysis(true)}
           renderNodeLegend={renderNodeLegend}
           renderEdgeLegend={renderEdgeLegend}
-          showToolbar={showToolbar ? showToolbar === "true" : true}
+          showToolbar={showToolbar}
+          showLeftSidebar={showLeftSidebar}
+          showRightSidebar={showRightSidebar}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>
@@ -2042,12 +2005,9 @@ interface AppProps {
   svgUrl?: string;
   defaultActiveView?: string;
   defaultActiveLayout?: string;
-  showOptionsPanel?: string;
-  showLegendBars?: string;
-  showGraphLayoutToolbar?: string;
-  showRenderConfigOptions?: string;
-  showToolbar?: string;
-  sidebarPosition?: "left" | "right"; // Add sidebarPosition prop
+  showToolbar?: boolean;
+  showLeftSidebar?: boolean;
+  showRightSidebar?: boolean;
 }
 
 const App: React.FC<AppProps> = ({
@@ -2055,11 +2015,9 @@ const App: React.FC<AppProps> = ({
   svgUrl,
   defaultActiveView,
   defaultActiveLayout,
-  showOptionsPanel,
-  showLegendBars,
-  showGraphLayoutToolbar,
-  showRenderConfigOptions,
   showToolbar,
+  showLeftSidebar,
+  showRightSidebar,
 }) => {
   return (
     <MousePositionProvider>
@@ -2068,11 +2026,9 @@ const App: React.FC<AppProps> = ({
         svgUrl={svgUrl}
         defaultActiveView={defaultActiveView}
         defaultActiveLayout={defaultActiveLayout}
-        showOptionsPanel={showOptionsPanel}
-        showLegendBars={showLegendBars}
-        showGraphLayoutToolbar={showGraphLayoutToolbar}
-        showRenderConfigOptions={showRenderConfigOptions}
         showToolbar={showToolbar}
+        showLeftSidebar={showLeftSidebar}
+        showRightSidebar={showRightSidebar}
       />
     </MousePositionProvider>
   );

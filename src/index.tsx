@@ -4,6 +4,16 @@ import App from "./App";
 
 import "./index.css";
 
+const getToggleOptionValue = (
+  params: URLSearchParams,
+  key: string
+): boolean => {
+  if (params.get(key) != null) {
+    return params.get(key) === "true";
+  }
+  return true; //default to true
+};
+
 const rootElement = document.getElementById("root");
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
@@ -12,24 +22,20 @@ if (rootElement) {
   const svgUrl = urlParams.get("svgUrl") ?? undefined;
   const activeView = urlParams.get("view") ?? undefined;
   const activeLayout = urlParams.get("layout") ?? undefined;
-  const showOptionsPanel = urlParams.get("showOptionsPanel") ?? undefined;
-  const showLegendBars = urlParams.get("showLegendBars") ?? undefined;
-  const showGraphLayoutToolbar =
-    urlParams.get("showGraphLayoutToolbar") ?? undefined;
-  const showRenderConfigOptions =
-    urlParams.get("showRenderConfig") ?? undefined;
-  const showToolbar = urlParams.get("showToolbar") ?? undefined;
+
+  const showToolbar = getToggleOptionValue(urlParams, "showToolbar");
+  const showLeftSidebar = getToggleOptionValue(urlParams, "showLeftSidebar");
+  const showRightSidebar = getToggleOptionValue(urlParams, "showRightSidebar");
+
   root.render(
     <App
       defaultGraph={graphName}
       svgUrl={svgUrl}
       defaultActiveView={activeView}
       defaultActiveLayout={activeLayout}
-      showOptionsPanel={showOptionsPanel}
-      showLegendBars={showLegendBars}
-      showGraphLayoutToolbar={showGraphLayoutToolbar}
-      showRenderConfigOptions={showRenderConfigOptions}
       showToolbar={showToolbar}
+      showLeftSidebar={showLeftSidebar}
+      showRightSidebar={showRightSidebar}
     />
   );
 }

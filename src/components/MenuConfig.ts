@@ -250,63 +250,6 @@ export class MenuConfig {
           },
         },
       },
-      Window: {
-        submenu: {
-          Filters: {
-            action: () => {
-              this.callbacks.showFilterWindow();
-            },
-          },
-          OptionsPanel: {
-            checked: this.appConfig.windows.showOptionsPanel,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showOptionsPanel: !prev.windows.showOptionsPanel,
-                },
-              }));
-            },
-          },
-          Legend: {
-            checked: this.appConfig.windows.showLegendBars,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showLegendBars: !prev.windows.showLegendBars,
-                },
-              }));
-            },
-          },
-          "Layout Panel": {
-            checked: this.appConfig.windows.showGraphLayoutToolbar,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showGraphLayoutToolbar: !prev.windows.showGraphLayoutToolbar,
-                },
-              }));
-            },
-          },
-          "Force Graph Config Editor": {
-            checked: this.appConfig.forceGraph3dOptions.showOptionsPanel,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                forceGraph3dOptions: {
-                  ...prev.forceGraph3dOptions,
-                  showOptionsPanel: !prev.forceGraph3dOptions.showOptionsPanel,
-                },
-              }));
-            },
-          },
-        },
-      },
       Layout: {
         submenu: {
           "Save Current Layout": {

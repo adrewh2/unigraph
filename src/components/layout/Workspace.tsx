@@ -31,6 +31,8 @@ interface WorkspaceProps {
   renderNodeLegend: React.ReactNode;
   renderEdgeLegend: React.ReactNode;
   showToolbar?: boolean;
+  showLeftSidebar?: boolean;
+  showRightSidebar?: boolean;
   showPathAnalysis: () => void;
 }
 
@@ -56,6 +58,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
   renderNodeLegend,
   renderEdgeLegend,
   showToolbar = true,
+  showLeftSidebar = true,
+  showRightSidebar = true,
   showPathAnalysis,
 }) => {
   const renderUniappToolbar = useMemo(() => {
@@ -92,64 +96,102 @@ const Workspace: React.FC<WorkspaceProps> = ({
     simulations,
   ]);
 
+  const renderLeftSideBar = useMemo(() => {
+    if (!showLeftSidebar) {
+      return null;
+    }
+    return (
+      <Sidebar
+        position="left"
+        style={{
+          height: "100%",
+          top: 0,
+        }}
+        menuItems={createDefaultLeftMenus({
+          onLayoutChange: (layout: LayoutEngineOption) =>
+            applyNewLayout(layout),
+          activeLayout: appConfig.activeLayout,
+          physicsMode:
+            appConfig.forceGraph3dOptions.layout === "Physics" &&
+            appConfig.activeView === "ForceGraph3d",
+          isDarkMode,
+          onApplyForceGraphConfig: onApplyForceGraphConfig,
+          initialForceGraphConfig:
+            currentSceneGraph.getForceGraphRenderConfig(),
+          sceneGraph: currentSceneGraph,
+          onShowFilter: showFilterWindow,
+          onShowFilterManager: showFilterManager,
+          onClearFilters: clearFilters,
+          onShowPathAnalysis: showPathAnalysis,
+        })}
+        defaultIsOpen={true}
+        isDarkMode={isDarkMode}
+        footer={footerContent}
+      />
+    );
+  }, [
+    appConfig.activeLayout,
+    appConfig.activeView,
+    appConfig.forceGraph3dOptions.layout,
+    applyNewLayout,
+    clearFilters,
+    currentSceneGraph,
+    isDarkMode,
+    onApplyForceGraphConfig,
+    showFilterManager,
+    showFilterWindow,
+    showLeftSidebar,
+    showPathAnalysis,
+  ]);
+
+  const renderRightSideBar = useMemo(() => {
+    if (!showRightSidebar) {
+      return null;
+    }
+    return (
+      <Sidebar
+        position="right"
+        style={{
+          height: "100%",
+          top: 0,
+        }}
+        title="Controls"
+        menuItems={createDefaultRightMenus(
+          () => (
+            <>
+              {renderLayoutModeRadio()}
+              {renderNodeLegend}
+              {renderEdgeLegend}
+            </>
+          ),
+          appConfig.activeView === "ForceGraph3d",
+          appConfig.forceGraph3dOptions.layout,
+          setSelectedForceGraph3dLayoutMode,
+          isDarkMode
+        )}
+        defaultIsOpen={true}
+        isDarkMode={isDarkMode}
+        minimal={true}
+      />
+    );
+  }, [
+    appConfig.activeView,
+    appConfig.forceGraph3dOptions.layout,
+    isDarkMode,
+    renderEdgeLegend,
+    renderLayoutModeRadio,
+    renderNodeLegend,
+    setSelectedForceGraph3dLayoutMode,
+    showRightSidebar,
+  ]);
+
   return (
     <div className={styles.workspace}>
       {renderUniappToolbar}
       <div className={styles.content}>
-        <Sidebar
-          position="left"
-          style={{
-            height: "100%",
-            top: 0,
-          }}
-          menuItems={createDefaultLeftMenus({
-            onLayoutChange: (layout: LayoutEngineOption) =>
-              applyNewLayout(layout),
-            activeLayout: appConfig.activeLayout,
-            physicsMode:
-              appConfig.forceGraph3dOptions.layout === "Physics" &&
-              appConfig.activeView === "ForceGraph3d",
-            isDarkMode,
-            onApplyForceGraphConfig: onApplyForceGraphConfig,
-            initialForceGraphConfig:
-              currentSceneGraph.getForceGraphRenderConfig(),
-            sceneGraph: currentSceneGraph,
-            onShowFilter: showFilterWindow,
-            onShowFilterManager: showFilterManager,
-            onClearFilters: clearFilters,
-            onShowPathAnalysis: showPathAnalysis,
-          })}
-          defaultIsOpen={true}
-          isDarkMode={isDarkMode}
-          footer={footerContent}
-        />
-
+        {renderLeftSideBar}
         <main className={styles.main}>{children}</main>
-
-        <Sidebar
-          position="right"
-          style={{
-            height: "100%",
-            top: 0,
-          }}
-          title="Controls"
-          menuItems={createDefaultRightMenus(
-            () => (
-              <>
-                {renderLayoutModeRadio()}
-                {renderNodeLegend}
-                {renderEdgeLegend}
-              </>
-            ),
-            appConfig.activeView === "ForceGraph3d",
-            appConfig.forceGraph3dOptions.layout,
-            setSelectedForceGraph3dLayoutMode,
-            isDarkMode
-          )}
-          defaultIsOpen={true}
-          isDarkMode={isDarkMode}
-          minimal={true}
-        />
+        {renderRightSideBar}
       </div>
     </div>
   );
