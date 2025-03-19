@@ -84,6 +84,9 @@ export const createDefaultLeftMenus = ({
           }}
         >
           <button className={styles.submenuButton} style={{ flex: 1 }}>
+            Save As
+          </button>
+          <button className={styles.submenuButton} style={{ flex: 1 }}>
             Save
           </button>
           <button
