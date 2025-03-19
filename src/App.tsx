@@ -1726,6 +1726,7 @@ const AppContent: React.FC<{
           }
           handleLoadLayout={handleLoadLayout}
           handleFitToView={handleFitToView}
+          handleShowEntityTables={handleShowEntityTables}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>

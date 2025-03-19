@@ -45,6 +45,7 @@ interface WorkspaceProps {
   showLayoutManager: (mode: "save" | "load") => void;
   handleLoadLayout: (nodePositionData: NodePositionData) => void;
   handleFitToView: (activeView: string) => void;
+  handleShowEntityTables: () => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -77,6 +78,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   showLayoutManager,
   handleLoadLayout,
   handleFitToView,
+  handleShowEntityTables,
 }) => {
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -206,6 +208,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         footer={(isOpen) =>
           rightFooterContent(isOpen, {
             onFitToView: () => handleFitToView(appConfig.activeView),
+            onViewEntities: () => handleShowEntityTables(),
           })
         }
       />
@@ -220,6 +223,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     renderNodeLegend,
     setSelectedForceGraph3dLayoutMode,
     showRightSidebar,
+    handleShowEntityTables,
   ]);
 
   return (
