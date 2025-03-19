@@ -53,3 +53,20 @@ export const createDefaultRightMenus = (
     ),
   },
 ];
+
+export const rightFooterContent = (
+  isOpen: boolean,
+  actions?: {
+    onFitToView: () => void;
+  }
+) => {
+  if (!actions) return null;
+
+  return (
+    <div className={styles.footerButtonGroup}>
+      <button className={styles.footerButton} onClick={actions.onFitToView}>
+        Fit to View
+      </button>
+    </div>
+  );
+};

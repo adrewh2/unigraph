@@ -3,7 +3,10 @@ import {
   createDefaultLeftMenus,
   leftFooterContent,
 } from "../../configs/LeftSidebarConfig";
-import { createDefaultRightMenus } from "../../configs/RightSidebarConfig";
+import {
+  createDefaultRightMenus,
+  rightFooterContent,
+} from "../../configs/RightSidebarConfig";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
 import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import Sidebar from "../../Sidebar";
@@ -41,6 +44,7 @@ interface WorkspaceProps {
   showSaveSceneGraphDialog: () => void; // Add the prop
   showLayoutManager: (mode: "save" | "load") => void;
   handleLoadLayout: (nodePositionData: NodePositionData) => void;
+  handleFitToView: (activeView: string) => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -72,6 +76,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   showSaveSceneGraphDialog,
   showLayoutManager,
   handleLoadLayout,
+  handleFitToView,
 }) => {
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -167,12 +172,13 @@ const Workspace: React.FC<WorkspaceProps> = ({
   ]);
 
   const renderRightSideBar = useMemo(() => {
-    if (!showRightSidebar) {
+    if (
+      !showRightSidebar ||
+      sidebarDisabledViews.includes(appConfig.activeView)
+    ) {
       return null;
     }
-    if (sidebarDisabledViews.includes(appConfig.activeView)) {
-      return null;
-    }
+
     return (
       <Sidebar
         position="right"
@@ -197,11 +203,17 @@ const Workspace: React.FC<WorkspaceProps> = ({
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
         minimal={true}
+        footer={(isOpen) =>
+          rightFooterContent(isOpen, {
+            onFitToView: () => handleFitToView(appConfig.activeView),
+          })
+        }
       />
     );
   }, [
     appConfig.activeView,
     appConfig.forceGraph3dOptions.layout,
+    handleFitToView,
     isDarkMode,
     renderEdgeLegend,
     renderLayoutModeRadio,
