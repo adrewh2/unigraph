@@ -11,6 +11,7 @@ import { deserializeGraphmlToSceneGraph } from "../../core/serializers/fromGraph
 import { deserializeSvgToSceneGraph } from "../../core/serializers/fromSvg";
 import { deserializeSceneGraphFromJson } from "../../core/serializers/toFromJson";
 import { sceneGraphs } from "../../data/graphs/sceneGraphLib";
+import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import styles from "./LoadSceneGraphDialog.module.css";
 
 interface TreeNodeProps {
@@ -56,7 +57,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         className={`${styles.treeNodeHeader} ${
           isDarkMode ? styles.dark : styles.light
         }`}
-        onClick={() => toggleExpand(category)} // Make the entire header clickable
+        onClick={() => toggleExpand(category)}
       >
         <button className={styles.expandButton}>
           {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -95,14 +96,15 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   isDarkMode,
   handleLoadSceneGraph,
 }) => {
-  const [activeTab, setActiveTab] = useState<"File" | "Demos" | "Text">(
-    "Demos"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "File" | "Demos" | "Text" | "SVG URL"
+  >("Demos");
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [textInput, setTextInput] = useState("");
+  const [svgUrl, setSvgUrl] = useState("");
 
   const toggleExpand = (category: string) => {
     setExpandedCategories((prev) => ({
@@ -128,7 +130,6 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
 
-    // Auto-expand sections containing the search term
     const expandedState = Object.entries(sceneGraphs).reduce(
       (acc, [category, { graphs }]) => {
         const matchesCategory = category.toLowerCase().includes(term);
@@ -178,7 +179,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
               console.error(
                 `Unsupported file type: ${fileExtension || file.type}`
               );
-              return; //@todo: add banner error message
+              return;
           }
 
           if (sceneGraph) {
@@ -205,6 +206,20 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
       onClose();
     } catch (error) {
       console.error("Failed to parse text input as SceneGraph:", error);
+    }
+  };
+
+  const handleSvgUrlSubmit = async () => {
+    try {
+      const { sceneGraph, error } = await fetchSvgSceneGraph(svgUrl);
+      if (error) {
+        console.error("Failed to load SVG from URL:", error);
+        return;
+      }
+      handleLoadSceneGraph(sceneGraph);
+      onClose();
+    } catch (error) {
+      console.error("Failed to load SVG URL:", error);
     }
   };
 
@@ -246,6 +261,14 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             onClick={() => setActiveTab("Text")}
           >
             Text
+          </button>
+          <button
+            className={`${styles.tabButton} ${
+              activeTab === "SVG URL" ? styles.activeTab : ""
+            }`}
+            onClick={() => setActiveTab("SVG URL")}
+          >
+            SVG URL
           </button>
         </div>
         {activeTab === "File" && (
@@ -303,6 +326,23 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
               onChange={(e) => setTextInput(e.target.value)}
             />
             <button className={styles.submitButton} onClick={handleTextSubmit}>
+              Load
+            </button>
+          </div>
+        )}
+        {activeTab === "SVG URL" && (
+          <div className={styles.svgUrlTab}>
+            <input
+              type="text"
+              placeholder="Enter SVG URL..."
+              className={styles.svgUrlInput}
+              value={svgUrl}
+              onChange={(e) => setSvgUrl(e.target.value)}
+            />
+            <button
+              className={styles.submitButton}
+              onClick={handleSvgUrlSubmit}
+            >
               Load
             </button>
           </div>
