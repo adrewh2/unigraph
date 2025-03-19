@@ -35,8 +35,6 @@ import {
   FilterRuleDefinition,
 } from "./components/filters/FilterRuleDefinition";
 import FilterWindow from "./components/filters/FilterWindow";
-import ForceGraphLayoutRadio from "./components/force-graph/ForceGraphLayoutRadio";
-import ForceGraphRenderConfigEditor from "./components/force-graph/ForceGraphRenderConfigEditor";
 import ImageGalleryV2 from "./components/imageView/ImageGalleryV2";
 import ImageGalleryV3 from "./components/imageView/ImageGalleryV3";
 import ImportSvgFromUrlDialog from "./components/ImportSvgFromUrlDialog";
@@ -317,21 +315,6 @@ const AppContent: React.FC<{
   );
   const [layoutMode, setLayoutMode] =
     useState<RenderingManager__DisplayMode>("type");
-
-  const isLegendVisible = useMemo(() => {
-    return appConfig.windows.showLegendBars;
-  }, [appConfig]);
-
-  const isOptionsPanelVisible = useMemo(() => {
-    return appConfig.windows.showOptionsPanel;
-  }, [appConfig]);
-
-  const _isGraphLayoutPanelVisible = useMemo(() => {
-    if (appConfig.activeView === "Yasgui") {
-      return false;
-    }
-    return appConfig.windows.showGraphLayoutToolbar;
-  }, [appConfig]);
 
   const isDarkMode = useMemo(() => {
     return (
@@ -1161,7 +1144,7 @@ const AppContent: React.FC<{
     [menuConfigInstance]
   );
 
-  const renderSceneGraphTitle = useMemo(() => {
+  const _renderSceneGraphTitle = useMemo(() => {
     return (
       <SceneGraphTitle
         title={currentSceneGraph.getMetadata().name ?? ""}
@@ -1179,52 +1162,6 @@ const AppContent: React.FC<{
       />
     );
   }, [layoutMode, handleLayoutModeChange, isDarkMode]);
-
-  const _renderOptionsPanel = useCallback(() => {
-    if (!isLegendVisible && !isOptionsPanelVisible) {
-      return undefined;
-    }
-    if (
-      appConfig.activeView === "Yasgui" ||
-      appConfig.activeView === "Copilot"
-    ) {
-      return undefined;
-    }
-    return (
-      <div
-        className="options-panel-container"
-        style={{
-          backgroundColor: isDarkMode ? "transparent" : "transparent",
-          marginTop: "20px",
-        }}
-      >
-        {renderLayoutModeRadio()}
-        {renderNodeLegend}
-        {renderEdgeLegend}
-
-        {/* Update ForceGraph3d layout options to match dark mode */}
-        {appConfig.activeView === "ForceGraph3d" && (
-          <ForceGraphLayoutRadio
-            layout={appConfig.forceGraph3dOptions.layout}
-            onLayoutChange={setSelectedForceGraph3dLayoutMode}
-            isDarkMode={isDarkMode}
-          />
-        )}
-        {renderSceneGraphTitle}
-      </div>
-    );
-  }, [
-    isLegendVisible,
-    isOptionsPanelVisible,
-    appConfig.activeView,
-    appConfig.forceGraph3dOptions.layout,
-    isDarkMode,
-    renderLayoutModeRadio,
-    renderNodeLegend,
-    renderEdgeLegend,
-    setSelectedForceGraph3dLayoutMode,
-    renderSceneGraphTitle,
-  ]);
 
   const maybeRenderReactFlow = useMemo(() => {
     if (appConfig.activeView !== "ReactFlow") {
@@ -1602,28 +1539,6 @@ const AppContent: React.FC<{
     },
     []
   );
-
-  const _renderForceGraphRenderConfigEditor = useCallback(() => {
-    if (appConfig.activeView !== "ForceGraph3d") {
-      return null;
-    }
-    if (!appConfig.forceGraph3dOptions.showOptionsPanel) {
-      return null;
-    }
-    return (
-      <ForceGraphRenderConfigEditor
-        onApply={handleApplyForceGraphConfig}
-        isDarkMode={isDarkMode}
-        initialConfig={currentSceneGraph.getForceGraphRenderConfig()}
-      />
-    );
-  }, [
-    handleApplyForceGraphConfig,
-    isDarkMode,
-    currentSceneGraph,
-    appConfig.activeView,
-    appConfig.forceGraph3dOptions.showOptionsPanel,
-  ]);
 
   const getBackgroundRightClickContextMenuItems = useCallback(
     (): ContextMenuItem[] => [
