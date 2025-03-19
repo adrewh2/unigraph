@@ -29,7 +29,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .header h2 {
@@ -48,10 +48,45 @@
   color: #999;
 }
 
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.searchBar {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.dark .searchBar {
+  background: #2d3748;
+  color: white;
+  border: 1px solid #4a5568;
+}
+
+.toolbarButton {
+  padding: 8px 12px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.toolbarButton:hover {
+  background: #0056b3;
+}
+
 .content {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px; /* Reduced spacing between categories */
   overflow-y: auto;
   max-height: 60vh;
 }
@@ -59,14 +94,24 @@
 .treeNode {
   display: flex;
   flex-direction: column;
-  margin-bottom: 8px;
 }
 
 .treeNodeHeader {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 0;
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.treeNodeHeader.light {
+  background: #f5f5f5;
+}
+
+.treeNodeHeader.dark {
+  background: #2d3748;
 }
 
 .expandButton {
@@ -90,11 +135,11 @@
 
 .categoryName {
   font-weight: 500;
-  color: #666;
+  color: #333;
 }
 
 .dark .categoryName {
-  color: #999;
+  color: white;
 }
 
 .treeNodeChildren {
@@ -116,7 +161,7 @@
 }
 
 .graphButton:hover {
-  background: #f5f5f5;
+  background: #e0e0e0;
 }
 
 .dark .graphButton:hover {
