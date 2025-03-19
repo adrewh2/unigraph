@@ -1291,7 +1291,7 @@ const AppContent: React.FC<{
           ref={forceGraphRef}
           style={{
             position: "fixed",
-            top: "var(--toolbar-height, 40px)",
+            top: showToolbar ? "var(--toolbar-height, 40px)" : 0,
             left: 0,
             right: 0,
             bottom: 0,
@@ -1302,7 +1302,7 @@ const AppContent: React.FC<{
       );
     }
     return null;
-  }, [appConfig.activeView, forceGraphRef]);
+  }, [appConfig.activeView, showToolbar]);
 
   const _handleUpdateForceGraphScene = useCallback((sceneGraph: SceneGraph) => {
     if (!forceGraphInstance.current) {
