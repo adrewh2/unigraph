@@ -1,5 +1,4 @@
 import { ForceGraph3DInstance } from "3d-force-graph";
-import { saveAs } from "file-saver";
 import { AppConfig } from "../AppConfig";
 import {
   attachSimulation,
@@ -41,12 +40,8 @@ import { SceneGraph } from "../core/model/SceneGraph";
 import {
   getRandomNode,
   GetRandomNodeFromSceneGraph,
-  saveRenderingConfigToFile,
 } from "../core/model/utils";
 import { processImageNodesInSceneGraph } from "../core/processors/imageBoxProcessor";
-import { serializeSceneGraphToDot } from "../core/serializers/toDot";
-import { serializeSceneGraphToJson } from "../core/serializers/toFromJson";
-import { serializeSceneGraphToGraphml } from "../core/serializers/toGraphml";
 import {
   extractPositionsFromNodes,
   extractPositionsFromUserData,
@@ -56,31 +51,9 @@ import { demoSongAnnotations } from "../mp3/data";
 import { demoSongAnnotations2 } from "../mp3/demoSongAnnotations247";
 import { IMenuConfig, IMenuConfig as MenuConfigType } from "./UniAppToolbar";
 
-const handleExportDot = (sceneGraph: SceneGraph) => {
-  const dotContent = serializeSceneGraphToDot(sceneGraph);
-  const blob = new Blob([dotContent], { type: "text/plain;charset=utf-8" });
-  saveAs(blob, "graph.dot");
-};
-
-const handleExportGraphml = (sceneGraph: SceneGraph) => {
-  const graphmlContent = serializeSceneGraphToGraphml(sceneGraph);
-  const blob = new Blob([graphmlContent], {
-    type: "application/xml;charset=utf-8",
-  });
-  saveAs(blob, "graph.graphml");
-};
-
-const handleExportJson = (sceneGraph: SceneGraph) => {
-  const jsonContent = serializeSceneGraphToJson(sceneGraph);
-  const blob = new Blob([jsonContent], {
-    type: "application/json;charset=utf-8",
-  });
-  saveAs(blob, "graph.json");
-};
-
-const handleExportConfig = (sceneGraph: SceneGraph) => {
-  saveRenderingConfigToFile(sceneGraph.getDisplayConfig(), "renderConfig.json");
-};
+// const handleExportConfig = (sceneGraph: SceneGraph) => {
+//   saveRenderingConfigToFile(sceneGraph.getDisplayConfig(), "renderConfig.json");
+// };
 
 const graphVizMenuActions = (
   applyNewLayout: (
@@ -186,53 +159,6 @@ export class MenuConfig {
 
   getConfig(): MenuConfigType {
     return {
-      File: {
-        submenu: {
-          Export: {
-            submenu: {
-              Graph: {
-                submenu: {
-                  Dot: {
-                    action: () => handleExportDot(this.sceneGraph),
-                  },
-                  Graphml: {
-                    action: () => handleExportGraphml(this.sceneGraph),
-                  },
-                  JSON: {
-                    action: () => handleExportJson(this.sceneGraph),
-                  },
-                },
-              },
-              "Display Config": {
-                action: () => handleExportConfig(this.sceneGraph),
-              },
-            },
-          },
-          Import: {
-            submenu: {
-              Graph: {
-                submenu: {
-                  File: {
-                    action: () =>
-                      document
-                        .getElementById("import-file-to-scenegraph-input")
-                        ?.click(),
-                  },
-                  "SVG From URL": {
-                    action: () => {
-                      this.callbacks.showImportSvgFromUrlDialog();
-                    },
-                  },
-                },
-              },
-              "Import Config": {
-                action: () =>
-                  document.getElementById("import-config-input")?.click(),
-              },
-            },
-          },
-        },
-      },
       View: {
         submenu: {
           "Fit to View": {
