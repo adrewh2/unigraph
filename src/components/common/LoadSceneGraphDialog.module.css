@@ -69,18 +69,25 @@
   border: 1px solid #4a5568;
 }
 
-.toolbarButton {
-  padding: 8px 12px;
-  background: #007bff;
-  color: white;
+.toolbarIconButton {
+  background: none;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  color: #007bff;
+  padding: 4px;
+  border-radius: 4px;
 }
 
-.toolbarButton:hover {
-  background: #0056b3;
+.toolbarIconButton:hover {
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.dark .toolbarIconButton {
+  color: #4a90e2;
+}
+
+.dark .toolbarIconButton:hover {
+  background: rgba(74, 144, 226, 0.1);
 }
 
 .content {
@@ -104,6 +111,7 @@
   background: #f5f5f5;
   border-radius: 4px;
   cursor: pointer;
+  user-select: none; /* Prevent text selection when clicking */
 }
 
 .treeNodeHeader.light {
@@ -112,6 +120,10 @@
 
 .treeNodeHeader.dark {
   background: #2d3748;
+}
+
+.treeNodeHeader:hover {
+  background: rgba(0, 123, 255, 0.1); /* Highlight on hover */
 }
 
 .expandButton {
@@ -123,14 +135,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none; /* Prevent button from intercepting clicks */
 }
 
 .dark .expandButton {
   color: #999;
-}
-
-.leafNode {
-  width: 20px;
 }
 
 .categoryName {

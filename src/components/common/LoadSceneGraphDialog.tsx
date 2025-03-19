@@ -1,4 +1,9 @@
-import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  MinusSquare,
+  PlusSquare,
+} from "lucide-react";
 import React, { useState } from "react";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { sceneGraphs } from "../../data/graphs/sceneGraphLib";
@@ -11,6 +16,7 @@ interface TreeNodeProps {
   isExpanded: boolean;
   toggleExpand: (category: string) => void;
   isDarkMode?: boolean;
+  searchTerm: string;
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({
@@ -20,25 +26,28 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   isExpanded,
   toggleExpand,
   isDarkMode,
+  searchTerm,
 }) => {
+  const filteredGraphs = Object.entries(graphs).filter(([key]) =>
+    key.toLowerCase().includes(searchTerm)
+  );
+
   return (
     <div className={styles.treeNode}>
       <div
         className={`${styles.treeNodeHeader} ${
           isDarkMode ? styles.dark : styles.light
         }`}
+        onClick={() => toggleExpand(category)} // Make the entire header clickable
       >
-        <button
-          className={styles.expandButton}
-          onClick={() => toggleExpand(category)}
-        >
+        <button className={styles.expandButton}>
           {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
         <span className={styles.categoryName}>{category}</span>
       </div>
       {isExpanded && (
         <div className={styles.treeNodeChildren}>
-          {Object.entries(graphs).map(([key]) => (
+          {filteredGraphs.map(([key]) => (
             <button
               key={key}
               className={styles.graphButton}
@@ -93,8 +102,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     setSearchTerm(e.target.value.toLowerCase());
   };
 
-  const filteredSceneGraphs = Object.entries(sceneGraphs).filter(([category]) =>
-    category.toLowerCase().includes(searchTerm)
+  const filteredSceneGraphs = Object.entries(sceneGraphs).filter(
+    ([category, { graphs }]) =>
+      category.toLowerCase().includes(searchTerm) ||
+      Object.keys(graphs).some((key) => key.toLowerCase().includes(searchTerm))
   );
 
   const handleSelect = (key: string) => {
@@ -119,11 +130,11 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             value={searchTerm}
             onChange={handleSearchChange}
           />
-          <button className={styles.toolbarButton} onClick={expandAll}>
-            Expand All
+          <button className={styles.toolbarIconButton} onClick={expandAll}>
+            <PlusSquare size={20} />
           </button>
-          <button className={styles.toolbarButton} onClick={collapseAll}>
-            Collapse All
+          <button className={styles.toolbarIconButton} onClick={collapseAll}>
+            <MinusSquare size={20} />
           </button>
         </div>
         <div className={styles.content}>
@@ -136,6 +147,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
               isExpanded={!!expandedCategories[category]}
               toggleExpand={toggleExpand}
               isDarkMode={isDarkMode}
+              searchTerm={searchTerm}
             />
           ))}
         </div>
