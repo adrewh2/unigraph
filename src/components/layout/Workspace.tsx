@@ -209,20 +209,28 @@ const Workspace: React.FC<WorkspaceProps> = ({
           rightFooterContent(isOpen, {
             onFitToView: () => handleFitToView(appConfig.activeView),
             onViewEntities: () => handleShowEntityTables(),
+            details: {
+              sceneGraphName:
+                currentSceneGraph.getMetadata().name ?? "Untitled",
+              activeLayout: appConfig.activeLayout,
+              activeFilters: null,
+            },
           })
         }
       />
     );
   }, [
+    showRightSidebar,
     appConfig.activeView,
     appConfig.forceGraph3dOptions.layout,
-    handleFitToView,
+    appConfig.activeLayout,
+    setSelectedForceGraph3dLayoutMode,
     isDarkMode,
-    renderEdgeLegend,
     renderLayoutModeRadio,
     renderNodeLegend,
-    setSelectedForceGraph3dLayoutMode,
-    showRightSidebar,
+    renderEdgeLegend,
+    currentSceneGraph,
+    handleFitToView,
     handleShowEntityTables,
   ]);
 

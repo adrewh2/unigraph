@@ -59,12 +59,41 @@ export const rightFooterContent = (
   actions?: {
     onFitToView: () => void;
     onViewEntities?: () => void;
+    details?: {
+      sceneGraphName: string;
+      activeLayout: string;
+      activeFilters?: string | null;
+    };
   }
 ) => {
   if (!actions) return null;
 
   return (
     <div className={`${styles.footerButtonGroup} ${styles.footerButtonColumn}`}>
+      {actions.details && (
+        <div className={styles.footerDetailsCard}>
+          <div className={styles.footerDetailsRow}>
+            <span className={styles.footerDetailsLabel}>SceneGraph:</span>
+            <span className={styles.footerDetailsValue}>
+              {actions.details.sceneGraphName}
+            </span>
+          </div>
+          <div className={styles.footerDetailsRow}>
+            <span className={styles.footerDetailsLabel}>Active Layout:</span>
+            <span className={styles.footerDetailsValue}>
+              {actions.details.activeLayout}
+            </span>
+          </div>
+          {actions.details.activeFilters && (
+            <div className={styles.footerDetailsRow}>
+              <span className={styles.footerDetailsLabel}>Active Filters:</span>
+              <span className={styles.footerDetailsValue}>
+                {actions.details.activeFilters}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
       <button className={styles.footerButton} onClick={actions.onViewEntities}>
         View Entities
       </button>
