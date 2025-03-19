@@ -1724,6 +1724,7 @@ const AppContent: React.FC<{
           showLayoutManager={(mode: "save" | "load") =>
             setShowLayoutManager({ mode, show: true })
           }
+          handleLoadLayout={handleLoadLayout}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>

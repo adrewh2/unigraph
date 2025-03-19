@@ -5,6 +5,7 @@ import {
   footerContent,
 } from "../../configs/sidebarMenuConfig";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
+import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import Sidebar from "../../Sidebar";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
@@ -39,6 +40,7 @@ interface WorkspaceProps {
   showLoadSceneGraphWindow: () => void;
   showSaveSceneGraphDialog: () => void; // Add the prop
   showLayoutManager: (mode: "save" | "load") => void;
+  handleLoadLayout: (nodePositionData: NodePositionData) => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -69,6 +71,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   showLoadSceneGraphWindow,
   showSaveSceneGraphDialog,
   showLayoutManager,
+  handleLoadLayout,
 }) => {
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -137,6 +140,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onShowLoadSceneGraphWindow: showLoadSceneGraphWindow,
           onShowSaveSceneGraphDialog: showSaveSceneGraphDialog, // Pass the handler
           showLayoutManager: (mode: "save" | "load") => showLayoutManager(mode),
+          handleLoadLayout: handleLoadLayout,
         })}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
@@ -157,6 +161,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showPathAnalysis,
     showLoadSceneGraphWindow,
     showSaveSceneGraphDialog,
+    handleLoadLayout,
     applyNewLayout,
     showLayoutManager,
   ]);

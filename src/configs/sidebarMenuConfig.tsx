@@ -15,6 +15,7 @@ import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "../core/layouts/GraphologyLayoutEngine";
 import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutEngine";
 import { PresetLayoutType } from "../core/layouts/LayoutEngine";
+import { extractPositionsFromNodes } from "../data/graphs/blobMesh";
 import styles from "../Sidebar.module.css";
 
 export interface SubMenuItem {
@@ -130,6 +131,17 @@ export const createDefaultLeftMenus = ({
             onClick={() => showLayoutManager("load")}
           >
             Load
+          </button>
+          <button
+            className={styles.submenuButton}
+            style={{ flex: 1 }}
+            onClick={() => {
+              const positions = extractPositionsFromNodes(sceneGraph);
+              sceneGraph.setNodePositions(positions);
+              onLayoutChange(positions);
+            }}
+          >
+            Reset
           </button>
         </div>
         <select
