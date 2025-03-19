@@ -189,9 +189,11 @@ const Workspace: React.FC<WorkspaceProps> = ({
     <div className={styles.workspace}>
       {renderUniappToolbar}
       <div className={styles.content}>
-        {renderLeftSideBar}
-        <main className={styles.main}>{children}</main>
-        {renderRightSideBar}
+        <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
+        <main className={styles.main}>
+          <div className={styles.graphContainer}>{children}</div>
+        </main>
+        <div className={styles.sidebarLayer}>{renderRightSideBar}</div>
       </div>
     </div>
   );

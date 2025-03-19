@@ -1394,21 +1394,18 @@ const AppContent: React.FC<{
 
   const maybeRenderForceGraph3D = useMemo(() => {
     if (appConfig.activeView === "ForceGraph3d") {
-      console.log("RENDERING FORCE GRAPH");
       return (
         <div
           id="force-graph"
           ref={forceGraphRef}
           style={{
-            width: "100%",
-            height: "100vh",
-            background: "black",
-            zIndex: 5,
-            position: "absolute",
-            top: 0, // Changed from "50px" to 0
+            position: "fixed",
+            top: "var(--toolbar-height, 40px)",
             left: 0,
             right: 0,
             bottom: 0,
+            background: "black",
+            zIndex: 1,
           }}
         />
       );
