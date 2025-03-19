@@ -52,6 +52,7 @@ import SolarSystem from "./components/simulations/solarSystemSimulation";
 import YasguiPanel from "./components/YasguiPanel";
 
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
+import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -288,6 +289,9 @@ const AppContent: React.FC<{
   );
 
   const [showLoadSceneGraphWindow, setShowLoadSceneGraphWindow] =
+    useState(false);
+
+  const [showSaveSceneGraphDialog, setShowSaveSceneGraphDialog] =
     useState(false);
 
   const selectedNode = useMemo(() => {
@@ -1648,6 +1652,18 @@ const AppContent: React.FC<{
     return null;
   }, [handleLoadSceneGraph, handleSetSceneGraph, showLoadSceneGraphWindow]);
 
+  const maybeRenderSaveSceneGraphWindow = useMemo(() => {
+    if (showSaveSceneGraphDialog) {
+      return (
+        <SaveSceneGraphDialog
+          sceneGraph={currentSceneGraph}
+          onClose={() => setShowSaveSceneGraphDialog(false)} // Ensure this closes the dialog
+        />
+      );
+    }
+    return null;
+  }, [currentSceneGraph, showSaveSceneGraphDialog]);
+
   const maybeRenderYasgui = useMemo(() => {
     if (appConfig.activeView !== "Yasgui") {
       return null;
@@ -1704,6 +1720,7 @@ const AppContent: React.FC<{
           showLeftSidebar={showLeftSidebar}
           showRightSidebar={showRightSidebar}
           showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
+          showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)} // Pass the correct handler
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>
@@ -1722,6 +1739,7 @@ const AppContent: React.FC<{
               getSimulation(appConfig.activeView)}
           </div>
         </Workspace>
+        {maybeRenderSaveSceneGraphWindow}
         {appConfig.windows.showEntityDataCard &&
           currentSceneGraph.getAppState().hoveredNodes.size > 0 && (
             <EntityDataDisplayCard

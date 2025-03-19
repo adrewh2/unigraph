@@ -69,6 +69,7 @@ export const createDefaultLeftMenus = ({
   onClearFilters,
   onShowPathAnalysis,
   onShowLoadSceneGraphWindow,
+  onShowSaveSceneGraphDialog, // Ensure this is passed
 }: any) => [
   {
     id: "project",
@@ -83,7 +84,11 @@ export const createDefaultLeftMenus = ({
             marginBottom: "16px",
           }}
         >
-          <button className={styles.submenuButton} style={{ flex: 1 }}>
+          <button
+            className={styles.submenuButton}
+            style={{ flex: 1 }}
+            onClick={onShowSaveSceneGraphDialog}
+          >
             Save As
           </button>
           <button className={styles.submenuButton} style={{ flex: 1 }}>

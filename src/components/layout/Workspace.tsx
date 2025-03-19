@@ -35,6 +35,7 @@ interface WorkspaceProps {
   showRightSidebar?: boolean;
   showPathAnalysis: () => void;
   showLoadSceneGraphWindow: () => void;
+  showSaveSceneGraphDialog: () => void; // Add the prop
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -63,6 +64,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   showRightSidebar = true,
   showPathAnalysis,
   showLoadSceneGraphWindow,
+  showSaveSceneGraphDialog, // Add the prop
 }) => {
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -126,6 +128,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onClearFilters: clearFilters,
           onShowPathAnalysis: showPathAnalysis,
           onShowLoadSceneGraphWindow: showLoadSceneGraphWindow,
+          onShowSaveSceneGraphDialog: showSaveSceneGraphDialog, // Pass the handler
         })}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
@@ -146,6 +149,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showFilterWindow,
     showLeftSidebar,
     showPathAnalysis,
+    showSaveSceneGraphDialog, // Add dependency
   ]);
 
   const renderRightSideBar = useMemo(() => {
