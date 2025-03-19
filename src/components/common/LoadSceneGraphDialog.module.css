@@ -176,3 +176,11 @@
 .dark .graphButton:hover {
   background: #374151;
 }
+
+.highlight {
+  background-color: yellow;
+  color: black;
+  font-weight: bold;
+  padding: 0 2px;
+  border-radius: 2px;
+}

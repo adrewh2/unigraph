@@ -32,6 +32,20 @@ const TreeNode: React.FC<TreeNodeProps> = ({
     key.toLowerCase().includes(searchTerm)
   );
 
+  const highlightText = (text: string, term: string) => {
+    if (!term) return text;
+    const regex = new RegExp(`(${term})`, "gi");
+    return text.split(regex).map((part, index) =>
+      part.toLowerCase() === term.toLowerCase() ? (
+        <span key={index} className={styles.highlight}>
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   return (
     <div className={styles.treeNode}>
       <div
@@ -43,7 +57,9 @@ const TreeNode: React.FC<TreeNodeProps> = ({
         <button className={styles.expandButton}>
           {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         </button>
-        <span className={styles.categoryName}>{category}</span>
+        <span className={styles.categoryName}>
+          {highlightText(category, searchTerm)}
+        </span>
       </div>
       {isExpanded && (
         <div className={styles.treeNodeChildren}>
@@ -53,7 +69,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               className={styles.graphButton}
               onClick={() => onSelect(key)}
             >
-              {key}
+              {highlightText(key, searchTerm)}
             </button>
           ))}
         </div>
@@ -99,7 +115,21 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value.toLowerCase());
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+
+    // Auto-expand sections containing the search term
+    const expandedState = Object.entries(sceneGraphs).reduce(
+      (acc, [category, { graphs }]) => {
+        const matchesCategory = category.toLowerCase().includes(term);
+        const matchesGraphs = Object.keys(graphs).some((key) =>
+          key.toLowerCase().includes(term)
+        );
+        return { ...acc, [category]: matchesCategory || matchesGraphs };
+      },
+      {}
+    );
+    setExpandedCategories(expandedState);
   };
 
   const filteredSceneGraphs = Object.entries(sceneGraphs).filter(
