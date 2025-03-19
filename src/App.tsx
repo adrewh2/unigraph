@@ -51,6 +51,7 @@ import ReactFlowPanel from "./components/simulations/ReactFlowPanel";
 import SolarSystem from "./components/simulations/solarSystemSimulation";
 import YasguiPanel from "./components/YasguiPanel";
 
+import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -289,6 +290,9 @@ const AppContent: React.FC<{
     },
     []
   );
+
+  const [showLoadSceneGraphWindow, setShowLoadSceneGraphWindow] =
+    useState(false);
 
   const selectedNode = useMemo(() => {
     return appInteractionConfig.clickedNode;
@@ -1685,6 +1689,18 @@ const AppContent: React.FC<{
     [currentSceneGraph]
   );
 
+  const maybeRenderLoadSceneGraphWindow = useMemo(() => {
+    if (showLoadSceneGraphWindow) {
+      return (
+        <LoadSceneGraphDialog
+          onClose={() => setShowLoadSceneGraphWindow(false)}
+          onSelect={handleSetSceneGraph}
+        />
+      );
+    }
+    return null;
+  }, [handleSetSceneGraph, showLoadSceneGraphWindow]);
+
   const maybeRenderYasgui = useMemo(() => {
     if (appConfig.activeView !== "Yasgui") {
       return null;
@@ -1740,6 +1756,7 @@ const AppContent: React.FC<{
           showToolbar={showToolbar}
           showLeftSidebar={showLeftSidebar}
           showRightSidebar={showRightSidebar}
+          showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>
@@ -1811,6 +1828,7 @@ const AppContent: React.FC<{
             }}
           />
         )}
+        {maybeRenderLoadSceneGraphWindow}
         {pathAnalysisWizard}
         {showEntityTables && (
           <EntityTabDialog

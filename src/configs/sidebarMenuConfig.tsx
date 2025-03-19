@@ -68,23 +68,40 @@ export const createDefaultLeftMenus = ({
   onShowFilterManager,
   onClearFilters,
   onShowPathAnalysis,
+  onShowLoadSceneGraphWindow,
 }: any) => [
   {
     id: "project",
     icon: <Home size={20} className={styles.menuIcon} />,
     label: "Project",
+    content: (
+      <div style={{ padding: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
+          <button className={styles.submenuButton} style={{ flex: 1 }}>
+            Save
+          </button>
+          <button
+            className={styles.submenuButton}
+            style={{ flex: 1 }}
+            onClick={onShowLoadSceneGraphWindow}
+          >
+            Load
+          </button>
+        </div>
+        <div>
+          <span>
+            <strong>{sceneGraph.getMetadata().name}</strong>
+          </span>
+        </div>
+      </div>
+    ),
     subMenus: [
-      {
-        label: "Loaded Graph",
-        content: (
-          <div>
-            <br />
-            <span>
-              <strong>{sceneGraph.getMetadata().name}</strong>
-            </span>
-          </div>
-        ),
-      },
       { label: "Overview", onClick: () => console.log("Overview clicked") },
       {
         label: "Analytics",

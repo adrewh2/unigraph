@@ -34,6 +34,7 @@ interface WorkspaceProps {
   showLeftSidebar?: boolean;
   showRightSidebar?: boolean;
   showPathAnalysis: () => void;
+  showLoadSceneGraphWindow: () => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -61,6 +62,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   showLeftSidebar = true,
   showRightSidebar = true,
   showPathAnalysis,
+  showLoadSceneGraphWindow,
 }) => {
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -123,6 +125,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onShowFilterManager: showFilterManager,
           onClearFilters: clearFilters,
           onShowPathAnalysis: showPathAnalysis,
+          onShowLoadSceneGraphWindow: showLoadSceneGraphWindow,
         })}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
@@ -138,6 +141,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     currentSceneGraph,
     isDarkMode,
     onApplyForceGraphConfig,
+    showLoadSceneGraphWindow,
     showFilterManager,
     showFilterWindow,
     showLeftSidebar,
