@@ -4,8 +4,12 @@ import {
   MinusSquare,
   PlusSquare,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { SceneGraph } from "../../core/model/SceneGraph";
+import { deserializeDotToSceneGraph } from "../../core/serializers/fromDot";
+import { deserializeGraphmlToSceneGraph } from "../../core/serializers/fromGraphml";
+import { deserializeSvgToSceneGraph } from "../../core/serializers/fromSvg";
+import { deserializeSceneGraphFromJson } from "../../core/serializers/toFromJson";
 import { sceneGraphs } from "../../data/graphs/sceneGraphLib";
 import styles from "./LoadSceneGraphDialog.module.css";
 
@@ -82,13 +86,16 @@ interface LoadSceneGraphDialogProps {
   onClose: () => void;
   onSelect: (graphKey: string) => void;
   isDarkMode?: boolean;
+  handleLoadSceneGraph: (sceneGraph: SceneGraph) => void;
 }
 
 const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   onClose,
   onSelect,
   isDarkMode,
+  handleLoadSceneGraph,
 }) => {
+  const [activeTab, setActiveTab] = useState<"File" | "Demos">("Demos");
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
@@ -138,6 +145,56 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
       Object.keys(graphs).some((key) => key.toLowerCase().includes(searchTerm))
   );
 
+  const handleImportFileToSceneGraph = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        const content = e.target?.result as string;
+        let sceneGraph: SceneGraph | undefined;
+
+        try {
+          switch (fileExtension) {
+            case "json":
+              sceneGraph = deserializeSceneGraphFromJson(content);
+              break;
+            case "graphml":
+              sceneGraph = await deserializeGraphmlToSceneGraph(content);
+              break;
+            case "svg":
+              sceneGraph = deserializeSvgToSceneGraph(content);
+              break;
+            case "dot":
+              sceneGraph = deserializeDotToSceneGraph(content);
+              break;
+            default:
+              console.error(
+                `Unsupported file type: ${fileExtension || file.type}`
+              );
+              return; //@todo: add banner error message
+          }
+
+          if (sceneGraph) {
+            handleLoadSceneGraph(sceneGraph);
+          } else {
+            throw new Error("Unable to load file to SceneGraph");
+          }
+        } catch (error) {
+          console.error(`Error importing file: ${error}`);
+        } finally {
+          onClose();
+        }
+      };
+
+      reader.readAsText(file);
+    },
+    [handleLoadSceneGraph, onClose]
+  );
+
   const handleSelect = (key: string) => {
     onSelect(key);
     onClose();
@@ -152,35 +209,69 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             ×
           </button>
         </div>
-        <div className={styles.toolbar}>
-          <input
-            type="text"
-            placeholder="Search..."
-            className={styles.searchBar}
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
-          <button className={styles.toolbarIconButton} onClick={expandAll}>
-            <PlusSquare size={20} />
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tabButton} ${
+              activeTab === "File" ? styles.activeTab : ""
+            }`}
+            onClick={() => setActiveTab("File")}
+          >
+            File
           </button>
-          <button className={styles.toolbarIconButton} onClick={collapseAll}>
-            <MinusSquare size={20} />
+          <button
+            className={`${styles.tabButton} ${
+              activeTab === "Demos" ? styles.activeTab : ""
+            }`}
+            onClick={() => setActiveTab("Demos")}
+          >
+            Demos
           </button>
         </div>
-        <div className={styles.content}>
-          {filteredSceneGraphs.map(([category, { graphs }]) => (
-            <TreeNode
-              key={category}
-              category={category}
-              graphs={graphs}
-              onSelect={handleSelect}
-              isExpanded={!!expandedCategories[category]}
-              toggleExpand={toggleExpand}
-              isDarkMode={isDarkMode}
-              searchTerm={searchTerm}
+        {activeTab === "File" ? (
+          <div className={styles.fileTab}>
+            <input
+              type="file"
+              accept=".json,.graphml,.svg,.dot"
+              onChange={handleImportFileToSceneGraph}
+              className={styles.fileInput}
             />
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className={styles.demosTab}>
+            <div className={styles.toolbar}>
+              <input
+                type="text"
+                placeholder="Search..."
+                className={styles.searchBar}
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+              <button className={styles.toolbarIconButton} onClick={expandAll}>
+                <PlusSquare size={20} />
+              </button>
+              <button
+                className={styles.toolbarIconButton}
+                onClick={collapseAll}
+              >
+                <MinusSquare size={20} />
+              </button>
+            </div>
+            <div className={styles.content}>
+              {filteredSceneGraphs.map(([category, { graphs }]) => (
+                <TreeNode
+                  key={category}
+                  category={category}
+                  graphs={graphs}
+                  onSelect={handleSelect}
+                  isExpanded={!!expandedCategories[category]}
+                  toggleExpand={toggleExpand}
+                  isDarkMode={isDarkMode}
+                  searchTerm={searchTerm}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

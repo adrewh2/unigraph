@@ -129,9 +129,6 @@ const customLayoutMenuActions = (
 
 export interface IMenuConfigCallbacks {
   handleImportConfig: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleImportFileToSceneGraph: (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
   handleFitToView: (activeView: string) => void;
   GraphMenuActions: () => { [key: string]: { action: () => void } };
   SimulationMenuActions: () => { [key: string]: { action: () => void } };

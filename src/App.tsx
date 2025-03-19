@@ -97,10 +97,6 @@ import {
   SetCurrentDisplayConfigOf,
 } from "./core/model/utils";
 import { exportGraphDataForReactFlow } from "./core/react-flow/exportGraphDataForReactFlow";
-import { deserializeDotToSceneGraph } from "./core/serializers/fromDot";
-import { deserializeGraphmlToSceneGraph } from "./core/serializers/fromGraphml";
-import { deserializeSvgToSceneGraph } from "./core/serializers/fromSvg";
-import { deserializeSceneGraphFromJson } from "./core/serializers/toFromJson";
 import { IMAGE_ANNOTATION_ENTITIES } from "./core/types/ImageAnnotation";
 import { flyToNode } from "./core/webgl/webglHelpers";
 import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
@@ -973,54 +969,6 @@ const AppContent: React.FC<{
     return actions;
   }, [handleSetActiveView, simulations]);
 
-  const handleImportFileToSceneGraph = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      const fileExtension = file.name.split(".").pop()?.toLowerCase();
-      const reader = new FileReader();
-
-      reader.onload = async (e) => {
-        const content = e.target?.result as string;
-        let sceneGraph: SceneGraph | undefined;
-
-        try {
-          switch (fileExtension) {
-            case "json":
-              sceneGraph = deserializeSceneGraphFromJson(content);
-              break;
-            case "graphml":
-              sceneGraph = await deserializeGraphmlToSceneGraph(content);
-              break;
-            case "svg":
-              sceneGraph = deserializeSvgToSceneGraph(content);
-              break;
-            case "dot":
-              sceneGraph = deserializeDotToSceneGraph(content);
-              break;
-            default:
-              console.error(
-                `Unsupported file type: ${fileExtension || file.type}`
-              );
-              return; //@todo: add banner error message
-          }
-
-          if (sceneGraph) {
-            handleLoadSceneGraph(sceneGraph);
-          } else {
-            throw new Error("Unable to load file to SceneGraph");
-          }
-        } catch (error) {
-          console.error(`Error importing file: ${error}`);
-        }
-      };
-
-      reader.readAsText(file);
-    },
-    [handleLoadSceneGraph]
-  );
-
   const handleImportConfig = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -1107,7 +1055,6 @@ const AppContent: React.FC<{
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
       handleImportConfig,
-      handleImportFileToSceneGraph,
       handleFitToView,
       GraphMenuActions,
       SimulationMenuActions,
@@ -1138,7 +1085,6 @@ const AppContent: React.FC<{
     currentSceneGraph,
     handleFitToView,
     handleImportConfig,
-    handleImportFileToSceneGraph,
     handleLoadLayout,
     handleShowEntityTables,
   ]);
@@ -1695,11 +1641,12 @@ const AppContent: React.FC<{
         <LoadSceneGraphDialog
           onClose={() => setShowLoadSceneGraphWindow(false)}
           onSelect={handleSetSceneGraph}
+          handleLoadSceneGraph={handleLoadSceneGraph}
         />
       );
     }
     return null;
-  }, [handleSetSceneGraph, showLoadSceneGraphWindow]);
+  }, [handleLoadSceneGraph, handleSetSceneGraph, showLoadSceneGraphWindow]);
 
   const maybeRenderYasgui = useMemo(() => {
     if (appConfig.activeView !== "Yasgui") {
