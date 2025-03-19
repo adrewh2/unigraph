@@ -39,28 +39,10 @@ const allLayoutLabels = [
   ...Object.values(PresetLayoutType),
 ];
 
-const LayoutButton = ({
-  layout,
-  onClick,
-  isActive,
-}: {
-  layout: string;
-  onClick: () => void;
-  isActive: boolean;
-}) => (
-  <button
-    className={`${styles.layoutButton} ${isActive ? styles.active : ""}`}
-    onClick={onClick}
-  >
-    {layout}
-  </button>
-);
-
 export const createDefaultLeftMenus = ({
   sceneGraph,
   onLayoutChange,
   activeLayout,
-  physicsMode,
   onApplyForceGraphConfig,
   isDarkMode,
   initialForceGraphConfig,
@@ -69,7 +51,8 @@ export const createDefaultLeftMenus = ({
   onClearFilters,
   onShowPathAnalysis,
   onShowLoadSceneGraphWindow,
-  onShowSaveSceneGraphDialog, // Ensure this is passed
+  onShowSaveSceneGraphDialog,
+  showLayoutManager,
 }: any) => [
   {
     id: "project",
@@ -125,17 +108,43 @@ export const createDefaultLeftMenus = ({
     id: "layouts",
     icon: <Share2 size={20} className={styles.menuIcon} />,
     label: "Layouts",
-    subMenus: allLayoutLabels.map((layout: string) => ({
-      label: layout,
-      customRender: (
-        <LayoutButton
-          key={layout}
-          layout={layout}
-          onClick={() => onLayoutChange(layout)}
-          isActive={!physicsMode && activeLayout === layout}
-        />
-      ),
-    })),
+    content: (
+      <div style={{ padding: "8px" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            marginBottom: "16px",
+          }}
+        >
+          <button
+            className={styles.submenuButton}
+            style={{ flex: 1 }}
+            onClick={() => showLayoutManager("save")}
+          >
+            Save
+          </button>
+          <button
+            className={styles.submenuButton}
+            style={{ flex: 1 }}
+            onClick={() => showLayoutManager("load")}
+          >
+            Load
+          </button>
+        </div>
+        <select
+          value={activeLayout}
+          onChange={(e) => onLayoutChange(e.target.value)}
+          className={styles.layoutSelect}
+        >
+          {allLayoutLabels.map((layout) => (
+            <option key={layout} value={layout}>
+              {layout}
+            </option>
+          ))}
+        </select>
+      </div>
+    ),
   },
   {
     id: "forceGraphSettings",

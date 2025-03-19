@@ -1721,6 +1721,9 @@ const AppContent: React.FC<{
           showRightSidebar={showRightSidebar}
           showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
           showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)} // Pass the correct handler
+          showLayoutManager={(mode: "save" | "load") =>
+            setShowLayoutManager({ mode, show: true })
+          }
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>
