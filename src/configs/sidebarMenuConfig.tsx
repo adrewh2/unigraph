@@ -1,4 +1,4 @@
-import { BookOpen, Home, List, Settings2, Share2 } from "lucide-react";
+import { BookOpen, Filter, Home, List, Settings2, Share2 } from "lucide-react";
 import React from "react";
 import { ForceGraph3dLayoutMode } from "../AppConfig";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
@@ -56,6 +56,9 @@ export const createDefaultLeftMenus = ({
   onApplyForceGraphConfig,
   isDarkMode,
   initialForceGraphConfig,
+  onShowFilter,
+  onShowFilterManager,
+  onClearFilters,
 }: any) => [
   {
     id: "project",
@@ -110,6 +113,43 @@ export const createDefaultLeftMenus = ({
         isDarkMode={isDarkMode}
         initialConfig={initialForceGraphConfig}
       />
+    ),
+  },
+  {
+    id: "filters",
+    icon: <Filter size={20} />,
+    label: "Filters",
+    content: (
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          padding: "8px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          onClick={onShowFilter}
+          className={styles.submenuButton}
+          style={{ flex: "1", minWidth: "70px" }}
+        >
+          Create
+        </button>
+        <button
+          onClick={onShowFilterManager}
+          className={styles.submenuButton}
+          style={{ flex: "1", minWidth: "70px" }}
+        >
+          Load
+        </button>
+        <button
+          onClick={onClearFilters}
+          className={styles.submenuButton}
+          style={{ flex: "1", minWidth: "70px" }}
+        >
+          Clear
+        </button>
+      </div>
     ),
   },
 ];

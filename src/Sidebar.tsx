@@ -1,5 +1,12 @@
 /* eslint-disable unused-imports/no-unused-vars */
-import { ChevronDown, ChevronLeft, ChevronRight, Menu, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Menu,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/sidebarMenuConfig";
@@ -44,6 +51,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     [key: string]: boolean;
   }>({});
 
+  const closeButton =
+    position === "left" ? (
+      <ChevronsLeft size={20} />
+    ) : (
+      <ChevronsRight size={20} />
+    );
+
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
     onToggle?.();
@@ -75,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         aria-label="Open sidebar"
       >
         {position === "left" ? (
-          <ChevronRight size={16} />
+          <ChevronsRight size={16} />
         ) : (
           <ChevronLeft size={16} />
         )}
@@ -98,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={styles.toggleButton}
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
-          {isOpen ? <X size={20} /> : <Menu size={20} />}
+          {isOpen ? closeButton : <Menu size={20} />}
         </button>
       </div>
 

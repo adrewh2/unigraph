@@ -6,11 +6,11 @@ import {
 } from "../../configs/sidebarMenuConfig";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
 import Sidebar from "../../Sidebar";
-import UniAppToolbar from "../UniAppToolbar";
+import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
 interface WorkspaceProps {
-  menuConfig: any;
+  menuConfig: IMenuConfig;
   currentSceneGraph: any;
   appConfig: any;
   isDarkMode: boolean;
@@ -25,6 +25,9 @@ interface WorkspaceProps {
   setSelectedForceGraph3dLayoutMode: (mode: any) => void;
   applyNewLayout: (layout: LayoutEngineOption) => void;
   renderLayoutModeRadio: () => React.ReactNode;
+  showFilterWindow: () => void;
+  showFilterManager: () => void;
+  clearFilters: () => void;
   renderNodeLegend: React.ReactNode;
   renderEdgeLegend: React.ReactNode;
   showToolbar?: boolean;
@@ -46,6 +49,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
   setSelectedForceGraph3dLayoutMode,
   applyNewLayout,
   renderLayoutModeRadio,
+  showFilterWindow,
+  showFilterManager,
+  clearFilters,
   renderNodeLegend,
   renderEdgeLegend,
   showToolbar = true,
@@ -106,6 +112,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
             initialForceGraphConfig:
               currentSceneGraph.getForceGraphRenderConfig(),
             sceneGraph: currentSceneGraph,
+            onShowFilter: showFilterWindow,
+            onShowFilterManager: showFilterManager,
+            onClearFilters: clearFilters,
           })}
           defaultIsOpen={true}
           isDarkMode={isDarkMode}

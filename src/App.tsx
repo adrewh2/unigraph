@@ -1861,6 +1861,12 @@ const AppContent: React.FC<{
           setSelectedForceGraph3dLayoutMode={setSelectedForceGraph3dLayoutMode}
           applyNewLayout={applyNewLayout}
           renderLayoutModeRadio={renderLayoutModeRadio}
+          showFilterWindow={() => setShowFilter(true)}
+          showFilterManager={() => setShowFilterManager(true)}
+          clearFilters={() => {
+            DisplayManager.setAllVisible(currentSceneGraph.getGraph());
+            setActiveFilterPreset(null);
+          }}
           renderNodeLegend={renderNodeLegend}
           renderEdgeLegend={renderEdgeLegend}
           showToolbar={showToolbar ? showToolbar === "true" : true}
