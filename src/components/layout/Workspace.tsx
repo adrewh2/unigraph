@@ -31,6 +31,7 @@ interface WorkspaceProps {
   renderNodeLegend: React.ReactNode;
   renderEdgeLegend: React.ReactNode;
   showToolbar?: boolean;
+  showPathAnalysis: () => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -55,6 +56,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   renderNodeLegend,
   renderEdgeLegend,
   showToolbar = true,
+  showPathAnalysis,
 }) => {
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -115,6 +117,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
             onShowFilter: showFilterWindow,
             onShowFilterManager: showFilterManager,
             onClearFilters: clearFilters,
+            onShowPathAnalysis: showPathAnalysis,
           })}
           defaultIsOpen={true}
           isDarkMode={isDarkMode}

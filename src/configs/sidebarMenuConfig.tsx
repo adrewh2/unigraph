@@ -1,4 +1,12 @@
-import { BookOpen, Filter, Home, List, Settings2, Share2 } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  Filter,
+  Home,
+  List,
+  Settings2,
+  Share2,
+} from "lucide-react";
 import React from "react";
 import { ForceGraph3dLayoutMode } from "../AppConfig";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
@@ -59,6 +67,7 @@ export const createDefaultLeftMenus = ({
   onShowFilter,
   onShowFilterManager,
   onClearFilters,
+  onShowPathAnalysis,
 }: any) => [
   {
     id: "project",
@@ -148,6 +157,25 @@ export const createDefaultLeftMenus = ({
           style={{ flex: "1", minWidth: "70px" }}
         >
           Clear
+        </button>
+      </div>
+    ),
+  },
+  {
+    id: "analysis",
+    icon: <Activity size={20} />,
+    label: "Analysis",
+    content: (
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          padding: "8px",
+          flexDirection: "column",
+        }}
+      >
+        <button onClick={onShowPathAnalysis} className={styles.submenuButton}>
+          Path Analysis
         </button>
       </div>
     ),

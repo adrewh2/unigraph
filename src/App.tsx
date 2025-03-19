@@ -1158,7 +1158,6 @@ const AppContent: React.FC<{
 
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
-      setShowPathAnalysis,
       handleImportConfig,
       handleImportFileToSceneGraph,
       handleFitToView,
@@ -1171,11 +1170,6 @@ const AppContent: React.FC<{
       showLayoutManager: (mode: "save" | "load") =>
         setShowLayoutManager({ mode, show: true }),
       showFilterWindow: () => setShowFilter(true),
-      showFilterManager: () => setShowFilterManager(true),
-      clearFilters: () => {
-        DisplayManager.setAllVisible(currentSceneGraph.getGraph());
-        setActiveFilterPreset(null);
-      },
       handleLoadLayout: handleLoadLayout,
       showImportSvgFromUrlDialog: () => setShowImportSvgFromUrlDialog(true),
       showSceneGraphDetailView: (readOnly: boolean) => {
@@ -1867,6 +1861,7 @@ const AppContent: React.FC<{
             DisplayManager.setAllVisible(currentSceneGraph.getGraph());
             setActiveFilterPreset(null);
           }}
+          showPathAnalysis={() => setShowPathAnalysis(true)}
           renderNodeLegend={renderNodeLegend}
           renderEdgeLegend={renderEdgeLegend}
           showToolbar={showToolbar ? showToolbar === "true" : true}

@@ -135,7 +135,6 @@ export interface IMenuConfigCallbacks {
   handleFitToView: (activeView: string) => void;
   GraphMenuActions: () => { [key: string]: { action: () => void } };
   SimulationMenuActions: () => { [key: string]: { action: () => void } };
-  setShowPathAnalysis: (show: boolean) => void;
   applyNewLayout: (
     layoutType: LayoutEngineOption,
     sceneGraph: SceneGraph
@@ -145,8 +144,6 @@ export interface IMenuConfigCallbacks {
   setShowEdgeTable: (show: boolean) => void;
   showLayoutManager: (mode: "save" | "load") => void;
   showFilterWindow: () => void;
-  showFilterManager: () => void;
-  clearFilters: () => void;
   handleLoadLayout: (positions: NodePositionData) => void;
   showImportSvgFromUrlDialog: () => void;
   showSceneGraphDetailView: (readOnly: boolean) => void;
@@ -358,28 +355,8 @@ export class MenuConfig {
           },
         },
       },
-      Filters: {
-        submenu: {
-          "New Filters": {
-            action: () => this.callbacks.showFilterWindow(),
-          },
-          "Load Filters": {
-            action: () => this.callbacks.showFilterManager(),
-          },
-          "Clear Filters": {
-            action: () => this.callbacks.clearFilters(),
-          },
-        },
-      },
       Graph: { submenu: this.buildGraphMenu() },
       Simulations: { submenu: this.callbacks.SimulationMenuActions() },
-      Analysis: {
-        submenu: {
-          "Path Analysis": {
-            action: () => this.callbacks.setShowPathAnalysis(true),
-          },
-        },
-      },
       Dev: {
         submenu: {
           "Print SceneGraph": {
