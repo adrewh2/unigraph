@@ -295,7 +295,6 @@ export class MenuConfig {
           },
         },
       },
-      Graph: { submenu: this.buildGraphMenu() },
       Simulations: { submenu: this.callbacks.SimulationMenuActions() },
       Dev: {
         submenu: {

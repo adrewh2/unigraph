@@ -95,11 +95,14 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   isDarkMode,
   handleLoadSceneGraph,
 }) => {
-  const [activeTab, setActiveTab] = useState<"File" | "Demos">("Demos");
+  const [activeTab, setActiveTab] = useState<"File" | "Demos" | "Text">(
+    "Demos"
+  );
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
   const [searchTerm, setSearchTerm] = useState("");
+  const [textInput, setTextInput] = useState("");
 
   const toggleExpand = (category: string) => {
     setExpandedCategories((prev) => ({
@@ -195,6 +198,16 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     [handleLoadSceneGraph, onClose]
   );
 
+  const handleTextSubmit = () => {
+    try {
+      const sceneGraph = deserializeDotToSceneGraph(textInput);
+      handleLoadSceneGraph(sceneGraph);
+      onClose();
+    } catch (error) {
+      console.error("Failed to parse text input as SceneGraph:", error);
+    }
+  };
+
   const handleSelect = (key: string) => {
     onSelect(key);
     onClose();
@@ -226,8 +239,16 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
           >
             Demos
           </button>
+          <button
+            className={`${styles.tabButton} ${
+              activeTab === "Text" ? styles.activeTab : ""
+            }`}
+            onClick={() => setActiveTab("Text")}
+          >
+            Text
+          </button>
         </div>
-        {activeTab === "File" ? (
+        {activeTab === "File" && (
           <div className={styles.fileTab}>
             <input
               type="file"
@@ -236,7 +257,8 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
               className={styles.fileInput}
             />
           </div>
-        ) : (
+        )}
+        {activeTab === "Demos" && (
           <div className={styles.demosTab}>
             <div className={styles.toolbar}>
               <input
@@ -270,6 +292,19 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
                 />
               ))}
             </div>
+          </div>
+        )}
+        {activeTab === "Text" && (
+          <div className={styles.textTab}>
+            <textarea
+              className={styles.textInput}
+              placeholder="Paste SceneGraph JSON here..."
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+            />
+            <button className={styles.submitButton} onClick={handleTextSubmit}>
+              Load
+            </button>
           </div>
         )}
       </div>
