@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import styles from "./Sidebar.module.css";
-import { SubMenuItem } from "./configs/sidebarMenuConfig";
+import { SubMenuItem } from "./configs/RightSidebarConfig";
 
 interface SidebarProps {
   position: "left" | "right";

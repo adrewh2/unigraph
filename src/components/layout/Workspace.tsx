@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
 import {
   createDefaultLeftMenus,
-  createDefaultRightMenus,
-  footerContent,
-} from "../../configs/sidebarMenuConfig";
+  leftFooterContent,
+} from "../../configs/LeftSidebarConfig";
+import { createDefaultRightMenus } from "../../configs/RightSidebarConfig";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
 import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import Sidebar from "../../Sidebar";
@@ -144,7 +144,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         })}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
-        footer={footerContent}
+        footer={leftFooterContent}
       />
     );
   }, [
