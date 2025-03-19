@@ -57,6 +57,15 @@
   border-radius: 4px;
 }
 
+.select {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+}
+
 .saveButton {
   padding: 8px 16px;
   font-size: 14px;
@@ -69,4 +78,52 @@
 
 .saveButton:hover {
   background: #0056b3;
+}
+
+.fileInputRow {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: center;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+/* File name input group should be wider */
+.inputGroup:first-child {
+  flex: 1;
+}
+
+/* Extension input group should be narrow */
+.inputGroup:last-child {
+  width: 100px; /* Fixed narrow width for extension group */
+  flex: 0 0 auto; /* Prevent extending */
+}
+
+.fileInputRow {
+  display: flex;
+  flex-direction: row; /* Ensure inputs are in a row */
+  gap: 16px;
+  align-items: center; /* Align inputs vertically */
+  justify-content: space-between; /* Add spacing between inputs */
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Allow inputs to grow equally */
+  min-width: 0; /* Prevent overflow */
+}
+
+.input,
+.select {
+  width: 100%; /* Ensure inputs take full width of their container */
+  box-sizing: border-box; /* Include padding and border in width */
+}
+
+.extensionLabel {
+  width: 20px !important; /* Make the extension label smaller */
 }
