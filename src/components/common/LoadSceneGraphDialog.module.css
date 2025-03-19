@@ -56,18 +56,63 @@
   max-height: 60vh;
 }
 
-.graphButton {
-  padding: 8px 16px;
-  text-align: left;
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
+.treeNode {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
 }
 
-.dark .graphButton {
-  border-color: #4a5568;
-  color: white;
+.treeNodeHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark .expandButton {
+  color: #999;
+}
+
+.leafNode {
+  width: 20px;
+}
+
+.categoryName {
+  font-weight: 500;
+  color: #666;
+}
+
+.dark .categoryName {
+  color: #999;
+}
+
+.treeNodeChildren {
+  display: flex;
+  flex-direction: column;
+  margin-left: 16px;
+  gap: 4px;
+}
+
+.graphButton {
+  padding: 4px 8px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  color: inherit;
 }
 
 .graphButton:hover {
