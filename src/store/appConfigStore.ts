@@ -3,7 +3,27 @@ import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { LayoutEngineOption } from "../core/layouts/LayoutEngine";
 import { ActiveView, AppConfig } from "./../AppConfig";
 
-const useAppConfigStore = create<AppConfig>((set) => ({
+export type AppConfigSetters = {
+  setActiveView: (activeView: ActiveView) => void;
+  setActiveSceneGraph: (activeSceneGraph: string) => void;
+  setWindows: (windows: { showEntityDataCard: boolean }) => void;
+  setForceGraph3dOptions: (forceGraph3dOptions: {
+    layout: "Physics" | "Layout";
+  }) => void;
+  setForceGraph3dLayoutMode: (layout: "Physics" | "Layout") => void;
+  setActiveLayout: (activeLayout: LayoutEngineOption) => void;
+  setAppConfig: (appConfig: AppConfig) => void;
+  setIsDarkMode: (isDarkMode: boolean) => void;
+  setSelectedSimulation: (selectedSimulation: string) => void;
+};
+
+export type AppState = AppConfig &
+  AppConfigSetters & {
+    isDarkMode: boolean;
+    selectedSimulation: string;
+  };
+
+const useAppConfigStore = create<AppState>((set) => ({
   activeView: "ForceGraph3d",
   activeSceneGraph: "AcademicsKG",
   windows: {
@@ -13,6 +33,8 @@ const useAppConfigStore = create<AppConfig>((set) => ({
     layout: "Physics",
   },
   activeLayout: CustomLayoutType.Random,
+  isDarkMode: false,
+  selectedSimulation: "Lumina",
 
   setActiveView: (activeView: ActiveView) => set({ activeView }),
   setActiveSceneGraph: (activeSceneGraph: string) => set({ activeSceneGraph }),
@@ -24,6 +46,10 @@ const useAppConfigStore = create<AppConfig>((set) => ({
     set({ forceGraph3dOptions: { layout } }),
   setActiveLayout: (activeLayout: LayoutEngineOption) => set({ activeLayout }),
   setAppConfig: (appConfig: AppConfig) => set(appConfig),
+
+  setIsDarkMode: (isDarkMode: boolean) => set({ isDarkMode }),
+  setSelectedSimulation: (selectedSimulation: string) =>
+    set({ selectedSimulation }),
 }));
 
 export const setActiveView = (activeView: ActiveView) => {
@@ -94,6 +120,12 @@ export const setAppConfig = (appConfig: AppConfig) => {
 
 export const getAppConfig = () => {
   return useAppConfigStore.getState();
+};
+
+export const setIsDarkMode = (isDarkMode: boolean) => {
+  useAppConfigStore.setState(() => ({
+    isDarkMode,
+  }));
 };
 
 export default useAppConfigStore;

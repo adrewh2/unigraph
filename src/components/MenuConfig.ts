@@ -49,6 +49,7 @@ import {
 import { SceneGraphCategory, sceneGraphs } from "../data/graphs/sceneGraphLib";
 import { demoSongAnnotations } from "../mp3/data";
 import { demoSongAnnotations2 } from "../mp3/demoSongAnnotations247";
+import { getActiveView } from "../store/appConfigStore";
 import {
   getLeftSidebarConfig,
   getRightSidebarConfig,
@@ -167,8 +168,7 @@ export class MenuConfig {
       View: {
         submenu: {
           "Fit to View": {
-            action: () =>
-              this.callbacks.handleFitToView(this.appConfig.activeView),
+            action: () => this.callbacks.handleFitToView(getActiveView()),
           },
           Entities: {
             action: () => this.callbacks.setShowNodeTable(true),

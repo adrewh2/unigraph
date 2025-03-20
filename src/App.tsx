@@ -189,7 +189,8 @@ const AppContent: React.FC<{
     showSceneGraphDetailView,
   } = useDialogStore();
 
-  const { forceGraph3dOptions } = useAppConfigStore();
+  const { forceGraph3dOptions, activeView, setActiveView } =
+    useAppConfigStore();
 
   const { showToolbar } = useWorkspaceConfigStore();
 
@@ -285,11 +286,12 @@ const AppContent: React.FC<{
     useState<RenderingManager__DisplayMode>("type");
 
   const isDarkMode = useMemo(() => {
-    return (
-      appConfig.activeView === "ForceGraph3d" ||
-      appConfig.activeView in simulations
-    );
-  }, [appConfig.activeView, simulations]);
+    return activeView === "ForceGraph3d" || activeView in simulations;
+  }, [activeView, simulations]);
+
+  // useEffect(() => {
+  //   setIsDarkMode(activeView === "ForceGraph3d" || );
+  // });
 
   const [graphStatistics, setGraphStatistics] = useState<
     GraphStastics | undefined
@@ -297,13 +299,13 @@ const AppContent: React.FC<{
 
   const handleReactFlowFitView = useCallback(
     (padding: number = 0.1, duration: number = 0) => {
-      if (appConfig.activeView === "ReactFlow" && reactFlowInstance.current) {
+      if (activeView === "ReactFlow" && reactFlowInstance.current) {
         setTimeout(() => {
           reactFlowInstance.current?.fitView({ padding, duration });
         }, 0);
       }
     },
-    [appConfig.activeView]
+    [activeView]
   );
 
   useEffect(() => {
@@ -344,13 +346,13 @@ const AppContent: React.FC<{
   ]);
 
   useEffect(() => {
-    if (appConfig.activeView === "ReactFlow" && reactFlowInstance.current) {
+    if (activeView === "ReactFlow" && reactFlowInstance.current) {
       handleReactFlowFitView();
     }
   }, [
     nodeConfig,
     edgeConfig,
-    appConfig.activeView,
+    activeView,
     handleReactFlowFitView,
     layoutResult,
   ]);
@@ -579,9 +581,9 @@ const AppContent: React.FC<{
       return;
     }
     if (
-      appConfig.activeView === "Graphviz" ||
-      appConfig.activeView === "ReactFlow" ||
-      (appConfig.activeView === "ForceGraph3d" &&
+      activeView === "Graphviz" ||
+      activeView === "ReactFlow" ||
+      (activeView === "ForceGraph3d" &&
         forceGraph3dOptions.layout === "Layout") ||
       forceGraph3dOptions.layout in new Set(Object.values(GraphvizLayoutType))
     ) {
@@ -592,7 +594,7 @@ const AppContent: React.FC<{
     forceGraph3dOptions.layout,
     appConfig.activeLayout,
     safeComputeLayout,
-    appConfig.activeView,
+    activeView,
     layoutResult?.layoutType,
   ]);
 
@@ -891,22 +893,13 @@ const AppContent: React.FC<{
   const handleSetActiveView = useCallback(
     (key: string) => {
       console.log("setting active view", key);
-      setAppConfig((prevConfig) => ({
-        ...prevConfig,
-        windows: {
-          ...prevConfig.windows,
-          showLegendBars: !(key === "Gallery" || key in simulations), // Update condition
-          showOptionsPanel: !(key === "Gallery" || key in simulations), // Update condition
-          showGraphLayoutToolbar: !(key === "Gallery" || key in simulations), // Update condition
-        },
-        activeView: key as any,
-      }));
+      setActiveView(key);
       handleFitToView(key);
       const url = new URL(window.location.href);
       url.searchParams.set("view", key);
       window.history.pushState({}, "", url.toString());
     },
-    [handleFitToView, simulations]
+    [handleFitToView, setActiveView]
   );
 
   const GraphMenuActions = useCallback(() => {
@@ -966,16 +959,13 @@ const AppContent: React.FC<{
       );
       handleSetActiveLayout(PresetLayoutType.Preset);
       setLayoutResult({ positions, layoutType: PresetLayoutType.Preset });
-      if (
-        forceGraphInstance.current &&
-        appConfig.activeView === "ForceGraph3d"
-      ) {
+      if (forceGraphInstance.current && activeView === "ForceGraph3d") {
         updateNodePositions(forceGraphInstance.current, positions);
-      } else if (appConfig.activeView === "ReactFlow") {
+      } else if (activeView === "ReactFlow") {
         setGraphModelUpdateTime(Date.now()); //hack
       }
     },
-    [currentSceneGraph, handleSetActiveLayout, appConfig.activeView]
+    [currentSceneGraph, handleSetActiveLayout, activeView]
   );
 
   // const handleLoadSceneGraphFromUrl = useCallback(
@@ -1055,7 +1045,7 @@ const AppContent: React.FC<{
   }, [layoutMode, handleLayoutModeChange]);
 
   const maybeRenderReactFlow = useMemo(() => {
-    if (appConfig.activeView !== "ReactFlow") {
+    if (activeView !== "ReactFlow") {
       return null;
     }
 
@@ -1184,7 +1174,7 @@ const AppContent: React.FC<{
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    appConfig.activeView,
+    activeView,
     appConfig.activeLayout,
     currentSceneGraph,
     layoutResult,
@@ -1198,7 +1188,7 @@ const AppContent: React.FC<{
   ]);
 
   const maybeRenderGraphviz = useMemo(() => {
-    if (appConfig.activeView !== "Graphviz") {
+    if (activeView !== "Graphviz") {
       return;
     }
 
@@ -1218,10 +1208,10 @@ const AppContent: React.FC<{
         id="graphviz"
       />
     );
-  }, [appConfig.activeView]);
+  }, [activeView]);
 
   const maybeRenderForceGraph3D = useMemo(() => {
-    if (appConfig.activeView === "ForceGraph3d") {
+    if (activeView === "ForceGraph3d") {
       return (
         <div
           id="force-graph"
@@ -1239,7 +1229,7 @@ const AppContent: React.FC<{
       );
     }
     return null;
-  }, [appConfig.activeView, showToolbar]);
+  }, [activeView, showToolbar]);
 
   const _handleUpdateForceGraphScene = useCallback((sceneGraph: SceneGraph) => {
     if (!forceGraphInstance.current) {
@@ -1257,7 +1247,7 @@ const AppContent: React.FC<{
   }, []);
 
   useEffect(() => {
-    if (appConfig.activeView === "ForceGraph3d") {
+    if (activeView === "ForceGraph3d") {
       if (forceGraphInstance.current) {
         console.log(
           "refreshing on layout mode change",
@@ -1273,7 +1263,7 @@ const AppContent: React.FC<{
   }, [
     nodeConfig,
     edgeConfig,
-    appConfig.activeView,
+    activeView,
     forceGraph3dOptions.layout,
     activeFilterPreset,
     currentSceneGraph,
@@ -1282,13 +1272,12 @@ const AppContent: React.FC<{
   useEffect(() => {
     if (
       layoutResult?.layoutType !== appConfig.activeLayout &&
-      (appConfig.activeView === "Graphviz" ||
-        appConfig.activeView === "ReactFlow")
+      (activeView === "Graphviz" || activeView === "ReactFlow")
     ) {
       if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
         safeComputeLayout(currentSceneGraph, appConfig.activeLayout);
       }
-    } else if (appConfig.activeView === "ForceGraph3d") {
+    } else if (activeView === "ForceGraph3d") {
       console.log("Reinitializing");
       initializeForceGraph();
     }
@@ -1301,7 +1290,7 @@ const AppContent: React.FC<{
     };
   }, [
     currentSceneGraph,
-    appConfig.activeView,
+    activeView,
     forceGraph3dOptions.layout,
     appConfig.activeLayout,
     initializeForceGraph,
@@ -1344,10 +1333,7 @@ const AppContent: React.FC<{
     (nodeId: string) => {
       // setHighlightedNode(nodeId);
       // Additional logic for highlighting in different views
-      if (
-        appConfig.activeView === "ForceGraph3d" &&
-        forceGraphInstance.current
-      ) {
+      if (activeView === "ForceGraph3d" && forceGraphInstance.current) {
         forceGraphInstance.current.cameraPosition({
           x: forceGraphInstance.current.getGraphBbox().x[0],
           y: forceGraphInstance.current.getGraphBbox().y[0],
@@ -1358,7 +1344,7 @@ const AppContent: React.FC<{
         );
       }
     },
-    [appConfig.activeView, forceGraphInstance]
+    [activeView, forceGraphInstance]
   );
 
   const handleSelectResult = useCallback(
@@ -1366,7 +1352,7 @@ const AppContent: React.FC<{
       if (!forceGraphInstance.current) {
         return;
       }
-      if (appConfig.activeView === "ForceGraph3d") {
+      if (activeView === "ForceGraph3d") {
         const node = forceGraphInstance.current
           .graphData()
           .nodes.find((node) => node.id === nodeId);
@@ -1378,19 +1364,16 @@ const AppContent: React.FC<{
         }
       }
     },
-    [appConfig.activeView, handleHighlight]
+    [activeView, handleHighlight]
   );
 
   const handleMouseMove = useCallback(
     (event: React.MouseEvent) => {
-      if (
-        appConfig.activeView === "ForceGraph3d" &&
-        forceGraphInstance.current
-      ) {
+      if (activeView === "ForceGraph3d" && forceGraphInstance.current) {
         setMousePosition({ x: event.clientX, y: event.clientY });
       }
     },
-    [appConfig.activeView, setMousePosition]
+    [activeView, setMousePosition]
   );
 
   const _handleNodeMouseEnter = useCallback(
@@ -1617,7 +1600,7 @@ const AppContent: React.FC<{
   ]);
 
   const maybeRenderYasgui = useMemo(() => {
-    if (appConfig.activeView !== "Yasgui") {
+    if (activeView !== "Yasgui") {
       return null;
     }
 
@@ -1635,7 +1618,7 @@ const AppContent: React.FC<{
         <YasguiPanel sceneGraph={currentSceneGraph} />
       </div>
     );
-  }, [appConfig.activeView, currentSceneGraph]);
+  }, [activeView, currentSceneGraph]);
 
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
@@ -1682,15 +1665,14 @@ const AppContent: React.FC<{
             {maybeRenderForceGraph3D}
             {maybeRenderReactFlow}
             {maybeRenderYasgui}
-            {appConfig.activeView === "Gallery" && (
+            {activeView === "Gallery" && (
               <ImageGalleryV3
                 sceneGraph={currentSceneGraph}
                 addRandomImageBoxes={false}
                 defaultLinksEnabled={false}
               />
             )}
-            {appConfig.activeView in simulations &&
-              getSimulation(appConfig.activeView)}
+            {activeView in simulations && getSimulation(activeView)}
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
@@ -1759,10 +1741,7 @@ const AppContent: React.FC<{
             onNodeClick={(nodeId) => {
               setSelectedNodeId(nodeId as NodeId);
               setShowEntityTables(false);
-              if (
-                appConfig.activeView === "ForceGraph3d" &&
-                forceGraphInstance.current
-              ) {
+              if (activeView === "ForceGraph3d" && forceGraphInstance.current) {
                 const node = forceGraphInstance.current
                   .graphData()
                   .nodes.find((n) => n.id === nodeId);

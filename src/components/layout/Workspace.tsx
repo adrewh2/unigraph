@@ -10,6 +10,7 @@ import {
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
 import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import Sidebar from "../../Sidebar";
+import useAppConfigStore from "../../store/appConfigStore";
 import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
@@ -76,6 +77,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
+  const { activeView } = useAppConfigStore();
+
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
       return null;
@@ -85,7 +88,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         <UniAppToolbar
           config={menuConfig}
           sceneGraph={currentSceneGraph}
-          activeView={appConfig.activeView}
+          activeView={activeView}
           onViewChange={onViewChange}
           simulationList={Object.keys(simulations)}
           selectedSimulation={selectedSimulation}
@@ -97,7 +100,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       </div>
     );
   }, [
-    appConfig.activeView,
+    activeView,
     currentSceneGraph,
     isDarkMode,
     menuConfig,
@@ -114,7 +117,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     if (!leftSidebarConfig.isVisible) {
       return null;
     }
-    if (sidebarDisabledViews.includes(appConfig.activeView)) {
+    if (sidebarDisabledViews.includes(activeView)) {
       return null;
     }
     console.log("mode became", leftSidebarConfig.mode);
@@ -131,7 +134,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           activeLayout: appConfig.activeLayout,
           physicsMode:
             appConfig.forceGraph3dOptions.layout === "Physics" &&
-            appConfig.activeView === "ForceGraph3d",
+            activeView === "ForceGraph3d",
           isDarkMode,
           onApplyForceGraphConfig: onApplyForceGraphConfig,
           initialForceGraphConfig:
@@ -156,7 +159,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     leftSidebarConfig.isVisible,
     leftSidebarConfig.minimal,
     leftSidebarConfig.mode,
-    appConfig.activeView,
+    activeView,
     appConfig.activeLayout,
     appConfig.forceGraph3dOptions.layout,
     isDarkMode,
@@ -176,7 +179,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const renderRightSideBar = useMemo(() => {
     if (
       !rightSidebarConfig.isVisible ||
-      sidebarDisabledViews.includes(appConfig.activeView)
+      sidebarDisabledViews.includes(activeView)
     ) {
       return null;
     }
@@ -197,7 +200,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
               {renderEdgeLegend}
             </>
           ),
-          appConfig.activeView === "ForceGraph3d",
+          activeView === "ForceGraph3d",
           appConfig.forceGraph3dOptions.layout,
           isDarkMode
         )}
@@ -206,7 +209,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         minimal={rightSidebarConfig.minimal}
         footer={(isOpen) =>
           rightFooterContent(isOpen, {
-            onFitToView: () => handleFitToView(appConfig.activeView),
+            onFitToView: () => handleFitToView(activeView),
             onViewEntities: () => handleShowEntityTables(),
             details: {
               sceneGraphName:
@@ -222,7 +225,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     rightSidebarConfig.isVisible,
     rightSidebarConfig.mode,
     rightSidebarConfig.minimal,
-    appConfig.activeView,
+    activeView,
     appConfig.forceGraph3dOptions.layout,
     appConfig.activeLayout,
     isDarkMode,
