@@ -69,6 +69,16 @@
   justify-content: center;
 }
 
+.menuButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Add styling for expanded menu items */
+.menuButtonExpanded {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #4a90e2;
+}
+
 .menuIcon {
   flex-shrink: 0;
   transition: margin 0.3s ease;
@@ -92,6 +102,15 @@
   width: 100%; /* Use full width */
   max-height: calc(100vh - 200px); /* Leave space for header and footer */
   overflow-y: auto;
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.15
+  ); /* Slightly darker background for submenu */
+  border-radius: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .submenuItem {
