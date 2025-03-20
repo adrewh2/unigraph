@@ -115,7 +115,6 @@ export interface IMenuConfigCallbacks {
   showLayoutManager: (mode: "save" | "load") => void;
   showFilterWindow: () => void;
   handleLoadLayout: (positions: NodePositionData) => void;
-  showImportSvgFromUrlDialog: () => void;
   showSceneGraphDetailView: (readOnly: boolean) => void;
 }
 

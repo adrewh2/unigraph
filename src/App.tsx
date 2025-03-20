@@ -37,7 +37,6 @@ import {
 import FilterWindow from "./components/filters/FilterWindow";
 import ImageGalleryV2 from "./components/imageView/ImageGalleryV2";
 import ImageGalleryV3 from "./components/imageView/ImageGalleryV3";
-import ImportSvgFromUrlDialog from "./components/ImportSvgFromUrlDialog";
 import Workspace from "./components/layout/Workspace";
 import ImageGallery from "./components/lumina/galleryTestbed/ImageGallery";
 import ImageBoxCreator from "./components/lumina/ImageBoxCreator";
@@ -1029,23 +1028,20 @@ const AppContent: React.FC<{
     [currentSceneGraph, handleSetActiveLayout, appConfig.activeView]
   );
 
-  const [showImportSvgFromUrlDialog, setShowImportSvgFromUrlDialog] =
-    useState(false);
+  // const handleLoadSceneGraphFromUrl = useCallback(
+  //   (sceneGraph: SceneGraph) => {
+  //     handleLoadSceneGraph(sceneGraph);
 
-  const handleLoadSceneGraphFromUrl = useCallback(
-    (sceneGraph: SceneGraph) => {
-      handleLoadSceneGraph(sceneGraph);
+  //     // Update the URL query parameter
+  //     const url = new URL(window.location.href);
+  //     url.searchParams.delete("graph");
+  //     url.searchParams.set("svgUrl", sceneGraph.getMetadata().source ?? "");
+  //     window.history.pushState({}, "", url.toString());
 
-      // Update the URL query parameter
-      const url = new URL(window.location.href);
-      url.searchParams.delete("graph");
-      url.searchParams.set("svgUrl", sceneGraph.getMetadata().source ?? "");
-      window.history.pushState({}, "", url.toString());
-
-      setShowImportSvgFromUrlDialog(false);
-    },
-    [handleLoadSceneGraph]
-  );
+  //     setShowImportSvgFromUrlDialog(false);
+  //   },
+  //   [handleLoadSceneGraph]
+  // );
 
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
@@ -1061,7 +1057,6 @@ const AppContent: React.FC<{
         setShowLayoutManager({ mode, show: true }),
       showFilterWindow: () => setShowFilter(true),
       handleLoadLayout: handleLoadLayout,
-      showImportSvgFromUrlDialog: () => setShowImportSvgFromUrlDialog(true),
       showSceneGraphDetailView: (readOnly: boolean) => {
         setShowSceneGraphDetailView({ show: true, readOnly });
       },
@@ -1883,13 +1878,6 @@ const AppContent: React.FC<{
             sceneGraph={currentSceneGraph}
             onClose={() => setShowFilterManager(false)}
             onFilterLoad={handleLoadFilter}
-            isDarkMode={isDarkMode}
-          />
-        )}
-        {showImportSvgFromUrlDialog && (
-          <ImportSvgFromUrlDialog
-            onClose={() => setShowImportSvgFromUrlDialog(false)}
-            onLoad={handleLoadSceneGraphFromUrl}
             isDarkMode={isDarkMode}
           />
         )}
