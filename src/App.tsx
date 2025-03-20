@@ -67,7 +67,6 @@ import {
   bindEventsToGraphInstance,
   createForceGraph,
   getNodeMousePosition,
-  IForceGraphRenderConfig,
   refreshForceGraphInstance,
   updateNodePositions,
   zoomToFit,
@@ -107,6 +106,7 @@ import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import useDialogStore from "./store/dialogStore";
+import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import {
   getSelectedNodeId,
   setHoveredNodeId,

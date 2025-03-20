@@ -1,10 +1,11 @@
 import { ForceGraph3DInstance } from "3d-force-graph";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 import { AppConfig } from "../../AppConfig";
+import { IForceGraphRenderConfig } from "../../store/forceGraphConfigStore";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
-import { createForceGraph, IForceGraphRenderConfig } from "./createForceGraph";
+import { createForceGraph } from "./createForceGraph";
 
 export interface IForceGraphEventHandlers {
   onNodeHovered?: (node: NodeId | null) => void;

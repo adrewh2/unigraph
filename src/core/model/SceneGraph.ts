@@ -6,7 +6,7 @@ import {
   RenderingConfig,
   RenderingManager,
 } from "../../controllers/RenderingManager";
-import { IForceGraphRenderConfig } from "../force-graph/createForceGraph";
+import { IForceGraphRenderConfig } from "../../store/forceGraphConfigStore";
 import { NodePositionData, Position } from "../layouts/layoutHelpers";
 import { EdgeId } from "./Edge";
 import { IEntity } from "./entity/abstractEntity";
