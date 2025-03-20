@@ -141,18 +141,6 @@ export const createDefaultLeftMenus = ({
     ),
   },
   {
-    id: "forceGraphSettings",
-    icon: <Settings2 size={20} />,
-    label: "ForceGraph Settings",
-    content: (
-      <ForceGraphRenderConfigEditor
-        onApply={onApplyForceGraphConfig}
-        isDarkMode={isDarkMode}
-        initialConfig={initialForceGraphConfig}
-      />
-    ),
-  },
-  {
     id: "filters",
     icon: <Filter size={20} />,
     label: "Filters",
@@ -206,6 +194,18 @@ export const createDefaultLeftMenus = ({
           Path Analysis
         </button>
       </div>
+    ),
+  },
+  {
+    id: "forceGraphSettings",
+    icon: <Settings2 size={20} />,
+    label: "Display",
+    content: (
+      <ForceGraphRenderConfigEditor
+        onApply={onApplyForceGraphConfig}
+        isDarkMode={isDarkMode}
+        initialConfig={initialForceGraphConfig}
+      />
     ),
   },
 ];
