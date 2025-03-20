@@ -266,27 +266,6 @@ const AppContent: React.FC<{
     [getAppConfigWithUrlOverrides]
   );
 
-  // const setSelectedNode = useCallback((nodeId: NodeId | null) => {
-  //   setAppInteractionConfig((prevConfig) => ({
-  //     ...prevConfig,
-  //     clickedNode: nodeId,
-  //   }));
-  // }, []);
-
-  // const setHoveredNode = useCallback((nodeId: string | null) => {
-  //   setAppInteractionConfig((prevConfig) => ({
-  //     ...prevConfig,
-  //     mouseHoveredNode: nodeId,
-  //   }));
-  // }, []);
-
-  // const _setSelectedNodes = useCallback((nodeIds: string[]) => {
-  //   setAppInteractionConfig((prevConfig) => ({
-  //     ...prevConfig,
-  //     selectedNodes: new Set(nodeIds),
-  //   }));
-  // }, []);
-
   const setSelectedForceGraph3dLayoutMode = useCallback(
     (layout: ForceGraph3dLayoutMode) => {
       setAppConfig((prevConfig) => ({
@@ -595,8 +574,6 @@ const AppContent: React.FC<{
     bindEventsToGraphInstance(
       forceGraphInstance.current,
       currentSceneGraph,
-      setHoveredNodeId,
-      setSelectedNodeId,
       handleNodeRightClick,
       handleBackgroundRightClick
     );

@@ -11,6 +11,10 @@ import {
   CSS2DRenderer,
 } from "three/examples/jsm/renderers/CSS2DRenderer";
 import { ForceGraph3dLayoutMode } from "../../AppConfig";
+import {
+  setHoveredNodeId,
+  setSelectedNodeId,
+} from "../../store/graphInteractionStore";
 import { ILayoutEngineResult } from "../layouts/LayoutEngine";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { NodeId } from "../model/Node";
@@ -272,12 +276,10 @@ export const createForceGraph = (
 export const bindEventsToGraphInstance = (
   graph: ForceGraph3DInstance,
   sceneGraph: SceneGraph,
-  onNodeHovered: (node: NodeId | null) => void,
-  onNodeClicked: (node: NodeId | null) => void,
   onNodeRightClick?: (event: MouseEvent, nodeId: string | null) => void,
   onBackgroundRightClick?: (event: MouseEvent) => void
 ) => {
-  graph.onNodeClick((node) => onNodeClicked(node?.id as NodeId));
+  graph.onNodeClick((node) => setSelectedNodeId(node?.id as NodeId));
   graph.onNodeHover((node) => {
     // no state change
     // if (!node && !sceneGraph.getAppState().hoveredNodes.has(node.id as string)) {
@@ -287,7 +289,7 @@ export const bindEventsToGraphInstance = (
     if (node) {
       sceneGraph.getAppState().hoveredNodes.add(node.id as string);
     }
-    onNodeHovered(node?.id as NodeId);
+    setHoveredNodeId(node?.id as NodeId);
 
     // highlightNodes.clear();
     // highlightLinks.clear();
