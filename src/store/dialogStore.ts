@@ -57,4 +57,10 @@ const useDialogStore = create<DialogState>((set) => ({
   setShowFilterWindow: (show) => set({ showFilterWindow: show }),
 }));
 
+export const setShowSceneGraphDetailView = () => {
+  useDialogStore.setState(() => ({
+    showSceneGraphDetailView: { show: true, readOnly: false },
+  }));
+};
+
 export default useDialogStore;
