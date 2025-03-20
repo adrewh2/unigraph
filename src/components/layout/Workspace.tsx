@@ -20,7 +20,6 @@ const sidebarDisabledViews = ["Yasgui", "Gallery", "Simulation"];
 interface WorkspaceProps {
   menuConfig: IMenuConfig;
   currentSceneGraph: any;
-  appConfig: any;
   isDarkMode: boolean;
   selectedSimulation: string;
   simulations: any;
@@ -49,7 +48,6 @@ interface WorkspaceProps {
 const Workspace: React.FC<WorkspaceProps> = ({
   menuConfig,
   currentSceneGraph,
-  appConfig,
   isDarkMode,
   selectedSimulation,
   simulations,
@@ -77,7 +75,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
-  const { activeView } = useAppConfigStore();
+  const { activeView, activeLayout, forceGraph3dOptions } = useAppConfigStore();
 
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -131,9 +129,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
         menuItems={createDefaultLeftMenus({
           onLayoutChange: (layout: LayoutEngineOption) =>
             applyNewLayout(layout),
-          activeLayout: appConfig.activeLayout,
+          activeLayout: activeLayout,
           physicsMode:
-            appConfig.forceGraph3dOptions.layout === "Physics" &&
+            forceGraph3dOptions.layout === "Physics" &&
             activeView === "ForceGraph3d",
           isDarkMode,
           onApplyForceGraphConfig: onApplyForceGraphConfig,
@@ -160,8 +158,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
     leftSidebarConfig.minimal,
     leftSidebarConfig.mode,
     activeView,
-    appConfig.activeLayout,
-    appConfig.forceGraph3dOptions.layout,
+    activeLayout,
+    forceGraph3dOptions.layout,
     isDarkMode,
     onApplyForceGraphConfig,
     currentSceneGraph,
@@ -201,7 +199,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
             </>
           ),
           activeView === "ForceGraph3d",
-          appConfig.forceGraph3dOptions.layout,
+          forceGraph3dOptions.layout,
           isDarkMode
         )}
         isDarkMode={isDarkMode}
@@ -214,7 +212,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
             details: {
               sceneGraphName:
                 currentSceneGraph.getMetadata().name ?? "Untitled",
-              activeLayout: appConfig.activeLayout,
+              activeLayout: activeLayout,
               activeFilters: null,
             },
           })
@@ -226,8 +224,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
     rightSidebarConfig.mode,
     rightSidebarConfig.minimal,
     activeView,
-    appConfig.forceGraph3dOptions.layout,
-    appConfig.activeLayout,
+    forceGraph3dOptions.layout,
+    activeLayout,
     isDarkMode,
     renderLayoutModeRadio,
     renderNodeLegend,

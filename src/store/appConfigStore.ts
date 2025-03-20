@@ -44,7 +44,8 @@ const useAppConfigStore = create<AppState>((set) => ({
   }) => set({ forceGraph3dOptions }),
   setForceGraph3dLayoutMode: (layout: "Physics" | "Layout") =>
     set({ forceGraph3dOptions: { layout } }),
-  setActiveLayout: (activeLayout: LayoutEngineOption) => set({ activeLayout }),
+  setActiveLayout: (activeLayout: LayoutEngineOption) =>
+    set({ activeLayout, forceGraph3dOptions: { layout: "Layout" } }),
   setAppConfig: (appConfig: AppConfig) => set(appConfig),
 
   setIsDarkMode: (isDarkMode: boolean) => set({ isDarkMode }),
@@ -107,6 +108,7 @@ export const getForceGraph3dOptions = () => {
 export const setActiveLayout = (activeLayout: LayoutEngineOption) => {
   useAppConfigStore.setState(() => ({
     activeLayout,
+    forceGraph3dOptions: { layout: "Layout" },
   }));
 };
 

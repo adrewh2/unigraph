@@ -101,7 +101,7 @@ import { getAllGraphs, sceneGraphs } from "./data/graphs/sceneGraphLib";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
-import useAppConfigStore from "./store/appConfigStore";
+import useAppConfigStore, { setActiveLayout } from "./store/appConfigStore";
 import useDialogStore from "./store/dialogStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import {
@@ -189,7 +189,7 @@ const AppContent: React.FC<{
     showSceneGraphDetailView,
   } = useDialogStore();
 
-  const { forceGraph3dOptions, activeView, setActiveView } =
+  const { forceGraph3dOptions, activeView, setActiveView, activeLayout } =
     useAppConfigStore();
 
   const { showToolbar } = useWorkspaceConfigStore();
@@ -574,7 +574,7 @@ const AppContent: React.FC<{
   ]);
 
   useEffect(() => {
-    if (layoutResult?.layoutType === appConfig.activeLayout) {
+    if (layoutResult?.layoutType === activeLayout) {
       console.log(
         "Skipping layout computation because it has already been computed"
       );
@@ -587,12 +587,12 @@ const AppContent: React.FC<{
         forceGraph3dOptions.layout === "Layout") ||
       forceGraph3dOptions.layout in new Set(Object.values(GraphvizLayoutType))
     ) {
-      safeComputeLayout(currentSceneGraph, appConfig.activeLayout);
+      safeComputeLayout(currentSceneGraph, activeLayout);
     }
   }, [
     currentSceneGraph,
     forceGraph3dOptions.layout,
-    appConfig.activeLayout,
+    activeLayout,
     safeComputeLayout,
     activeView,
     layoutResult?.layoutType,
@@ -624,7 +624,7 @@ const AppContent: React.FC<{
       if (clearQueryParams) {
         clearUrlOfQueryParams();
       }
-      safeComputeLayout(graph, appConfig.activeLayout).then(() => {
+      safeComputeLayout(graph, activeLayout).then(() => {
         setCurrentSceneGraph(graph);
         if (graph.getData().defaultAppConfig) {
           setAppConfig(graph.getData().defaultAppConfig!);
@@ -658,7 +658,7 @@ const AppContent: React.FC<{
       });
     },
     [
-      appConfig.activeLayout,
+      activeLayout,
       clearUrlOfQueryParams,
       handleDisplayConfigChanged,
       safeComputeLayout,
@@ -712,14 +712,7 @@ const AppContent: React.FC<{
   );
 
   const handleSetActiveLayout = useCallback((layout: LayoutEngineOption) => {
-    setAppConfig((prevConfig) => ({
-      ...prevConfig,
-      activeLayout: layout,
-      forceGraph3dOptions: {
-        ...prevConfig.forceGraph3dOptions,
-        layout: "Layout",
-      },
-    }));
+    setActiveLayout(layout);
   }, []);
 
   const graphvizFitToView = useCallback((element: HTMLDivElement) => {
@@ -1050,7 +1043,7 @@ const AppContent: React.FC<{
     }
 
     if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
-      safeComputeLayout(currentSceneGraph, appConfig.activeLayout);
+      safeComputeLayout(currentSceneGraph, activeLayout);
       return;
     }
 
@@ -1175,7 +1168,7 @@ const AppContent: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeView,
-    appConfig.activeLayout,
+    activeLayout,
     currentSceneGraph,
     layoutResult,
     nodeConfig,
@@ -1271,11 +1264,11 @@ const AppContent: React.FC<{
 
   useEffect(() => {
     if (
-      layoutResult?.layoutType !== appConfig.activeLayout &&
+      layoutResult?.layoutType !== activeLayout &&
       (activeView === "Graphviz" || activeView === "ReactFlow")
     ) {
       if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
-        safeComputeLayout(currentSceneGraph, appConfig.activeLayout);
+        safeComputeLayout(currentSceneGraph, activeLayout);
       }
     } else if (activeView === "ForceGraph3d") {
       console.log("Reinitializing");
@@ -1292,7 +1285,7 @@ const AppContent: React.FC<{
     currentSceneGraph,
     activeView,
     forceGraph3dOptions.layout,
-    appConfig.activeLayout,
+    activeLayout,
     initializeForceGraph,
     safeComputeLayout,
     layoutResult?.layoutType,
@@ -1630,7 +1623,6 @@ const AppContent: React.FC<{
         <Workspace
           menuConfig={menuConfig}
           currentSceneGraph={currentSceneGraph}
-          appConfig={appConfig}
           isDarkMode={isDarkMode}
           selectedSimulation={selectedSimulation}
           simulations={simulations}
