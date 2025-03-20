@@ -10,6 +10,7 @@ import {
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
 import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import Sidebar from "../../Sidebar";
+import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
@@ -36,9 +37,6 @@ interface WorkspaceProps {
   clearFilters: () => void;
   renderNodeLegend: React.ReactNode;
   renderEdgeLegend: React.ReactNode;
-  showToolbar?: boolean;
-  showLeftSidebar?: boolean;
-  showRightSidebar?: boolean;
   showPathAnalysis: () => void;
   showLoadSceneGraphWindow: () => void;
   showSaveSceneGraphDialog: () => void; // Add the prop
@@ -69,9 +67,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
   clearFilters,
   renderNodeLegend,
   renderEdgeLegend,
-  showToolbar = true,
-  showLeftSidebar = true,
-  showRightSidebar = true,
   showPathAnalysis,
   showLoadSceneGraphWindow,
   showSaveSceneGraphDialog,
@@ -80,6 +75,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleFitToView,
   handleShowEntityTables,
 }) => {
+  const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
+    useWorkspaceConfigStore();
+
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
       return null;
@@ -115,7 +113,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   ]);
 
   const renderLeftSideBar = useMemo(() => {
-    if (!showLeftSidebar) {
+    if (!leftSidebarConfig.isVisible) {
       return null;
     }
     if (sidebarDisabledViews.includes(appConfig.activeView)) {
@@ -155,7 +153,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       />
     );
   }, [
-    showLeftSidebar,
+    leftSidebarConfig.isVisible,
     appConfig.activeView,
     appConfig.activeLayout,
     appConfig.forceGraph3dOptions.layout,
@@ -175,7 +173,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
   const renderRightSideBar = useMemo(() => {
     if (
-      !showRightSidebar ||
+      !rightSidebarConfig.isVisible ||
       sidebarDisabledViews.includes(appConfig.activeView)
     ) {
       return null;
@@ -220,7 +218,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       />
     );
   }, [
-    showRightSidebar,
+    rightSidebarConfig.isVisible,
     appConfig.activeView,
     appConfig.forceGraph3dOptions.layout,
     appConfig.activeLayout,

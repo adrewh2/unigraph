@@ -107,6 +107,7 @@ import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import useDialogStore from "./store/dialogStore";
+import useWorkspaceConfigStore from "./store/workspaceConfigStore";
 
 export type ObjectOf<T> = { [key: string]: T };
 
@@ -170,18 +171,7 @@ const AppContent: React.FC<{
   svgUrl?: string;
   defaultActiveView?: string;
   defaultActiveLayout?: string;
-  showToolbar?: boolean;
-  showLeftSidebar?: boolean;
-  showRightSidebar?: boolean;
-}> = ({
-  defaultGraph,
-  svgUrl,
-  defaultActiveView,
-  defaultActiveLayout,
-  showToolbar,
-  showLeftSidebar,
-  showRightSidebar,
-}) => {
+}> = ({ defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout }) => {
   const {
     showPathAnalysis,
     setShowEntityTables,
@@ -196,6 +186,8 @@ const AppContent: React.FC<{
     showLayoutManager,
     showSceneGraphDetailView,
   } = useDialogStore();
+
+  const { showToolbar } = useWorkspaceConfigStore();
 
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -1718,9 +1710,6 @@ const AppContent: React.FC<{
           showPathAnalysis={() => setShowPathAnalysis(true)}
           renderNodeLegend={renderNodeLegend}
           renderEdgeLegend={renderEdgeLegend}
-          showToolbar={showToolbar}
-          showLeftSidebar={showLeftSidebar}
-          showRightSidebar={showRightSidebar}
           showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
           showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)} // Pass the correct handler
           showLayoutManager={(mode: "save" | "load") =>
@@ -1901,9 +1890,6 @@ interface AppProps {
   svgUrl?: string;
   defaultActiveView?: string;
   defaultActiveLayout?: string;
-  showToolbar?: boolean;
-  showLeftSidebar?: boolean;
-  showRightSidebar?: boolean;
 }
 
 const App: React.FC<AppProps> = ({
@@ -1911,9 +1897,6 @@ const App: React.FC<AppProps> = ({
   svgUrl,
   defaultActiveView,
   defaultActiveLayout,
-  showToolbar,
-  showLeftSidebar,
-  showRightSidebar,
 }) => {
   return (
     <MousePositionProvider>
@@ -1922,9 +1905,6 @@ const App: React.FC<AppProps> = ({
         svgUrl={svgUrl}
         defaultActiveView={defaultActiveView}
         defaultActiveLayout={defaultActiveLayout}
-        showToolbar={showToolbar}
-        showLeftSidebar={showLeftSidebar}
-        showRightSidebar={showRightSidebar}
       />
     </MousePositionProvider>
   );
