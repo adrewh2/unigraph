@@ -107,6 +107,11 @@ import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import useDialogStore from "./store/dialogStore";
+import {
+  getSelectedNodeId,
+  setHoveredNodeId,
+  setSelectedNodeId,
+} from "./store/graphInteractionStore";
 import useWorkspaceConfigStore from "./store/workspaceConfigStore";
 
 export type ObjectOf<T> = { [key: string]: T };
@@ -150,11 +155,11 @@ const getSimulations = (
   };
 };
 
-export type AppInteractionConfig = {
-  clickedNode: NodeId | null; // For display card
-  mouseHoveredNode: string | null; // For highlighting
-  selectedNodes: Set<string>; // For highlighting
-};
+// export type AppInteractionConfig = {
+//   clickedNode: NodeId | null; // For display card
+//   mouseHoveredNode: string | null; // For highlighting
+//   selectedNodes: Set<string>; // For highlighting
+// };
 
 const initialSceneGraph = new SceneGraph();
 
@@ -223,12 +228,12 @@ const AppContent: React.FC<{
     filterRules: FilterRuleDefinition[];
   } | null>(null);
 
-  const [appInteractionConfig, setAppInteractionConfig] =
-    useState<AppInteractionConfig>({
-      clickedNode: null,
-      mouseHoveredNode: null,
-      selectedNodes: new Set(),
-    });
+  // const [appInteractionConfig, setAppInteractionConfig] =
+  //   useState<AppInteractionConfig>({
+  //     clickedNode: null,
+  //     mouseHoveredNode: null,
+  //     selectedNodes: new Set(),
+  //   });
 
   const getAppConfigWithUrlOverrides = useCallback(
     (config: AppConfig) => {
@@ -261,26 +266,26 @@ const AppContent: React.FC<{
     [getAppConfigWithUrlOverrides]
   );
 
-  const setSelectedNode = useCallback((nodeId: NodeId | null) => {
-    setAppInteractionConfig((prevConfig) => ({
-      ...prevConfig,
-      clickedNode: nodeId,
-    }));
-  }, []);
+  // const setSelectedNode = useCallback((nodeId: NodeId | null) => {
+  //   setAppInteractionConfig((prevConfig) => ({
+  //     ...prevConfig,
+  //     clickedNode: nodeId,
+  //   }));
+  // }, []);
 
-  const setHoveredNode = useCallback((nodeId: string | null) => {
-    setAppInteractionConfig((prevConfig) => ({
-      ...prevConfig,
-      mouseHoveredNode: nodeId,
-    }));
-  }, []);
+  // const setHoveredNode = useCallback((nodeId: string | null) => {
+  //   setAppInteractionConfig((prevConfig) => ({
+  //     ...prevConfig,
+  //     mouseHoveredNode: nodeId,
+  //   }));
+  // }, []);
 
-  const _setSelectedNodes = useCallback((nodeIds: string[]) => {
-    setAppInteractionConfig((prevConfig) => ({
-      ...prevConfig,
-      selectedNodes: new Set(nodeIds),
-    }));
-  }, []);
+  // const _setSelectedNodes = useCallback((nodeIds: string[]) => {
+  //   setAppInteractionConfig((prevConfig) => ({
+  //     ...prevConfig,
+  //     selectedNodes: new Set(nodeIds),
+  //   }));
+  // }, []);
 
   const setSelectedForceGraph3dLayoutMode = useCallback(
     (layout: ForceGraph3dLayoutMode) => {
@@ -295,9 +300,9 @@ const AppContent: React.FC<{
     []
   );
 
-  const selectedNode = useMemo(() => {
-    return appInteractionConfig.clickedNode;
-  }, [appInteractionConfig]);
+  // const selectedNode = useMemo(() => {
+  //   return appInteractionConfig.clickedNode;
+  // }, [appInteractionConfig]);
 
   const [layoutResult, setLayoutResult] =
     useState<ILayoutEngineResult | null>();
@@ -393,11 +398,11 @@ const AppContent: React.FC<{
   ]);
 
   const selectedGraphNode = useMemo(() => {
-    if (selectedNode) {
-      return currentSceneGraph.getGraph().getNode(selectedNode);
+    if (getSelectedNodeId()) {
+      return currentSceneGraph.getGraph().getNode(getSelectedNodeId()!);
     }
     return null;
-  }, [selectedNode, currentSceneGraph]);
+  }, [currentSceneGraph]);
 
   const handleMouseHoverLegendItem = useCallback(
     (type: GraphEntityType) =>
@@ -590,8 +595,8 @@ const AppContent: React.FC<{
     bindEventsToGraphInstance(
       forceGraphInstance.current,
       currentSceneGraph,
-      setHoveredNode,
-      setSelectedNode,
+      setHoveredNodeId,
+      setSelectedNodeId,
       handleNodeRightClick,
       handleBackgroundRightClick
     );
@@ -608,8 +613,6 @@ const AppContent: React.FC<{
     appConfig.forceGraph3dOptions.layout,
     handleNodeRightClick,
     handleBackgroundRightClick,
-    setHoveredNode,
-    setSelectedNode,
   ]);
 
   useEffect(() => {
@@ -1416,11 +1419,11 @@ const AppContent: React.FC<{
           console.log("flying to ", node);
           flyToNode(forceGraphInstance.current, node);
           handleHighlight(nodeId);
-          setSelectedNode(nodeId as NodeId);
+          setSelectedNodeId(nodeId as NodeId);
         }
       }
     },
-    [appConfig.activeView, handleHighlight, setSelectedNode]
+    [appConfig.activeView, handleHighlight]
   );
 
   const handleMouseMove = useCallback(
@@ -1437,15 +1440,15 @@ const AppContent: React.FC<{
 
   const _handleNodeMouseEnter = useCallback(
     (event: React.MouseEvent, nodeId: string) => {
-      setHoveredNode(nodeId);
+      setHoveredNodeId(nodeId as NodeId);
       setMousePosition({ x: event.clientX, y: event.clientY });
     },
-    [setHoveredNode, setMousePosition]
+    [setMousePosition]
   );
 
   const _handleNodeMouseLeave = useCallback(() => {
-    setHoveredNode(null);
-  }, [setHoveredNode]);
+    setHoveredNodeId(null);
+  }, []);
 
   const handleApplyForceGraphConfig = useCallback(
     (config: IForceGraphRenderConfig) => {
@@ -1508,7 +1511,7 @@ const AppContent: React.FC<{
       },
       {
         label: "Select Node",
-        action: () => setSelectedNode(nodeId),
+        action: () => setSelectedNodeId(nodeId),
       },
       {
         label: "Hide Node",
@@ -1564,7 +1567,7 @@ const AppContent: React.FC<{
         },
       },
     ],
-    [currentSceneGraph, setSelectedNode, setShowPathAnalysis]
+    [currentSceneGraph, setShowPathAnalysis]
   );
 
   const getContextMenuItems = useCallback(
@@ -1749,9 +1752,9 @@ const AppContent: React.FC<{
                 )}
             />
           )}
-        {selectedNode && forceGraphInstance.current && (
+        {getSelectedNodeId() && forceGraphInstance.current && (
           <NodeDisplayCard
-            nodeId={selectedNode}
+            nodeId={getSelectedNodeId()!}
             sceneGraph={currentSceneGraph}
             position={
               getNodeMousePosition(
@@ -1760,7 +1763,7 @@ const AppContent: React.FC<{
               )!
             }
             onNodeSelect={handleSelectResult}
-            onClose={() => setSelectedNode(null)}
+            onClose={() => setSelectedNodeId(null)}
           />
         )}
         {contextMenu && (
@@ -1800,7 +1803,7 @@ const AppContent: React.FC<{
             entityCache={currentSceneGraph.getEntityCache()}
             onClose={() => setShowEntityTables(false)}
             onNodeClick={(nodeId) => {
-              setSelectedNode(nodeId as NodeId);
+              setSelectedNodeId(nodeId as NodeId);
               setShowEntityTables(false);
               if (
                 appConfig.activeView === "ForceGraph3d" &&
