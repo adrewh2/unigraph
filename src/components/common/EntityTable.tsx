@@ -1,4 +1,8 @@
-import { MaterialReactTable, MRT_ColumnDef } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+} from "material-react-table";
 import React, { useCallback, useMemo, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { Entity } from "../../core/model/entity/abstractEntity";
@@ -11,16 +15,13 @@ interface EntityTableProps {
   container: EntitiesContainer<any, any>;
   sceneGraph: SceneGraph;
   onEntityClick?: (entity: Entity) => void;
-  renderActions?: (entity: Entity) => React.ReactNode;
   isDarkMode?: boolean;
   maxHeight?: string;
 }
 
 const EntityTable: React.FC<EntityTableProps> = ({
   container,
-  sceneGraph,
   onEntityClick,
-  renderActions,
   isDarkMode = false,
   maxHeight = 600,
 }) => {
@@ -183,6 +184,7 @@ const EntityTable: React.FC<EntityTableProps> = ({
     return [...orderedColumns, ...remainingColumns].map((col) => ({
       accessorKey: `data.${col}`,
       header: col,
+      size: 200, // Set default column width
       Cell: ({ row }) => {
         const value = (row.original.getData() as any)[col];
         return formatValue(value);
@@ -192,11 +194,11 @@ const EntityTable: React.FC<EntityTableProps> = ({
         return searchInValue(value, filterValue);
       },
     }));
-  }, [container, searchInValue]);
+  }, [container, searchInValue, formatValue]);
 
   const { setEditingEntity, setJsonEditEntity } = useAppContext();
 
-  const contextMenuItems: ContextMenuItem[] = [
+  const _contextMenuItems: ContextMenuItem[] = [
     {
       label: "Edit",
       action: () => {
@@ -235,6 +237,52 @@ const EntityTable: React.FC<EntityTableProps> = ({
     setContextMenu(null);
   };
 
+  const table = useMaterialReactTable({
+    columns,
+    data: container.toArray(),
+    enableColumnVirtualization: true,
+    enableRowVirtualization: true,
+    enablePagination: false,
+    enableBottomToolbar: true,
+    enableTopToolbar: true,
+    enableColumnResizing: true,
+    enableColumnPinning: true,
+    enableGlobalFilter: true,
+    enableColumnFilters: true,
+    muiTableContainerProps: {
+      sx: {
+        maxHeight: typeof maxHeight === "string" ? maxHeight : `${maxHeight}px`,
+      },
+    },
+    muiTablePaperProps: {
+      sx: {
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: theme.tableBackground,
+        color: theme.text,
+      },
+    },
+    initialState: {
+      density: "compact",
+    },
+    enableStickyHeader: true,
+    rowVirtualizerOptions: { overscan: 10 },
+    columnVirtualizerOptions: { overscan: 2 },
+    defaultDisplayColumn: { enableResizing: true },
+    muiTableBodyRowProps: ({ row }) => ({
+      onClick: () => onEntityClick?.(row.original),
+      onContextMenu: (e) => handleContextMenu(e, row.original),
+      sx: {
+        cursor: onEntityClick ? "pointer" : "default",
+        backgroundColor: theme.rowBackground,
+        "&:hover": {
+          backgroundColor: theme.rowHover,
+        },
+      },
+    }),
+  });
+
   return (
     <div
       className={styles.container}
@@ -243,32 +291,7 @@ const EntityTable: React.FC<EntityTableProps> = ({
         height: typeof maxHeight === "string" ? maxHeight : `${maxHeight}px`,
       }}
     >
-      <MaterialReactTable
-        columns={columns}
-        data={container.toArray()}
-        enableColumnPinning
-        enableFacetedValues
-        enableRowActions
-        enableRowSelection
-        muiTableContainerProps={{
-          sx: {
-            maxHeight: "calc(100% - 100px)", // Leave space for pagination
-          },
-        }}
-        muiTablePaperProps={{
-          sx: {
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-          },
-        }}
-        initialState={{
-          density: "compact",
-          pagination: { pageSize: 25, pageIndex: 0 },
-        }}
-        enableStickyHeader
-        enableBottomToolbar
-      />
+      <MaterialReactTable table={table} />
     </div>
   );
 };
