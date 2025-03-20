@@ -15,14 +15,12 @@ interface EntityTableProps {
   container: EntitiesContainer<any, any>;
   sceneGraph: SceneGraph;
   onEntityClick?: (entity: Entity) => void;
-  isDarkMode?: boolean;
   maxHeight?: string;
 }
 
 const EntityTable: React.FC<EntityTableProps> = ({
   container,
   onEntityClick,
-  isDarkMode = false,
   maxHeight = 600,
 }) => {
   const [contextMenu, setContextMenu] = useState<{
@@ -30,59 +28,6 @@ const EntityTable: React.FC<EntityTableProps> = ({
     mouseY: number;
     entity: Entity | null;
   } | null>(null);
-
-  const THEME = {
-    light: {
-      background: "#ffffff",
-      tableBackground: "rgba(255, 255, 255, 0.8)",
-      headerBackground: "rgba(255, 255, 255, 0.95)",
-      rowBackground: "rgba(255, 255, 255, 0.6)",
-      rowHover: "rgba(0, 122, 255, 0.1)",
-      text: "#000000",
-      mutedText: "#666666",
-      border: "rgba(0, 0, 0, 0.1)",
-      input: {
-        background: "rgba(0, 0, 0, 0.05)",
-        focusBackground: "rgba(0, 0, 0, 0.08)",
-        text: "#000000",
-        placeholder: "#666666",
-      },
-      tag: {
-        background: "rgba(0, 122, 255, 0.1)",
-        text: "#0066cc",
-      },
-      code: {
-        background: "rgba(0, 0, 0, 0.05)",
-        text: "#333333",
-      },
-    },
-    dark: {
-      background: "#1a1a1a",
-      tableBackground: "rgba(0, 0, 0, 0.3)",
-      headerBackground: "rgba(30, 30, 30, 0.95)",
-      rowBackground: "rgba(255, 255, 255, 0.03)",
-      rowHover: "rgba(255, 255, 255, 0.05)",
-      text: "#ffffff",
-      mutedText: "#999999",
-      border: "rgba(255, 255, 255, 0.1)",
-      input: {
-        background: "rgba(255, 255, 255, 0.05)",
-        focusBackground: "rgba(255, 255, 255, 0.08)",
-        text: "#ffffff",
-        placeholder: "#999999",
-      },
-      tag: {
-        background: "rgba(64, 156, 255, 0.2)",
-        text: "#409cff",
-      },
-      code: {
-        background: "rgba(255, 255, 255, 0.05)",
-        text: "#e2e8f0",
-      },
-    },
-  };
-
-  const theme = isDarkMode ? THEME.dark : THEME.light;
 
   const searchInValue = useCallback(
     (value: any, searchText: string): boolean => {
@@ -259,8 +204,6 @@ const EntityTable: React.FC<EntityTableProps> = ({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: theme.tableBackground,
-        color: theme.text,
       },
     },
     initialState: {
@@ -275,10 +218,6 @@ const EntityTable: React.FC<EntityTableProps> = ({
       onContextMenu: (e) => handleContextMenu(e, row.original),
       sx: {
         cursor: onEntityClick ? "pointer" : "default",
-        backgroundColor: theme.rowBackground,
-        "&:hover": {
-          backgroundColor: theme.rowHover,
-        },
       },
     }),
   });

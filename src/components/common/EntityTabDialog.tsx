@@ -76,11 +76,10 @@ const EntityTabDialog: React.FC<EntityTabDialogProps> = ({
                 ? (node: Entity) => onNodeClick(node.getId())
                 : undefined
             }
-            isDarkMode={isDarkMode}
           />
         </div>
       )),
-    [tabs, activeTab, sceneGraph, isDarkMode, onNodeClick]
+    [tabs, activeTab, sceneGraph, onNodeClick]
   );
 
   return (
