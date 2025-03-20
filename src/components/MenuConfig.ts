@@ -50,6 +50,8 @@ import { SceneGraphCategory, sceneGraphs } from "../data/graphs/sceneGraphLib";
 import { demoSongAnnotations } from "../mp3/data";
 import { demoSongAnnotations2 } from "../mp3/demoSongAnnotations247";
 import {
+  getLeftSidebarConfig,
+  getRightSidebarConfig,
   setLeftSidebarConfig,
   setRightSidebarConfig,
 } from "../store/workspaceConfigStore";
@@ -234,8 +236,18 @@ export class MenuConfig {
           },
           "Toggle sidebar expansion": {
             action: () => {
-              setLeftSidebarConfig({ mode: "minimal", isVisible: true });
-              setRightSidebarConfig({ mode: "minimal", isVisible: true });
+              const leftConfig = getLeftSidebarConfig();
+              setLeftSidebarConfig({
+                mode: leftConfig.mode === "collapsed" ? "full" : "collapsed",
+                isVisible: true,
+                minimal: false,
+              });
+              const rightConfig = getRightSidebarConfig();
+              setRightSidebarConfig({
+                mode: rightConfig.mode === "collapsed" ? "full" : "collapsed",
+                isVisible: true,
+                minimal: true,
+              });
             },
           },
           "Show Entity Data Card": {

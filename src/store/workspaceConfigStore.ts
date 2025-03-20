@@ -2,7 +2,8 @@ import { create } from "zustand";
 
 interface ISidebarConfig {
   isVisible: boolean;
-  mode: "minimal" | "collapsed" | "full";
+  mode: "collapsed" | "full";
+  minimal: boolean;
 }
 
 type WorkspaceConfigState = {
@@ -17,8 +18,8 @@ type WorkspaceConfigState = {
 
 const useWorkspaceConfigStore = create<WorkspaceConfigState>((set) => ({
   showToolbar: true,
-  leftSidebarConfig: { isVisible: true, mode: "full" },
-  rightSidebarConfig: { isVisible: true, mode: "full" },
+  leftSidebarConfig: { isVisible: true, mode: "full", minimal: false },
+  rightSidebarConfig: { isVisible: true, mode: "full", minimal: false },
 
   setShowToolbar: (show) => set({ showToolbar: show }),
   setLeftSidebarConfig: (config) => set({ leftSidebarConfig: config }),
@@ -37,10 +38,18 @@ export const setLeftSidebarConfig = (config: ISidebarConfig) => {
   }));
 };
 
+export const getLeftSidebarConfig = () => {
+  return useWorkspaceConfigStore.getState().leftSidebarConfig;
+};
+
 export const setRightSidebarConfig = (config: ISidebarConfig) => {
   useWorkspaceConfigStore.setState(() => ({
     rightSidebarConfig: config,
   }));
+};
+
+export const getRightSidebarConfig = () => {
+  return useWorkspaceConfigStore.getState().rightSidebarConfig;
 };
 
 export default useWorkspaceConfigStore;

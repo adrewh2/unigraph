@@ -33,16 +33,24 @@ if (rootElement) {
   setShowToolbar(showToolbar);
 
   const showLeftSidebar = getToggleOptionValue(urlParams, "showLeftSidebar");
-  setLeftSidebarConfig({ isVisible: showLeftSidebar, mode: "full" });
+  setLeftSidebarConfig({
+    isVisible: showLeftSidebar,
+    mode: "full",
+    minimal: false,
+  });
 
   const showRightSidebar = getToggleOptionValue(urlParams, "showRightSidebar");
-  setRightSidebarConfig({ isVisible: showRightSidebar, mode: "full" });
+  setRightSidebarConfig({
+    isVisible: showRightSidebar,
+    mode: "full",
+    minimal: false,
+  });
 
   const hideWorkspace = getToggleOptionValue(urlParams, "hideWorkspace", false);
   if (hideWorkspace) {
     setShowToolbar(false);
-    setLeftSidebarConfig({ isVisible: false, mode: "minimal" });
-    setRightSidebarConfig({ isVisible: false, mode: "minimal" });
+    setLeftSidebarConfig({ isVisible: false, mode: "full", minimal: false });
+    setRightSidebarConfig({ isVisible: false, mode: "full", minimal: true });
   }
 
   root.render(

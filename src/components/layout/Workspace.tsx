@@ -119,6 +119,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     if (sidebarDisabledViews.includes(appConfig.activeView)) {
       return null;
     }
+    console.log("mode became", leftSidebarConfig.mode);
     return (
       <Sidebar
         position="left"
@@ -147,14 +148,15 @@ const Workspace: React.FC<WorkspaceProps> = ({
           showLayoutManager: (mode: "save" | "load") => showLayoutManager(mode),
           handleLoadLayout: handleLoadLayout,
         })}
-        defaultIsOpen={true}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
-        minimal={leftSidebarConfig.mode === "minimal"}
+        minimal={leftSidebarConfig.minimal}
+        mode={leftSidebarConfig.mode}
       />
     );
   }, [
     leftSidebarConfig.isVisible,
+    leftSidebarConfig.minimal,
     leftSidebarConfig.mode,
     appConfig.activeView,
     appConfig.activeLayout,
@@ -202,9 +204,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
           setSelectedForceGraph3dLayoutMode,
           isDarkMode
         )}
-        defaultIsOpen={true}
         isDarkMode={isDarkMode}
-        minimal={rightSidebarConfig.mode === "minimal"}
+        mode={rightSidebarConfig.mode}
+        minimal={rightSidebarConfig.minimal}
         footer={(isOpen) =>
           rightFooterContent(isOpen, {
             onFitToView: () => handleFitToView(appConfig.activeView),
@@ -222,6 +224,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   }, [
     rightSidebarConfig.isVisible,
     rightSidebarConfig.mode,
+    rightSidebarConfig.minimal,
     appConfig.activeView,
     appConfig.forceGraph3dOptions.layout,
     appConfig.activeLayout,
