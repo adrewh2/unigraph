@@ -29,7 +29,6 @@ interface WorkspaceProps {
   onSearchResult: (nodeIds: string[]) => void;
   onHighlight: (nodeId: string) => void;
   onApplyForceGraphConfig: (config: any) => void;
-  setSelectedForceGraph3dLayoutMode: (mode: any) => void;
   applyNewLayout: (layout: LayoutEngineOption) => void;
   renderLayoutModeRadio: () => React.ReactNode;
   showFilterWindow: () => void;
@@ -59,7 +58,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
   onSearchResult,
   onHighlight,
   onApplyForceGraphConfig,
-  setSelectedForceGraph3dLayoutMode,
   applyNewLayout,
   renderLayoutModeRadio,
   showFilterWindow,
@@ -201,7 +199,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
           ),
           appConfig.activeView === "ForceGraph3d",
           appConfig.forceGraph3dOptions.layout,
-          setSelectedForceGraph3dLayoutMode,
           isDarkMode
         )}
         isDarkMode={isDarkMode}
@@ -228,7 +225,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     appConfig.activeView,
     appConfig.forceGraph3dOptions.layout,
     appConfig.activeLayout,
-    setSelectedForceGraph3dLayoutMode,
     isDarkMode,
     renderLayoutModeRadio,
     renderNodeLegend,

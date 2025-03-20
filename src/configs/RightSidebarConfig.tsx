@@ -1,8 +1,11 @@
 import { List, Settings2 } from "lucide-react";
 import React from "react";
-import { ForceGraph3dLayoutMode } from "../AppConfig";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
 import styles from "../Sidebar.module.css";
+import {
+  getForceGraph3dLayoutMode,
+  setForceGraph3dLayoutMode,
+} from "../store/appConfigStore";
 import { setShowSceneGraphDetailView } from "../store/dialogStore";
 
 export interface SubMenuItem {
@@ -24,7 +27,6 @@ export const createDefaultRightMenus = (
   renderLegends: () => React.ReactNode,
   isForceGraph3dActive: boolean,
   forceGraphLayout: string,
-  onForceGraphLayoutChange: (layout: string) => void,
   isDarkMode: boolean
 ) => [
   {
@@ -45,8 +47,8 @@ export const createDefaultRightMenus = (
       <div className={styles.optionsPanelContainer}>
         {isForceGraph3dActive && (
           <ForceGraphLayoutRadio
-            layout={forceGraphLayout as ForceGraph3dLayoutMode}
-            onLayoutChange={onForceGraphLayoutChange}
+            layout={getForceGraph3dLayoutMode()}
+            onLayoutChange={setForceGraph3dLayoutMode}
             isDarkMode={isDarkMode}
           />
         )}

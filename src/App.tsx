@@ -12,11 +12,7 @@ import React, {
 import { toDot } from "ts-graphviz";
 import { v4 as uuidv4 } from "uuid";
 import "./App.css";
-import {
-  AppConfig,
-  DEFAULT_APP_CONFIG,
-  ForceGraph3dLayoutMode,
-} from "./AppConfig";
+import { AppConfig, DEFAULT_APP_CONFIG } from "./AppConfig";
 import PathAnalysisWizard, {
   IPathArgs,
 } from "./components/analysis/PathAnalysisWizard";
@@ -105,6 +101,7 @@ import { getAllGraphs, sceneGraphs } from "./data/graphs/sceneGraphLib";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
+import useAppConfigStore from "./store/appConfigStore";
 import useDialogStore from "./store/dialogStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import {
@@ -192,6 +189,8 @@ const AppContent: React.FC<{
     showSceneGraphDetailView,
   } = useDialogStore();
 
+  const { forceGraph3dOptions } = useAppConfigStore();
+
   const { showToolbar } = useWorkspaceConfigStore();
 
   const graphvizRef = useRef<HTMLDivElement | null>(null);
@@ -228,13 +227,6 @@ const AppContent: React.FC<{
     filterRules: FilterRuleDefinition[];
   } | null>(null);
 
-  // const [appInteractionConfig, setAppInteractionConfig] =
-  //   useState<AppInteractionConfig>({
-  //     clickedNode: null,
-  //     mouseHoveredNode: null,
-  //     selectedNodes: new Set(),
-  //   });
-
   const getAppConfigWithUrlOverrides = useCallback(
     (config: AppConfig) => {
       const layoutToUse = defaultActiveLayout
@@ -264,19 +256,6 @@ const AppContent: React.FC<{
       console.log("Set app config!", getAppConfigWithUrlOverrides(config));
     },
     [getAppConfigWithUrlOverrides]
-  );
-
-  const setSelectedForceGraph3dLayoutMode = useCallback(
-    (layout: ForceGraph3dLayoutMode) => {
-      setAppConfig((prevConfig) => ({
-        ...prevConfig,
-        forceGraph3dOptions: {
-          ...prevConfig.forceGraph3dOptions,
-          layout: layout,
-        },
-      }));
-    },
-    []
   );
 
   // const selectedNode = useMemo(() => {
@@ -562,14 +541,14 @@ const AppContent: React.FC<{
       "Creating new force graph instance",
       forceGraphInstance.current,
       currentSceneGraph.getDisplayConfig().nodePositions,
-      appConfig.forceGraph3dOptions.layout
+      forceGraph3dOptions.layout
     );
     forceGraphInstance.current = createForceGraph(
       currentSceneGraph,
       forceGraphRef.current!,
       currentSceneGraph.getDisplayConfig().nodePositions,
       currentSceneGraph.getForceGraphRenderConfig(),
-      appConfig.forceGraph3dOptions.layout
+      forceGraph3dOptions.layout
     );
     bindEventsToGraphInstance(
       forceGraphInstance.current,
@@ -587,7 +566,7 @@ const AppContent: React.FC<{
     }, 800);
   }, [
     currentSceneGraph,
-    appConfig.forceGraph3dOptions.layout,
+    forceGraph3dOptions.layout,
     handleNodeRightClick,
     handleBackgroundRightClick,
   ]);
@@ -603,15 +582,14 @@ const AppContent: React.FC<{
       appConfig.activeView === "Graphviz" ||
       appConfig.activeView === "ReactFlow" ||
       (appConfig.activeView === "ForceGraph3d" &&
-        appConfig.forceGraph3dOptions.layout === "Layout") ||
-      appConfig.forceGraph3dOptions.layout in
-        new Set(Object.values(GraphvizLayoutType))
+        forceGraph3dOptions.layout === "Layout") ||
+      forceGraph3dOptions.layout in new Set(Object.values(GraphvizLayoutType))
     ) {
       safeComputeLayout(currentSceneGraph, appConfig.activeLayout);
     }
   }, [
     currentSceneGraph,
-    appConfig.forceGraph3dOptions.layout,
+    forceGraph3dOptions.layout,
     appConfig.activeLayout,
     safeComputeLayout,
     appConfig.activeView,
@@ -1283,12 +1261,12 @@ const AppContent: React.FC<{
       if (forceGraphInstance.current) {
         console.log(
           "refreshing on layout mode change",
-          appConfig.forceGraph3dOptions.layout
+          forceGraph3dOptions.layout
         );
         refreshForceGraphInstance(
           forceGraphInstance.current,
           currentSceneGraph,
-          appConfig.forceGraph3dOptions.layout
+          forceGraph3dOptions.layout
         );
       }
     }
@@ -1296,7 +1274,7 @@ const AppContent: React.FC<{
     nodeConfig,
     edgeConfig,
     appConfig.activeView,
-    appConfig.forceGraph3dOptions.layout,
+    forceGraph3dOptions.layout,
     activeFilterPreset,
     currentSceneGraph,
   ]);
@@ -1324,7 +1302,7 @@ const AppContent: React.FC<{
   }, [
     currentSceneGraph,
     appConfig.activeView,
-    appConfig.forceGraph3dOptions.layout,
+    forceGraph3dOptions.layout,
     appConfig.activeLayout,
     initializeForceGraph,
     safeComputeLayout,
@@ -1335,7 +1313,7 @@ const AppContent: React.FC<{
     if (
       forceGraphInstance.current &&
       layoutResult &&
-      appConfig.forceGraph3dOptions.layout === "Layout"
+      forceGraph3dOptions.layout === "Layout"
     ) {
       ForceGraphManager.applyFixedNodePositions(
         forceGraphInstance.current,
@@ -1353,7 +1331,7 @@ const AppContent: React.FC<{
   }, [
     forceGraphInstance,
     layoutResult,
-    appConfig.forceGraph3dOptions.layout,
+    forceGraph3dOptions.layout,
     graphvizFitToView,
   ]);
 
@@ -1678,7 +1656,6 @@ const AppContent: React.FC<{
           onSearchResult={handleSearchResult}
           onHighlight={handleHighlight}
           onApplyForceGraphConfig={handleApplyForceGraphConfig}
-          setSelectedForceGraph3dLayoutMode={setSelectedForceGraph3dLayoutMode}
           applyNewLayout={applyNewLayout}
           renderLayoutModeRadio={renderLayoutModeRadio}
           showFilterWindow={() => setShowFilter(true)}
