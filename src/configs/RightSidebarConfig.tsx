@@ -26,7 +26,6 @@ export interface MenuItem {
 export const createDefaultRightMenus = (
   renderLegends: () => React.ReactNode,
   isForceGraph3dActive: boolean,
-  forceGraphLayout: string,
   isDarkMode: boolean
 ) => [
   {

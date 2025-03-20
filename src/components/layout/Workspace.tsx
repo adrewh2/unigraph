@@ -199,7 +199,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
             </>
           ),
           activeView === "ForceGraph3d",
-          forceGraph3dOptions.layout,
           isDarkMode
         )}
         isDarkMode={isDarkMode}
@@ -224,7 +223,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     rightSidebarConfig.mode,
     rightSidebarConfig.minimal,
     activeView,
-    forceGraph3dOptions.layout,
     activeLayout,
     isDarkMode,
     renderLayoutModeRadio,
