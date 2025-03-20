@@ -46,6 +46,7 @@
     "graphology-layout-forceatlas2": "^0.10.1",
     "graphology-layout-noverlap": "^0.4.2",
     "lucide-react": "^0.473.0",
+    "material-react-table": "^3.2.1",
     "monaco-editor": "^0.52.2",
     "openai": "^4.80.1",
     "path-browserify": "^1.0.1",
