@@ -150,10 +150,12 @@ const Workspace: React.FC<WorkspaceProps> = ({
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
+        minimal={leftSidebarConfig.mode === "minimal"}
       />
     );
   }, [
     leftSidebarConfig.isVisible,
+    leftSidebarConfig.mode,
     appConfig.activeView,
     appConfig.activeLayout,
     appConfig.forceGraph3dOptions.layout,
@@ -202,7 +204,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         )}
         defaultIsOpen={true}
         isDarkMode={isDarkMode}
-        minimal={true}
+        minimal={rightSidebarConfig.mode === "minimal"}
         footer={(isOpen) =>
           rightFooterContent(isOpen, {
             onFitToView: () => handleFitToView(appConfig.activeView),
@@ -219,6 +221,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     );
   }, [
     rightSidebarConfig.isVisible,
+    rightSidebarConfig.mode,
     appConfig.activeView,
     appConfig.forceGraph3dOptions.layout,
     appConfig.activeLayout,

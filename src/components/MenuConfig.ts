@@ -49,6 +49,10 @@ import {
 import { SceneGraphCategory, sceneGraphs } from "../data/graphs/sceneGraphLib";
 import { demoSongAnnotations } from "../mp3/data";
 import { demoSongAnnotations2 } from "../mp3/demoSongAnnotations247";
+import {
+  setLeftSidebarConfig,
+  setRightSidebarConfig,
+} from "../store/workspaceConfigStore";
 import { IMenuConfig, IMenuConfig as MenuConfigType } from "./UniAppToolbar";
 
 // const handleExportConfig = (sceneGraph: SceneGraph) => {
@@ -226,6 +230,12 @@ export class MenuConfig {
           "Print SceneGraph": {
             action: () => {
               console.log(this.sceneGraph);
+            },
+          },
+          "Toggle sidebar expansion": {
+            action: () => {
+              setLeftSidebarConfig({ mode: "minimal", isVisible: true });
+              setRightSidebarConfig({ mode: "minimal", isVisible: true });
             },
           },
           "Show Entity Data Card": {

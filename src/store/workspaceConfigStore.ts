@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 interface ISidebarConfig {
   isVisible: boolean;
-  mode: "minimal" | "full";
+  mode: "minimal" | "collapsed" | "full";
 }
 
 type WorkspaceConfigState = {
