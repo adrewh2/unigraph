@@ -1,5 +1,4 @@
 import { ForceGraph3DInstance } from "3d-force-graph";
-import { AppConfig } from "../AppConfig";
 import {
   attachSimulation,
   updateNodePositions,
@@ -49,7 +48,11 @@ import {
 import { SceneGraphCategory, sceneGraphs } from "../data/graphs/sceneGraphLib";
 import { demoSongAnnotations } from "../mp3/data";
 import { demoSongAnnotations2 } from "../mp3/demoSongAnnotations247";
-import { getActiveView } from "../store/appConfigStore";
+import {
+  getActiveView,
+  getShowEntityDataCard,
+  setShowEntityDataCard,
+} from "../store/appConfigStore";
 import {
   getLeftSidebarConfig,
   getRightSidebarConfig,
@@ -116,7 +119,6 @@ export interface IMenuConfigCallbacks {
     layoutType: LayoutEngineOption,
     sceneGraph: SceneGraph
   ) => void;
-  setAppConfig: React.Dispatch<React.SetStateAction<AppConfig>>;
   setShowNodeTable: (show: boolean) => void;
   setShowEdgeTable: (show: boolean) => void;
   showLayoutManager: (mode: "save" | "load") => void;
@@ -127,18 +129,15 @@ export interface IMenuConfigCallbacks {
 
 export class MenuConfig {
   private callbacks: IMenuConfigCallbacks;
-  private appConfig: AppConfig;
   private sceneGraph: SceneGraph;
   private forceGraphInstance: React.RefObject<ForceGraph3DInstance | null>;
 
   constructor(
     callbacks: IMenuConfigCallbacks,
-    appConfig: AppConfig,
     sceneGraph: SceneGraph,
     forceGraphInstance: React.RefObject<ForceGraph3DInstance | null>
   ) {
     this.callbacks = callbacks;
-    this.appConfig = appConfig;
     this.sceneGraph = sceneGraph;
     this.forceGraphInstance = forceGraphInstance;
   }
@@ -251,15 +250,9 @@ export class MenuConfig {
             },
           },
           "Show Entity Data Card": {
-            checked: this.appConfig.windows.showEntityDataCard,
+            checked: getShowEntityDataCard(),
             onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showEntityDataCard: !prev.windows.showEntityDataCard,
-                },
-              }));
+              setShowEntityDataCard(!getShowEntityDataCard());
             },
           },
           "Run animation": {

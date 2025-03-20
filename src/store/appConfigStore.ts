@@ -3,7 +3,7 @@ import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { LayoutEngineOption } from "../core/layouts/LayoutEngine";
 import { ActiveView, AppConfig } from "./../AppConfig";
 
-export type AppConfigSetters = {
+export type AppConfigActions = {
   setActiveView: (activeView: ActiveView) => void;
   setActiveSceneGraph: (activeSceneGraph: string) => void;
   setWindows: (windows: { showEntityDataCard: boolean }) => void;
@@ -15,10 +15,12 @@ export type AppConfigSetters = {
   setAppConfig: (appConfig: AppConfig) => void;
   setIsDarkMode: (isDarkMode: boolean) => void;
   setSelectedSimulation: (selectedSimulation: string) => void;
+  getShowEntityDataCard: () => boolean;
+  setShowEntityDataCard: (showEntityDataCard: boolean) => void;
 };
 
 export type AppState = AppConfig &
-  AppConfigSetters & {
+  AppConfigActions & {
     isDarkMode: boolean;
     selectedSimulation: string;
   };
@@ -39,6 +41,13 @@ const useAppConfigStore = create<AppState>((set) => ({
   setActiveView: (activeView: ActiveView) => set({ activeView }),
   setActiveSceneGraph: (activeSceneGraph: string) => set({ activeSceneGraph }),
   setWindows: (windows: { showEntityDataCard: boolean }) => set({ windows }),
+
+  getShowEntityDataCard: (): boolean => {
+    return useAppConfigStore.getState().windows.showEntityDataCard;
+  },
+  setShowEntityDataCard: (showEntityDataCard: boolean) =>
+    set({ windows: { showEntityDataCard } }),
+
   setForceGraph3dOptions: (forceGraph3dOptions: {
     layout: "Physics" | "Layout";
   }) => set({ forceGraph3dOptions }),
@@ -127,6 +136,21 @@ export const getAppConfig = () => {
 export const setIsDarkMode = (isDarkMode: boolean) => {
   useAppConfigStore.setState(() => ({
     isDarkMode,
+  }));
+};
+
+export const getShowEntityDataCard = () => {
+  console.log(
+    "getting as ",
+    useAppConfigStore.getState().windows.showEntityDataCard
+  );
+  return useAppConfigStore.getState().windows.showEntityDataCard;
+};
+
+export const setShowEntityDataCard = (showEntityDataCard: boolean) => {
+  console.log("setting to ", showEntityDataCard);
+  useAppConfigStore.setState(() => ({
+    windows: { showEntityDataCard },
   }));
 };
 

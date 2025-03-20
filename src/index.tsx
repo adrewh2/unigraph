@@ -2,7 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 
+import { LayoutEngineOption } from "./core/layouts/LayoutEngine";
 import "./index.css";
+import {
+  setActiveLayout,
+  setActiveSceneGraph,
+  setActiveView,
+} from "./store/appConfigStore";
 import {
   setLeftSidebarConfig,
   setRightSidebarConfig,
@@ -51,6 +57,16 @@ if (rootElement) {
     setShowToolbar(false);
     setLeftSidebarConfig({ isVisible: false, mode: "full", minimal: false });
     setRightSidebarConfig({ isVisible: false, mode: "full", minimal: true });
+  }
+
+  if (graphName) {
+    setActiveSceneGraph(graphName);
+  }
+  if (activeView) {
+    setActiveView(activeView);
+  }
+  if (activeLayout) {
+    setActiveLayout(activeLayout as LayoutEngineOption);
   }
 
   root.render(

@@ -12,7 +12,7 @@ import React, {
 import { toDot } from "ts-graphviz";
 import { v4 as uuidv4 } from "uuid";
 import "./App.css";
-import { AppConfig, DEFAULT_APP_CONFIG } from "./AppConfig";
+import { AppConfig } from "./AppConfig";
 import PathAnalysisWizard, {
   IPathArgs,
 } from "./components/analysis/PathAnalysisWizard";
@@ -101,7 +101,10 @@ import { getAllGraphs, sceneGraphs } from "./data/graphs/sceneGraphLib";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
-import useAppConfigStore, { setActiveLayout } from "./store/appConfigStore";
+import useAppConfigStore, {
+  setActiveLayout,
+  setAppConfig,
+} from "./store/appConfigStore";
 import useDialogStore from "./store/dialogStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import {
@@ -189,8 +192,14 @@ const AppContent: React.FC<{
     showSceneGraphDetailView,
   } = useDialogStore();
 
-  const { forceGraph3dOptions, activeView, setActiveView, activeLayout } =
-    useAppConfigStore();
+  const {
+    forceGraph3dOptions,
+    activeView,
+    setActiveView,
+    activeLayout,
+    getShowEntityDataCard,
+    activeSceneGraph,
+  } = useAppConfigStore();
 
   const { showToolbar } = useWorkspaceConfigStore();
 
@@ -228,7 +237,7 @@ const AppContent: React.FC<{
     filterRules: FilterRuleDefinition[];
   } | null>(null);
 
-  const getAppConfigWithUrlOverrides = useCallback(
+  const _getAppConfigWithUrlOverrides = useCallback(
     (config: AppConfig) => {
       const layoutToUse = defaultActiveLayout
         ? (defaultActiveLayout as LayoutEngineOption)
@@ -251,24 +260,12 @@ const AppContent: React.FC<{
     [defaultActiveLayout, defaultActiveView]
   );
 
-  const handleSetAppConfig = useCallback(
-    (config: AppConfig) => {
-      setAppConfig(getAppConfigWithUrlOverrides(config));
-      console.log("Set app config!", getAppConfigWithUrlOverrides(config));
-    },
-    [getAppConfigWithUrlOverrides]
-  );
-
   // const selectedNode = useMemo(() => {
   //   return appInteractionConfig.clickedNode;
   // }, [appInteractionConfig]);
 
   const [layoutResult, setLayoutResult] =
     useState<ILayoutEngineResult | null>();
-
-  const [appConfig, setAppConfig] = useState<AppConfig>({
-    ...DEFAULT_APP_CONFIG(),
-  });
 
   const [selectedSimulation, setSelectedSimulation] =
     useState<string>("Lumina");
@@ -324,7 +321,7 @@ const AppContent: React.FC<{
     } else if (defaultGraph) {
       handleSetSceneGraph(defaultGraph, false);
     } else {
-      handleSetSceneGraph(appConfig.activeSceneGraph);
+      handleSetSceneGraph(activeSceneGraph);
     }
 
     if (defaultActiveView) {
@@ -334,16 +331,8 @@ const AppContent: React.FC<{
     if (defaultActiveLayout) {
       handleSetActiveLayout(defaultActiveLayout as LayoutEngineOption);
     }
-
-    handleSetAppConfig(appConfig);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    defaultGraph,
-    svgUrl,
-    defaultActiveView,
-    defaultActiveLayout,
-    // appConfig // we don't want to trigger this effect when appConfig changes, this is an initialization function for url query params. need to fix
-  ]);
+  }, [defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout]);
 
   useEffect(() => {
     if (activeView === "ReactFlow" && reactFlowInstance.current) {
@@ -983,7 +972,6 @@ const AppContent: React.FC<{
       GraphMenuActions,
       SimulationMenuActions,
       applyNewLayout,
-      setAppConfig,
       setShowNodeTable: setShowEntityTables,
       setShowEdgeTable: setShowEntityTables,
       showLayoutManager: (mode: "save" | "load") =>
@@ -996,14 +984,12 @@ const AppContent: React.FC<{
     };
     return new MenuConfig(
       menuConfigCallbacks,
-      appConfig,
       currentSceneGraph,
       forceGraphInstance
     );
   }, [
     GraphMenuActions,
     SimulationMenuActions,
-    appConfig,
     applyNewLayout,
     currentSceneGraph,
     handleFitToView,
@@ -1668,7 +1654,7 @@ const AppContent: React.FC<{
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
-        {appConfig.windows.showEntityDataCard &&
+        {getShowEntityDataCard() &&
           currentSceneGraph.getAppState().hoveredNodes.size > 0 && (
             <EntityDataDisplayCard
               entityData={currentSceneGraph
