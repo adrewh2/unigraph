@@ -1112,10 +1112,9 @@ const AppContent: React.FC<{
       <LayoutModeRadio
         layoutMode={layoutMode}
         onLayoutModeChange={handleLayoutModeChange}
-        isDarkMode={isDarkMode}
       />
     );
-  }, [layoutMode, handleLayoutModeChange, isDarkMode]);
+  }, [layoutMode, handleLayoutModeChange]);
 
   const maybeRenderReactFlow = useMemo(() => {
     if (appConfig.activeView !== "ReactFlow") {
