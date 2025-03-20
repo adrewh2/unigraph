@@ -22,7 +22,7 @@ const EntityTable: React.FC<EntityTableProps> = ({
   onEntityClick,
   renderActions,
   isDarkMode = false,
-  maxHeight = 400,
+  maxHeight = 600,
 }) => {
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
@@ -236,7 +236,13 @@ const EntityTable: React.FC<EntityTableProps> = ({
   };
 
   return (
-    <div className={styles.container} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={styles.container}
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        height: typeof maxHeight === "string" ? maxHeight : `${maxHeight}px`,
+      }}
+    >
       <MaterialReactTable
         columns={columns}
         data={container.toArray()}
@@ -244,15 +250,24 @@ const EntityTable: React.FC<EntityTableProps> = ({
         enableFacetedValues
         enableRowActions
         enableRowSelection
-        // {contextMenu && (
-        //   <ContextMenu
-        //     x={contextMenu.mouseX}
-        //     y={contextMenu.mouseY}
-        //     items={contextMenuItems}
-        //     onClose={() => setContextMenu(null)}
-        //     isDarkMode={isDarkMode}
-        //   />
-        // )}
+        muiTableContainerProps={{
+          sx: {
+            maxHeight: "calc(100% - 100px)", // Leave space for pagination
+          },
+        }}
+        muiTablePaperProps={{
+          sx: {
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+          },
+        }}
+        initialState={{
+          density: "compact",
+          pagination: { pageSize: 25, pageIndex: 0 },
+        }}
+        enableStickyHeader
+        enableBottomToolbar
       />
     </div>
   );
