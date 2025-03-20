@@ -107,6 +107,7 @@ import { getAllGraphs, sceneGraphs } from "./data/graphs/sceneGraphLib";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
+import useDialogStore from "./store/dialogStore";
 
 export type ObjectOf<T> = { [key: string]: T };
 
@@ -182,6 +183,21 @@ const AppContent: React.FC<{
   showLeftSidebar,
   showRightSidebar,
 }) => {
+  const {
+    showPathAnalysis,
+    setShowEntityTables,
+    setShowLayoutManager,
+    setShowSceneGraphDetailView,
+    setShowPathAnalysis,
+    showLoadSceneGraphWindow,
+    setShowLoadSceneGraphWindow,
+    showSaveSceneGraphDialog,
+    setShowSaveSceneGraphDialog,
+    showEntityTables,
+    showLayoutManager,
+    showSceneGraphDetailView,
+  } = useDialogStore();
+
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
   const reactFlowRef = useRef<HTMLDivElement | null>(null);
@@ -287,12 +303,6 @@ const AppContent: React.FC<{
     },
     []
   );
-
-  const [showLoadSceneGraphWindow, setShowLoadSceneGraphWindow] =
-    useState(false);
-
-  const [showSaveSceneGraphDialog, setShowSaveSceneGraphDialog] =
-    useState(false);
 
   const selectedNode = useMemo(() => {
     return appInteractionConfig.clickedNode;
@@ -993,21 +1003,10 @@ const AppContent: React.FC<{
     [handleSetActiveLayout]
   );
 
-  const [showPathAnalysis, setShowPathAnalysis] = useState(false);
   const [pathAnalysisConfig, setPathAnalysisConfig] = useState<
     IPathArgs | undefined
   >(undefined);
   const [editingNodeId, setEditingNodeId] = useState<NodeId | null>(null);
-  const [showEntityTables, setShowEntityTables] = useState(false);
-
-  const handleShowEntityTables = useCallback(() => {
-    setShowEntityTables(true);
-  }, []);
-
-  const [showLayoutManager, setShowLayoutManager] = useState<{
-    mode: "save" | "load";
-    show: boolean;
-  }>({ mode: "save", show: false });
 
   const handleLoadLayout = useCallback(
     (positions: NodePositionData) => {
@@ -1048,14 +1047,6 @@ const AppContent: React.FC<{
     [handleLoadSceneGraph]
   );
 
-  const [showSceneGraphDetailView, setShowSceneGraphDetailView] = useState<{
-    show: boolean;
-    readOnly: boolean;
-  }>({
-    show: false,
-    readOnly: true,
-  });
-
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
       handleImportConfig,
@@ -1064,8 +1055,8 @@ const AppContent: React.FC<{
       SimulationMenuActions,
       applyNewLayout,
       setAppConfig,
-      setShowNodeTable: handleShowEntityTables,
-      setShowEdgeTable: handleShowEntityTables,
+      setShowNodeTable: setShowEntityTables,
+      setShowEdgeTable: setShowEntityTables,
       showLayoutManager: (mode: "save" | "load") =>
         setShowLayoutManager({ mode, show: true }),
       showFilterWindow: () => setShowFilter(true),
@@ -1090,7 +1081,9 @@ const AppContent: React.FC<{
     handleFitToView,
     handleImportConfig,
     handleLoadLayout,
-    handleShowEntityTables,
+    setShowEntityTables,
+    setShowLayoutManager,
+    setShowSceneGraphDetailView,
   ]);
 
   const menuConfig = useMemo(
@@ -1584,7 +1577,7 @@ const AppContent: React.FC<{
         },
       },
     ],
-    [currentSceneGraph, setSelectedNode]
+    [currentSceneGraph, setSelectedNode, setShowPathAnalysis]
   );
 
   const getContextMenuItems = useCallback(
@@ -1613,7 +1606,13 @@ const AppContent: React.FC<{
         />
       );
     }
-  }, [showPathAnalysis, pathAnalysisConfig, currentSceneGraph, isDarkMode]);
+  }, [
+    showPathAnalysis,
+    currentSceneGraph,
+    isDarkMode,
+    pathAnalysisConfig,
+    setShowPathAnalysis,
+  ]);
 
   const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
   const [jsonEditEntity, setJsonEditEntity] = useState<Entity | null>(null);
@@ -1649,7 +1648,12 @@ const AppContent: React.FC<{
       );
     }
     return null;
-  }, [handleLoadSceneGraph, handleSetSceneGraph, showLoadSceneGraphWindow]);
+  }, [
+    handleLoadSceneGraph,
+    handleSetSceneGraph,
+    setShowLoadSceneGraphWindow,
+    showLoadSceneGraphWindow,
+  ]);
 
   const maybeRenderSaveSceneGraphWindow = useMemo(() => {
     if (showSaveSceneGraphDialog) {
@@ -1661,7 +1665,11 @@ const AppContent: React.FC<{
       );
     }
     return null;
-  }, [currentSceneGraph, showSaveSceneGraphDialog]);
+  }, [
+    currentSceneGraph,
+    setShowSaveSceneGraphDialog,
+    showSaveSceneGraphDialog,
+  ]);
 
   const maybeRenderYasgui = useMemo(() => {
     if (appConfig.activeView !== "Yasgui") {
@@ -1725,7 +1733,7 @@ const AppContent: React.FC<{
           }
           handleLoadLayout={handleLoadLayout}
           handleFitToView={handleFitToView}
-          handleShowEntityTables={handleShowEntityTables}
+          handleShowEntityTables={() => setShowEntityTables(true)}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>
