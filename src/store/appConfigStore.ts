@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
+import { RenderingManager__DisplayMode } from "../controllers/RenderingManager";
 import { LayoutEngineOption } from "../core/layouts/LayoutEngine";
-import { ActiveView, AppConfig } from "./../AppConfig";
+import { ActiveView, AppConfig, DEFAULT_APP_CONFIG } from "./../AppConfig";
 
 export type AppConfigActions = {
   setActiveView: (activeView: ActiveView) => void;
@@ -17,6 +17,8 @@ export type AppConfigActions = {
   setSelectedSimulation: (selectedSimulation: string) => void;
   getShowEntityDataCard: () => boolean;
   setShowEntityDataCard: (showEntityDataCard: boolean) => void;
+  setLegendMode: (legendMode: RenderingManager__DisplayMode) => void;
+  getLegendMode: () => RenderingManager__DisplayMode;
 };
 
 export type AppState = AppConfig &
@@ -25,18 +27,21 @@ export type AppState = AppConfig &
     selectedSimulation: string;
   };
 
+const DEFAULTS = DEFAULT_APP_CONFIG();
+
 const useAppConfigStore = create<AppState>((set) => ({
-  activeView: "ForceGraph3d",
-  activeSceneGraph: "AcademicsKG",
+  activeView: DEFAULTS.activeView,
+  activeSceneGraph: DEFAULTS.activeSceneGraph,
   windows: {
-    showEntityDataCard: false,
+    showEntityDataCard: DEFAULTS.windows.showEntityDataCard,
   },
   forceGraph3dOptions: {
-    layout: "Physics",
+    layout: DEFAULTS.forceGraph3dOptions.layout,
   },
-  activeLayout: CustomLayoutType.Random,
+  activeLayout: DEFAULTS.activeLayout,
   isDarkMode: false,
   selectedSimulation: "Lumina",
+  legendMode: DEFAULTS.legendMode,
 
   setActiveView: (activeView: ActiveView) => set({ activeView }),
   setActiveSceneGraph: (activeSceneGraph: string) => set({ activeSceneGraph }),
@@ -60,6 +65,11 @@ const useAppConfigStore = create<AppState>((set) => ({
   setIsDarkMode: (isDarkMode: boolean) => set({ isDarkMode }),
   setSelectedSimulation: (selectedSimulation: string) =>
     set({ selectedSimulation }),
+
+  setLegendMode: (legendMode: RenderingManager__DisplayMode) =>
+    set({ legendMode }),
+  getLegendMode: (): RenderingManager__DisplayMode =>
+    useAppConfigStore.getState().legendMode,
 }));
 
 export const setActiveView = (activeView: ActiveView) => {
@@ -152,6 +162,16 @@ export const setShowEntityDataCard = (showEntityDataCard: boolean) => {
   useAppConfigStore.setState(() => ({
     windows: { showEntityDataCard },
   }));
+};
+
+export const setLegendMode = (legendMode: RenderingManager__DisplayMode) => {
+  useAppConfigStore.setState(() => ({
+    legendMode,
+  }));
+};
+
+export const getLegendMode = () => {
+  return useAppConfigStore.getState().legendMode;
 };
 
 export default useAppConfigStore;

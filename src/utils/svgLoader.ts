@@ -144,6 +144,7 @@ export const loadSvgToSceneGraph = (
         layout: "Layout",
       },
       activeLayout: PresetLayoutType.NodePositions,
+      legendMode: "type",
       ...options?.appConfig,
     },
   });

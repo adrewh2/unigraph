@@ -199,6 +199,8 @@ const AppContent: React.FC<{
     activeLayout,
     getShowEntityDataCard,
     activeSceneGraph,
+    legendMode,
+    setLegendMode,
   } = useAppConfigStore();
 
   const { showToolbar } = useWorkspaceConfigStore();
@@ -279,8 +281,6 @@ const AppContent: React.FC<{
   const [edgeConfig, setEdgeConfig] = useState<DisplayConfig>(
     GetCurrentDisplayConfigOf(currentSceneGraph, "Edge")
   );
-  const [layoutMode, setLayoutMode] =
-    useState<RenderingManager__DisplayMode>("type");
 
   const isDarkMode = useMemo(() => {
     return activeView === "ForceGraph3d" || activeView in simulations;
@@ -618,7 +618,7 @@ const AppContent: React.FC<{
         if (graph.getData().defaultAppConfig) {
           setAppConfig(graph.getData().defaultAppConfig!);
         }
-        setLayoutMode(graph.getDisplayConfig().mode);
+        setLegendMode(graph.getDisplayConfig().mode);
         setGraphStatistics(getGraphStatistics(graph.getGraph()));
         setNodeConfig(GetCurrentDisplayConfigOf(graph, "Node"));
         setEdgeConfig(GetCurrentDisplayConfigOf(graph, "Edge"));
@@ -651,6 +651,7 @@ const AppContent: React.FC<{
       clearUrlOfQueryParams,
       handleDisplayConfigChanged,
       safeComputeLayout,
+      setLegendMode,
     ]
   );
 
@@ -781,11 +782,11 @@ const AppContent: React.FC<{
       console.log("changing layoutmode to ", mode);
       refreshForceGraphInstance(forceGraphInstance.current!, currentSceneGraph);
 
-      setLayoutMode(mode);
+      setLegendMode(mode);
       setNodeConfig(GetCurrentDisplayConfigOf(currentSceneGraph, "Node"));
       setEdgeConfig(GetCurrentDisplayConfigOf(currentSceneGraph, "Edge"));
     },
-    [currentSceneGraph]
+    [currentSceneGraph, setLegendMode]
   );
 
   const handleNodeCheckBulk = useCallback(
@@ -1017,11 +1018,11 @@ const AppContent: React.FC<{
   const renderLayoutModeRadio = useCallback(() => {
     return (
       <LayoutModeRadio
-        layoutMode={layoutMode}
+        layoutMode={legendMode}
         onLayoutModeChange={handleLayoutModeChange}
       />
     );
-  }, [layoutMode, handleLayoutModeChange]);
+  }, [legendMode, handleLayoutModeChange]);
 
   const maybeRenderReactFlow = useMemo(() => {
     if (activeView !== "ReactFlow") {
