@@ -18,3 +18,24 @@ export const DEFAULT_FORCE_GRAPH_RENDER_CONFIG: IForceGraphRenderConfig = {
   //phyics
   chargeStrength: -30, // default.
 };
+
+// type ForceGraphConfigState = {
+//   forceGraphRenderConfig: IForceGraphRenderConfig;
+//   setForceGraphRenderConfig: (config: IForceGraphRenderConfig) => void;
+// };
+
+// const useForceGraphConfigStore = create<ForceGraphConfigState>((set) => ({
+//   forceGraphRenderConfig: DEFAULT_FORCE_GRAPH_RENDER_CONFIG,
+//   setForceGraphRenderConfig: (config) =>
+//     set({ forceGraphRenderConfig: config }),
+// }));
+
+// export const setForceGraphRenderConfig = (config: IForceGraphRenderConfig) => {
+//   useForceGraphConfigStore.setState(() => ({
+//     forceGraphRenderConfig: config,
+//   }));
+// };
+
+// export const getForceGraphRenderConfig = () => {
+//   return useForceGraphConfigStore.getState().forceGraphRenderConfig;
+// };
