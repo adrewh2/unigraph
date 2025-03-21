@@ -5,6 +5,7 @@ import {
 } from "../../controllers/RenderingManager";
 import { GraphvizLayoutType } from "../layouts/GraphvizLayoutEngine";
 import { LayoutEngineOption } from "../layouts/LayoutEngine";
+import { getNodeIsVisible } from "../react-flow/legenUtils";
 import { Graph } from "./Graph";
 
 export const ConvertSceneGraphToGraphviz = (
@@ -30,7 +31,7 @@ export const ConvertSceneGraphToGraphviz = (
     }
 
     for (const node of graph.getNodes()) {
-      if (!renderingManager.getNodeIsVisible(node)) {
+      if (!getNodeIsVisible(node)) {
         continue;
       }
       const n = g.node(node.getId().replace(/:/g, "_"), {

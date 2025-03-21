@@ -2,7 +2,6 @@ import { ForceGraph3DInstance } from "3d-force-graph";
 import { ForceGraph3dLayoutMode } from "../../AppConfig";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EdgeId } from "../model/Edge";
-import { EntitiesContainer } from "../model/entity/entitiesContainer";
 import { EntityIds } from "../model/entity/entityIds";
 import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
@@ -32,20 +31,13 @@ export const updateVisibleEntitiesInForceGraphInstance = (
 ): void => {
   const visibleNodes = sceneGraph
     .getNodes()
-    .filter((node) => node.isVisible())
-    .filter((node) => getNodeIsVisible(node));
+    .filter((node) => node.isVisible() && getNodeIsVisible(node));
   const visibleEdges = sceneGraph
     .getGraph()
     .getEdgesConnectedToNodes(
       new EntityIds(visibleNodes.map((node) => node.getId()))
     )
-    .filter((edge) => edge.isVisible())
-    .filter((edge) => getEdgeIsVisible(edge))
-    .filter((edge) => {
-      const source = sceneGraph.getNodes().get(edge.getSource());
-      const target = sceneGraph.getNodes().get(edge.getTarget());
-      return source.isVisible() && target.isVisible();
-    });
+    .filter((edge) => edge.isVisible() && getEdgeIsVisible(edge));
 
   const newNodeList = instance
     .graphData()
@@ -67,9 +59,7 @@ export const updateVisibleEntitiesInForceGraphInstance = (
 
   const newEdgeList = instance
     .graphData()
-    .links.filter((link) =>
-      new EntitiesContainer(visibleEdges).has((link as any).id as EdgeId)
-    );
+    .links.filter((link) => visibleEdges.has((link as any).id as EdgeId));
 
   const existingEdges = new Set(newEdgeList.map((link) => (link as any).id));
   visibleEdges.forEach((edge) => {
