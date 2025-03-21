@@ -1118,6 +1118,7 @@ const AppContent: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeView,
+    activeFilterPreset,
     activeLayout,
     currentSceneGraph,
     layoutResult,
