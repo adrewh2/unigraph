@@ -1,42 +1,61 @@
 import { create } from "zustand";
 import { EdgeId } from "../core/model/Edge";
 import { NodeId } from "../core/model/Node";
+import { EntityIds } from "../core/model/entity/entityIds";
 
 type GraphInteractionState = {
-  hoveredNodeId: NodeId | null;
-  hoveredEdgeId: EdgeId | null;
-  selectedNodeIds: Set<NodeId>;
-  selectedEdgeIds: Set<EdgeId>;
+  hoveredNodeIds: EntityIds<NodeId>;
+  hoveredEdgeIds: EntityIds<EdgeId>;
+  selectedNodeIds: EntityIds<NodeId>;
+  selectedEdgeIds: EntityIds<EdgeId>;
 
   setHoveredNodeId: (nodeId: NodeId | null) => void;
   setHoveredEdgeId: (edgeId: EdgeId | null) => void;
-  getSelectedNodeId: () => NodeId | null;
-  getSelectedEdgeId: () => EdgeId | null;
+  setHoveredNodeIds: (nodeIds: EntityIds<NodeId> | NodeId[]) => void;
+  setHoveredEdgeIds: (edgeIds: EntityIds<EdgeId> | EdgeId[]) => void;
+  getHoveredNodeId: () => NodeId | null;
+  getHoveredEdgeId: () => EdgeId | null;
+  getHoveredNodeIds: () => EntityIds<NodeId>;
+  getHoveredEdgeIds: () => EntityIds<EdgeId>;
   setSelectedNodeId: (nodeId: NodeId | null) => void;
   setSelectedEdgeId: (edgeId: EdgeId | null) => void;
-  setSelectedNodeIds: (nodeIds: NodeId[]) => void;
-  setSelectedEdgeIds: (edgeIds: EdgeId[]) => void;
+  setSelectedNodeIds: (nodeIds: EntityIds<NodeId> | NodeId[]) => void;
+  setSelectedEdgeIds: (edgeIds: EntityIds<EdgeId> | EdgeId[]) => void;
+  getSelectedNodeId: () => NodeId | null;
+  getSelectedEdgeId: () => EdgeId | null;
   clearSelections: () => void;
 };
 
 const useGraphInteractionStore = create<GraphInteractionState>((set, get) => ({
-  hoveredNodeId: null,
-  hoveredEdgeId: null,
-  selectedNodeIds: new Set(),
-  selectedEdgeIds: new Set(),
+  hoveredNodeIds: new EntityIds(),
+  hoveredEdgeIds: new EntityIds(),
+  selectedNodeIds: new EntityIds(),
+  selectedEdgeIds: new EntityIds(),
 
-  setHoveredNodeId: (nodeId: NodeId | null) => set({ hoveredNodeId: nodeId }),
-  setHoveredEdgeId: (edgeId: EdgeId | null) => set({ hoveredEdgeId: edgeId }),
+  setHoveredNodeId: (nodeId) =>
+    set({ hoveredNodeIds: nodeId ? new EntityIds([nodeId]) : new EntityIds() }),
+  setHoveredEdgeId: (edgeId) =>
+    set({ hoveredEdgeIds: edgeId ? new EntityIds([edgeId]) : new EntityIds() }),
+  setHoveredNodeIds: (nodeIds) =>
+    set({ hoveredNodeIds: new EntityIds(nodeIds) }),
+  setHoveredEdgeIds: (edgeIds) =>
+    set({ hoveredEdgeIds: new EntityIds(edgeIds) }),
 
-  setSelectedNodeId: (nodeId: NodeId | null) => {
-    set({ selectedNodeIds: nodeId ? new Set([nodeId]) : new Set() });
-    set({ selectedEdgeIds: new Set() });
+  getHoveredNodeId: () => {
+    const hoveredNodes = Array.from(get().hoveredNodeIds);
+    return hoveredNodes.length === 1 ? hoveredNodes[0] : null;
   },
-  setSelectedEdgeId: (edgeId: EdgeId | null) => {
-    set({ selectedEdgeIds: edgeId ? new Set([edgeId]) : new Set() });
-    set({ selectedNodeIds: new Set() });
+  getHoveredEdgeId: () => {
+    const hoveredEdges = Array.from(get().hoveredEdgeIds);
+    return hoveredEdges.length === 1 ? hoveredEdges[0] : null;
   },
+  getHoveredNodeIds: () => get().hoveredNodeIds,
+  getHoveredEdgeIds: () => get().hoveredEdgeIds,
 
+  setSelectedNodeId: (nodeId) =>
+    set({
+      selectedNodeIds: nodeId ? new EntityIds([nodeId]) : new EntityIds(),
+    }),
   getSelectedNodeId: () => {
     const selectedNodes = Array.from(get().selectedNodeIds);
     return selectedNodes.length === 1 ? selectedNodes[0] : null;
@@ -45,16 +64,39 @@ const useGraphInteractionStore = create<GraphInteractionState>((set, get) => ({
     const selectedEdges = Array.from(get().selectedEdgeIds);
     return selectedEdges.length === 1 ? selectedEdges[0] : null;
   },
-  setSelectedNodeIds: (nodeIds) => set({ selectedNodeIds: new Set(nodeIds) }),
-  setSelectedEdgeIds: (edgeIds) => set({ selectedEdgeIds: new Set(edgeIds) }),
+  setSelectedEdgeId: (edgeId) =>
+    set({
+      selectedEdgeIds: edgeId ? new EntityIds([edgeId]) : new EntityIds(),
+    }),
+  setSelectedNodeIds: (nodeIds) =>
+    set({ selectedNodeIds: new EntityIds(nodeIds) }),
+  setSelectedEdgeIds: (edgeIds) =>
+    set({ selectedEdgeIds: new EntityIds(edgeIds) }),
   clearSelections: () =>
-    set({ selectedNodeIds: new Set(), selectedEdgeIds: new Set() }),
+    set({
+      selectedNodeIds: new EntityIds(),
+      selectedEdgeIds: new EntityIds(),
+      hoveredNodeIds: new EntityIds(),
+      hoveredEdgeIds: new EntityIds(),
+    }),
 }));
 
 export const setHoveredNodeId = (nodeId: NodeId | null) =>
   useGraphInteractionStore.getState().setHoveredNodeId(nodeId);
 export const setHoveredEdgeId = (edgeId: EdgeId | null) =>
   useGraphInteractionStore.getState().setHoveredEdgeId(edgeId);
+export const setHoveredNodeIds = (nodeIds: EntityIds<NodeId> | NodeId[]) =>
+  useGraphInteractionStore.getState().setHoveredNodeIds(nodeIds);
+export const setHoveredEdgeIds = (edgeIds: EntityIds<EdgeId> | EdgeId[]) =>
+  useGraphInteractionStore.getState().setHoveredEdgeIds(edgeIds);
+export const getHoveredNodeId = () =>
+  useGraphInteractionStore.getState().getHoveredNodeId();
+export const getHoveredEdgeId = () =>
+  useGraphInteractionStore.getState().getHoveredEdgeId();
+export const getHoveredNodeIds = () =>
+  useGraphInteractionStore.getState().getHoveredNodeIds();
+export const getHoveredEdgeIds = () =>
+  useGraphInteractionStore.getState().getHoveredEdgeIds();
 export const getSelectedNodeId = () =>
   useGraphInteractionStore.getState().getSelectedNodeId();
 export const getSelectedEdgeId = () =>
@@ -63,9 +105,9 @@ export const setSelectedNodeId = (nodeId: NodeId | null) =>
   useGraphInteractionStore.getState().setSelectedNodeId(nodeId);
 export const setSelectedEdgeId = (edgeId: EdgeId | null) =>
   useGraphInteractionStore.getState().setSelectedEdgeId(edgeId);
-export const setSelectedNodeIds = (nodeIds: NodeId[]) =>
+export const setSelectedNodeIds = (nodeIds: EntityIds<NodeId> | NodeId[]) =>
   useGraphInteractionStore.getState().setSelectedNodeIds(nodeIds);
-export const setSelectedEdgeIds = (edgeIds: EdgeId[]) =>
+export const setSelectedEdgeIds = (edgeIds: EntityIds<EdgeId> | EdgeId[]) =>
   useGraphInteractionStore.getState().setSelectedEdgeIds(edgeIds);
 export const clearSelections = () =>
   useGraphInteractionStore.getState().clearSelections();

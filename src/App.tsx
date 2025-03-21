@@ -108,8 +108,12 @@ import useAppConfigStore, {
 import useDialogStore from "./store/dialogStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import {
+  clearSelections,
+  getHoveredNodeIds,
   getSelectedNodeId,
+  setHoveredEdgeIds,
   setHoveredNodeId,
+  setHoveredNodeIds,
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
 import useWorkspaceConfigStore from "./store/workspaceConfigStore";
@@ -359,11 +363,15 @@ const AppContent: React.FC<{
         if (type === "Node") {
           const allNodesOfType =
             currentSceneGraph.getDisplayConfig().mode === "type"
-              ? currentSceneGraph.getGraph().getNodesByType(key)
-              : currentSceneGraph.getGraph().getNodesByTag(key);
-          allNodesOfType.forEach((n) => {
-            currentSceneGraph.getAppState().hoveredNodes.add(n.getId());
-          });
+              ? currentSceneGraph
+                  .getGraph()
+                  .getNodesByType(key)
+                  .map((n) => n.getId())
+              : currentSceneGraph
+                  .getGraph()
+                  .getNodesByTag(key)
+                  .map((node) => node.getId());
+          setHoveredNodeIds(allNodesOfType);
           if (forceGraphInstance.current) {
             forceGraphInstance.current.nodeColor(
               forceGraphInstance.current.nodeColor()
@@ -379,9 +387,10 @@ const AppContent: React.FC<{
   const handleMouseUnhoverLegendItem = useCallback(
     (_type: GraphEntityType) =>
       (_key: string): void => {
-        currentSceneGraph.getAppState().hoveredNodes.clear();
+        setHoveredNodeIds([]);
+        setHoveredEdgeIds([]);
       },
-    [currentSceneGraph]
+    []
   );
 
   const handleSetActiveFilterPreset = useCallback(
@@ -613,6 +622,7 @@ const AppContent: React.FC<{
       if (clearQueryParams) {
         clearUrlOfQueryParams();
       }
+      clearSelections();
       safeComputeLayout(graph, activeLayout).then(() => {
         setCurrentSceneGraph(graph);
         if (graph.getData().defaultAppConfig) {
@@ -772,7 +782,7 @@ const AppContent: React.FC<{
     [currentSceneGraph, edgeConfig]
   );
 
-  const handleLayoutModeChange = useCallback(
+  const handleLegendModeChange = useCallback(
     (mode: RenderingManager__DisplayMode) => {
       currentSceneGraph.getDisplayConfig().mode = mode;
       // DisplayManager.applyRenderingConfigToGraph(
@@ -1019,10 +1029,10 @@ const AppContent: React.FC<{
     return (
       <LayoutModeRadio
         layoutMode={legendMode}
-        onLayoutModeChange={handleLayoutModeChange}
+        onLayoutModeChange={handleLegendModeChange}
       />
     );
-  }, [legendMode, handleLayoutModeChange]);
+  }, [legendMode, handleLegendModeChange]);
 
   const maybeRenderReactFlow = useMemo(() => {
     if (activeView !== "ReactFlow") {
@@ -1655,18 +1665,13 @@ const AppContent: React.FC<{
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
-        {getShowEntityDataCard() &&
-          currentSceneGraph.getAppState().hoveredNodes.size > 0 && (
-            <EntityDataDisplayCard
-              entityData={currentSceneGraph
-                .getGraph()
-                .getNode(
-                  Array.from(
-                    currentSceneGraph.getAppState().hoveredNodes
-                  )[0] as NodeId
-                )}
-            />
-          )}
+        {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (
+          <EntityDataDisplayCard
+            entityData={currentSceneGraph
+              .getGraph()
+              .getNode(Array.from(getHoveredNodeIds())[0] as NodeId)}
+          />
+        )}
         {getSelectedNodeId() && forceGraphInstance.current && (
           <NodeDisplayCard
             nodeId={getSelectedNodeId()!}
