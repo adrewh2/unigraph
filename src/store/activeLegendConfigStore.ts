@@ -17,7 +17,9 @@ export type ActiveLegendConfigState = {
   setEdgeVisibility: (key: EdgeId, isVisible: boolean) => void;
   getEdgeVisiblity: (key: EdgeId) => boolean;
   setNodeColor: (key: NodeId, color: string) => void;
+  getNodeColor: (key: NodeId) => string;
   setEdgeColor: (key: EdgeId, color: string) => void;
+  getEdgeColor: (key: EdgeId) => string;
 };
 
 const useActiveLegendConfigStore = create<ActiveLegendConfigState>((set) => ({
@@ -118,5 +120,53 @@ const useActiveLegendConfigStore = create<ActiveLegendConfigState>((set) => ({
     );
   },
 }));
+
+export const setNodeLegendConfig = (config: DisplayConfig) => {
+  useActiveLegendConfigStore.getState().setNodeLegendConfig(config);
+};
+
+export const setEdgeLegendConfig = (config: DisplayConfig) => {
+  useActiveLegendConfigStore.getState().setEdgeLegendConfig(config);
+};
+
+export const getNodeLegendConfig = () => {
+  return useActiveLegendConfigStore.getState().getNodeLegendConfig();
+};
+
+export const getEdgeLegendConfig = () => {
+  return useActiveLegendConfigStore.getState().getEdgeLegendConfig();
+};
+
+export const setNodeVisibility = (key: NodeId, isVisible: boolean) => {
+  useActiveLegendConfigStore.getState().setNodeVisibility(key, isVisible);
+};
+
+export const getNodeVisibility = (key: NodeId) => {
+  return useActiveLegendConfigStore.getState().getNodeVisiblity(key);
+};
+
+export const getEdgeVisibility = (key: EdgeId) => {
+  return useActiveLegendConfigStore.getState().getEdgeVisiblity(key);
+};
+
+export const setEdgeVisibility = (key: EdgeId, isVisible: boolean) => {
+  useActiveLegendConfigStore.getState().setEdgeVisibility(key, isVisible);
+};
+
+export const setNodeColor = (key: NodeId, color: string) => {
+  useActiveLegendConfigStore.getState().setNodeColor(key, color);
+};
+
+export const setEdgeColor = (key: EdgeId, color: string) => {
+  useActiveLegendConfigStore.getState().setEdgeColor(key, color);
+};
+
+export const getNodeColor = (key: NodeId) => {
+  return useActiveLegendConfigStore.getState().getNodeColor(key);
+};
+
+export const getEdgeColor = (key: EdgeId) => {
+  return useActiveLegendConfigStore.getState().getEdgeColor(key);
+};
 
 export default useActiveLegendConfigStore;
