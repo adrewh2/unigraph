@@ -377,7 +377,7 @@ const AppContent: React.FC<{
       (key: string): void => {
         if (type === "Node") {
           const allNodesOfType =
-            currentSceneGraph.getDisplayConfig().mode === "type"
+            legendMode === "type"
               ? currentSceneGraph
                   .getGraph()
                   .getNodesByType(key)
@@ -396,7 +396,7 @@ const AppContent: React.FC<{
           return;
         }
       },
-    [currentSceneGraph]
+    [currentSceneGraph, legendMode]
   );
 
   const handleMouseUnhoverLegendItem = useCallback(
@@ -845,7 +845,7 @@ const AppContent: React.FC<{
 
   const renderNodeLegend = useMemo(() => {
     const statistics =
-      currentSceneGraph.getDisplayConfig().mode === "type"
+      legendMode === "type"
         ? graphStatistics?.nodeTypeToCount
         : graphStatistics?.nodeTagsToCount;
     return (
@@ -868,20 +868,21 @@ const AppContent: React.FC<{
       />
     );
   }, [
-    currentSceneGraph,
+    legendMode,
     graphStatistics?.nodeTypeToCount,
     graphStatistics?.nodeTagsToCount,
     graphStatistics?.nodeCount,
     nodeLegendConfig,
     handleNodeCheckBulk,
     isDarkMode,
+    currentSceneGraph,
     handleMouseHoverLegendItem,
     handleMouseUnhoverLegendItem,
   ]);
 
   const renderEdgeLegend = useMemo(() => {
     const statistics =
-      currentSceneGraph.getDisplayConfig().mode === "type"
+      legendMode === "type"
         ? graphStatistics?.edgeTypeToCount
         : graphStatistics?.edgeTagsToCount;
     return (
@@ -902,13 +903,14 @@ const AppContent: React.FC<{
       />
     );
   }, [
-    currentSceneGraph,
+    legendMode,
     graphStatistics?.edgeTypeToCount,
     graphStatistics?.edgeTagsToCount,
     graphStatistics?.edgeCount,
     edgeLegendConfig,
     handleEdgeCheckBulk,
     isDarkMode,
+    currentSceneGraph,
   ]);
 
   // useEffect(() => {
