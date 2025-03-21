@@ -1,12 +1,15 @@
 import { ForceGraph3DInstance } from "3d-force-graph";
 import { ForceGraph3dLayoutMode } from "../../AppConfig";
+import {
+  getEdgeIsVisible,
+  getNodeIsVisible,
+} from "../../store/activeLegendConfigStore";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EdgeId } from "../model/Edge";
 import { EntityIds } from "../model/entity/entityIds";
 import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
 import { exportGraphDataForReactFlow } from "../react-flow/exportGraphDataForReactFlow";
-import { getEdgeIsVisible, getNodeIsVisible } from "../react-flow/legenUtils";
 
 export const extractPositionDataFromForceGraphInstance = (
   instance: ForceGraph3DInstance

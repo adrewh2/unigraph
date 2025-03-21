@@ -1,8 +1,13 @@
 import { create } from "zustand";
-import { DisplayConfig } from "../controllers/RenderingManager";
+import {
+  DisplayConfig,
+  RenderingManager,
+} from "../controllers/RenderingManager";
 import { EdgeId } from "../core/model/Edge";
+import { IEntity } from "../core/model/entity/abstractEntity";
 import { NodeId } from "../core/model/Node";
 import { getRandomColor } from "../utils/colorUtils";
+import { getLegendMode } from "./appConfigStore";
 
 export type ActiveLegendConfigState = {
   nodeLegendConfig: DisplayConfig;
@@ -179,5 +184,17 @@ export const getNodeKeyColor = (key: NodeId) => {
 export const getEdgeKeyColor = (key: EdgeId) => {
   return useActiveLegendConfigStore.getState().getEdgeKeyColor(key);
 };
+
+export const getNodeIsVisible = (node: IEntity): boolean =>
+  RenderingManager.getVisibility(node, getNodeLegendConfig(), getLegendMode());
+
+export const getNodeColor = (node: IEntity): string =>
+  RenderingManager.getColor(node, getNodeLegendConfig(), getLegendMode());
+
+export const getEdgeIsVisible = (edge: IEntity): boolean =>
+  RenderingManager.getVisibility(edge, getEdgeLegendConfig(), getLegendMode());
+
+export const getEdgeColor = (edge: IEntity): string =>
+  RenderingManager.getColor(edge, getEdgeLegendConfig(), getLegendMode());
 
 export default useActiveLegendConfigStore;

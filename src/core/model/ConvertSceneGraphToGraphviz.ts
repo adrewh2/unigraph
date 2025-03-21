@@ -3,9 +3,9 @@ import {
   RenderingConfig,
   RenderingManager,
 } from "../../controllers/RenderingManager";
+import { getNodeIsVisible } from "../../store/activeLegendConfigStore";
 import { GraphvizLayoutType } from "../layouts/GraphvizLayoutEngine";
 import { LayoutEngineOption } from "../layouts/LayoutEngine";
-import { getNodeIsVisible } from "../react-flow/legenUtils";
 import { Graph } from "./Graph";
 
 export const ConvertSceneGraphToGraphviz = (
