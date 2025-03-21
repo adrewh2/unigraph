@@ -1,12 +1,13 @@
 import { Edge, Node } from "@xyflow/react";
-import { RenderingManager } from "../../controllers/RenderingManager";
-import { getNodeLegendConfig } from "../../store/activeLegendConfigStore";
-import { getLegendMode } from "../../store/appConfigStore";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { SceneGraph } from "../model/SceneGraph";
-import { IEntity } from "../model/entity/abstractEntity";
 import { EntityIds } from "../model/entity/entityIds";
-import { getEdgeLegendConfig } from "./../../store/activeLegendConfigStore";
+import {
+  getEdgeColor,
+  getEdgeIsVisible,
+  getNodeColor,
+  getNodeIsVisible,
+} from "./legenUtils";
 
 export const exportGraphDataForReactFlow = (
   sceneGraph: SceneGraph,
@@ -15,26 +16,6 @@ export const exportGraphDataForReactFlow = (
 ): { nodes: Node[]; edges: Edge[] } => {
   const positions: NodePositionData | undefined =
     positionsOverride ?? sceneGraph.getDisplayConfig().nodePositions;
-
-  const getNodeIsVisible = (node: IEntity): boolean =>
-    RenderingManager.getVisibility(
-      node,
-      getNodeLegendConfig(),
-      getLegendMode()
-    );
-
-  const getNodeColor = (node: IEntity): string =>
-    RenderingManager.getColor(node, getNodeLegendConfig(), getLegendMode());
-
-  const getEdgeIsVisible = (edge: IEntity): boolean =>
-    RenderingManager.getVisibility(
-      edge,
-      getEdgeLegendConfig(),
-      getLegendMode()
-    );
-
-  const getEdgeColor = (edge: IEntity): string =>
-    RenderingManager.getColor(edge, getEdgeLegendConfig(), getLegendMode());
 
   const nodes = Array.from(sceneGraph.getGraph().getNodes())
     .filter((node) => {
