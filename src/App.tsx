@@ -785,13 +785,6 @@ const AppContent: React.FC<{
   const handleLegendModeChange = useCallback(
     (mode: RenderingManager__DisplayMode) => {
       currentSceneGraph.getDisplayConfig().mode = mode;
-      // DisplayManager.applyRenderingConfigToGraph(
-      //   currentSceneGraph.getGraph(),
-      //   currentSceneGraph.getDisplayConfig()
-      // );
-      console.log("changing layoutmode to ", mode);
-      refreshForceGraphInstance(forceGraphInstance.current!, currentSceneGraph);
-
       setLegendMode(mode);
       setNodeConfig(GetCurrentDisplayConfigOf(currentSceneGraph, "Node"));
       setEdgeConfig(GetCurrentDisplayConfigOf(currentSceneGraph, "Edge"));
