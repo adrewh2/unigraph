@@ -19,7 +19,6 @@ import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
 import useWorkspaceConfigStore, {
-  setLeftSidebarConfig,
   setRightSidebarConfig,
 } from "../../store/workspaceConfigStore";
 import NodeInfo from "../NodeInfo";
@@ -261,14 +260,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
       if (rightSidebarConfig.activeSectionId !== "node-details") {
         // Use a microtask to avoid multiple state updates in one render
         Promise.resolve().then(() => {
-          if (rightSidebarConfig.mode === "collapsed") {
-            setRightSidebarConfig({
-              mode: "full",
-              activeSectionId: "node-details",
-            });
-          } else {
-            setLeftSidebarConfig({ activeSectionId: "node-details" });
-          }
+          setRightSidebarConfig({
+            activeSectionId: "node-details",
+          });
+          console.log("setting to node-details");
         });
       }
     }
