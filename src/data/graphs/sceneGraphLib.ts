@@ -68,12 +68,12 @@ export const sceneGraphs: { [key: string]: SceneGraphCategory } = {
     graphs: {
       big: randomBigGraph,
       biggest: randomBiggestGraph,
-      AcademicsKG: demo_sceneGraph_academicsKG,
     },
   },
   "Thinker Graphs": {
     name: "Thinker Graphs",
     graphs: {
+      AcademicsKG: demo_sceneGraph_academicsKG,
       thinkers1: thinkers1,
       thinkers2: thinkers2,
     },
