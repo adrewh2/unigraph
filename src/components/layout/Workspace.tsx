@@ -43,6 +43,7 @@ interface WorkspaceProps {
   handleLoadLayout: (nodePositionData: NodePositionData) => void;
   handleFitToView: (activeView: string) => void;
   handleShowEntityTables: () => void;
+  activeFilters: string | null; // Add activeFilters prop
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -71,6 +72,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleLoadLayout,
   handleFitToView,
   handleShowEntityTables,
+  activeFilters,
 }) => {
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
@@ -212,7 +214,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
               sceneGraphName:
                 currentSceneGraph.getMetadata().name ?? "Untitled",
               activeLayout: activeLayout,
-              activeFilters: null,
+              activeFilters, // Pass activeFilters name here
             },
           })
         }
@@ -231,6 +233,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     currentSceneGraph,
     handleFitToView,
     handleShowEntityTables,
+    activeFilters, // Add dependency
   ]);
 
   return (

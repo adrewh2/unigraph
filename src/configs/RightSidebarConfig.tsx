@@ -92,9 +92,15 @@ export const rightFooterContent = (
           </div>
           {actions.details.activeFilters && (
             <div className={styles.footerDetailsRow}>
-              <span className={styles.footerDetailsLabel}>Active Filters:</span>
+              <span
+                className={styles.footerDetailsLabel}
+                style={{ color: "orange" }}
+              >
+                Filters
+              </span>
               <span className={styles.footerDetailsValue}>
-                {actions.details.activeFilters}
+                {/* {actions.details.activeFilters} */}
+                <span style={{ color: "orange" }}>Active</span>
               </span>
             </div>
           )}
