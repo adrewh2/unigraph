@@ -46,7 +46,6 @@ import SolarSystem from "./components/simulations/solarSystemSimulation";
 import YasguiPanel from "./components/YasguiPanel";
 
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
-import NodeDisplayCard from "./components/common/NodeDisplayCard";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
 import { AppContextProvider } from "./context/AppContext";
 import {
@@ -62,7 +61,6 @@ import {
   attachRepulsiveForce,
   bindEventsToGraphInstance,
   createForceGraph,
-  getNodeMousePosition,
   refreshForceGraphInstance,
   updateNodePositions,
   zoomToFit,
@@ -122,7 +120,6 @@ import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import {
   clearSelections,
   getHoveredNodeIds,
-  getSelectedNodeId,
   setHoveredEdgeIds,
   setHoveredNodeId,
   setHoveredNodeIds,
@@ -341,12 +338,12 @@ const AppContent: React.FC<{
     layoutResult,
   ]);
 
-  const selectedGraphNode = useMemo(() => {
-    if (getSelectedNodeId()) {
-      return currentSceneGraph.getGraph().getNode(getSelectedNodeId()!);
-    }
-    return null;
-  }, [currentSceneGraph]);
+  // const selectedGraphNode = useMemo(() => {
+  //   if (getSelectedNodeId()) {
+  //     return currentSceneGraph.getGraph().getNode(getSelectedNodeId()!);
+  //   }
+  //   return null;
+  // }, [currentSceneGraph]);
 
   const handleMouseHoverLegendItem = useCallback(
     (type: GraphEntityType) =>
@@ -1668,7 +1665,7 @@ const AppContent: React.FC<{
               .getNode(Array.from(getHoveredNodeIds())[0] as NodeId)}
           />
         )}
-        {getSelectedNodeId() && forceGraphInstance.current && (
+        {/* {getSelectedNodeId() && forceGraphInstance.current && (
           <NodeDisplayCard
             nodeId={getSelectedNodeId()!}
             sceneGraph={currentSceneGraph}
@@ -1681,7 +1678,7 @@ const AppContent: React.FC<{
             onNodeSelect={handleSelectResult}
             onClose={() => setSelectedNodeId(null)}
           />
-        )}
+        )} */}
         {contextMenu && (
           <ContextMenu
             x={contextMenu.x}
