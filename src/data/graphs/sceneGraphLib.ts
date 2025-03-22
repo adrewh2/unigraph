@@ -35,7 +35,6 @@ export const sceneGraphs: { [key: string]: SceneGraphCategory } = {
     name: "Base",
     graphs: {
       Empty: new SceneGraph({}),
-      // URL: urlSceneGraph.sceneGraph,
     },
   },
   "Demo Graphs": {

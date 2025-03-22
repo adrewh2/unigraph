@@ -35,19 +35,7 @@ export type RenderingConfig = {
 export const CLONE_RENDERING_CONFIG = (
   config: RenderingConfig
 ): RenderingConfig => {
-  return {
-    nodeConfig: {
-      types: { ...config.nodeConfig.types },
-      tags: { ...config.nodeConfig.tags },
-    },
-    edgeConfig: {
-      types: { ...config.edgeConfig.types },
-      tags: { ...config.edgeConfig.tags },
-    },
-    mode: config.mode,
-    nodePositions: { ...config.nodePositions },
-    svg: config.svg,
-  };
+  return structuredClone(config);
 };
 
 export type RenderingManager__DisplayMode = "tag" | "type";
