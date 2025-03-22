@@ -1,5 +1,5 @@
 import { Info } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useMemo } from "react"; // Add useRef import
 import {
   createDefaultLeftMenus,
   leftFooterContent,
@@ -19,7 +19,8 @@ import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
 import useWorkspaceConfigStore, {
-  setRightActiveSection,
+  setLeftSidebarConfig,
+  setRightSidebarConfig,
 } from "../../store/workspaceConfigStore";
 import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
@@ -217,32 +218,59 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
     // Dynamically add Node Details section when a node is selected
     if (selectedNodeId) {
-      menuItems.unshift({
-        id: "node-details",
-        icon: <Info size={20} className={styles.menuIcon} />,
-        label: "Node Details",
-        content: (
-          <NodeInfo
-            onFocusNode={(nodeId) => {
-              if (forceGraphInstance && activeView === "ForceGraph3d") {
-                const node = findNodeInForceGraph(forceGraphInstance, nodeId);
-                if (node) {
-                  flyToNode(forceGraphInstance, node);
+      // Find if node details already exists
+      const nodeDetailsExists = menuItems.some(
+        (item) => item.id === "node-details"
+      );
+
+      if (!nodeDetailsExists) {
+        menuItems.unshift({
+          id: "node-details",
+          icon: <Info size={20} className={styles.menuIcon} />,
+          label: "Node Details",
+          content: (
+            <NodeInfo
+              onFocusNode={(nodeId) => {
+                if (forceGraphInstance && activeView === "ForceGraph3d") {
+                  const node = findNodeInForceGraph(
+                    forceGraphInstance!,
+                    nodeId
+                  );
+                  if (node) {
+                    flyToNode(forceGraphInstance!, node);
+                  }
                 }
-              }
-            }}
-            onZoomToNode={(nodeId) => {
-              if (forceGraphInstance && activeView === "ForceGraph3d") {
-                const node = findNodeInForceGraph(forceGraphInstance, nodeId);
-                if (node) {
-                  flyToNode(forceGraphInstance, node);
+              }}
+              onZoomToNode={(nodeId) => {
+                if (forceGraphInstance && activeView === "ForceGraph3d") {
+                  const node = findNodeInForceGraph(
+                    forceGraphInstance!,
+                    nodeId
+                  );
+                  if (node) {
+                    flyToNode(forceGraphInstance!, node);
+                  }
                 }
-              }
-            }}
-          />
-        ),
-      });
-      setRightActiveSection("node-details");
+              }}
+            />
+          ),
+        });
+      }
+
+      // Only auto-open the sidebar and select section when first selecting a node
+      if (rightSidebarConfig.activeSectionId !== "node-details") {
+        // Use a microtask to avoid multiple state updates in one render
+        Promise.resolve().then(() => {
+          if (rightSidebarConfig.mode === "collapsed") {
+            setRightSidebarConfig({
+              mode: "full",
+              activeSectionId: "node-details",
+            });
+          } else {
+            setLeftSidebarConfig({ activeSectionId: "node-details" });
+          }
+        });
+      }
     }
 
     return (
@@ -278,6 +306,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     handleShowEntityTables,
     selectedNodeId, // Add selectedNodeId as a dependency
     forceGraphInstance,
+    rightSidebarConfig.activeSectionId, // Add this to dependencies
   ]);
 
   return (
