@@ -6,7 +6,7 @@ import {
   ChevronsRight,
   Menu,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/RightSidebarConfig";
 import useWorkspaceConfigStore from "./store/workspaceConfigStore";
@@ -50,6 +50,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(mode === "full");
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [panelWidth, setPanelWidth] = useState(350); // Default width
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const { showToolbar } = useWorkspaceConfigStore();
 
@@ -97,6 +100,62 @@ const Sidebar: React.FC<SidebarProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeRef.current = {
+      startX: e.clientX,
+      startWidth: panelWidth,
+    };
+  };
+
+  const handleResizeMove = React.useCallback(
+    (e: MouseEvent) => {
+      if (!isResizing || !resizeRef.current) return;
+
+      const delta =
+        position === "left"
+          ? e.clientX - resizeRef.current.startX
+          : resizeRef.current.startX - e.clientX;
+
+      const newWidth = Math.max(
+        250,
+        Math.min(600, resizeRef.current.startWidth + delta)
+      );
+      setPanelWidth(newWidth);
+    },
+    [isResizing, position]
+  );
+
+  const handleResizeEnd = () => {
+    setIsResizing(false);
+    resizeRef.current = null;
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener("mousemove", handleResizeMove);
+      document.addEventListener("mouseup", handleResizeEnd);
+
+      document.body.style.userSelect = "none"; // Prevent text selection during resize
+      document.body.style.cursor =
+        position === "left" ? "e-resize" : "w-resize";
+    } else {
+      document.removeEventListener("mousemove", handleResizeMove);
+      document.removeEventListener("mouseup", handleResizeEnd);
+
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleResizeMove);
+      document.removeEventListener("mouseup", handleResizeEnd);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    };
+  }, [handleResizeMove, isResizing, position]);
 
   if (minimal && !isOpen) {
     return (
@@ -206,6 +265,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               height: showToolbar
                 ? `calc(100vh - var(--toolbar-height, ${toolbarHeight}))`
                 : "100vh",
+              width: `${panelWidth}px`, // Apply dynamic width
             }}
           >
             <div className={styles.sidePanelHeader}>
@@ -222,6 +282,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className={styles.sidePanelContent}>
               {menuItems.find((item) => item.id === activeSection)?.content}
             </div>
+
+            {/* Add resize handle */}
+            <div
+              className={`${styles.resizeHandle} ${styles[position]}`}
+              onMouseDown={handleResizeStart}
+            />
           </div>
         )}
     </>
