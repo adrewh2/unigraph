@@ -63,6 +63,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     leftSidebarConfig,
     rightSidebarConfig,
     getActiveSection,
+    setLeftActiveSection,
+    setRightActiveSection,
   } = useWorkspaceConfigStore();
 
   useEffect(() => {
@@ -108,6 +110,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         activeSectionId: newValue,
       };
       useWorkspaceConfigStore.setState({ rightSidebarConfig: updatedConfig });
+    }
+  };
+
+  // Properly handle the close button click to update both local state and store
+  const handleCloseSection = () => {
+    setActiveSection(null);
+    if (position === "left") {
+      setLeftActiveSection(null);
+    } else {
+      setRightActiveSection(null);
     }
   };
 
@@ -335,7 +347,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {menuItems.find((item) => item.id === activeSection)?.label}
               </h3>
               <button
-                onClick={() => setActiveSection(null)}
+                onClick={handleCloseSection} // Use the new handler here
                 className={styles.closeButton}
               >
                 <ChevronLeft size={16} />
