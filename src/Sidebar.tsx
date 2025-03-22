@@ -96,17 +96,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     // Update the store directly instead of relying on effect
     if (position === "left") {
-      const updatedConfig = {
-        ...leftSidebarConfig,
-        activeSectionId: newValue,
-      };
-      useWorkspaceConfigStore.setState({ leftSidebarConfig: updatedConfig });
+      setLeftActiveSection(newValue);
     } else {
-      const updatedConfig = {
-        ...rightSidebarConfig,
-        activeSectionId: newValue,
-      };
-      useWorkspaceConfigStore.setState({ rightSidebarConfig: updatedConfig });
+      setRightActiveSection(newValue);
     }
   };
 
