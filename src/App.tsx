@@ -105,6 +105,7 @@ import useActiveLegendConfigStore, {
   setEdgeKeyColor,
   setEdgeKeyVisibility,
   setEdgeLegendConfig,
+  SetNodeAndEdgeLegendsForOnlyVisibleEntities,
   setNodeKeyColor,
   setNodeKeyVisibility,
   setNodeLegendConfig,
@@ -393,9 +394,13 @@ const AppContent: React.FC<{
         currentSceneGraph.getGraph(),
         filterRules
       );
+      SetNodeAndEdgeLegendsForOnlyVisibleEntities(
+        currentSceneGraph,
+        legendMode
+      );
       setActiveFilterPreset({ preset, filterRules });
     },
-    [currentSceneGraph]
+    [currentSceneGraph, legendMode]
   );
 
   const handleSetVisibleNodes = useCallback(
@@ -1505,10 +1510,14 @@ const AppContent: React.FC<{
         currentSceneGraph.getGraph(),
         preset.rules
       );
+      SetNodeAndEdgeLegendsForOnlyVisibleEntities(
+        currentSceneGraph,
+        legendMode
+      );
       setShowFilterManager(false);
       setActiveFilterPreset({ preset: null, filterRules: preset.rules });
     },
-    [currentSceneGraph]
+    [currentSceneGraph, legendMode]
   );
 
   const maybeRenderLoadSceneGraphWindow = useMemo(() => {
@@ -1590,6 +1599,10 @@ const AppContent: React.FC<{
           showFilterManager={() => setShowFilterManager(true)}
           clearFilters={() => {
             DisplayManager.setAllVisible(currentSceneGraph.getGraph());
+            SetNodeAndEdgeLegendsForOnlyVisibleEntities(
+              currentSceneGraph,
+              legendMode
+            );
             setActiveFilterPreset(null);
           }}
           showPathAnalysis={() => setShowPathAnalysis(true)}

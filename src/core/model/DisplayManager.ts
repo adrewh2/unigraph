@@ -1,3 +1,4 @@
+import { GraphEntityType } from "../../components/common/GraphSearch";
 import { FilterRuleDefinition } from "../../components/filters/FilterRuleDefinition";
 import {
   DisplayConfig,
@@ -5,11 +6,20 @@ import {
   RenderingManager,
   RenderingManager__DisplayMode,
 } from "../../controllers/RenderingManager";
+import {
+  getActiveEdgeLegendConfig,
+  getActiveNodeLegendConfig,
+  getEdgeIsVisible,
+  getNodeIsVisible,
+} from "../../store/activeLegendConfigStore";
 import { filterNodes } from "../filters/filterEngine";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EntitiesContainer } from "./entity/entitiesContainer";
+import { EntityIds } from "./entity/entityIds";
 import { EdgesContainer, Graph, NodesContainer } from "./Graph";
 import { DEFAULT_DISPLAY_NODE_DATA } from "./Node";
+import { SceneGraph } from "./SceneGraph";
+import { GetCurrentDisplayConfigOf } from "./utils";
 
 export interface IDisplayManagerData {
   mode: "type" | "tag";
@@ -99,6 +109,43 @@ export class DisplayManager {
       node.setColor(RenderingManager.getColor(node, config, mode));
       node.setVisibility(RenderingManager.getVisibility(node, config, mode));
     });
+  };
+
+  public static getDisplayConfigForOnlyVisibleEntities = (
+    sceneGraph: SceneGraph,
+    entityType: GraphEntityType,
+    mode: RenderingManager__DisplayMode
+  ) => {
+    const originalDisplayConfig = GetCurrentDisplayConfigOf(
+      sceneGraph,
+      entityType
+    );
+    const checkIsVisible =
+      entityType === "Node" ? getNodeIsVisible : getEdgeIsVisible;
+    const activeLegendConfig =
+      entityType === "Node"
+        ? getActiveNodeLegendConfig()
+        : getActiveEdgeLegendConfig();
+    const visibleEntities = (
+      entityType === "Node" ? sceneGraph.getNodes() : sceneGraph.getEdges()
+    ).filter((entity) => entity.isVisible() && checkIsVisible(entity));
+    const visibleKeys =
+      mode === "type" ? visibleEntities.getTypes() : visibleEntities.getTags();
+    const visibleDisplayConfig: DisplayConfig = { ...originalDisplayConfig };
+    const originalKeys = Object.keys(originalDisplayConfig);
+    originalKeys.forEach((key) => {
+      if (!visibleKeys.has(key)) {
+        delete visibleDisplayConfig[key];
+      } else if (key in activeLegendConfig) {
+        visibleDisplayConfig[key] = activeLegendConfig[key];
+      }
+    });
+    console.log(
+      "visibleDisplayConfig",
+      originalDisplayConfig,
+      visibleDisplayConfig
+    );
+    return visibleDisplayConfig;
   };
 
   public static applyDisplayConfigToEdgesInGraph = (
@@ -204,12 +251,17 @@ export class DisplayManager {
       graph.getNodes().toArray(),
       filterRules
     );
-    const visibleNodeIds = new Set(
+    const visibleNodeIds = new EntityIds(
       nodesThatAreVisible.map((node) => node.getId())
     );
 
+    const visibleEdges = graph.getEdgesConnectedToNodes(visibleNodeIds);
+
     graph.getNodes().forEach((node) => {
       node.setVisibility(visibleNodeIds.has(node.getId()));
+    });
+    graph.getEdges().forEach((edge) => {
+      edge.setVisibility(visibleEdges.has(edge.getId()));
     });
   }
 
@@ -223,6 +275,9 @@ export class DisplayManager {
   static setAllVisible(graph: Graph) {
     graph.getNodes().forEach((node) => {
       node.setVisibility(true);
+    });
+    graph.getEdges().forEach((edge) => {
+      edge.setVisibility(true);
     });
   }
 
