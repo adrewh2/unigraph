@@ -2,6 +2,7 @@ import { ObjectOf } from "../../App";
 import { AppConfig } from "../../AppConfig";
 import { FilterPreset } from "../../components/filters/FilterRuleDefinition";
 import {
+  CLONE_RENDERING_CONFIG,
   GET_DEFAULT_RENDERING_CONFIG,
   RenderingConfig,
   RenderingManager,
@@ -50,7 +51,7 @@ export const DEFAULT_SCENE_GRAPH_DATA = (): SceneGraphData => {
     },
     metadata: {},
     entityCache: new EntityCache(),
-    committed_DisplayConfig: { ...displayConfig },
+    committed_DisplayConfig: CLONE_RENDERING_CONFIG(displayConfig),
   };
 };
 
@@ -79,7 +80,9 @@ export class SceneGraph {
         this.data.displayConfig = data.displayConfig;
       } else {
         this.data.displayConfig = GET_DEFAULT_RENDERING_CONFIG(this.data.graph);
-        this.data.committed_DisplayConfig = this.data.displayConfig;
+        this.data.committed_DisplayConfig = CLONE_RENDERING_CONFIG(
+          this.data.displayConfig
+        );
       }
     }
     validateSceneGraph(this);
