@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { FilterRuleDefinition } from "../components/filters/FilterRuleDefinition";
 import {
   DisplayConfig,
   RenderingManager,
@@ -9,6 +10,7 @@ import { EdgeId } from "../core/model/Edge";
 import { IEntity } from "../core/model/entity/abstractEntity";
 import { NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
+import { GetCurrentDisplayConfigOf } from "../core/model/utils";
 import { getRandomColor } from "../utils/colorUtils";
 import { getLegendMode } from "./appConfigStore";
 
@@ -210,18 +212,35 @@ export const getEdgeColor = (edge: IEntity): string =>
 
 export const SetNodeAndEdgeLegendsForOnlyVisibleEntities = (
   sceneGraph: SceneGraph,
-  mode: RenderingManager__DisplayMode
+  mode: RenderingManager__DisplayMode,
+  filterRules?: FilterRuleDefinition[]
 ) => {
+  console.log("enter");
   const nodeLegend = DisplayManager.getDisplayConfigForOnlyVisibleEntities(
     sceneGraph,
     "Node",
-    mode
+    mode,
+    filterRules
   );
   setNodeLegendConfig(nodeLegend);
   const edgeLegend = DisplayManager.getDisplayConfigForOnlyVisibleEntities(
     sceneGraph,
     "Edge",
-    mode
+    mode,
+    filterRules
+  );
+  setEdgeLegendConfig(edgeLegend);
+};
+
+export const ResetNodeAndEdgeLegends = (sceneGraph: SceneGraph) => {
+  const nodeLegend = GetCurrentDisplayConfigOf(
+    sceneGraph.getCommittedDisplayConfig(),
+    "Node"
+  );
+  setNodeLegendConfig(nodeLegend);
+  const edgeLegend = GetCurrentDisplayConfigOf(
+    sceneGraph.getCommittedDisplayConfig(),
+    "Edge"
   );
   setEdgeLegendConfig(edgeLegend);
 };

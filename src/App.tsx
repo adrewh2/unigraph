@@ -394,7 +394,8 @@ const AppContent: React.FC<{
       );
       SetNodeAndEdgeLegendsForOnlyVisibleEntities(
         currentSceneGraph,
-        legendMode
+        legendMode,
+        filterRules
       );
       setActiveFilter({ name: preset, filterRules });
     },
@@ -1527,7 +1528,8 @@ const AppContent: React.FC<{
       );
       SetNodeAndEdgeLegendsForOnlyVisibleEntities(
         currentSceneGraph,
-        legendMode
+        legendMode,
+        preset.rules
       );
       setShowFilterManager(false);
       setActiveFilter({ name: preset.name, filterRules: preset.rules });

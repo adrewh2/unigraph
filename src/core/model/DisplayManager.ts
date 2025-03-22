@@ -12,6 +12,7 @@ import {
   getEdgeIsVisible,
   getNodeIsVisible,
 } from "../../store/activeLegendConfigStore";
+import { GetInclusiveTypesAndTags } from "../../utils/filterUtils";
 import { filterNodes } from "../filters/filterEngine";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EntitiesContainer } from "./entity/entitiesContainer";
@@ -114,8 +115,12 @@ export class DisplayManager {
   public static getDisplayConfigForOnlyVisibleEntities = (
     sceneGraph: SceneGraph,
     entityType: GraphEntityType,
-    mode: RenderingManager__DisplayMode
+    mode: RenderingManager__DisplayMode,
+    filterRules?: FilterRuleDefinition[]
   ) => {
+    const includedTypesAndTags = filterRules
+      ? GetInclusiveTypesAndTags(filterRules, sceneGraph)
+      : { node: { types: [], tags: [] }, edge: { types: [], tags: [] } };
     const originalDisplayConfig = GetCurrentDisplayConfigOf(
       sceneGraph.getCommittedDisplayConfig(),
       entityType
@@ -129,21 +134,35 @@ export class DisplayManager {
     const visibleEntities = (
       entityType === "Node" ? sceneGraph.getNodes() : sceneGraph.getEdges()
     ).filter((entity) => entity.isVisible() && checkIsVisible(entity));
-    const visibleKeys =
+    const currentVisibleKeys =
       mode === "type" ? visibleEntities.getTypes() : visibleEntities.getTags();
+    const filterRuleGraphConfig =
+      entityType === "Node"
+        ? includedTypesAndTags.node
+        : includedTypesAndTags.edge;
+    const filterRuleVisibleKeys =
+      mode === "type"
+        ? filterRuleGraphConfig.types
+        : filterRuleGraphConfig.tags;
+    const visibleKeys = new Set([
+      ...currentVisibleKeys,
+      ...filterRuleVisibleKeys,
+    ]);
     const visibleDisplayConfig: DisplayConfig = { ...originalDisplayConfig };
     const originalKeys = Object.keys(originalDisplayConfig);
     originalKeys.forEach((key) => {
       if (!visibleKeys.has(key)) {
         delete visibleDisplayConfig[key];
       } else if (key in activeLegendConfig) {
-        visibleDisplayConfig[key] = activeLegendConfig[key];
+        visibleDisplayConfig[key] = { ...activeLegendConfig[key] };
       }
     });
     console.log(
       "visibleDisplayConfig",
       originalDisplayConfig,
-      visibleDisplayConfig
+      visibleDisplayConfig,
+      currentVisibleKeys,
+      filterRuleVisibleKeys
     );
     return visibleDisplayConfig;
   };

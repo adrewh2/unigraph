@@ -12,7 +12,7 @@ import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import { DisplayManager } from "../../core/model/DisplayManager";
 import Sidebar from "../../Sidebar";
 import useActiveFilterStore from "../../store/activeFilterStore";
-import { SetNodeAndEdgeLegendsForOnlyVisibleEntities } from "../../store/activeLegendConfigStore";
+import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
@@ -76,8 +76,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
-  const { activeView, activeLayout, forceGraph3dOptions, legendMode } =
-    useAppConfigStore();
+  const { activeView, activeLayout, forceGraph3dOptions } = useAppConfigStore();
 
   const { activeFilter, setActiveFilter } = useActiveFilterStore();
 
@@ -117,9 +116,10 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
   const clearFilters = React.useCallback(() => {
     DisplayManager.setAllVisible(currentSceneGraph.getGraph());
-    SetNodeAndEdgeLegendsForOnlyVisibleEntities(currentSceneGraph, legendMode);
+    console.log("calling");
+    ResetNodeAndEdgeLegends(currentSceneGraph);
     setActiveFilter(null);
-  }, [currentSceneGraph, legendMode, setActiveFilter]);
+  }, [currentSceneGraph, setActiveFilter]);
 
   const renderLeftSideBar = useMemo(() => {
     if (!leftSidebarConfig.isVisible) {
