@@ -52,6 +52,7 @@
 
 .menuItem {
   margin-bottom: 4px;
+  position: relative;
 }
 
 .menuButton {
@@ -394,4 +395,64 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sidePanel {
+  display: none; /* Hide the old inline panel */
+}
+
+/* New full-height side panel */
+.fullHeightSidePanel {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 350px; /* Wider panel */
+  background-color: #2d3748;
+  border-left: 1px solid #374151;
+  overflow-y: auto;
+  z-index: 50;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #374151;
+  background-color: #1f2937;
+}
+
+.sidePanelHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidePanelContent {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.active .sidePanel {
+  transform: translateX(0);
 }

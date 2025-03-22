@@ -1,6 +1,5 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -47,14 +46,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   mode = "full",
 }) => {
   const [isOpen, setIsOpen] = useState(mode === "full");
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
     setIsOpen(mode === "full");
   }, [mode]);
-
-  const [expandedMenus, setExpandedMenus] = useState<{
-    [key: string]: boolean;
-  }>({});
 
   const closeButton =
     position === "left" ? (
@@ -68,23 +64,28 @@ const Sidebar: React.FC<SidebarProps> = ({
     onToggle?.();
   };
 
-  const toggleMenu = (menuId: string) => {
-    if (!isOpen) {
-      setIsOpen(true);
-      setExpandedMenus((prev) => ({ ...prev, [menuId]: true }));
-    } else {
-      setExpandedMenus((prev) => ({
-        ...prev,
-        [menuId]: !prev[menuId],
-      }));
-    }
+  const handleSectionClick = (menuId: string) => {
+    setActiveSection((prev) => (prev === menuId ? null : menuId));
   };
 
+  // Close active section when clicking outside
   useEffect(() => {
-    if (!isOpen) {
-      setExpandedMenus({});
-    }
-  }, [isOpen]);
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      // Check if click is outside both the sidebar and any side panel
+      if (
+        !target.closest(`.${styles.sidebar}`) &&
+        !target.closest(`.${styles.fullHeightSidePanel}`)
+      ) {
+        setActiveSection(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   if (minimal && !isOpen) {
     return (
@@ -103,78 +104,98 @@ const Sidebar: React.FC<SidebarProps> = ({
   }
 
   return (
-    <div
-      className={styles.sidebar}
-      style={{
-        width: isOpen ? "200px" : minimal ? "0px" : "60px",
-        ...style,
-      }}
-    >
-      <div className={styles.sidebarHeader}>
-        {isOpen && <h1 className={styles.sidebarTitle}>{title}</h1>}
-        <button
-          onClick={toggleSidebar}
-          className={styles.toggleButton}
-          aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-        >
-          {isOpen ? closeButton : <Menu size={20} />}
-        </button>
-      </div>
+    <>
+      <div
+        className={styles.sidebar}
+        style={{
+          width: isOpen ? "200px" : minimal ? "0px" : "60px",
+          ...style,
+        }}
+      >
+        <div className={styles.sidebarHeader}>
+          {isOpen && <h1 className={styles.sidebarTitle}>{title}</h1>}
+          <button
+            onClick={toggleSidebar}
+            className={styles.toggleButton}
+            aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {isOpen ? closeButton : <Menu size={20} />}
+          </button>
+        </div>
 
-      <div className={styles.menuContainer}>
-        {content ? (
-          <div className={styles.sidebarContent}>{content}</div>
-        ) : (
-          <nav className={styles.nav}>
-            {menuItems.map((item) => (
-              <div key={item.id} className={styles.menuItem}>
-                {!item.hideHeader && (
-                  <button
-                    className={styles.menuButton}
-                    onClick={() => toggleMenu(item.id)}
-                  >
-                    {item.icon}
-                    {isOpen && (
-                      <>
-                        <span className={styles.menuText}>{item.label}</span>
-                        {expandedMenus[item.id] ? (
-                          <ChevronDown size={16} />
-                        ) : (
-                          <ChevronRight size={16} />
-                        )}
-                      </>
-                    )}
-                  </button>
-                )}
-                {isOpen && (expandedMenus[item.id] || item.alwaysExpanded) && (
-                  <div className={styles.submenu}>
-                    {item.content ||
-                      item.subMenus?.map((subMenu, idx) => (
-                        <div key={idx} className={styles.submenuItem}>
-                          {subMenu.customRender || subMenu.content || (
-                            <button
-                              onClick={subMenu.onClick}
-                              className={styles.submenuButton}
-                            >
-                              {subMenu.label}
-                            </button>
+        <div className={styles.menuContainer}>
+          {content ? (
+            <div className={styles.sidebarContent}>{content}</div>
+          ) : (
+            <nav className={styles.nav}>
+              {menuItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={`${styles.menuItem} ${
+                    activeSection === item.id ? styles.active : ""
+                  }`}
+                >
+                  {!item.hideHeader && (
+                    <button
+                      className={styles.menuButton}
+                      onClick={() => handleSectionClick(item.id)}
+                    >
+                      {item.icon}
+                      {isOpen && (
+                        <>
+                          <span className={styles.menuText}>{item.label}</span>
+                          {activeSection === item.id ? (
+                            <ChevronRight size={16} />
+                          ) : (
+                            <ChevronLeft size={16} />
                           )}
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </nav>
+          )}
+        </div>
+
+        {footer && typeof footer === "function" ? (
+          <div className={styles.sidebarFooter}>{footer(isOpen)}</div>
+        ) : (
+          footer && <div className={styles.sidebarFooter}>{footer}</div>
         )}
       </div>
 
-      {footer && typeof footer === "function" ? (
-        <div className={styles.sidebarFooter}>{footer(isOpen)}</div>
-      ) : (
-        footer && <div className={styles.sidebarFooter}>{footer}</div>
-      )}
-    </div>
+      {/* Full-height side panels for active section */}
+      {activeSection &&
+        menuItems.find((item) => item.id === activeSection)?.content && (
+          <div
+            className={styles.fullHeightSidePanel}
+            style={{
+              [position === "left" ? "left" : "right"]: isOpen
+                ? "200px"
+                : minimal
+                  ? "0px"
+                  : "60px",
+            }}
+          >
+            <div className={styles.sidePanelHeader}>
+              <h3>
+                {menuItems.find((item) => item.id === activeSection)?.label}
+              </h3>
+              <button
+                onClick={() => setActiveSection(null)}
+                className={styles.closeButton}
+              >
+                <ChevronLeft size={16} />
+              </button>
+            </div>
+            <div className={styles.sidePanelContent}>
+              {menuItems.find((item) => item.id === activeSection)?.content}
+            </div>
+          </div>
+        )}
+    </>
   );
 };
 
