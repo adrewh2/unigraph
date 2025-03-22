@@ -1,40 +1,41 @@
 import React from "react";
 import { RenderingManager__DisplayMode } from "../../controllers/RenderingManager";
+import useAppConfigStore from "../../store/appConfigStore";
 import "./LegendModeRadio.css";
 
-interface LayoutModeRadioProps {
-  layoutMode: RenderingManager__DisplayMode;
-  onLayoutModeChange: (mode: RenderingManager__DisplayMode) => void;
+interface LegendModeRadioProps {
+  onLegendModeChange: (mode: RenderingManager__DisplayMode) => void;
   isDarkMode?: boolean;
 }
 
-const LegendModeRadio: React.FC<LayoutModeRadioProps> = ({
-  layoutMode,
-  onLayoutModeChange,
+const LegendModeRadio: React.FC<LegendModeRadioProps> = ({
+  onLegendModeChange,
   isDarkMode = true,
 }) => {
+  const { legendMode } = useAppConfigStore();
+
   return (
     <div className={`layout-mode-radio ${isDarkMode ? "dark" : "light"}`}>
       <label
-        className={`radio-label ${layoutMode === "type" ? "selected" : ""}`}
+        className={`radio-label ${legendMode === "type" ? "selected" : ""}`}
       >
         <input
           type="radio"
           value="type"
-          checked={layoutMode === "type"}
-          onChange={() => onLayoutModeChange("type")}
+          checked={legendMode === "type"}
+          onChange={() => onLegendModeChange("type")}
           className="radio-input"
         />
         Type
       </label>
       <label
-        className={`radio-label ${layoutMode === "tag" ? "selected" : ""}`}
+        className={`radio-label ${legendMode === "tag" ? "selected" : ""}`}
       >
         <input
           type="radio"
           value="tag"
-          checked={layoutMode === "tag"}
-          onChange={() => onLayoutModeChange("tag")}
+          checked={legendMode === "tag"}
+          onChange={() => onLegendModeChange("tag")}
           className="radio-input"
         />
         Tag

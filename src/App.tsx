@@ -977,13 +977,8 @@ const AppContent: React.FC<{
   }, [currentSceneGraph]);
 
   const renderLayoutModeRadio = useCallback(() => {
-    return (
-      <LegendModeRadio
-        layoutMode={legendMode}
-        onLayoutModeChange={handleLegendModeChange}
-      />
-    );
-  }, [legendMode, handleLegendModeChange]);
+    return <LegendModeRadio onLegendModeChange={handleLegendModeChange} />;
+  }, [handleLegendModeChange]);
 
   const maybeRenderReactFlow = useMemo(() => {
     if (activeView !== "ReactFlow") {
