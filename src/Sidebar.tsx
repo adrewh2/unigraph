@@ -82,24 +82,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     setActiveSection((prev) => (prev === menuId ? null : menuId));
   };
 
-  // Close active section when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Element;
-      // Check if click is outside both the sidebar and any side panel
-      if (
-        !target.closest(`.${styles.sidebar}`) &&
-        !target.closest(`.${styles.fullHeightSidePanel}`)
-      ) {
-        setActiveSection(null);
-      }
-    };
+  // // Close active section when clicking outside
+  // useEffect(() => {
+  //   const handleClickOutside = (e: MouseEvent) => {
+  //     const target = e.target as Element;
+  //     // Check if click is outside both the sidebar and any side panel
+  //     if (
+  //       !target.closest(`.${styles.sidebar}`) &&
+  //       !target.closest(`.${styles.fullHeightSidePanel}`)
+  //     ) {
+  //       setActiveSection(null);
+  //     }
+  //   };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, []);
 
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
