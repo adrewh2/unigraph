@@ -18,9 +18,7 @@ import useActiveFilterStore from "../../store/activeFilterStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
-import useWorkspaceConfigStore, {
-  setRightSidebarConfig,
-} from "../../store/workspaceConfigStore";
+import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
 import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
@@ -255,17 +253,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
           ),
         });
       }
-
-      // Only auto-open the sidebar and select section when first selecting a node
-      if (rightSidebarConfig.activeSectionId !== "node-details") {
-        // Use a microtask to avoid multiple state updates in one render
-        Promise.resolve().then(() => {
-          setRightSidebarConfig({
-            activeSectionId: "node-details",
-          });
-          console.log("setting to node-details");
-        });
-      }
     }
 
     return (
@@ -299,9 +286,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
     renderEdgeLegend,
     handleFitToView,
     handleShowEntityTables,
-    selectedNodeId, // Add selectedNodeId as a dependency
+    selectedNodeId,
     forceGraphInstance,
-    rightSidebarConfig.activeSectionId, // Add this to dependencies
   ]);
 
   return (

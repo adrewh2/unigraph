@@ -125,7 +125,9 @@ import {
   setHoveredNodeIds,
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
-import useWorkspaceConfigStore from "./store/workspaceConfigStore";
+import useWorkspaceConfigStore, {
+  setRightActiveSection,
+} from "./store/workspaceConfigStore";
 
 export type ObjectOf<T> = { [key: string]: T };
 
@@ -1349,6 +1351,7 @@ const AppContent: React.FC<{
           flyToNode(forceGraphInstance, node);
           handleHighlight(nodeId);
           setSelectedNodeId(nodeId as NodeId);
+          setRightActiveSection("node-details");
         }
       }
     },
@@ -1723,6 +1726,7 @@ const AppContent: React.FC<{
             onClose={() => setShowEntityTables(false)}
             onNodeClick={(nodeId) => {
               setSelectedNodeId(nodeId as NodeId);
+              setRightActiveSection("node-details");
               setShowEntityTables(false);
               if (activeView === "ForceGraph3d" && forceGraphInstance) {
                 const node = forceGraphInstance

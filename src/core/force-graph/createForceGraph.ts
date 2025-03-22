@@ -28,6 +28,7 @@ import {
   setHoveredNodeId,
   setSelectedNodeId,
 } from "../../store/graphInteractionStore";
+import { setRightActiveSection } from "../../store/workspaceConfigStore";
 import { ILayoutEngineResult } from "../layouts/LayoutEngine";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EdgeId } from "../model/Edge";
@@ -268,7 +269,10 @@ export const bindEventsToGraphInstance = (
   onNodeRightClick?: (event: MouseEvent, nodeId: string | null) => void,
   onBackgroundRightClick?: (event: MouseEvent) => void
 ) => {
-  graph.onNodeClick((node) => setSelectedNodeId(node?.id as NodeId));
+  graph.onNodeClick((node) => {
+    setSelectedNodeId(node?.id as NodeId);
+    setRightActiveSection("node-details");
+  });
   graph.onNodeHover((node) => {
     // no state change
     // if (!node && !sceneGraph.getAppState().hoveredNodes.has(node.id as string)) {
