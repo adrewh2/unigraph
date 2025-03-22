@@ -152,15 +152,22 @@ const Sidebar: React.FC<SidebarProps> = ({
                 >
                   {!item.hideHeader && (
                     <button
-                      className={styles.menuButton}
+                      className={`${styles.menuButton} ${
+                        activeSection === item.id ? styles.activeMenuButton : ""
+                      }`}
                       onClick={() => handleSectionClick(item.id)}
+                      title={item.label} // Add tooltip that shows on hover
+                      aria-label={item.label} // For accessibility
                     >
                       {item.icon}
                       {isOpen && (
                         <>
                           <span className={styles.menuText}>{item.label}</span>
                           {activeSection === item.id ? (
-                            <ChevronRight size={16} />
+                            <ChevronRight
+                              size={16}
+                              className={styles.activeIcon}
+                            />
                           ) : (
                             <ChevronLeft size={16} />
                           )}
