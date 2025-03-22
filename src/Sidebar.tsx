@@ -9,6 +9,7 @@ import {
 import React, { useEffect, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/RightSidebarConfig";
+import useWorkspaceConfigStore from "./store/workspaceConfigStore";
 
 interface SidebarProps {
   position: "left" | "right";
@@ -47,6 +48,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(mode === "full");
   const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  const { showToolbar } = useWorkspaceConfigStore();
 
   useEffect(() => {
     setIsOpen(mode === "full");
@@ -183,9 +186,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 : minimal
                   ? "0px"
                   : "60px",
-              // Ensure the CSS variable is applied for correct positioning
-              top: `var(--toolbar-height, ${toolbarHeight})`,
-              height: `calc(100vh - var(--toolbar-height, ${toolbarHeight}))`,
+              // Adjust top position and height based on toolbar presence
+              top: showToolbar
+                ? `var(--toolbar-height, ${toolbarHeight})`
+                : "0",
+              height: showToolbar
+                ? `calc(100vh - var(--toolbar-height, ${toolbarHeight}))`
+                : "100vh",
             }}
           >
             <div className={styles.sidePanelHeader}>
