@@ -404,8 +404,8 @@
 /* New full-height side panel */
 .fullHeightSidePanel {
   position: fixed;
-  top: var(--toolbar-height, 40px);
-  height: calc(100vh - var(--toolbar-height, 40px));
+  top: 0;
+  height: 100vh;
   width: 350px; /* Wider panel */
   background-color: #2d3748;
   border-left: 1px solid #374151;

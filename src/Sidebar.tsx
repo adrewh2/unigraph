@@ -117,7 +117,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div
         className={styles.sidebar}
         style={{
-          width: isOpen ? "200px" : minimal ? "0px" : "60px",
+          width: isOpen ? "150px" : minimal ? "0px" : "60px",
           ...style,
         }}
       >
@@ -182,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             className={styles.fullHeightSidePanel}
             style={{
               [position === "left" ? "left" : "right"]: isOpen
-                ? "200px"
+                ? "150px"
                 : minimal
                   ? "0px"
                   : "60px",
