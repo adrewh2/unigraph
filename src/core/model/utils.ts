@@ -1,6 +1,5 @@
 import { GraphEntityType } from "../../components/common/GraphSearch";
 import { RenderingConfig } from "../../controllers/RenderingManager";
-import { DisplayManager } from "./DisplayManager";
 import { Graph } from "./Graph";
 import { Node } from "./Node";
 import { SceneGraph } from "./SceneGraph";
@@ -19,12 +18,11 @@ export const GetCurrentDisplayConfigOf = (
   sceneGraph: SceneGraph,
   type: GraphEntityType
 ) => {
-  const renderingManager = sceneGraph.getRenderingManager();
-  const displayConfig = renderingManager.getDisplayConfig(
-    type,
-    sceneGraph.getDisplayConfig().mode
-  );
-  return displayConfig;
+  const renderingConfig = sceneGraph.getDisplayConfig();
+  const mode = renderingConfig.mode;
+  const entityConfig =
+    type === "Node" ? renderingConfig.nodeConfig : renderingConfig.edgeConfig;
+  return mode === "type" ? entityConfig.types : entityConfig.tags;
 };
 
 export const SetCurrentDisplayConfigOf = (
@@ -32,16 +30,21 @@ export const SetCurrentDisplayConfigOf = (
   type: GraphEntityType,
   config: any
 ) => {
-  const renderingManager = sceneGraph.getRenderingManager();
-  renderingManager.setDisplayConfig(
-    sceneGraph.getDisplayConfig().mode,
-    type,
-    config
-  );
-  DisplayManager.applyRenderingConfigToGraph(
-    sceneGraph.getGraph(),
-    sceneGraph.getDisplayConfig()
-  );
+  const mode = sceneGraph.getDisplayConfig().mode;
+  if (mode === "type") {
+    if (type === "Node") {
+      sceneGraph.getDisplayConfig().nodeConfig.types = config;
+    } else {
+      sceneGraph.getDisplayConfig().edgeConfig.types = config;
+    }
+  }
+  if (mode === "tag") {
+    if (type === "Node") {
+      sceneGraph.getDisplayConfig().nodeConfig.tags = config;
+    } else {
+      sceneGraph.getDisplayConfig().edgeConfig.tags = config;
+    }
+  }
 };
 
 export const saveRenderingConfigToFile = (

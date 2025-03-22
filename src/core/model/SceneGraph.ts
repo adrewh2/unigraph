@@ -161,10 +161,6 @@ export class SceneGraph {
     this.listeners?.onPositionsChanged?.(positions);
   }
 
-  getRenderingManager() {
-    return new RenderingManager(this.data.displayConfig);
-  }
-
   getNode(nodeId: NodeId) {
     return this.data.graph.getNode(nodeId);
   }
@@ -175,16 +171,6 @@ export class SceneGraph {
 
   getNodePosition(nodeId: NodeId): Position | undefined {
     return this.data.displayConfig?.nodePositions?.[nodeId];
-  }
-
-  // Todo: precache this, make it afap.
-  getNodeColorById(nodeId: NodeId) {
-    return this.getRenderingManager().getNodeColor(this.getNode(nodeId));
-  }
-
-  // Todo: precache this, make it afap.
-  getEdgeColorById(edgeId: EdgeId) {
-    return this.getRenderingManager().getEdgeColor(this.getEdgeById(edgeId));
   }
 
   // Todo: precache this, make it afap.
