@@ -56,6 +56,7 @@ import {
 import {
   getLeftSidebarConfig,
   getRightSidebarConfig,
+  setLeftActiveSection,
   setLeftSidebarConfig,
   setRightSidebarConfig,
 } from "../store/workspaceConfigStore";
@@ -229,6 +230,12 @@ export class MenuConfig {
       Simulations: { submenu: this.callbacks.SimulationMenuActions() },
       Dev: {
         submenu: {
+          "TEST: Set Left Sidebar to Layouts": {
+            action: () => {
+              setLeftActiveSection("layouts");
+              console.log("Left sidebar section set to 'layouts'");
+            },
+          },
           "Print SceneGraph": {
             action: () => {
               console.log(this.sceneGraph);

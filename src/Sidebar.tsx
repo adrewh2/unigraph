@@ -69,23 +69,26 @@ const Sidebar: React.FC<SidebarProps> = ({
     setIsOpen(mode === "full");
   }, [mode]);
 
-  // Get active section from workspace config store to coordinate across sidebars
-  const configBasedActiveSection =
-    position === "left"
-      ? leftSidebarConfig.activeSectionId
-      : rightSidebarConfig.activeSectionId;
-
   // Sync active section from config when it changes, but only if not already syncing
   useEffect(() => {
-    if (
-      !syncingRef.current &&
-      configBasedActiveSection !== getActiveSection(position)
-    ) {
+    // Get active section from workspace config store to coordinate across sidebars
+    const configBasedActiveSection =
+      position === "left"
+        ? leftSidebarConfig.activeSectionId
+        : rightSidebarConfig.activeSectionId;
+
+    if (!syncingRef.current && configBasedActiveSection != activeSection) {
       syncingRef.current = true;
       setActiveSection(configBasedActiveSection);
       syncingRef.current = false;
     }
-  }, [configBasedActiveSection, getActiveSection, position]);
+  }, [
+    leftSidebarConfig.activeSectionId,
+    rightSidebarConfig.activeSectionId,
+    position,
+    getActiveSection,
+    activeSection,
+  ]);
 
   // Handler for section click - updates local state only
   const handleSectionClick = (menuId: string) => {
