@@ -1003,6 +1003,29 @@ const AppContent: React.FC<{
     return <LegendModeRadio onLegendModeChange={handleLegendModeChange} />;
   }, [handleLegendModeChange]);
 
+  useEffect(() => {
+    const errorHandler = (e: any) => {
+      if (
+        e.message.includes(
+          "ResizeObserver loop completed with undelivered notifications"
+        ) ||
+        e.message.includes("ResizeObserver loop limit exceeded")
+      ) {
+        const resizeObserverErr = document.getElementById(
+          "webpack-dev-server-client-overlay"
+        );
+        if (resizeObserverErr) {
+          resizeObserverErr.style.display = "none";
+        }
+      }
+    };
+    window.addEventListener("error", errorHandler);
+
+    return () => {
+      window.removeEventListener("error", errorHandler);
+    };
+  }, []);
+
   const maybeRenderReactFlow = useMemo(() => {
     if (activeView !== "ReactFlow") {
       return null;
