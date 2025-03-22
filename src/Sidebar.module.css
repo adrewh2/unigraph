@@ -456,3 +456,8 @@
 .active .sidePanel {
   transform: translateX(0);
 }
+
+.noHeaderMenuContainer {
+  /* padding-top: 0; */
+  border-top: none;
+}

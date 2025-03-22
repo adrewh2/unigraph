@@ -22,6 +22,7 @@ interface SidebarProps {
   minimal?: boolean;
   mode: "collapsed" | "full";
   style?: React.CSSProperties;
+  hideHeader?: boolean; // Add option to hide the header entirely
 }
 
 interface MenuItem {
@@ -45,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   minimal = false,
   style = {},
   mode = "full",
+  hideHeader = true,
 }) => {
   const [isOpen, setIsOpen] = useState(mode === "full");
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -121,18 +123,22 @@ const Sidebar: React.FC<SidebarProps> = ({
           ...style,
         }}
       >
-        <div className={styles.sidebarHeader}>
-          {isOpen && <h1 className={styles.sidebarTitle}>{title}</h1>}
-          <button
-            onClick={toggleSidebar}
-            className={styles.toggleButton}
-            aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-          >
-            {isOpen ? closeButton : <Menu size={20} />}
-          </button>
-        </div>
+        {!hideHeader && (
+          <div className={styles.sidebarHeader}>
+            {isOpen && <h1 className={styles.sidebarTitle}>{title}</h1>}
+            <button
+              onClick={toggleSidebar}
+              className={styles.toggleButton}
+              aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {isOpen ? closeButton : <Menu size={20} />}
+            </button>
+          </div>
+        )}
 
-        <div className={styles.menuContainer}>
+        <div
+          className={`${styles.menuContainer} ${hideHeader ? styles.noHeaderMenuContainer : ""}`}
+        >
           {content ? (
             <div className={styles.sidebarContent}>{content}</div>
           ) : (
