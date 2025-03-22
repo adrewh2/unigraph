@@ -32,6 +32,24 @@ export type RenderingConfig = {
   svg?: string;
 };
 
+export const CLONE_RENDERING_CONFIG = (
+  config: RenderingConfig
+): RenderingConfig => {
+  return {
+    nodeConfig: {
+      types: { ...config.nodeConfig.types },
+      tags: { ...config.nodeConfig.tags },
+    },
+    edgeConfig: {
+      types: { ...config.edgeConfig.types },
+      tags: { ...config.edgeConfig.tags },
+    },
+    mode: config.mode,
+    nodePositions: { ...config.nodePositions },
+    svg: config.svg,
+  };
+};
+
 export type RenderingManager__DisplayMode = "tag" | "type";
 
 export const GET_DEFAULT_RENDERING_CONFIG = (
