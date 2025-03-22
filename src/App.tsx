@@ -101,6 +101,7 @@ import { getAllGraphs, sceneGraphs } from "./data/graphs/sceneGraphLib";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
+import useActiveFilterStore from "./store/activeFilterStore";
 import useActiveLegendConfigStore, {
   setEdgeKeyColor,
   setEdgeKeyVisibility,
@@ -219,6 +220,8 @@ const AppContent: React.FC<{
     edgeLegendUpdateTime,
   } = useActiveLegendConfigStore();
 
+  const { activeFilter, setActiveFilter } = useActiveFilterStore();
+
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
   const reactFlowRef = useRef<HTMLDivElement | null>(null);
@@ -247,11 +250,6 @@ const AppContent: React.FC<{
 
   const [showFilter, setShowFilter] = useState(false);
   const [showFilterManager, setShowFilterManager] = useState(false);
-
-  const [activeFilterPreset, setActiveFilterPreset] = useState<{
-    preset: string | null;
-    filterRules: FilterRuleDefinition[];
-  } | null>(null);
 
   const _getAppConfigWithUrlOverrides = useCallback(
     (config: AppConfig) => {
@@ -389,7 +387,7 @@ const AppContent: React.FC<{
   );
 
   const handleSetActiveFilterPreset = useCallback(
-    (preset: string | null, filterRules: FilterRuleDefinition[]) => {
+    (preset: string | undefined, filterRules: FilterRuleDefinition[]) => {
       DisplayManager.applyVisibilityFromFilterRulesToGraph(
         currentSceneGraph.getGraph(),
         filterRules
@@ -398,9 +396,9 @@ const AppContent: React.FC<{
         currentSceneGraph,
         legendMode
       );
-      setActiveFilterPreset({ preset, filterRules });
+      setActiveFilter({ name: preset, filterRules });
     },
-    [currentSceneGraph, legendMode]
+    [currentSceneGraph, legendMode, setActiveFilter]
   );
 
   const handleSetVisibleNodes = useCallback(
@@ -1123,7 +1121,7 @@ const AppContent: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeView,
-    activeFilterPreset,
+    activeFilter,
     activeLayout,
     currentSceneGraph,
     layoutResult,
@@ -1216,7 +1214,7 @@ const AppContent: React.FC<{
     edgeLegendUpdateTime,
     activeView,
     forceGraph3dOptions.layout,
-    activeFilterPreset,
+    activeFilter,
     currentSceneGraph,
   ]);
 
@@ -1515,9 +1513,9 @@ const AppContent: React.FC<{
         legendMode
       );
       setShowFilterManager(false);
-      setActiveFilterPreset({ preset: null, filterRules: preset.rules });
+      setActiveFilter({ name: preset.name, filterRules: preset.rules });
     },
-    [currentSceneGraph, legendMode]
+    [currentSceneGraph, legendMode, setActiveFilter]
   );
 
   const maybeRenderLoadSceneGraphWindow = useMemo(() => {
@@ -1578,8 +1576,8 @@ const AppContent: React.FC<{
   const clearFilters = useCallback(() => {
     DisplayManager.setAllVisible(currentSceneGraph.getGraph());
     SetNodeAndEdgeLegendsForOnlyVisibleEntities(currentSceneGraph, legendMode);
-    setActiveFilterPreset({ preset: null, filterRules: [] });
-  }, [currentSceneGraph, legendMode]);
+    setActiveFilter({ name: undefined, filterRules: [] });
+  }, [currentSceneGraph, legendMode, setActiveFilter]);
 
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
@@ -1604,7 +1602,7 @@ const AppContent: React.FC<{
           showFilterWindow={() => setShowFilter(true)}
           showFilterManager={() => setShowFilterManager(true)}
           clearFilters={clearFilters}
-          activeFilters={activeFilterPreset?.preset ?? null}
+          activeFilters={activeFilter?.name ?? null}
           showPathAnalysis={() => setShowPathAnalysis(true)}
           renderNodeLegend={renderNodeLegend}
           renderEdgeLegend={renderEdgeLegend}
