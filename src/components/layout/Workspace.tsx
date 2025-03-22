@@ -78,7 +78,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
 
   const { activeView, activeLayout, forceGraph3dOptions } = useAppConfigStore();
 
-  const { activeFilter, setActiveFilter } = useActiveFilterStore();
+  const { setActiveFilter } = useActiveFilterStore();
 
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -191,6 +191,19 @@ const Workspace: React.FC<WorkspaceProps> = ({
       return null;
     }
 
+    // Create menuItems with our info
+    const menuItems = createDefaultRightMenus(
+      () => (
+        <>
+          {renderLayoutModeRadio()}
+          {renderNodeLegend}
+          {renderEdgeLegend}
+        </>
+      ),
+      activeView === "ForceGraph3d",
+      isDarkMode
+    );
+
     return (
       <Sidebar
         position="right"
@@ -199,17 +212,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           top: 0,
         }}
         title="Controls"
-        menuItems={createDefaultRightMenus(
-          () => (
-            <>
-              {renderLayoutModeRadio()}
-              {renderNodeLegend}
-              {renderEdgeLegend}
-            </>
-          ),
-          activeView === "ForceGraph3d",
-          isDarkMode
-        )}
+        menuItems={menuItems}
         isDarkMode={isDarkMode}
         mode={rightSidebarConfig.mode}
         minimal={rightSidebarConfig.minimal}
@@ -217,12 +220,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
           rightFooterContent(isOpen, {
             onFitToView: () => handleFitToView(activeView),
             onViewEntities: () => handleShowEntityTables(),
-            details: {
-              sceneGraphName:
-                currentSceneGraph.getMetadata().name ?? "Untitled",
-              activeLayout: activeLayout,
-              activeFilter: activeFilter?.name, // Pass activeFilters name here
-            },
           })
         }
       />
@@ -236,9 +233,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     renderLayoutModeRadio,
     renderNodeLegend,
     renderEdgeLegend,
-    currentSceneGraph,
-    activeLayout,
-    activeFilter?.name,
     handleFitToView,
     handleShowEntityTables,
   ]);

@@ -493,3 +493,49 @@
   /* padding-top: 0; */
   border-top: none;
 }
+
+.footerIconGroup {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+}
+
+.footerIconButton {
+  background: #2d3748;
+  color: white;
+  border: 1px solid #4a5568;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.footerIconButton:hover {
+  background: #4a5568;
+}
+
+.infoPanel {
+  padding: 16px;
+}
+
+.infoSection {
+  margin-bottom: 12px;
+}
+
+.infoSectionTitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 4px 0;
+}
+
+.infoSectionValue {
+  font-size: 14px;
+  color: white;
+  font-weight: 500;
+  word-break: break-word;
+}

@@ -1,12 +1,14 @@
-import { List, Settings2 } from "lucide-react";
+import { Info, List, Settings2, Table2, ZoomIn } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
 import styles from "../Sidebar.module.css";
+import { getActiveFilter } from "../store/activeFilterStore";
 import {
+  getActiveLayout,
+  getCurrentSceneGraph,
   getForceGraph3dLayoutMode,
   setForceGraph3dLayoutMode,
 } from "../store/appConfigStore";
-import { setShowSceneGraphDetailView } from "../store/dialogStore";
 
 export interface SubMenuItem {
   label: string;
@@ -27,7 +29,7 @@ export const createDefaultRightMenus = (
   renderLegends: () => React.ReactNode,
   isForceGraph3dActive: boolean,
   isDarkMode: boolean
-) => [
+): MenuItem[] => [
   {
     id: "legends",
     icon: <List size={20} className={styles.menuIcon} />,
@@ -38,10 +40,8 @@ export const createDefaultRightMenus = (
   },
   {
     id: "settings",
-    hideHeader: true, // Add this flag to hide the header
     icon: <Settings2 size={20} className={styles.menuIcon} />,
     label: "Settings",
-    alwaysExpanded: true, // Add this flag to keep it expanded
     content: (
       <div className={styles.optionsPanelContainer}>
         {isForceGraph3dActive && (
@@ -54,7 +54,51 @@ export const createDefaultRightMenus = (
       </div>
     ),
   },
+  {
+    id: "info",
+    icon: <Info size={20} className={styles.menuIcon} />,
+    label: "Info",
+    content: (
+      <SceneGraphInfoPanel
+        sceneGraphName={getCurrentSceneGraph().getMetadata().name ?? ""}
+        activeLayout={getActiveLayout()}
+        activeFilter={getActiveFilter()?.name}
+      />
+    ),
+  },
 ];
+
+// Info panel component for SceneGraph details
+const SceneGraphInfoPanel = ({
+  sceneGraphName,
+  activeLayout,
+  activeFilter,
+}: {
+  sceneGraphName: string;
+  activeLayout: string;
+  activeFilter?: string | null;
+}) => (
+  <div className={styles.infoPanel}>
+    <div className={styles.infoSection}>
+      <h4 className={styles.infoSectionTitle}>SceneGraph</h4>
+      <div className={styles.infoSectionValue}>
+        {sceneGraphName || "Untitled"}
+      </div>
+    </div>
+    <div className={styles.infoSection}>
+      <h4 className={styles.infoSectionTitle}>Active Layout</h4>
+      <div className={styles.infoSectionValue}>{activeLayout}</div>
+    </div>
+    {activeFilter && (
+      <div className={styles.infoSection}>
+        <h4 className={styles.infoSectionTitle}>Active Filter</h4>
+        <div className={styles.infoSectionValue} style={{ color: "orange" }}>
+          {activeFilter}
+        </div>
+      </div>
+    )}
+  </div>
+);
 
 export const rightFooterContent = (
   isOpen: boolean,
@@ -71,46 +115,20 @@ export const rightFooterContent = (
   if (!actions) return null;
 
   return (
-    <div className={`${styles.footerButtonGroup} ${styles.footerButtonColumn}`}>
-      {actions.details && (
-        <div
-          className={styles.footerDetailsCard}
-          onClick={setShowSceneGraphDetailView}
-          style={{ cursor: "pointer" }} // Add pointer cursor for better UX
-        >
-          <div className={styles.footerDetailsRow}>
-            <span className={styles.footerDetailsLabel}>SceneGraph:</span>
-            <span className={styles.footerDetailsValue}>
-              {actions.details.sceneGraphName}
-            </span>
-          </div>
-          <div className={styles.footerDetailsRow}>
-            <span className={styles.footerDetailsLabel}>Active Layout:</span>
-            <span className={styles.footerDetailsValue}>
-              {actions.details.activeLayout}
-            </span>
-          </div>
-          {actions.details.activeFilter && (
-            <div className={styles.footerDetailsRow}>
-              <span
-                className={styles.footerDetailsLabel}
-                style={{ color: "orange" }}
-              >
-                Filters
-              </span>
-              <span className={styles.footerDetailsValue}>
-                {/* {actions.details.activeFilters} */}
-                <span style={{ color: "orange" }}>Active</span>
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-      <button className={styles.footerButton} onClick={actions.onViewEntities}>
-        View Entities
+    <div className={styles.footerIconGroup}>
+      <button
+        className={styles.footerIconButton}
+        onClick={actions.onViewEntities}
+        title="View Entities"
+      >
+        <Table2 size={16} />
       </button>
-      <button className={styles.footerButton} onClick={actions.onFitToView}>
-        Fit to View
+      <button
+        className={styles.footerIconButton}
+        onClick={actions.onFitToView}
+        title="Fit to View"
+      >
+        <ZoomIn size={16} />
       </button>
     </div>
   );

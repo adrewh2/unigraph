@@ -181,4 +181,14 @@ export const getLegendMode = () => {
   return useAppConfigStore.getState().legendMode;
 };
 
+export const getCurrentSceneGraph = () => {
+  return useAppConfigStore.getState().currentSceneGraph;
+};
+
+export const setCurrentSceneGraph = (currentSceneGraph: SceneGraph) => {
+  useAppConfigStore.setState(() => ({
+    currentSceneGraph,
+  }));
+};
+
 export default useAppConfigStore;
