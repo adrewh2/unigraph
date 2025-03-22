@@ -1,4 +1,4 @@
-import { createStore } from "zustand";
+import { create } from "zustand";
 import { FilterRuleDefinition } from "../components/filters/FilterRuleDefinition";
 
 interface Filter {
@@ -9,22 +9,22 @@ interface Filter {
 
 interface ActiveFiltersState {
   activeFilter: Filter | null;
+  setActiveFilter: (activeFilter: Filter | null) => void;
+  getActiveFilter: () => Filter | null;
 }
 
-const useActiveFilterStore = createStore<ActiveFiltersState>((set) => ({
+const useActiveFilterStore = create<ActiveFiltersState>((set, get) => ({
   activeFilter: null,
-  setActiveFilter: (activeFilter: Filter) => set({ activeFilter }),
-  getActiveFilter: () => useActiveFilterStore.getState().activeFilter,
+  setActiveFilter: (activeFilter) => set({ activeFilter }),
+  getActiveFilter: () => get().activeFilter,
 }));
 
-export const setActiveFilter = (activeFilter: Filter) => {
-  useActiveFilterStore.setState(() => ({
-    activeFilter,
-  }));
+export const setActiveFilter = (activeFilter: Filter | null) => {
+  useActiveFilterStore.getState().setActiveFilter(activeFilter);
 };
 
 export const getActiveFilter = () => {
-  return useActiveFilterStore.getState().activeFilter;
+  return useActiveFilterStore.getState().getActiveFilter();
 };
 
 export default useActiveFilterStore;
