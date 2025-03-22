@@ -1,4 +1,4 @@
-import { Info, List, Settings2, Table2, ZoomIn } from "lucide-react";
+import { FileText, List, Settings2, Table2, ZoomIn } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
 import styles from "../Sidebar.module.css";
@@ -55,9 +55,9 @@ export const createDefaultRightMenus = (
     ),
   },
   {
-    id: "info",
-    icon: <Info size={20} className={styles.menuIcon} />,
-    label: "Info",
+    id: "sceneGraphInfo",
+    icon: <FileText size={20} className={styles.menuIcon} />,
+    label: "SceneGraph Info",
     content: (
       <div className={styles.infoPanel}>
         <SceneGraphInfoPanel
