@@ -115,21 +115,27 @@ export const rightFooterContent = (
   if (!actions) return null;
 
   return (
-    <div className={styles.footerIconGroup}>
-      <button
-        className={styles.footerIconButton}
-        onClick={actions.onViewEntities}
-        title="View Entities"
-      >
-        <Table2 size={16} />
-      </button>
-      <button
-        className={styles.footerIconButton}
-        onClick={actions.onFitToView}
-        title="Fit to View"
-      >
-        <ZoomIn size={16} />
-      </button>
-    </div>
+    <nav className={styles.nav}>
+      <div className={styles.menuItem}>
+        <button
+          className={styles.menuButton}
+          onClick={actions.onViewEntities}
+          title="View Entities"
+        >
+          <Table2 size={20} className={styles.menuIcon} />
+          {isOpen && <span className={styles.menuText}>View Entities</span>}
+        </button>
+      </div>
+      <div className={styles.menuItem}>
+        <button
+          className={styles.menuButton}
+          onClick={actions.onFitToView}
+          title="Fit to View"
+        >
+          <ZoomIn size={20} className={styles.menuIcon} />
+          {isOpen && <span className={styles.menuText}>Fit to View</span>}
+        </button>
+      </div>
+    </nav>
   );
 };
