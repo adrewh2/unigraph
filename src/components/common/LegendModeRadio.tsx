@@ -15,7 +15,7 @@ const LegendModeRadio: React.FC<LegendModeRadioProps> = ({
   const { legendMode } = useAppConfigStore();
 
   return (
-    <div className={`layout-mode-radio ${isDarkMode ? "dark" : "light"}`}>
+    <div className={`legend-mode-radio ${isDarkMode ? "dark" : "light"}`}>
       <label
         className={`radio-label ${legendMode === "type" ? "selected" : ""}`}
       >
