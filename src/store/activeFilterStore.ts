@@ -1,15 +1,15 @@
 import { createStore } from "zustand";
 import { FilterRuleDefinition } from "../components/filters/FilterRuleDefinition";
 
-type Filter = {
+interface Filter {
   name?: string;
   description?: string;
   filterRules: FilterRuleDefinition[];
-};
+}
 
-type ActiveFiltersState = {
+interface ActiveFiltersState {
   activeFilter: Filter | null;
-};
+}
 
 const useActiveFilterStore = createStore<ActiveFiltersState>((set) => ({
   activeFilter: null,
