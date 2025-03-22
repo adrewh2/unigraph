@@ -56,7 +56,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const lastWidthRef = useRef<number>(350);
-  const syncingRef = useRef<boolean>(false); // Flag to prevent circular updates
 
   const {
     showToolbar,
@@ -79,10 +78,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         ? leftSidebarConfig.activeSectionId
         : rightSidebarConfig.activeSectionId;
 
-    if (!syncingRef.current && configBasedActiveSection != activeSection) {
-      syncingRef.current = true;
+    if (configBasedActiveSection != activeSection) {
       setActiveSection(configBasedActiveSection);
-      syncingRef.current = false;
     }
   }, [
     leftSidebarConfig.activeSectionId,
