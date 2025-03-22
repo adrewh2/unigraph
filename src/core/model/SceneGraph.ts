@@ -35,9 +35,10 @@ export interface ISceneGraphMetadata {
 }
 
 export const DEFAULT_SCENE_GRAPH_DATA = (): SceneGraphData => {
+  const displayConfig = GET_DEFAULT_RENDERING_CONFIG(new Graph());
   return {
     graph: new Graph(),
-    displayConfig: GET_DEFAULT_RENDERING_CONFIG(new Graph()),
+    displayConfig: displayConfig,
     forceGraphDisplayConfig: {
       nodeTextLabels: false,
       nodeSize: 3,
@@ -49,6 +50,7 @@ export const DEFAULT_SCENE_GRAPH_DATA = (): SceneGraphData => {
     },
     metadata: {},
     entityCache: new EntityCache(),
+    committed_DisplayConfig: { ...displayConfig },
   };
 };
 
@@ -63,6 +65,7 @@ export type SceneGraphData = {
   metadata: ISceneGraphMetadata;
   entityCache: EntityCache; // for storing additional non-graph entities
   defaultAppConfig?: AppConfig;
+  committed_DisplayConfig: RenderingConfig;
 };
 
 export class SceneGraph {
@@ -76,12 +79,21 @@ export class SceneGraph {
         this.data.displayConfig = data.displayConfig;
       } else {
         this.data.displayConfig = GET_DEFAULT_RENDERING_CONFIG(this.data.graph);
+        this.data.committed_DisplayConfig = this.data.displayConfig;
       }
     }
     validateSceneGraph(this);
     this.getNodes().validate();
     this.getEdges().validate();
     this.listeners = listeners;
+  }
+
+  getCommittedDisplayConfig() {
+    return this.data.committed_DisplayConfig;
+  }
+
+  commitDisplayConfig() {
+    this.data.committed_DisplayConfig = this.data.displayConfig;
   }
 
   bindListeners(listeners: ISceneGraphListeners) {

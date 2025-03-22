@@ -602,12 +602,12 @@ const AppContent: React.FC<{
         currentSceneGraph.getGraph().getEdges().getTypes()
       );
       SetCurrentDisplayConfigOf(
-        currentSceneGraph,
+        currentSceneGraph.getDisplayConfig(),
         "Node",
         displayConfig.nodeConfig
       );
       SetCurrentDisplayConfigOf(
-        currentSceneGraph,
+        currentSceneGraph.getDisplayConfig(),
         "Edge",
         displayConfig.edgeConfig
       );
@@ -636,8 +636,12 @@ const AppContent: React.FC<{
           setAppConfig(graph.getData().defaultAppConfig!);
         }
         setLegendMode(graph.getDisplayConfig().mode);
-        setNodeLegendConfig(GetCurrentDisplayConfigOf(graph, "Node"));
-        setEdgeLegendConfig(GetCurrentDisplayConfigOf(graph, "Edge"));
+        setNodeLegendConfig(
+          GetCurrentDisplayConfigOf(graph.getDisplayConfig(), "Node")
+        );
+        setEdgeLegendConfig(
+          GetCurrentDisplayConfigOf(graph.getDisplayConfig(), "Edge")
+        );
         setGraphStatistics(getGraphStatistics(graph.getGraph()));
 
         graph.bindListeners({
@@ -745,8 +749,12 @@ const AppContent: React.FC<{
     (mode: RenderingManager__DisplayMode) => {
       currentSceneGraph.getDisplayConfig().mode = mode;
       setLegendMode(mode);
-      setNodeLegendConfig(GetCurrentDisplayConfigOf(currentSceneGraph, "Node"));
-      setEdgeLegendConfig(GetCurrentDisplayConfigOf(currentSceneGraph, "Edge"));
+      setNodeLegendConfig(
+        GetCurrentDisplayConfigOf(currentSceneGraph.getDisplayConfig(), "Node")
+      );
+      setEdgeLegendConfig(
+        GetCurrentDisplayConfigOf(currentSceneGraph.getDisplayConfig(), "Edge")
+      );
     },
     [currentSceneGraph, setLegendMode]
   );
@@ -757,7 +765,11 @@ const AppContent: React.FC<{
       Object.keys(updates).forEach((key) => {
         newConfig[key].isVisible = updates[key];
       });
-      SetCurrentDisplayConfigOf(currentSceneGraph, "Node", newConfig);
+      SetCurrentDisplayConfigOf(
+        currentSceneGraph.getDisplayConfig(),
+        "Node",
+        newConfig
+      );
       setNodeLegendConfig(newConfig);
     },
     [currentSceneGraph, nodeLegendConfig]
@@ -769,7 +781,11 @@ const AppContent: React.FC<{
       Object.keys(updates).forEach((key) => {
         newConfig[key].isVisible = updates[key];
       });
-      SetCurrentDisplayConfigOf(currentSceneGraph, "Edge", newConfig);
+      SetCurrentDisplayConfigOf(
+        currentSceneGraph.getDisplayConfig(),
+        "Edge",
+        newConfig
+      );
       setEdgeLegendConfig(newConfig);
     },
     [currentSceneGraph, edgeLegendConfig]
@@ -887,10 +903,16 @@ const AppContent: React.FC<{
         const config = await loadRenderingConfigFromFile(file);
         currentSceneGraph.setDisplayConfig(config);
         setNodeLegendConfig(
-          GetCurrentDisplayConfigOf(currentSceneGraph, "Node")
+          GetCurrentDisplayConfigOf(
+            currentSceneGraph.getDisplayConfig(),
+            "Node"
+          )
         );
         setEdgeLegendConfig(
-          GetCurrentDisplayConfigOf(currentSceneGraph, "Edge")
+          GetCurrentDisplayConfigOf(
+            currentSceneGraph.getDisplayConfig(),
+            "Edge"
+          )
         );
       }
     },

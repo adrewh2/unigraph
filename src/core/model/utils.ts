@@ -15,10 +15,9 @@ export const getRandomNode = (graph: Graph): Node => {
 };
 
 export const GetCurrentDisplayConfigOf = (
-  sceneGraph: SceneGraph,
+  renderingConfig: RenderingConfig,
   type: GraphEntityType
 ) => {
-  const renderingConfig = sceneGraph.getDisplayConfig();
   const mode = renderingConfig.mode;
   const entityConfig =
     type === "Node" ? renderingConfig.nodeConfig : renderingConfig.edgeConfig;
@@ -26,23 +25,23 @@ export const GetCurrentDisplayConfigOf = (
 };
 
 export const SetCurrentDisplayConfigOf = (
-  sceneGraph: SceneGraph,
+  renderingConfig: RenderingConfig,
   type: GraphEntityType,
   config: any
 ) => {
-  const mode = sceneGraph.getDisplayConfig().mode;
+  const mode = renderingConfig.mode;
   if (mode === "type") {
     if (type === "Node") {
-      sceneGraph.getDisplayConfig().nodeConfig.types = config;
+      renderingConfig.nodeConfig.types = config;
     } else {
-      sceneGraph.getDisplayConfig().edgeConfig.types = config;
+      renderingConfig.edgeConfig.types = config;
     }
   }
   if (mode === "tag") {
     if (type === "Node") {
-      sceneGraph.getDisplayConfig().nodeConfig.tags = config;
+      renderingConfig.nodeConfig.tags = config;
     } else {
-      sceneGraph.getDisplayConfig().edgeConfig.tags = config;
+      renderingConfig.edgeConfig.tags = config;
     }
   }
 };

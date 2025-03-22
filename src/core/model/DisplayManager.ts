@@ -117,7 +117,7 @@ export class DisplayManager {
     mode: RenderingManager__DisplayMode
   ) => {
     const originalDisplayConfig = GetCurrentDisplayConfigOf(
-      sceneGraph,
+      sceneGraph.getCommittedDisplayConfig(),
       entityType
     );
     const checkIsVisible =
