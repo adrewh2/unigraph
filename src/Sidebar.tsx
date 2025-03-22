@@ -6,7 +6,7 @@ import {
   ChevronsRight,
   Menu,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/RightSidebarConfig";
 import useWorkspaceConfigStore from "./store/workspaceConfigStore";
@@ -53,6 +53,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [panelWidth, setPanelWidth] = useState(350); // Default width
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastWidthRef = useRef<number>(350);
 
   const { showToolbar } = useWorkspaceConfigStore();
 
@@ -82,80 +85,92 @@ const Sidebar: React.FC<SidebarProps> = ({
     setActiveSection((prev) => (prev === menuId ? null : menuId));
   };
 
-  // // Close active section when clicking outside
-  // useEffect(() => {
-  //   const handleClickOutside = (e: MouseEvent) => {
-  //     const target = e.target as Element;
-  //     // Check if click is outside both the sidebar and any side panel
-  //     if (
-  //       !target.closest(`.${styles.sidebar}`) &&
-  //       !target.closest(`.${styles.fullHeightSidePanel}`)
-  //     ) {
-  //       setActiveSection(null);
-  //     }
-  //   };
-
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => {
-  //     document.removeEventListener("mousedown", handleClickOutside);
-  //   };
-  // }, []);
-
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsResizing(true);
     resizeRef.current = {
       startX: e.clientX,
-      startWidth: panelWidth,
+      startWidth: lastWidthRef.current,
     };
+    // Add a class to the body to disable text selection during resize
+    document.body.classList.add("resizing");
   };
 
   const handleResizeMove = React.useCallback(
     (e: MouseEvent) => {
       if (!isResizing || !resizeRef.current) return;
 
-      const delta =
-        position === "left"
-          ? e.clientX - resizeRef.current.startX
-          : resizeRef.current.startX - e.clientX;
+      // Cancel any pending animation frame
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
 
-      const newWidth = Math.max(
-        250,
-        Math.min(600, resizeRef.current.startWidth + delta)
-      );
-      setPanelWidth(newWidth);
+      // Use requestAnimationFrame for smoother updates
+      rafRef.current = requestAnimationFrame(() => {
+        if (!resizeRef.current) return;
+
+        const delta =
+          position === "left"
+            ? e.clientX - resizeRef.current.startX
+            : resizeRef.current.startX - e.clientX;
+
+        const newWidth = Math.max(
+          250,
+          Math.min(600, resizeRef.current.startWidth + delta)
+        );
+
+        lastWidthRef.current = newWidth;
+
+        // Directly update the DOM element style for better performance
+        if (panelRef.current) {
+          panelRef.current.style.width = `${newWidth}px`;
+        }
+      });
     },
     [isResizing, position]
   );
 
-  const handleResizeEnd = () => {
+  const handleResizeEnd = React.useCallback(() => {
     setIsResizing(false);
     resizeRef.current = null;
-  };
+    document.body.classList.remove("resizing");
 
-  useEffect(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
+    // Update the state only once at the end of resize
+    setPanelWidth(lastWidthRef.current);
+  }, []);
+
+  useLayoutEffect(() => {
     if (isResizing) {
-      document.addEventListener("mousemove", handleResizeMove);
+      document.addEventListener("mousemove", handleResizeMove, {
+        passive: true,
+      });
       document.addEventListener("mouseup", handleResizeEnd);
 
-      document.body.style.userSelect = "none"; // Prevent text selection during resize
       document.body.style.cursor =
         position === "left" ? "e-resize" : "w-resize";
     } else {
       document.removeEventListener("mousemove", handleResizeMove);
       document.removeEventListener("mouseup", handleResizeEnd);
 
-      document.body.style.userSelect = "";
       document.body.style.cursor = "";
     }
 
     return () => {
       document.removeEventListener("mousemove", handleResizeMove);
       document.removeEventListener("mouseup", handleResizeEnd);
-      document.body.style.userSelect = "";
       document.body.style.cursor = "";
+
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
-  }, [handleResizeMove, isResizing, position]);
+  }, [handleResizeMove, handleResizeEnd, isResizing, position]);
 
   if (minimal && !isOpen) {
     return (
@@ -251,6 +266,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {activeSection &&
         menuItems.find((item) => item.id === activeSection)?.content && (
           <div
+            ref={panelRef}
             className={styles.fullHeightSidePanel}
             style={{
               [position === "left" ? "left" : "right"]: isOpen
@@ -266,6 +282,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 ? `calc(100vh - var(--toolbar-height, ${toolbarHeight}))`
                 : "100vh",
               width: `${panelWidth}px`, // Apply dynamic width
+              willChange: isResizing ? "width" : "auto", // Add will-change for better performance during resize
+              transitionProperty: isResizing ? "none" : "width", // Disable transitions during resize
             }}
           >
             <div className={styles.sidePanelHeader}>

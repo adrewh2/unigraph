@@ -462,6 +462,7 @@
   display: flex;
   flex-direction: column;
   transition: width 0.1s ease; /* Add smooth transition when not dragging */
+  will-change: width; /* Hint to browser to optimize for width changes */
 }
 
 /* Resize handle for left panel (appears on right edge) */
@@ -469,11 +470,13 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 4px;
+  width: 8px; /* Wider for easier grabbing */
   height: 100%;
   cursor: e-resize;
   background-color: transparent;
   transition: background-color 0.2s;
+  z-index: 60; /* Make sure it's above other content */
+  touch-action: none; /* Prevent scrolling during resize */
 }
 
 /* Resize handle for right panel (appears on left edge) */
@@ -481,11 +484,19 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 4px;
+  width: 8px; /* Wider for easier grabbing */
   height: 100%;
   cursor: w-resize;
   background-color: transparent;
   transition: background-color 0.2s;
+  z-index: 60;
+  touch-action: none;
+}
+
+/* Add this for better resize performance */
+.resizing {
+  user-select: none !important;
+  cursor: e-resize;
 }
 
 .resizeHandle:hover,
