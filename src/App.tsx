@@ -1573,12 +1573,6 @@ const AppContent: React.FC<{
     );
   }, [activeView, currentSceneGraph]);
 
-  const clearFilters = useCallback(() => {
-    DisplayManager.setAllVisible(currentSceneGraph.getGraph());
-    SetNodeAndEdgeLegendsForOnlyVisibleEntities(currentSceneGraph, legendMode);
-    setActiveFilter({ name: undefined, filterRules: [] });
-  }, [currentSceneGraph, legendMode, setActiveFilter]);
-
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
       <div
@@ -1601,8 +1595,6 @@ const AppContent: React.FC<{
           renderLayoutModeRadio={renderLayoutModeRadio}
           showFilterWindow={() => setShowFilter(true)}
           showFilterManager={() => setShowFilterManager(true)}
-          clearFilters={clearFilters}
-          activeFilters={activeFilter?.name ?? null}
           showPathAnalysis={() => setShowPathAnalysis(true)}
           renderNodeLegend={renderNodeLegend}
           renderEdgeLegend={renderEdgeLegend}

@@ -9,7 +9,10 @@ import {
 } from "../../configs/RightSidebarConfig";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
 import { NodePositionData } from "../../core/layouts/layoutHelpers";
+import { DisplayManager } from "../../core/model/DisplayManager";
 import Sidebar from "../../Sidebar";
+import useActiveFilterStore from "../../store/activeFilterStore";
+import { SetNodeAndEdgeLegendsForOnlyVisibleEntities } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
@@ -33,7 +36,6 @@ interface WorkspaceProps {
   renderLayoutModeRadio: () => React.ReactNode;
   showFilterWindow: () => void;
   showFilterManager: () => void;
-  clearFilters: () => void;
   renderNodeLegend: React.ReactNode;
   renderEdgeLegend: React.ReactNode;
   showPathAnalysis: () => void;
@@ -43,7 +45,6 @@ interface WorkspaceProps {
   handleLoadLayout: (nodePositionData: NodePositionData) => void;
   handleFitToView: (activeView: string) => void;
   handleShowEntityTables: () => void;
-  activeFilters: string | null; // Add activeFilters prop
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -62,7 +63,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
   renderLayoutModeRadio,
   showFilterWindow,
   showFilterManager,
-  clearFilters,
   renderNodeLegend,
   renderEdgeLegend,
   showPathAnalysis,
@@ -72,12 +72,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleLoadLayout,
   handleFitToView,
   handleShowEntityTables,
-  activeFilters,
 }) => {
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
-  const { activeView, activeLayout, forceGraph3dOptions } = useAppConfigStore();
+  const { activeView, activeLayout, forceGraph3dOptions, legendMode } =
+    useAppConfigStore();
+
+  const { activeFilter, setActiveFilter } = useActiveFilterStore();
 
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -112,6 +114,12 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showToolbar,
     simulations,
   ]);
+
+  const clearFilters = React.useCallback(() => {
+    DisplayManager.setAllVisible(currentSceneGraph.getGraph());
+    SetNodeAndEdgeLegendsForOnlyVisibleEntities(currentSceneGraph, legendMode);
+    setActiveFilter(null);
+  }, [currentSceneGraph, legendMode, setActiveFilter]);
 
   const renderLeftSideBar = useMemo(() => {
     if (!leftSidebarConfig.isVisible) {
@@ -214,7 +222,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
               sceneGraphName:
                 currentSceneGraph.getMetadata().name ?? "Untitled",
               activeLayout: activeLayout,
-              activeFilters, // Pass activeFilters name here
+              activeFilter: activeFilter?.name, // Pass activeFilters name here
             },
           })
         }
@@ -225,15 +233,15 @@ const Workspace: React.FC<WorkspaceProps> = ({
     rightSidebarConfig.mode,
     rightSidebarConfig.minimal,
     activeView,
-    activeLayout,
     isDarkMode,
     renderLayoutModeRadio,
     renderNodeLegend,
     renderEdgeLegend,
     currentSceneGraph,
+    activeLayout,
+    activeFilter?.name,
     handleFitToView,
     handleShowEntityTables,
-    activeFilters, // Add dependency
   ]);
 
   return (

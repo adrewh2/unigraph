@@ -64,7 +64,7 @@ export const rightFooterContent = (
     details?: {
       sceneGraphName: string;
       activeLayout: string;
-      activeFilters?: string | null;
+      activeFilter?: string | null;
     };
   }
 ) => {
@@ -90,7 +90,7 @@ export const rightFooterContent = (
               {actions.details.activeLayout}
             </span>
           </div>
-          {actions.details.activeFilters && (
+          {actions.details.activeFilter && (
             <div className={styles.footerDetailsRow}>
               <span
                 className={styles.footerDetailsLabel}
