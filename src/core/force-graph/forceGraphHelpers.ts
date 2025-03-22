@@ -11,6 +11,17 @@ import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
 import { exportGraphDataForReactFlow } from "../react-flow/exportGraphDataForReactFlow";
 
+/**
+ * Find a node in the ForceGraph instance by its ID
+ */
+export function findNodeInForceGraph(
+  forceGraphInstance: ForceGraph3DInstance,
+  nodeId: NodeId
+): any | null {
+  const graphData = forceGraphInstance.graphData();
+  return graphData.nodes.find((node: any) => node.id === nodeId) || null;
+}
+
 export const extractPositionDataFromForceGraphInstance = (
   instance: ForceGraph3DInstance
 ): NodePositionData => {

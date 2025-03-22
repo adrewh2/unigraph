@@ -1,6 +1,9 @@
 import { Info, List, Settings2, Table2, ZoomIn } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
+import NodeInfo from "../components/NodeInfo";
+import { findNodeInForceGraph } from "../core/force-graph/forceGraphHelpers";
+import { flyToNode } from "../core/webgl/webglHelpers";
 import styles from "../Sidebar.module.css";
 import { getActiveFilter } from "../store/activeFilterStore";
 import {
@@ -28,7 +31,8 @@ export interface MenuItem {
 export const createDefaultRightMenus = (
   renderLegends: () => React.ReactNode,
   isForceGraph3dActive: boolean,
-  isDarkMode: boolean
+  isDarkMode: boolean,
+  forceGraphInstance?: any
 ): MenuItem[] => [
   {
     id: "legends",
@@ -59,11 +63,31 @@ export const createDefaultRightMenus = (
     icon: <Info size={20} className={styles.menuIcon} />,
     label: "Info",
     content: (
-      <SceneGraphInfoPanel
-        sceneGraphName={getCurrentSceneGraph().getMetadata().name ?? ""}
-        activeLayout={getActiveLayout()}
-        activeFilter={getActiveFilter()?.name}
-      />
+      <div className={styles.infoPanel}>
+        <SceneGraphInfoPanel
+          sceneGraphName={getCurrentSceneGraph().getMetadata().name ?? ""}
+          activeLayout={getActiveLayout()}
+          activeFilter={getActiveFilter()?.name}
+        />
+        <NodeInfo
+          onFocusNode={(nodeId) => {
+            if (forceGraphInstance && isForceGraph3dActive) {
+              const node = findNodeInForceGraph(forceGraphInstance, nodeId);
+              if (node) {
+                flyToNode(forceGraphInstance, node);
+              }
+            }
+          }}
+          onZoomToNode={(nodeId) => {
+            if (forceGraphInstance && isForceGraph3dActive) {
+              const node = findNodeInForceGraph(forceGraphInstance, nodeId);
+              if (node) {
+                flyToNode(forceGraphInstance, node);
+              }
+            }
+          }}
+        />
+      </div>
     ),
   },
 ];
