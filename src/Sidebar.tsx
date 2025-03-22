@@ -52,6 +52,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     setIsOpen(mode === "full");
   }, [mode]);
 
+  // Get toolbar height from CSS or use default
+  const toolbarHeight =
+    getComputedStyle(document.documentElement).getPropertyValue(
+      "--toolbar-height"
+    ) || "40px";
+
   const closeButton =
     position === "left" ? (
       <ChevronsLeft size={20} />
@@ -177,6 +183,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 : minimal
                   ? "0px"
                   : "60px",
+              // Ensure the CSS variable is applied for correct positioning
+              top: `var(--toolbar-height, ${toolbarHeight})`,
+              height: `calc(100vh - var(--toolbar-height, ${toolbarHeight}))`,
             }}
           >
             <div className={styles.sidePanelHeader}>

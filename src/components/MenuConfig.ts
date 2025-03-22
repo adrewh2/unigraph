@@ -246,7 +246,7 @@ export class MenuConfig {
               setRightSidebarConfig({
                 mode: rightConfig.mode === "collapsed" ? "full" : "collapsed",
                 isVisible: true,
-                minimal: true,
+                minimal: false,
               });
             },
           },

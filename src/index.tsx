@@ -49,14 +49,14 @@ if (rootElement) {
   setRightSidebarConfig({
     isVisible: showRightSidebar,
     mode: "full",
-    minimal: true,
+    minimal: false,
   });
 
   const hideWorkspace = getToggleOptionValue(urlParams, "hideWorkspace", false);
   if (hideWorkspace) {
     setShowToolbar(false);
     setLeftSidebarConfig({ isVisible: false, mode: "full", minimal: false });
-    setRightSidebarConfig({ isVisible: false, mode: "full", minimal: true });
+    setRightSidebarConfig({ isVisible: false, mode: "full", minimal: false });
   }
 
   if (graphName) {
