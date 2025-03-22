@@ -30,12 +30,19 @@ type WorkspaceConfigState = {
   setRightActiveSection: (sectionId: string | null) => void;
   setLeftPanelWidth: (width: number) => void;
   setRightPanelWidth: (width: number) => void;
+  getActiveSection: (sidebar: "left" | "right") => string | null;
 };
 
 const useWorkspaceConfigStore = create<WorkspaceConfigState>((set) => ({
   showToolbar: true,
   leftSidebarConfig: DEFAULT_SIDEBAR_CONFIG(),
   rightSidebarConfig: DEFAULT_SIDEBAR_CONFIG(),
+
+  getActiveSection: (sidebar): string | null => {
+    return sidebar === "left"
+      ? useWorkspaceConfigStore.getState().leftSidebarConfig.activeSectionId
+      : useWorkspaceConfigStore.getState().rightSidebarConfig.activeSectionId;
+  },
 
   setShowToolbar: (show) => set({ showToolbar: show }),
   setLeftSidebarConfig: (config) =>
@@ -104,6 +111,12 @@ export const setLeftPanelWidth = (width: number) => {
 
 export const setRightPanelWidth = (width: number) => {
   useWorkspaceConfigStore.getState().setRightPanelWidth(width);
+};
+
+export const getActiveSection = (sidebar: "left" | "right") => {
+  return sidebar === "left"
+    ? useWorkspaceConfigStore.getState().leftSidebarConfig.activeSectionId
+    : useWorkspaceConfigStore.getState().rightSidebarConfig.activeSectionId;
 };
 
 export default useWorkspaceConfigStore;

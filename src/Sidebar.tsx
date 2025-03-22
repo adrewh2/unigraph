@@ -9,10 +9,7 @@ import {
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/RightSidebarConfig";
-import useWorkspaceConfigStore, {
-  setLeftSidebarConfig,
-  setRightSidebarConfig,
-} from "./store/workspaceConfigStore";
+import useWorkspaceConfigStore from "./store/workspaceConfigStore";
 
 interface SidebarProps {
   position: "left" | "right";
@@ -59,37 +56,57 @@ const Sidebar: React.FC<SidebarProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const lastWidthRef = useRef<number>(350);
+  const syncingRef = useRef<boolean>(false); // Flag to prevent circular updates
 
-  const { showToolbar } = useWorkspaceConfigStore();
+  const {
+    showToolbar,
+    leftSidebarConfig,
+    rightSidebarConfig,
+    getActiveSection,
+  } = useWorkspaceConfigStore();
 
   useEffect(() => {
     setIsOpen(mode === "full");
   }, [mode]);
 
   // Get active section from workspace config store to coordinate across sidebars
-  const { leftSidebarConfig, rightSidebarConfig } = useWorkspaceConfigStore();
   const configBasedActiveSection =
     position === "left"
       ? leftSidebarConfig.activeSectionId
       : rightSidebarConfig.activeSectionId;
 
-  // Sync active section from config when it changes
+  // Sync active section from config when it changes, but only if not already syncing
   useEffect(() => {
-    if (configBasedActiveSection !== activeSection) {
+    if (
+      !syncingRef.current &&
+      configBasedActiveSection !== getActiveSection(position)
+    ) {
+      syncingRef.current = true;
       setActiveSection(configBasedActiveSection);
+      syncingRef.current = false;
     }
-  }, [activeSection, configBasedActiveSection]);
+  }, [configBasedActiveSection, getActiveSection, position]);
 
-  // Update config store when active section changes internally
-  useEffect(() => {
-    if (activeSection !== configBasedActiveSection) {
-      if (position === "left") {
-        setLeftSidebarConfig({ activeSectionId: activeSection });
-      } else {
-        setRightSidebarConfig({ activeSectionId: activeSection });
-      }
+  // Handler for section click - updates local state only
+  const handleSectionClick = (menuId: string) => {
+    const newValue = activeSection === menuId ? null : menuId;
+    setActiveSection(newValue);
+
+    // Update the store directly instead of relying on effect
+    if (position === "left") {
+      const updatedConfig = {
+        ...leftSidebarConfig,
+        activeSectionId: newValue,
+      };
+      useWorkspaceConfigStore.setState({ leftSidebarConfig: updatedConfig });
+    } else {
+      const updatedConfig = {
+        ...rightSidebarConfig,
+        activeSectionId: newValue,
+      };
+      useWorkspaceConfigStore.setState({ rightSidebarConfig: updatedConfig });
     }
-  }, [activeSection, configBasedActiveSection, position]);
+  };
 
   // Get toolbar height from CSS or use default
   const toolbarHeight =
@@ -107,10 +124,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
     onToggle?.();
-  };
-
-  const handleSectionClick = (menuId: string) => {
-    setActiveSection((prev) => (prev === menuId ? null : menuId));
   };
 
   const handleResizeStart = (e: React.MouseEvent) => {
