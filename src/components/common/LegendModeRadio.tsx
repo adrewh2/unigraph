@@ -1,6 +1,6 @@
 import React from "react";
 import { RenderingManager__DisplayMode } from "../../controllers/RenderingManager";
-import "./LayoutModeRadio.css";
+import "./LegendModeRadio.css";
 
 interface LayoutModeRadioProps {
   layoutMode: RenderingManager__DisplayMode;
@@ -8,7 +8,7 @@ interface LayoutModeRadioProps {
   isDarkMode?: boolean;
 }
 
-const LayoutModeRadio: React.FC<LayoutModeRadioProps> = ({
+const LegendModeRadio: React.FC<LayoutModeRadioProps> = ({
   layoutMode,
   onLayoutModeChange,
   isDarkMode = true,
@@ -43,4 +43,4 @@ const LayoutModeRadio: React.FC<LayoutModeRadioProps> = ({
   );
 };
 
-export default LayoutModeRadio;
+export default LegendModeRadio;

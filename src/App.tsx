@@ -22,8 +22,8 @@ import EntityJsonEditorDialog from "./components/common/EntityJsonEditorDialog";
 import EntityTabDialog from "./components/common/EntityTabDialog";
 import { GraphEntityType } from "./components/common/GraphSearch";
 import LayoutManager from "./components/common/LayoutManager";
-import LayoutModeRadio from "./components/common/LayoutModeRadio";
 import Legend from "./components/common/Legend";
+import LegendModeRadio from "./components/common/LegendModeRadio";
 import NodeDisplayCard from "./components/common/NodeDisplayCard";
 import FilterManager from "./components/filters/FilterManager";
 import {
@@ -978,7 +978,7 @@ const AppContent: React.FC<{
 
   const renderLayoutModeRadio = useCallback(() => {
     return (
-      <LayoutModeRadio
+      <LegendModeRadio
         layoutMode={legendMode}
         onLayoutModeChange={handleLegendModeChange}
       />
