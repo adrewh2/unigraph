@@ -9,7 +9,10 @@ import {
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/RightSidebarConfig";
-import useWorkspaceConfigStore from "./store/workspaceConfigStore";
+import useWorkspaceConfigStore, {
+  setLeftSidebarConfig,
+  setRightSidebarConfig,
+} from "./store/workspaceConfigStore";
 
 interface SidebarProps {
   position: "left" | "right";
@@ -62,6 +65,31 @@ const Sidebar: React.FC<SidebarProps> = ({
   useEffect(() => {
     setIsOpen(mode === "full");
   }, [mode]);
+
+  // Get active section from workspace config store to coordinate across sidebars
+  const { leftSidebarConfig, rightSidebarConfig } = useWorkspaceConfigStore();
+  const configBasedActiveSection =
+    position === "left"
+      ? leftSidebarConfig.activeSectionId
+      : rightSidebarConfig.activeSectionId;
+
+  // Sync active section from config when it changes
+  useEffect(() => {
+    if (configBasedActiveSection !== activeSection) {
+      setActiveSection(configBasedActiveSection);
+    }
+  }, [activeSection, configBasedActiveSection]);
+
+  // Update config store when active section changes internally
+  useEffect(() => {
+    if (activeSection !== configBasedActiveSection) {
+      if (position === "left") {
+        setLeftSidebarConfig({ activeSectionId: activeSection });
+      } else {
+        setRightSidebarConfig({ activeSectionId: activeSection });
+      }
+    }
+  }, [activeSection, configBasedActiveSection, position]);
 
   // Get toolbar height from CSS or use default
   const toolbarHeight =

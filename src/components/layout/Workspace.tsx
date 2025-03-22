@@ -1,3 +1,4 @@
+import { Info } from "lucide-react";
 import React, { useMemo } from "react";
 import {
   createDefaultLeftMenus,
@@ -7,14 +8,20 @@ import {
   createDefaultRightMenus,
   rightFooterContent,
 } from "../../configs/RightSidebarConfig";
+import { findNodeInForceGraph } from "../../core/force-graph/forceGraphHelpers";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
 import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import { DisplayManager } from "../../core/model/DisplayManager";
+import { flyToNode } from "../../core/webgl/webglHelpers";
 import Sidebar from "../../Sidebar";
 import useActiveFilterStore from "../../store/activeFilterStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
-import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
+import { getSelectedNodeId } from "../../store/graphInteractionStore";
+import useWorkspaceConfigStore, {
+  setRightActiveSection,
+} from "../../store/workspaceConfigStore";
+import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
@@ -76,7 +83,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
-  const { activeView, activeLayout, forceGraph3dOptions } = useAppConfigStore();
+  const { activeView, activeLayout, forceGraph3dOptions, forceGraphInstance } =
+    useAppConfigStore();
 
   const { setActiveFilter } = useActiveFilterStore();
 
@@ -183,6 +191,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showLayoutManager,
   ]);
 
+  // Monitor for selected node to show dynamic section
+  const selectedNodeId = getSelectedNodeId();
+
   const renderRightSideBar = useMemo(() => {
     if (
       !rightSidebarConfig.isVisible ||
@@ -191,7 +202,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       return null;
     }
 
-    // Create menuItems with our info
+    // Create base menu items with standard sections
     const menuItems = createDefaultRightMenus(
       () => (
         <>
@@ -203,6 +214,36 @@ const Workspace: React.FC<WorkspaceProps> = ({
       activeView === "ForceGraph3d",
       isDarkMode
     );
+
+    // Dynamically add Node Details section when a node is selected
+    if (selectedNodeId) {
+      menuItems.unshift({
+        id: "node-details",
+        icon: <Info size={20} className={styles.menuIcon} />,
+        label: "Node Details",
+        content: (
+          <NodeInfo
+            onFocusNode={(nodeId) => {
+              if (forceGraphInstance && activeView === "ForceGraph3d") {
+                const node = findNodeInForceGraph(forceGraphInstance, nodeId);
+                if (node) {
+                  flyToNode(forceGraphInstance, node);
+                }
+              }
+            }}
+            onZoomToNode={(nodeId) => {
+              if (forceGraphInstance && activeView === "ForceGraph3d") {
+                const node = findNodeInForceGraph(forceGraphInstance, nodeId);
+                if (node) {
+                  flyToNode(forceGraphInstance, node);
+                }
+              }
+            }}
+          />
+        ),
+      });
+      setRightActiveSection("node-details");
+    }
 
     return (
       <Sidebar
@@ -235,6 +276,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
     renderEdgeLegend,
     handleFitToView,
     handleShowEntityTables,
+    selectedNodeId, // Add selectedNodeId as a dependency
+    forceGraphInstance,
   ]);
 
   return (
