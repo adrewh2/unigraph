@@ -22,7 +22,7 @@ import {
 } from "../../core/force-graph/createForceGraph";
 import { NodeId } from "../../core/model/Node";
 import { EntityIds } from "../../core/model/entity/entityIds";
-import {
+import useGraphInteractionStore, {
   getSelectedNodeId,
   getSelectedNodeIds,
   setHoveredNodeId,
@@ -37,6 +37,7 @@ import { setRightActiveSection } from "../../store/workspaceConfigStore";
 import CustomNode from "../CustomNode";
 
 import "@xyflow/react/dist/style.css";
+import { EdgeId } from "../../core/model/Edge";
 import ResizerNode from "../resizerNode";
 
 // Remove the custom Node interface that was causing the type conflict
@@ -95,6 +96,8 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const selectionChangeRef = useRef(false);
+
+  const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
 
   // Get configuration from the store
   const reactFlowConfig = getReactFlowConfig();
@@ -261,6 +264,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
               fontSize: `${newConfig.nodeFontSize}px`,
               borderWidth: `${newConfig.nodeStrokeWidth}px`,
             },
+            selected: selectedNodeIds.has(node.id as NodeId),
           }))
         );
 
@@ -272,6 +276,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
               strokeWidth: newConfig.edgeStrokeWidth,
               fontSize: newConfig.edgeFontSize,
             },
+            selected: selectedEdgeIds.has(edge.id as EdgeId),
           }))
         );
       }
@@ -280,7 +285,25 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [selectedEdgeIds, selectedNodeIds]);
+
+  useEffect(() => {
+    // Update the ReactFlow nodes directly to show selection immediately
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
+          ...n,
+          selected: selectedNodeIds.has(n.id as NodeId),
+        }))
+      );
+      reactFlowInstance.current.setEdges((currentEdges) =>
+        currentEdges.map((e) => ({
+          ...e,
+          selected: selectedEdgeIds.has(e.id as EdgeId),
+        }))
+      );
+    }
+  }, [selectedNodeIds, selectedEdgeIds]);
 
   return (
     <div
