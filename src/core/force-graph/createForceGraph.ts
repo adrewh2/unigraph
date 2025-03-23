@@ -24,6 +24,7 @@ import {
 import {
   getHoveredEdgeIds,
   getHoveredNodeIds,
+  getSelectedNodeId,
   setHoveredEdgeId,
   setHoveredNodeId,
   setSelectedNodeId,
@@ -39,6 +40,9 @@ import { flyToNode } from "../webgl/webglHelpers";
 import { updateVisibleEntitiesInForceGraphInstance } from "./forceGraphHelpers";
 import { ForceGraphManager } from "./ForceGraphManager";
 
+export const MOUSE_HOVERED_NODE_COLOR = "rgb(242, 254, 9)";
+export const SELECTED_NODE_COLOR = "rgb(254, 148, 9)";
+
 export const refreshForceGraphInstance = (
   forceGraphInstance: ForceGraph3DInstance,
   sceneGraph: SceneGraph,
@@ -51,7 +55,10 @@ export const refreshForceGraphInstance = (
 
   forceGraphInstance.nodeColor((node) => {
     if (getHoveredNodeIds().has(node.id as NodeId)) {
-      return "rgb(242, 254, 9)";
+      return MOUSE_HOVERED_NODE_COLOR;
+    }
+    if (getSelectedNodeId() === node.id) {
+      return SELECTED_NODE_COLOR;
     }
     return RenderingManager.getColor(
       sceneGraph.getGraph().getNode(node.id as NodeId),
@@ -109,7 +116,9 @@ export const createForceGraph = (
     .nodeLabel("label")
     .nodeColor((node) => {
       if (getHoveredNodeIds().has(node.id as NodeId)) {
-        return "rgb(242, 254, 9)";
+        return MOUSE_HOVERED_NODE_COLOR;
+      } else if (getSelectedNodeId() === node.id) {
+        return SELECTED_NODE_COLOR;
       }
       return RenderingManager.getColor(
         sceneGraph.getGraph().getNode(node.id as NodeId),
