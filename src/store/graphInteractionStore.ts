@@ -43,12 +43,12 @@ const useGraphInteractionStore = create<GraphInteractionState>((set, get) => ({
     set({ hoveredEdgeIds: new EntityIds(edgeIds) }),
 
   getHoveredNodeId: () => {
-    const hoveredNodes = Array.from(get().hoveredNodeIds);
-    return hoveredNodes.length === 1 ? hoveredNodes[0] : null;
+    const hoveredNodeIds = get().hoveredNodeIds;
+    return hoveredNodeIds.size === 1 ? hoveredNodeIds.toArray()[0] : null;
   },
   getHoveredEdgeId: () => {
-    const hoveredEdges = Array.from(get().hoveredEdgeIds);
-    return hoveredEdges.length === 1 ? hoveredEdges[0] : null;
+    const hoveredEdgeIds = get().hoveredEdgeIds;
+    return hoveredEdgeIds.size === 1 ? hoveredEdgeIds.toArray()[0] : null;
   },
   getHoveredNodeIds: () => get().hoveredNodeIds,
   getHoveredEdgeIds: () => get().hoveredEdgeIds,
