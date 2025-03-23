@@ -110,13 +110,14 @@ const Legend: React.FC<LegendProps> = ({
             className={`legend-item ${theme}`}
             onMouseEnter={() => handleMouseEnter(key)}
             onMouseLeave={() => handleMouseLeave(key)}
-          >
-            <div
-              className="legend-item-label"
-              onClick={(_e) => {
+            onClick={(e) => {
+              // Only trigger if we didn't click the checkbox
+              if (!(e.target as HTMLElement).closest(".legend-checkbox")) {
                 onLabelSelected?.(key);
-              }}
-            >
+              }
+            }}
+          >
+            <div className="legend-item-label">
               <input
                 type="checkbox"
                 checked={checkedItems[key]}
