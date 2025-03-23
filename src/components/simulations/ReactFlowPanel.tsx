@@ -5,6 +5,7 @@ import {
   Edge,
   MiniMap,
   Node,
+  OnInit,
   OnSelectionChangeParams,
   ReactFlow,
   ReactFlowInstance,
@@ -12,7 +13,7 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { SelectionMode } from "reactflow";
 import {
   MOUSE_HOVERED_NODE_COLOR,
@@ -21,22 +22,27 @@ import {
 import { NodeId } from "../../core/model/Node";
 import { EntityIds } from "../../core/model/entity/entityIds";
 import {
+  getSelectedNodeId,
+  getSelectedNodeIds,
   setHoveredNodeId,
   setSelectedNodeId,
   setSelectedNodeIds,
 } from "../../store/graphInteractionStore";
 import { setRightActiveSection } from "../../store/workspaceConfigStore";
-import CustomNode from "../CustomNode"; // Import the custom node component
+import CustomNode from "../CustomNode";
 
 import "@xyflow/react/dist/style.css";
 import ResizerNode from "../resizerNode";
 
+// Remove the custom Node interface that was causing the type conflict
 interface ReactFlowPanelProps {
   nodes: Node[];
   edges: Edge[];
   onLoad?: (instance: ReactFlowInstance) => void;
   onNodeContextMenu?: (event: React.MouseEvent, node: Node) => void;
-  onBackgroundContextMenu?: (event: React.MouseEvent) => void;
+  onBackgroundContextMenu?: (
+    event: React.MouseEvent<Element, MouseEvent>
+  ) => void;
   onNodeDragStop?: (event: React.MouseEvent, node: Node, nodes: Node[]) => void;
   // sceneGraph: SceneGraph;
 }
@@ -81,12 +87,46 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   onBackgroundContextMenu,
   onNodeDragStop,
 }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+  const selectionChangeRef = useRef(false);
 
-  // Add the selection and hover styles to the document head
+  // PRE-PROCESS nodes to include selection state from global store
+  const processedNodes = useMemo(() => {
+    const selectedNodeId = getSelectedNodeId();
+    const selectedNodeIds = getSelectedNodeIds();
+
+    return initialNodes.map((node) => ({
+      ...node,
+      selected:
+        node.id === selectedNodeId || selectedNodeIds.has(node.id as NodeId),
+    }));
+  }, [initialNodes]);
+
+  const [nodes, setNodes, originalOnNodesChange] =
+    useNodesState(processedNodes);
+  const [edges, setEdges, originalOnEdgesChange] = useEdgesState(initialEdges);
+
+  // Fix the type mismatch by avoiding direct NodeChange typing - use any as an intermediary
+  const handleNodesChange = useCallback(
+    (changes: any) => {
+      setTimeout(() => {
+        originalOnNodesChange(changes);
+      });
+    },
+    [originalOnNodesChange]
+  );
+
+  const handleEdgesChange = useCallback(
+    (changes: any) => {
+      setTimeout(() => {
+        originalOnEdgesChange(changes);
+      });
+    },
+    [originalOnEdgesChange]
+  );
+
+  // Add the selection styles to the document head
   useEffect(() => {
     document.head.appendChild(nodeStyles);
     return () => {
@@ -94,45 +134,57 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     };
   }, []);
 
+  // Custom node click handler that sets the selected node
+  const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    event.stopPropagation();
+    selectionChangeRef.current = true;
+
+    // Set this node as the selected node in the global store
+    setSelectedNodeId(node.id as NodeId);
+
+    // Open the node details panel
+    setRightActiveSection("node-details");
+
+    // Update the ReactFlow nodes directly to show selection immediately
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
+          ...n,
+          selected: n.id === node.id,
+        }))
+      );
+    }
+  }, []);
+
   // Handle selection change in ReactFlow
   const handleSelectionChange = useCallback(
     ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
+      // Skip if this selection change was triggered by our node click handler
+      if (selectionChangeRef.current) {
+        selectionChangeRef.current = false;
+        return;
+      }
+
       if (!selectedNodes || selectedNodes.length === 0) {
-        // Clear selection when no nodes are selected
+        // Clear selection in global store
         setSelectedNodeIds(new EntityIds([]));
         return;
       }
 
-      // If only one node is selected, use setSelectedNodeId for compatibility with existing code
       if (selectedNodes.length === 1) {
+        // Single node selection
         setSelectedNodeId(selectedNodes[0].id as NodeId);
-
-        // Also open the node details panel in the right sidebar when a node is selected
         setRightActiveSection("node-details");
       } else {
-        // For multiple selections, update the store with all selected node IDs
+        // Multi-node selection
         const nodeIds = selectedNodes.map((node) => node.id as NodeId);
         setSelectedNodeIds(new EntityIds(nodeIds));
       }
-
-      console.log(
-        "ReactFlow selection changed:",
-        selectedNodes.map((n) => n.id)
-      );
     },
     []
   );
 
-  // Custom node click handler that sets the selected node
-  const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    // Set this node as the selected node
-    setSelectedNodeId(node.id as NodeId);
-
-    // Also open the node details panel
-    setRightActiveSection("node-details");
-  }, []);
-
-  // Handle node hover to update the store
+  // Handle node hover
   const handleNodeMouseEnter = useCallback(
     (event: React.MouseEvent, node: Node) => {
       setHoveredNodeId(node.id as NodeId);
@@ -144,17 +196,44 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     setHoveredNodeId(null);
   }, []);
 
+  // Handle background click to clear selection
+  const handlePaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+  }, []);
+
+  // Update nodes when initialNodes change
   useEffect(() => {
-    setNodes(initialNodes);
+    setNodes(processedNodes);
+  }, [processedNodes, setNodes]);
+
+  // Update edges when initialEdges change
+  useEffect(() => {
     setEdges(initialEdges);
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.fitView({ padding: 0.1 });
-    }
-    return () => {
-      setNodes([]);
-      setEdges([]);
-    };
-  }, [initialNodes, initialEdges, setNodes, setEdges]);
+  }, [initialEdges, setEdges]);
+
+  // Fix the onInit handler to use the correct type
+  const handleInit: OnInit = useCallback(
+    (instance: ReactFlowInstance) => {
+      reactFlowInstance.current = instance;
+      if (onLoad) {
+        onLoad(instance);
+      }
+      instance.fitView({ padding: 0.1 });
+
+      // Focus on selected node if there is one
+      const selectedNodeId = getSelectedNodeId();
+      if (selectedNodeId) {
+        const selectedNode = instance.getNode(selectedNodeId);
+        if (selectedNode) {
+          instance.fitView({
+            nodes: [selectedNode],
+            padding: 0.5,
+          });
+        }
+      }
+    },
+    [onLoad]
+  );
 
   return (
     <div
@@ -180,20 +259,17 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           multiSelectionKeyCode="Shift"
           nodes={nodes}
           edges={edges}
-          onNodesChange={(changes) => setTimeout(() => onNodesChange(changes))} // Need to set timeout here to avoid resizeobserver errors
-          onEdgesChange={(changes) => setTimeout(() => onEdgesChange(changes))} // Need to set timeout here to avoid resizeobserver errors
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
           onNodeDragStop={onNodeDragStop}
-          onInit={(instance: ReactFlowInstance) => {
-            reactFlowInstance.current = instance;
-            if (onLoad) {
-              onLoad(instance);
-            }
-            instance.fitView({ padding: 0.1 });
-          }}
+          onInit={handleInit} // Use the properly typed handler
           onNodeContextMenu={onNodeContextMenu}
-          onPaneContextMenu={(event: any) =>
-            onBackgroundContextMenu?.(event as React.MouseEvent)
+          onPaneContextMenu={(event) =>
+            onBackgroundContextMenu?.(
+              event as React.MouseEvent<Element, MouseEvent>
+            )
           }
+          onPaneClick={handlePaneClick}
           onNodeMouseEnter={handleNodeMouseEnter}
           onNodeMouseLeave={handleNodeMouseLeave}
           onNodeClick={handleNodeClick}
