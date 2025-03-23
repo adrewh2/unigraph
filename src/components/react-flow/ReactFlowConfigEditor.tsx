@@ -1,5 +1,6 @@
 import { BackgroundVariant } from "@xyflow/react";
 import React, { useEffect, useState } from "react";
+import { FormFieldProps, FormSchema } from "../shared/FormSchemaTypes";
 import styles from "./ReactFlowConfigEditor.module.css";
 
 interface ReactFlowConfigEditorProps {
@@ -42,20 +43,6 @@ export const DEFAULT_REACTFLOW_CONFIG: ReactFlowRenderConfig = {
   snapToGrid: false,
   snapGrid: [15, 15],
 };
-
-interface FormSchemaField {
-  validate: (value: number | boolean | string) => string | null;
-  label: string;
-  type: "number" | "checkbox" | "select";
-  options?: { value: string; label: string }[];
-  min?: number;
-  max?: number;
-  step?: number;
-}
-
-interface FormSchema {
-  [key: string]: FormSchemaField;
-}
 
 const formSchema: FormSchema = {
   nodeBorderRadius: {
@@ -155,16 +142,6 @@ const formSchema: FormSchema = {
     type: "checkbox",
   },
 };
-
-interface FormFieldProps {
-  name: string;
-  value: number | boolean | string;
-  error: string | null;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => void;
-  schema: FormSchema;
-}
 
 const FormField: React.FC<FormFieldProps> = ({
   name,
@@ -282,7 +259,6 @@ const FormField: React.FC<FormFieldProps> = ({
 };
 
 const ReactFlowConfigEditor: React.FC<ReactFlowConfigEditorProps> = ({
-  isDarkMode = true,
   onApply,
   initialConfig = DEFAULT_REACTFLOW_CONFIG,
 }) => {
@@ -294,7 +270,7 @@ const ReactFlowConfigEditor: React.FC<ReactFlowConfigEditorProps> = ({
     setFormData(initialConfig);
   }, [initialConfig]);
 
-  const validateField = (
+  const _validateField = (
     name: string,
     value: number | boolean | string
   ): string | null => {
