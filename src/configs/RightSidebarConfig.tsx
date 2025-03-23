@@ -1,4 +1,4 @@
-import { FileText, Info, List, Settings2, Table2, ZoomIn } from "lucide-react";
+import { FileText, Info, List, Scan, Settings2, Table2 } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
 import NodeDetailsPanel from "../components/NodeDetailsPanel";
@@ -153,7 +153,7 @@ export const rightFooterContent = (
           onClick={actions.onFitToView}
           title="Fit to View"
         >
-          <ZoomIn size={20} className={styles.menuIcon} />
+          <Scan size={20} className={styles.menuIcon} />
           {isOpen && <span className={styles.menuText}>Fit to View</span>}
         </button>
       </div>

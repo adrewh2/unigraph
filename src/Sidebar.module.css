@@ -459,6 +459,7 @@
   width: 350px; /* Default width - now controlled dynamically */
   background-color: #2d3748;
   overflow-y: auto;
+  overflow-x: hidden; /* Add this to prevent horizontal scroll */
   z-index: 40; /* Lower z-index than sidebar */
   box-shadow:
     inset 3px 0 5px -3px rgba(0, 0, 0, 0.5),
@@ -467,6 +468,7 @@
   flex-direction: column;
   transition: width 0.1s ease; /* Add smooth transition when not dragging */
   will-change: width; /* Hint to browser to optimize for width changes */
+  box-sizing: border-box; /* Add this to ensure padding is included in width */
 }
 
 /* Resize handle for left panel (appears on right edge) */
@@ -555,6 +557,9 @@
   flex: 1;
   padding: 16px;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .active .sidePanel {
@@ -595,4 +600,14 @@
   color: white;
   font-weight: 500;
   word-break: break-word;
+}
+
+.controlGroup,
+.section,
+.nodeInfoCard,
+.multiNodeContainer,
+.form-field,
+.formGroup {
+  max-width: 100%; /* Ensure no content exceeds container width */
+  box-sizing: border-box;
 }
