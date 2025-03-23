@@ -3,7 +3,7 @@ import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { HashtagNode } from "@lexical/hashtag";
 import { LinkNode } from "@lexical/link";
 import { ListItemNode, ListNode } from "@lexical/list";
-import { TRANSFORMERS } from "@lexical/markdown";
+import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
@@ -46,7 +46,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   onSave,
 }) => {
   const [markdown, setMarkdown] = useState(initialContent);
-  const [_editorState, setEditorState] = useState<EditorState | null>(null);
+  const [editorState, setEditorState] = useState<EditorState | null>(null);
   const [tags, setTags] = useState<string[]>([]);
 
   // Define theme
@@ -147,9 +147,9 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   };
 
   // Handle editor updates
-  const _handleEditorChange = (
+  const handleEditorChange = (
     editorState: EditorState,
-    _editor: LexicalEditor
+    editor: LexicalEditor
   ) => {
     setEditorState(editorState);
 
@@ -180,7 +180,17 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
 
   // Handle export button click
   const handleExport = () => {
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    let markdownContent = markdown;
+
+    if (editorState) {
+      editorState.read(() => {
+        markdownContent = $convertToMarkdownString(TRANSFORMERS);
+      });
+    }
+
+    const blob = new Blob([markdownContent], {
+      type: "text/markdown;charset=utf-8",
+    });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "document.md";
