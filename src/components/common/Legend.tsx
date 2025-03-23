@@ -105,19 +105,26 @@ const Legend: React.FC<LegendProps> = ({
       </div>
       <div className="legend-items">
         {keys.map((key) => (
-          <label
+          <div
             key={key}
             className={`legend-item ${theme}`}
             onMouseEnter={() => handleMouseEnter(key)}
             onMouseLeave={() => handleMouseLeave(key)}
           >
-            <div className="legend-item-label">
+            <div
+              className="legend-item-label"
+              onClick={(e) => {
+                // Only trigger label selection if not clicking the checkbox
+                if (!(e.target as HTMLElement).closest(".legend-checkbox")) {
+                  onLabelSelected?.(key);
+                }
+              }}
+            >
               <input
                 type="checkbox"
                 checked={checkedItems[key]}
                 onChange={() => handleCheckboxChange(key)}
                 className="legend-checkbox"
-                onClick={(_e) => onLabelSelected?.(key)} // Ensure click doesn't propagate
               />
               <span className={`legend-text ${theme}`}>{key}</span>
             </div>
@@ -134,7 +141,7 @@ const Legend: React.FC<LegendProps> = ({
                 className="legend-color-picker"
               />
             </div>
-          </label>
+          </div>
         ))}
       </div>
     </div>

@@ -797,7 +797,7 @@ const AppContent: React.FC<{
         ? graphStatistics?.nodeTypeToCount
         : graphStatistics?.nodeTagsToCount;
 
-    const onSelectLabel =
+    const onLegendLabelSelected =
       legendMode === "type" ? selectNodeIdsByType : selectNodesIdsByTag;
 
     return (
@@ -817,7 +817,7 @@ const AppContent: React.FC<{
         sceneGraph={currentSceneGraph}
         onMouseHoverItem={handleMouseHoverLegendItem("Node")}
         onMouseUnhoverItem={handleMouseUnhoverLegendItem("Node")}
-        onLabelSelected={onSelectLabel}
+        onLabelSelected={onLegendLabelSelected}
       />
     );
   }, [
@@ -839,7 +839,7 @@ const AppContent: React.FC<{
         ? graphStatistics?.edgeTypeToCount
         : graphStatistics?.edgeTagsToCount;
 
-    const onSelectLabel =
+    const onLegendLabelSelected =
       legendMode === "type" ? selectEdgeIdsByType : selectEdgeIdsByTag;
 
     return (
@@ -857,7 +857,7 @@ const AppContent: React.FC<{
         totalCount={graphStatistics?.edgeCount}
         statistics={statistics}
         sceneGraph={currentSceneGraph}
-        onLabelSelected={onSelectLabel}
+        onLabelSelected={onLegendLabelSelected}
       />
     );
   }, [
