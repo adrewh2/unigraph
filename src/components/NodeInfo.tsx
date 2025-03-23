@@ -1,4 +1,10 @@
-import { ArrowUpRight, ExternalLink, MapPin, Zap } from "lucide-react";
+import {
+  ArrowUpRight,
+  ExternalLink,
+  FileText,
+  MapPin,
+  Zap,
+} from "lucide-react";
 import React from "react";
 import { NodeId } from "../core/model/Node";
 import { getCurrentSceneGraph } from "../store/appConfigStore";
@@ -138,6 +144,13 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
             title="Zoom to this node"
           >
             <Zap size={18} />
+          </button>
+          <button
+            className={styles.actionButton}
+            onClick={() => console.log("Add document for node:", node.getId())}
+            title="Add Document"
+          >
+            <FileText size={18} />
           </button>
         </div>
       </div>
