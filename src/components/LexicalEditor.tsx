@@ -19,7 +19,6 @@ import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { $getRoot, $getSelection, EditorState, LexicalEditor } from "lexical";
-import { Download, Save } from "lucide-react";
 import React, { JSX, useState } from "react";
 import "./LexicalEditor.css";
 import { TagPlugin } from "./lexical/plugins/TagPlugin";
@@ -193,42 +192,20 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
 
   return (
     <div className="lexical-editor-container">
-      {/* Toolbar */}
-      <div className="lexical-toolbar">
-        {tags.length > 0 && (
-          <div className="tags-display">
-            {tags.map((tag) => (
-              <span key={tag} className="tag">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="toolbar-spacer" />
-        <div className="toolbar-right-buttons">
-          <button
-            className="lexical-toolbar-button"
-            onClick={handleSave}
-            title="Save document"
-          >
-            <Save size={16} />
-            <span>Save</span>
-          </button>
-          <button
-            className="lexical-toolbar-button last"
-            onClick={handleExport}
-            title="Export as Markdown"
-          >
-            <Download size={16} />
-            <span>Export</span>
-          </button>
+      {tags.length > 0 && (
+        <div className="tags-display">
+          {tags.map((tag) => (
+            <span key={tag} className="tag">
+              #{tag}
+            </span>
+          ))}
         </div>
-      </div>
+      )}
 
       <div className="lexical-content">
         <LexicalComposer initialConfig={initialConfig}>
           <div className="editor-wrapper">
-            <ToolbarPlugin />
+            <ToolbarPlugin onSave={handleSave} onExport={handleExport} />
             <div className="editor-inner">
               <RichTextPlugin
                 contentEditable={<ContentEditable className="editor-input" />}

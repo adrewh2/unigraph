@@ -179,6 +179,24 @@
   width: 100%; /* Ensure full width */
   margin: 0; /* Remove any margin */
   box-sizing: border-box; /* Include padding in width calculation */
+  align-items: center;
+}
+
+.toolbar-left {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
 }
 
 .toolbar-item {

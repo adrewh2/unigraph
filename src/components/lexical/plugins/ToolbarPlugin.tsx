@@ -25,6 +25,7 @@ import {
   AlignRight,
   Bold,
   Code,
+  Download,
   Heading1,
   Heading2,
   Heading3,
@@ -33,13 +34,22 @@ import {
   List as ListUl,
   Quote,
   Redo,
+  Save,
   Strikethrough,
   Underline,
   Undo,
 } from "lucide-react";
 import React from "react";
 
-export const ToolbarPlugin: React.FC = () => {
+interface ToolbarPluginProps {
+  onSave?: () => void;
+  onExport?: () => void;
+}
+
+export const ToolbarPlugin: React.FC<ToolbarPluginProps> = ({
+  onSave,
+  onExport,
+}) => {
   const [editor] = useLexicalComposerContext();
 
   const formatBold = () => {
@@ -123,112 +133,127 @@ export const ToolbarPlugin: React.FC = () => {
 
   return (
     <div className="toolbar">
-      <button onClick={undo} className="toolbar-item" title="Undo">
-        <Undo size={16} />
-      </button>
-      <button onClick={redo} className="toolbar-item" title="Redo">
-        <Redo size={16} />
-      </button>
-      <div className="divider" />
-      <button
-        onClick={() => formatHeading("h1")}
-        className="toolbar-item"
-        title="Heading 1"
-      >
-        <Heading1 size={16} />
-      </button>
-      <button
-        onClick={() => formatHeading("h2")}
-        className="toolbar-item"
-        title="Heading 2"
-      >
-        <Heading2 size={16} />
-      </button>
-      <button
-        onClick={() => formatHeading("h3")}
-        className="toolbar-item"
-        title="Heading 3"
-      >
-        <Heading3 size={16} />
-      </button>
-      <button
-        onClick={formatParagraph}
-        className="toolbar-item"
-        title="Paragraph"
-      >
-        <span>¶</span>
-      </button>
-      <div className="divider" />
-      <button onClick={formatBold} className="toolbar-item" title="Bold">
-        <Bold size={16} />
-      </button>
-      <button onClick={formatItalic} className="toolbar-item" title="Italic">
-        <Italic size={16} />
-      </button>
-      <button
-        onClick={formatUnderline}
-        className="toolbar-item"
-        title="Underline"
-      >
-        <Underline size={16} />
-      </button>
-      <button
-        onClick={formatStrikethrough}
-        className="toolbar-item"
-        title="Strikethrough"
-      >
-        <Strikethrough size={16} />
-      </button>
-      <button onClick={formatCode} className="toolbar-item" title="Code">
-        <Code size={16} />
-      </button>
-      <div className="divider" />
-      <button
-        onClick={insertOrderedList}
-        className="toolbar-item"
-        title="Ordered List"
-      >
-        <ListOrdered size={16} />
-      </button>
-      <button
-        onClick={insertUnorderedList}
-        className="toolbar-item"
-        title="Bulleted List"
-      >
-        <ListUl size={16} />
-      </button>
-      <button onClick={formatQuote} className="toolbar-item" title="Quote">
-        <Quote size={16} />
-      </button>
-      <div className="divider" />
-      <button
-        onClick={formatAlignLeft}
-        className="toolbar-item"
-        title="Align Left"
-      >
-        <AlignLeft size={16} />
-      </button>
-      <button
-        onClick={formatAlignCenter}
-        className="toolbar-item"
-        title="Align Center"
-      >
-        <AlignCenter size={16} />
-      </button>
-      <button
-        onClick={formatAlignRight}
-        className="toolbar-item"
-        title="Align Right"
-      >
-        <AlignRight size={16} />
-      </button>
-      <button
-        onClick={formatAlignJustify}
-        className="toolbar-item"
-        title="Justify"
-      >
-        <AlignJustify size={16} />
-      </button>
+      <div className="toolbar-left">
+        <button onClick={undo} className="toolbar-item" title="Undo">
+          <Undo size={16} />
+        </button>
+        <button onClick={redo} className="toolbar-item" title="Redo">
+          <Redo size={16} />
+        </button>
+        <div className="divider" />
+        <button
+          onClick={() => formatHeading("h1")}
+          className="toolbar-item"
+          title="Heading 1"
+        >
+          <Heading1 size={16} />
+        </button>
+        <button
+          onClick={() => formatHeading("h2")}
+          className="toolbar-item"
+          title="Heading 2"
+        >
+          <Heading2 size={16} />
+        </button>
+        <button
+          onClick={() => formatHeading("h3")}
+          className="toolbar-item"
+          title="Heading 3"
+        >
+          <Heading3 size={16} />
+        </button>
+        <button
+          onClick={formatParagraph}
+          className="toolbar-item"
+          title="Paragraph"
+        >
+          <span>¶</span>
+        </button>
+        <div className="divider" />
+        <button onClick={formatBold} className="toolbar-item" title="Bold">
+          <Bold size={16} />
+        </button>
+        <button onClick={formatItalic} className="toolbar-item" title="Italic">
+          <Italic size={16} />
+        </button>
+        <button
+          onClick={formatUnderline}
+          className="toolbar-item"
+          title="Underline"
+        >
+          <Underline size={16} />
+        </button>
+        <button
+          onClick={formatStrikethrough}
+          className="toolbar-item"
+          title="Strikethrough"
+        >
+          <Strikethrough size={16} />
+        </button>
+        <button onClick={formatCode} className="toolbar-item" title="Code">
+          <Code size={16} />
+        </button>
+        <div className="divider" />
+        <button
+          onClick={insertOrderedList}
+          className="toolbar-item"
+          title="Ordered List"
+        >
+          <ListOrdered size={16} />
+        </button>
+        <button
+          onClick={insertUnorderedList}
+          className="toolbar-item"
+          title="Bulleted List"
+        >
+          <ListUl size={16} />
+        </button>
+        <button onClick={formatQuote} className="toolbar-item" title="Quote">
+          <Quote size={16} />
+        </button>
+        <div className="divider" />
+        <button
+          onClick={formatAlignLeft}
+          className="toolbar-item"
+          title="Align Left"
+        >
+          <AlignLeft size={16} />
+        </button>
+        <button
+          onClick={formatAlignCenter}
+          className="toolbar-item"
+          title="Align Center"
+        >
+          <AlignCenter size={16} />
+        </button>
+        <button
+          onClick={formatAlignRight}
+          className="toolbar-item"
+          title="Align Right"
+        >
+          <AlignRight size={16} />
+        </button>
+        <button
+          onClick={formatAlignJustify}
+          className="toolbar-item"
+          title="Justify"
+        >
+          <AlignJustify size={16} />
+        </button>
+      </div>
+      <div className="toolbar-spacer" />
+      <div className="toolbar-right">
+        <button onClick={onSave} className="toolbar-item" title="Save document">
+          <Save size={16} />
+        </button>
+        <button
+          onClick={onExport}
+          className="toolbar-item"
+          title="Export as Markdown"
+        >
+          <Download size={16} />
+        </button>
+      </div>
     </div>
   );
 };
