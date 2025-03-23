@@ -8,6 +8,7 @@ import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HashtagPlugin } from "@lexical/react/LexicalHashtagPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
@@ -19,8 +20,15 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { $getRoot, $getSelection, EditorState, LexicalEditor } from "lexical";
-import React, { JSX, useState } from "react";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  $getSelection,
+  EditorState,
+  LexicalEditor,
+} from "lexical";
+import React, { JSX, useEffect, useState } from "react";
 import "./LexicalEditor.css";
 import { TagPlugin } from "./lexical/plugins/TagPlugin";
 import { ToolbarPlugin } from "./lexical/plugins/ToolbarPlugin";
@@ -34,7 +42,32 @@ const PlaceholderPlugin = ({
   return <div className="editor-placeholder">{placeholder}</div>;
 };
 
+// Create an EditorStateInitializer plugin to properly initialize content
+const EditorStateInitializer: React.FC<{ initialContent: string }> = ({
+  initialContent,
+}) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    // Initialize with the content only once
+    if (initialContent) {
+      editor.update(() => {
+        const root = $getRoot();
+        // Clear any existing content first
+        root.clear();
+        // Create a paragraph with the text
+        const paragraph = $createParagraphNode();
+        paragraph.append($createTextNode(initialContent));
+        root.append(paragraph);
+      });
+    }
+  }, [editor, initialContent]);
+
+  return null;
+};
+
 interface LexicalEditorProps {
+  id?: string; // Add an ID prop to identify this editor instance
   initialContent?: string;
   onChange?: (markdown: string, html?: string) => void;
   showPreview?: boolean;
@@ -42,13 +75,39 @@ interface LexicalEditorProps {
 }
 
 const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
+  id = "default-editor", // Default ID if none provided
   initialContent = "",
   onChange,
   onSave,
 }) => {
-  const [markdown, setMarkdown] = useState(initialContent);
+  // Use a stable storage key based on the provided ID
+  const storageKey = `lexical-editor-content-${id}`;
+
+  // Load content from localStorage on initial render
+  const savedContent = React.useMemo(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      console.log("Loading content from storage", storageKey, saved);
+      return saved || initialContent;
+    } catch (e) {
+      console.warn("Failed to load from localStorage:", e);
+      return initialContent;
+    }
+  }, [storageKey, initialContent]);
+
+  const [markdown, setMarkdown] = useState(savedContent);
   const [editorState, setEditorState] = useState<EditorState | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+
+  // Save to localStorage whenever content changes
+  useEffect(() => {
+    try {
+      console.log("Saving content to storage", storageKey, markdown);
+      localStorage.setItem(storageKey, markdown);
+    } catch (e) {
+      console.warn("Failed to save to localStorage:", e);
+    }
+  }, [markdown, storageKey]);
 
   // Define theme
   const theme = {
@@ -159,7 +218,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
       LinkNode,
       HashtagNode,
     ],
-    editorState: initialContent ? initialContent : undefined,
+    // Don't try to parse saved content as editor state - we'll handle initialization separately
     onError: (error: Error) => {
       console.error(error);
     },
@@ -225,6 +284,8 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
                   </div>
                 )}
               />
+              {/* Add our EditorStateInitializer to properly set initial content */}
+              <EditorStateInitializer initialContent={savedContent} />
               <HistoryPlugin />
               <AutoFocusPlugin />
               <ListPlugin />
