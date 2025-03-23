@@ -118,6 +118,25 @@
 .menuIcon {
   flex-shrink: 0;
   transition: margin 0.3s ease;
+  position: relative; /* Add this to position the badge */
+}
+
+.notificationBadge {
+  position: absolute;
+  top: -8px; /* Move up slightly */
+  right: -12px; /* Move right slightly */
+  background-color: rgba(249, 115, 22, 0.8); /* Reduce opacity of orange */
+  color: white;
+  border-radius: 9999px;
+  padding: 1px 4px; /* Reduce padding */
+  font-size: 8px; /* Smaller font */
+  font-weight: 500; /* Slightly less bold */
+  min-width: 10px; /* Smaller minimum width */
+  height: 10px; /* Smaller height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(31, 41, 55, 0.8); /* More transparent border */
 }
 
 .menuText {

@@ -77,7 +77,16 @@ export const createDefaultRightMenus = (
   if (getSelectedNodeIds().size > 0) {
     baseMenuItems.push({
       id: "node-details",
-      icon: <Info size={20} className={styles.menuIcon} />,
+      icon: (
+        <div className={styles.menuIcon}>
+          <Info size={20} />
+          {getSelectedNodeIds().size > 0 && (
+            <span className={styles.notificationBadge}>
+              {getSelectedNodeIds().size}
+            </span>
+          )}
+        </div>
+      ),
       label:
         getSelectedNodeIds().size > 1
           ? `Nodes (${getSelectedNodeIds().size})`
