@@ -14,9 +14,14 @@ import {
 } from "@xyflow/react";
 import React, { useCallback, useEffect, useRef } from "react";
 import { SelectionMode } from "reactflow";
+import {
+  MOUSE_HOVERED_NODE_COLOR,
+  SELECTED_NODE_COLOR,
+} from "../../core/force-graph/createForceGraph";
 import { NodeId } from "../../core/model/Node";
 import { EntityIds } from "../../core/model/entity/entityIds";
 import {
+  setHoveredNodeId,
   setSelectedNodeId,
   setSelectedNodeIds,
 } from "../../store/graphInteractionStore";
@@ -41,17 +46,29 @@ const nodeTypes = {
   resizerNode: ResizerNode,
 };
 
-// Add a style tag for selected nodes
-const selectedNodeStyle = document.createElement("style");
-selectedNodeStyle.textContent = `
+// Add a style tag for selected and hovered nodes
+const nodeStyles = document.createElement("style");
+nodeStyles.textContent = `
   .react-flow__node.selected {
-    box-shadow: 0 0 0 2px #ff8800 !important;
-    border: 2px solid #ff8800 !important;
+    box-shadow: 0 0 0 2px ${SELECTED_NODE_COLOR} !important;
+    border: 2px solid ${SELECTED_NODE_COLOR} !important;
     border-radius: 4px !important;
   }
 
   .react-flow__node-customNode.selected, .react-flow__node-resizerNode.selected {
-    outline: 2px solid #ff8800 !important;
+    outline: 2px solid ${SELECTED_NODE_COLOR} !important;
+    outline-offset: 2px;
+  }
+  
+  /* Add hover styles */
+  .react-flow__node:hover {
+    box-shadow: 0 0 0 2px ${MOUSE_HOVERED_NODE_COLOR} !important;
+    border: 2px solid ${MOUSE_HOVERED_NODE_COLOR} !important;
+    border-radius: 4px !important;
+  }
+  
+  .react-flow__node-customNode:hover:not(.selected), .react-flow__node-resizerNode:hover:not(.selected) {
+    outline: 2px solid ${MOUSE_HOVERED_NODE_COLOR} !important;
     outline-offset: 2px;
   }
 `;
@@ -69,11 +86,11 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
 
-  // Add the selection styles to the document head
+  // Add the selection and hover styles to the document head
   useEffect(() => {
-    document.head.appendChild(selectedNodeStyle);
+    document.head.appendChild(nodeStyles);
     return () => {
-      document.head.removeChild(selectedNodeStyle);
+      document.head.removeChild(nodeStyles);
     };
   }, []);
 
@@ -113,6 +130,18 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
 
     // Also open the node details panel
     setRightActiveSection("node-details");
+  }, []);
+
+  // Handle node hover to update the store
+  const handleNodeMouseEnter = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      setHoveredNodeId(node.id as NodeId);
+    },
+    []
+  );
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredNodeId(null);
   }, []);
 
   useEffect(() => {
@@ -165,6 +194,8 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           onPaneContextMenu={(event: any) =>
             onBackgroundContextMenu?.(event as React.MouseEvent)
           }
+          onNodeMouseEnter={handleNodeMouseEnter}
+          onNodeMouseLeave={handleNodeMouseLeave}
           onNodeClick={handleNodeClick}
           onSelectionChange={handleSelectionChange}
           fitView={true}
