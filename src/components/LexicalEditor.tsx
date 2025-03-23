@@ -15,19 +15,12 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import {
-  $createParagraphNode,
-  $createTextNode,
-  $getRoot,
-  $getSelection,
-  EditorState,
-  LexicalEditor,
-} from "lexical";
+import { $getRoot, EditorState, LexicalEditor } from "lexical";
+import { debounce, throttle } from "lodash";
 import React, { JSX, useEffect, useState } from "react";
 import "./LexicalEditor.css";
 import { TagPlugin } from "./lexical/plugins/TagPlugin";
@@ -42,26 +35,38 @@ const PlaceholderPlugin = ({
   return <div className="editor-placeholder">{placeholder}</div>;
 };
 
-// Create an EditorStateInitializer plugin to properly initialize content
-const EditorStateInitializer: React.FC<{ initialContent: string }> = ({
-  initialContent,
+// Create an EditorStateInitializer plugin to properly initialize content from saved state
+const EditorStateInitializer: React.FC<{ savedState: string | null }> = ({
+  savedState,
 }) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    // Initialize with the content only once
-    if (initialContent) {
-      editor.update(() => {
-        const root = $getRoot();
-        // Clear any existing content first
-        root.clear();
-        // Create a paragraph with the text
-        const paragraph = $createParagraphNode();
-        paragraph.append($createTextNode(initialContent));
-        root.append(paragraph);
-      });
+    if (savedState) {
+      try {
+        // Try to parse and load the saved state
+        const parsedState = JSON.parse(savedState);
+        editor.setEditorState(editor.parseEditorState(parsedState));
+      } catch (error) {
+        console.error("Error restoring editor state:", error);
+      }
     }
-  }, [editor, initialContent]);
+  }, [editor, savedState]);
+
+  return null;
+};
+
+// Create an OnChangePlugin replacement that doesn't cause too many re-renders
+const CustomOnChangePlugin: React.FC<{
+  onChange: (editorState: EditorState, editor: LexicalEditor) => void;
+}> = ({ onChange }) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      onChange(editorState, editor);
+    });
+  }, [editor, onChange]);
 
   return null;
 };
@@ -74,6 +79,29 @@ interface LexicalEditorProps {
   onSave?: (content: string, tags?: string[]) => void;
 }
 
+// Create a debounced save function that we'll use later
+const createSaveState = (storageKey: string, stateStorageKey: string) => {
+  // Use throttle for content changes (less important)
+  const saveContent = throttle((content: string) => {
+    try {
+      localStorage.setItem(storageKey, content);
+    } catch (e) {
+      console.warn("Failed to save content to localStorage:", e);
+    }
+  }, 1000); // Save content at most once per second
+
+  // Use debounce for state changes (more important)
+  const saveState = debounce((state: string) => {
+    try {
+      localStorage.setItem(stateStorageKey, state);
+    } catch (e) {
+      console.warn("Failed to save state to localStorage:", e);
+    }
+  }, 2000); // Save state at most once every 2 seconds
+
+  return { saveContent, saveState };
+};
+
 const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   id = "default-editor", // Default ID if none provided
   initialContent = "",
@@ -82,6 +110,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
 }) => {
   // Use a stable storage key based on the provided ID
   const storageKey = `lexical-editor-content-${id}`;
+  const stateStorageKey = `lexical-editor-state-${id}`;
 
   // Load content from localStorage on initial render
   const savedContent = React.useMemo(() => {
@@ -95,144 +124,194 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
     }
   }, [storageKey, initialContent]);
 
+  // Load saved state
+  const [savedState, setSavedState] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(stateStorageKey);
+    } catch (e) {
+      console.warn("Failed to load state from localStorage:", e);
+      return null;
+    }
+  });
+
+  // Move these outside of the render function to prevent recreation
+  const saveContent = React.useRef(
+    throttle((content: string) => {
+      try {
+        localStorage.setItem(storageKey, content);
+      } catch (e) {
+        console.warn("Failed to save content to localStorage:", e);
+      }
+    }, 2000)
+  ).current;
+
+  const saveState = React.useRef(
+    debounce((state: string) => {
+      try {
+        localStorage.setItem(stateStorageKey, state);
+      } catch (e) {
+        console.warn("Failed to save state to localStorage:", e);
+      }
+    }, 3000)
+  ).current;
+
+  // Use refs for internal state that shouldn't trigger rerenders
+  const markdownRef = React.useRef(savedContent);
+  const tagsRef = React.useRef<string[]>([]);
+
+  // These are still needed for UI updates
   const [markdown, setMarkdown] = useState(savedContent);
   const [editorState, setEditorState] = useState<EditorState | null>(null);
   const [tags, setTags] = useState<string[]>([]);
 
-  // Save to localStorage whenever content changes
-  useEffect(() => {
-    try {
-      console.log("Saving content to storage", storageKey, markdown);
-      localStorage.setItem(storageKey, markdown);
-    } catch (e) {
-      console.warn("Failed to save to localStorage:", e);
-    }
-  }, [markdown, storageKey]);
+  // Optimize change handler
+  const handleEditorChange = React.useCallback(
+    (editorState: EditorState, editor: LexicalEditor) => {
+      // We update the ref first
+      setEditorState(editorState);
 
-  // Define theme
-  const theme = {
-    ltr: "ltr",
-    rtl: "rtl",
-    paragraph: "editor-paragraph",
-    quote: "editor-quote",
-    heading: {
-      h1: "editor-heading-h1",
-      h2: "editor-heading-h2",
-      h3: "editor-heading-h3",
-      h4: "editor-heading-h4",
-      h5: "editor-heading-h5",
+      editorState.read(() => {
+        const root = $getRoot();
+        const textContent = root.getTextContent();
+
+        // Update ref directly - no UI impact
+        markdownRef.current = textContent;
+
+        // Throttled storage updates
+        saveState(JSON.stringify(editorState.toJSON()));
+        saveContent(textContent);
+
+        // Only update state (causing re-render) occasionally
+        // This makes the UI much more responsive
+        if (Math.random() < 0.1) {
+          // Update UI roughly every 10 changes
+          setMarkdown(textContent);
+        }
+
+        if (onChange) {
+          onChange(textContent);
+        }
+      });
     },
-    list: {
-      nested: {
-        listitem: "editor-nested-listitem",
-      },
-      ol: "editor-list-ol",
-      ul: "editor-list-ul",
-      listitem: "editor-listitem",
-    },
-    image: "editor-image",
-    link: "editor-link",
-    text: {
-      bold: "editor-text-bold",
-      italic: "editor-text-italic",
-      underline: "editor-text-underline",
-      strikethrough: "editor-text-strikethrough",
-      underlineStrikethrough: "editor-text-underlineStrikethrough",
-      code: "editor-text-code",
-      hashtag: "editor-text-hashtag", // Add hashtag styling
-    },
-    code: "editor-code",
-    codeHighlight: {
-      atrule: "editor-tokenAttr",
-      attr: "editor-tokenAttr",
-      boolean: "editor-tokenProperty",
-      builtin: "editor-tokenSelector",
-      cdata: "editor-tokenComment",
-      char: "editor-tokenSelector",
-      class: "editor-tokenFunction",
-      "class-name": "editor-tokenFunction",
-      comment: "editor-tokenComment",
-      constant: "editor-tokenProperty",
-      deleted: "editor-tokenProperty",
-      doctype: "editor-tokenComment",
-      entity: "editor-tokenOperator",
-      function: "editor-tokenFunction",
-      important: "editor-tokenVariable",
-      inserted: "editor-tokenSelector",
-      keyword: "editor-tokenAttr",
-      namespace: "editor-tokenVariable",
-      number: "editor-tokenProperty",
-      operator: "editor-tokenOperator",
-      prolog: "editor-tokenComment",
-      property: "editor-tokenProperty",
-      punctuation: "editor-tokenPunctuation",
-      regex: "editor-tokenVariable",
-      selector: "editor-tokenSelector",
-      string: "editor-tokenSelector",
-      symbol: "editor-tokenProperty",
-      tag: "editor-tokenProperty",
-      url: "editor-tokenOperator",
-      variable: "editor-tokenVariable",
-    },
-    hashtag: "my-hashtag-class",
-  };
+    [onChange, saveContent, saveState]
+  );
 
   // Handle tags change
-  const handleTagsChange = (newTags: string[]) => {
+  const handleTagsChange = React.useCallback((newTags: string[]) => {
+    tagsRef.current = newTags;
     setTags(newTags);
-  };
+  }, []);
 
-  // Handle editor updates - define before initialConfig to avoid reference errors
-  const handleEditorChange = (
-    editorState: EditorState,
-    editor: LexicalEditor
-  ) => {
-    setEditorState(editorState);
+  // Define theme inside useMemo
+  const theme = React.useMemo(
+    () => ({
+      ltr: "ltr",
+      rtl: "rtl",
+      paragraph: "editor-paragraph",
+      quote: "editor-quote",
+      heading: {
+        h1: "editor-heading-h1",
+        h2: "editor-heading-h2",
+        h3: "editor-heading-h3",
+        h4: "editor-heading-h4",
+        h5: "editor-heading-h5",
+      },
+      list: {
+        nested: {
+          listitem: "editor-nested-listitem",
+        },
+        ol: "editor-list-ol",
+        ul: "editor-list-ul",
+        listitem: "editor-listitem",
+      },
+      image: "editor-image",
+      link: "editor-link",
+      text: {
+        bold: "editor-text-bold",
+        italic: "editor-text-italic",
+        underline: "editor-text-underline",
+        strikethrough: "editor-text-strikethrough",
+        underlineStrikethrough: "editor-text-underlineStrikethrough",
+        code: "editor-text-code",
+        hashtag: "editor-text-hashtag", // Add hashtag styling
+      },
+      code: "editor-code",
+      codeHighlight: {
+        atrule: "editor-tokenAttr",
+        attr: "editor-tokenAttr",
+        boolean: "editor-tokenProperty",
+        builtin: "editor-tokenSelector",
+        cdata: "editor-tokenComment",
+        char: "editor-tokenSelector",
+        class: "editor-tokenFunction",
+        "class-name": "editor-tokenFunction",
+        comment: "editor-tokenComment",
+        constant: "editor-tokenProperty",
+        deleted: "editor-tokenProperty",
+        doctype: "editor-tokenComment",
+        entity: "editor-tokenOperator",
+        function: "editor-tokenFunction",
+        important: "editor-tokenVariable",
+        inserted: "editor-tokenSelector",
+        keyword: "editor-tokenAttr",
+        namespace: "editor-tokenVariable",
+        number: "editor-tokenProperty",
+        operator: "editor-tokenOperator",
+        prolog: "editor-tokenComment",
+        property: "editor-tokenProperty",
+        punctuation: "editor-tokenPunctuation",
+        regex: "editor-tokenVariable",
+        selector: "editor-tokenSelector",
+        string: "editor-tokenSelector",
+        symbol: "editor-tokenProperty",
+        tag: "editor-tokenProperty",
+        url: "editor-tokenOperator",
+        variable: "editor-tokenVariable",
+      },
+      hashtag: "my-hashtag-class",
+    }),
+    []
+  );
 
-    editorState.read(() => {
-      const root = $getRoot();
-      const _selection = $getSelection();
-      const textContent = root.getTextContent();
-      setMarkdown(textContent);
-
-      if (onChange) {
-        onChange(textContent);
-      }
-    });
-  };
-
-  // Define initial config for LexicalComposer
-  const initialConfig = {
-    namespace: "LexicalEditor",
-    theme,
-    nodes: [
-      HeadingNode,
-      ListNode,
-      ListItemNode,
-      QuoteNode,
-      CodeNode,
-      CodeHighlightNode,
-      TableNode,
-      TableCellNode,
-      TableRowNode,
-      LinkNode,
-      HashtagNode,
-    ],
-    // Don't try to parse saved content as editor state - we'll handle initialization separately
-    onError: (error: Error) => {
-      console.error(error);
-    },
-    onChange: handleEditorChange, // Connect the handler here
-  };
+  // Make sure the onChange handler is stable
+  const initialConfig = React.useMemo(
+    () => ({
+      namespace: "LexicalEditor",
+      theme,
+      nodes: [
+        HeadingNode,
+        ListNode,
+        ListItemNode,
+        QuoteNode,
+        CodeNode,
+        CodeHighlightNode,
+        TableNode,
+        TableCellNode,
+        TableRowNode,
+        LinkNode,
+        HashtagNode,
+      ],
+      onError: (error: Error) => {
+        console.error(error);
+      },
+    }),
+    [theme]
+  );
 
   // Handle save button click
-  const handleSave = () => {
+  const handleSave = React.useCallback(() => {
+    const currentContent = markdownRef.current;
+    const currentTags = tagsRef.current;
+
     if (onSave) {
-      onSave(markdown);
+      onSave(currentContent, currentTags);
     } else {
-      console.log("Save function not provided");
+      // Force save to localStorage
+      saveContent.flush();
+      saveState.flush();
+      console.log("Save function not provided - saved to localStorage");
     }
-  };
+  }, [onSave, saveContent, saveState]);
 
   // Handle export button click
   const handleExport = () => {
@@ -285,7 +364,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
                 )}
               />
               {/* Add our EditorStateInitializer to properly set initial content */}
-              <EditorStateInitializer initialContent={savedContent} />
+              <EditorStateInitializer savedState={savedState} />
               <HistoryPlugin />
               <AutoFocusPlugin />
               <ListPlugin />
@@ -296,7 +375,8 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               <CheckListPlugin />
               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
               <ClearEditorPlugin />
-              <OnChangePlugin onChange={handleEditorChange} />
+              {/* Replace OnChangePlugin with our optimized version */}
+              <CustomOnChangePlugin onChange={handleEditorChange} />
             </div>
           </div>
         </LexicalComposer>
