@@ -84,7 +84,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const { activeView, activeLayout, forceGraph3dOptions, forceGraphInstance } =
     useAppConfigStore();
 
-  const { setActiveFilter } = useActiveFilterStore();
+  const { setActiveFilter, activeFilter } = useActiveFilterStore();
 
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -162,6 +162,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           showLayoutManager: (mode: "save" | "load") => showLayoutManager(mode),
           handleLoadLayout: handleLoadLayout,
           activeView: activeView, // Make sure this is correctly passed
+          activeFilter: activeFilter,
         })}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
@@ -186,6 +187,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showLoadSceneGraphWindow,
     showSaveSceneGraphDialog,
     handleLoadLayout,
+    activeFilter,
     applyNewLayout,
     showLayoutManager,
   ]);

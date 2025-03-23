@@ -43,6 +43,7 @@ export const createDefaultLeftMenus = ({
   showLayoutManager,
   handleLoadLayout,
   activeView, // Important prop for determining which editor to show
+  activeFilter,
 }: any) => {
   // Add debugging to confirm the activeView value
   console.log("Current active view for display settings:", activeView);
@@ -158,7 +159,14 @@ export const createDefaultLeftMenus = ({
     },
     {
       id: "filters",
-      icon: <Filter size={20} />,
+      icon: (
+        <div className={styles.menuIcon}>
+          <Filter size={20} />
+          {activeFilter && (
+            <span className={styles.notificationBadge}>{"!"}</span>
+          )}
+        </div>
+      ),
       label: "Filters",
       content: (
         <div
