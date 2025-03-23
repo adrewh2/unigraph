@@ -307,11 +307,11 @@
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  background: #f0f7ff;
-  border: 1px solid #c8e1ff;
+  background: #7ab8f7;
+  border: 1px solid #f0f0f0;
   border-radius: 12px;
   font-size: 12px;
-  color: #0366d6;
+  color: #6c757d;
 }
 
 .tag-remove {
@@ -338,26 +338,59 @@
   min-width: 100px;
 }
 
-/* Tag styles */
+/* Tag styles - updated for more subtle highlighting */
 .tags-display {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   padding: 4px 8px;
-  background-color: #f8f8f8;
-  border: 1px solid #e0e0e0;
+  background-color: transparent;
+  border: 1px solid #f0f0f0;
   border-radius: 4px;
   margin-right: 8px;
 }
 
-/* Style for hashtags in the editor */
+/* Style for hashtags in the editor - more subtle */
 [data-lexical-text] [data-hashtag] {
-  color: #0366d6;
-  font-weight: 500;
+  color: #6c757d;
+  font-weight: normal;
+  background-color: #f8f9fa;
+  padding: 0 2px;
+  border-radius: 2px;
 }
 
-/* Update the theme to include hashtag styling */
+/* Update the theme to include more subtle hashtag styling */
 .editor-text-hashtag {
-  color: #0366d6;
-  font-weight: 500;
+  color: #6c757d;
+  font-weight: normal;
+  background-color: #f8f9fa;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Add these clear styles for hashtags IN THE EDITOR CONTENT */
+[data-lexical-decorator="true"] {
+  color: inherit;
+}
+
+span[data-hashtag="true"] {
+  background-color: rgba(88, 175, 223, 0.15);
+  color: #2a85ca;
+  border-radius: 2px;
+  padding: 1px 3px;
+  margin: 0 1px;
+}
+
+/* This is the class that gets applied by the theme */
+.editor-text-hashtag {
+  background-color: rgba(88, 175, 223, 0.15);
+  color: #2a85ca;
+  border-radius: 2px;
+  padding: 1px 3px;
+  margin: 0 1px;
+}
+
+.my-hashtag-class {
+  color: #007bff;
+  font-weight: bold;
 }

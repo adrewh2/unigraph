@@ -22,7 +22,6 @@ import { $getRoot, $getSelection, EditorState, LexicalEditor } from "lexical";
 import { Download, Save } from "lucide-react";
 import React, { JSX, useState } from "react";
 import "./LexicalEditor.css";
-import { TagPlugin } from "./lexical/plugins/TagPlugin";
 import { ToolbarPlugin } from "./lexical/plugins/ToolbarPlugin";
 
 // Create a separate PlaceholderPlugin component
@@ -48,7 +47,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
 }) => {
   const [markdown, setMarkdown] = useState(initialContent);
   const [_editorState, setEditorState] = useState<EditorState | null>(null);
-  const [tags, setTags] = useState<string[]>([]);
+  //   const [tags, setTags] = useState<string[]>([]);
 
   // Define theme
   const theme = {
@@ -115,12 +114,13 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
       url: "editor-tokenOperator",
       variable: "editor-tokenVariable",
     },
+    hashtag: "my-hashtag-class",
   };
 
   // Handle tags change
-  const handleTagsChange = (newTags: string[]) => {
-    setTags(newTags);
-  };
+  //   const handleTagsChange = (newTags: string[]) => {
+  //     setTags(newTags);
+  //   };
 
   // Define initial config for LexicalComposer
   const initialConfig = {
@@ -172,7 +172,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   // Handle save button click
   const handleSave = () => {
     if (onSave) {
-      onSave(markdown, tags);
+      onSave(markdown);
     } else {
       console.log("Save function not provided");
     }
@@ -194,7 +194,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
     <div className="lexical-editor-container">
       {/* Toolbar */}
       <div className="lexical-toolbar">
-        {tags.length > 0 && (
+        {/* {tags.length > 0 && (
           <div className="tags-display">
             {tags.map((tag) => (
               <span key={tag} className="tag">
@@ -202,7 +202,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               </span>
             ))}
           </div>
-        )}
+        )} */}
         <button
           className="lexical-toolbar-button"
           onClick={handleSave}
@@ -242,7 +242,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               <ListPlugin />
               <LinkPlugin />
               <HashtagPlugin />
-              <TagPlugin onTagsChange={handleTagsChange} />
+              {/* <TagPlugin onTagsChange={handleTagsChange} /> */}
               <TablePlugin />
               <CheckListPlugin />
               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />

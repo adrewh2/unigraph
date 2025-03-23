@@ -65,10 +65,16 @@ export function TagPlugin({ onTagsChange }: TagPluginProps) {
         const matchStart = match.index + (match[1] || "").length;
         const matchEnd = matchStart + match[2].length;
 
-        // Add class to the hashtag
         if (matchStart > lastIndex) {
-          node.spliceText(matchStart, matchEnd - matchStart, match[2]);
-          // Optionally, apply custom formatting logic here if needed
+          return;
+          //   // We need to get just the hashtag text without the # symbol
+          //   const hashTagText = match[2].substring(1);
+          //   // First delete the old text (including the # symbol)
+          //   node.spliceText(matchStart, matchEnd - matchStart, "");
+          //   // Then insert the text with the hashtag format applied
+          //   node.spliceText(matchStart, 0, match[2]);
+          //   // Apply a custom format using an existing TextFormatType, e.g., bold
+          //   node.setFormat(1); // Replace '1' with the appropriate TextFormatType or bitmask
         }
 
         lastIndex = matchEnd;
