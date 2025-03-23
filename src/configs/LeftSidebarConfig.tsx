@@ -217,11 +217,6 @@ export const createDefaultLeftMenus = ({
       icon: <Settings2 size={20} />,
       label: "Display",
       content: (() => {
-        // Use an IIFE for cleaner conditional logic
-        console.log("Rendering display settings for:", activeView);
-        console.log("Is ForceGraph3D:", isForceGraph3D);
-        console.log("Is ReactFlow:", isReactFlow);
-
         if (isForceGraph3D) {
           return (
             <ForceGraphRenderConfigEditor
