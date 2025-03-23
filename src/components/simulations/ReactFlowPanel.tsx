@@ -5,14 +5,22 @@ import {
   Edge,
   MiniMap,
   Node,
+  OnSelectionChangeParams,
   ReactFlow,
   ReactFlowInstance,
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { SelectionMode } from "reactflow";
+import { NodeId } from "../../core/model/Node";
+import { EntityIds } from "../../core/model/entity/entityIds";
+import {
+  setSelectedNodeId,
+  setSelectedNodeIds,
+} from "../../store/graphInteractionStore";
+import { setRightActiveSection } from "../../store/workspaceConfigStore";
 import CustomNode from "../CustomNode"; // Import the custom node component
 
 import "@xyflow/react/dist/style.css";
@@ -45,6 +53,44 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+
+  // Handle selection change in ReactFlow
+  const handleSelectionChange = useCallback(
+    ({ nodes: selectedNodes }: OnSelectionChangeParams) => {
+      if (!selectedNodes || selectedNodes.length === 0) {
+        // Clear selection when no nodes are selected
+        setSelectedNodeIds(new EntityIds([]));
+        return;
+      }
+
+      // If only one node is selected, use setSelectedNodeId for compatibility with existing code
+      if (selectedNodes.length === 1) {
+        setSelectedNodeId(selectedNodes[0].id as NodeId);
+
+        // Also open the node details panel in the right sidebar when a node is selected
+        setRightActiveSection("node-details");
+      } else {
+        // For multiple selections, update the store with all selected node IDs
+        const nodeIds = selectedNodes.map((node) => node.id as NodeId);
+        setSelectedNodeIds(new EntityIds(nodeIds));
+      }
+
+      console.log(
+        "ReactFlow selection changed:",
+        selectedNodes.map((n) => n.id)
+      );
+    },
+    []
+  );
+
+  // Custom node click handler that sets the selected node
+  const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    // Set this node as the selected node
+    setSelectedNodeId(node.id as NodeId);
+
+    // Also open the node details panel
+    setRightActiveSection("node-details");
+  }, []);
 
   useEffect(() => {
     setNodes(initialNodes);
@@ -96,6 +142,8 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           onPaneContextMenu={(event: any) =>
             onBackgroundContextMenu?.(event as React.MouseEvent)
           }
+          onNodeClick={handleNodeClick}
+          onSelectionChange={handleSelectionChange}
           fitView={true}
           minZoom={0.1}
           maxZoom={200}
