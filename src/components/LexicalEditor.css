@@ -24,7 +24,7 @@
   color: #333333;
 }
 
-/* Toolbar styling */
+/* Toolbar styling with right-aligned buttons */
 .lexical-toolbar {
   display: flex;
   padding: 8px;
@@ -32,6 +32,19 @@
   background-color: #f8f8f8;
   flex-shrink: 0; /* Prevent toolbar from shrinking */
   flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between; /* Space between tags and buttons */
+  align-items: center;
+}
+
+/* Add a flexible spacer to push buttons to the right */
+.toolbar-spacer {
+  flex: 1;
+}
+
+/* Container for right-aligned buttons */
+.toolbar-right-buttons {
+  display: flex;
   gap: 8px;
 }
 
@@ -47,6 +60,10 @@
   font-size: 14px;
   margin-right: 8px;
   color: #333;
+}
+
+.lexical-toolbar-button.last {
+  margin-right: 0;
 }
 
 .lexical-toolbar-button:hover {

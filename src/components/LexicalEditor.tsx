@@ -204,22 +204,25 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
             ))}
           </div>
         )}
-        <button
-          className="lexical-toolbar-button"
-          onClick={handleSave}
-          title="Save document"
-        >
-          <Save size={16} />
-          <span>Save</span>
-        </button>
-        <button
-          className="lexical-toolbar-button"
-          onClick={handleExport}
-          title="Export as Markdown"
-        >
-          <Download size={16} />
-          <span>Export</span>
-        </button>
+        <div className="toolbar-spacer" />
+        <div className="toolbar-right-buttons">
+          <button
+            className="lexical-toolbar-button"
+            onClick={handleSave}
+            title="Save document"
+          >
+            <Save size={16} />
+            <span>Save</span>
+          </button>
+          <button
+            className="lexical-toolbar-button last"
+            onClick={handleExport}
+            title="Export as Markdown"
+          >
+            <Download size={16} />
+            <span>Export</span>
+          </button>
+        </div>
       </div>
 
       <div className="lexical-content">
