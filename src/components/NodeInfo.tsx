@@ -33,7 +33,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   const activeNodeId = nodeId || getSelectedNodeId();
   const sceneGraph = getCurrentSceneGraph();
 
-  const { setActiveDocument } = useDocumentStore();
+  const { setActiveDocument, createDocument } = useDocumentStore();
 
   if (!activeNodeId) {
     return (
@@ -80,6 +80,13 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
 
   const handleZoom = () => {
     onZoomToNode?.(node.getId());
+  };
+
+  const handleDocumentClick = () => {
+    console.log("Document button clicked for node:", activeNodeId);
+    // Ensure document exists first
+    createDocument(activeNodeId);
+    setActiveDocument(activeNodeId);
   };
 
   // Different layout for compact mode
@@ -150,10 +157,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
           </button>
           <button
             className={styles.actionButton}
-            onClick={() => {
-              console.log("setting active document");
-              setActiveDocument(node.getId());
-            }}
+            onClick={handleDocumentClick}
             title="Add Document"
           >
             <FileText size={18} />

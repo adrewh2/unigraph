@@ -69,7 +69,14 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   },
 
   setActiveDocument: (nodeId) => {
+    console.log("Setting active document:", nodeId);
+    // Create document if it doesn't exist
+    if (nodeId && !get().documents[nodeId]) {
+      console.log("Creating new document for:", nodeId);
+      get().createDocument(nodeId);
+    }
     set({ activeDocument: nodeId });
+    console.log("New active document state:", get().activeDocument);
   },
 
   deleteDocument: (nodeId) => {

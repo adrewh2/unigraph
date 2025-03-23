@@ -1,5 +1,5 @@
 import { Info } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   createDefaultLeftMenus,
   leftFooterContent,
@@ -17,7 +17,7 @@ import Sidebar from "../../Sidebar";
 import useActiveFilterStore from "../../store/activeFilterStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
-import { useActiveDocument } from "../../store/documentStore";
+import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
 import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
 import LexicalEditorV2 from "../LexicalEditor";
@@ -81,6 +81,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleShowEntityTables,
 }) => {
   const activeDocument = useActiveDocument();
+  const { documents } = useDocumentStore();
+
+  // Add logging to track document state
+  useEffect(() => {
+    console.log("Active document changed:", activeDocument);
+    console.log("All documents:", documents);
+  }, [activeDocument, documents]);
+
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
@@ -309,8 +317,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
                 id={activeDocument.id}
                 initialContent={activeDocument.content}
                 onSave={(content, tags) => {
-                  // Handle saving document changes
-                  console.log("Document saved:", content, tags);
+                  console.log("Saving document:", content, tags);
                 }}
               />
             </div>
