@@ -196,9 +196,24 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     setHoveredNodeId(null);
   }, []);
 
-  // Handle background click to clear selection
+  // Handle background click to clear selection - update this to properly clear all selections
   const handlePaneClick = useCallback(() => {
+    // Clear selection in global store for both single and multi-select
     setSelectedNodeId(null);
+    setSelectedNodeIds(new EntityIds([]));
+
+    // Update the ReactFlow nodes directly to clear selection state
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
+          ...n,
+          selected: false,
+        }))
+      );
+    }
+
+    // Close the node details panel if it's open
+    setRightActiveSection(null);
   }, []);
 
   // Update nodes when initialNodes change
