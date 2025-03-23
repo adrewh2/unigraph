@@ -109,6 +109,10 @@ export const setSelectedNodeIds = (nodeIds: EntityIds<NodeId> | NodeId[]) =>
   useGraphInteractionStore.getState().setSelectedNodeIds(nodeIds);
 export const setSelectedEdgeIds = (edgeIds: EntityIds<EdgeId> | EdgeId[]) =>
   useGraphInteractionStore.getState().setSelectedEdgeIds(edgeIds);
+export const getSelectedNodeIds = () =>
+  useGraphInteractionStore.getState().selectedNodeIds;
+export const getSelectedEdgeIds = () =>
+  useGraphInteractionStore.getState().selectedEdgeIds;
 export const clearSelections = () =>
   useGraphInteractionStore.getState().clearSelections();
 

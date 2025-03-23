@@ -25,6 +25,7 @@ import {
   getHoveredEdgeIds,
   getHoveredNodeIds,
   getSelectedNodeId,
+  getSelectedNodeIds,
   setHoveredEdgeId,
   setHoveredNodeId,
   setSelectedNodeId,
@@ -57,7 +58,10 @@ export const refreshForceGraphInstance = (
     if (getHoveredNodeIds().has(node.id as NodeId)) {
       return MOUSE_HOVERED_NODE_COLOR;
     }
-    if (getSelectedNodeId() === node.id) {
+    if (
+      getSelectedNodeId() === node.id ||
+      getSelectedNodeIds().has(node.id as NodeId)
+    ) {
       return SELECTED_NODE_COLOR;
     }
     return RenderingManager.getColor(
@@ -117,7 +121,10 @@ export const createForceGraph = (
     .nodeColor((node) => {
       if (getHoveredNodeIds().has(node.id as NodeId)) {
         return MOUSE_HOVERED_NODE_COLOR;
-      } else if (getSelectedNodeId() === node.id) {
+      } else if (
+        getSelectedNodeId() === node.id ||
+        getSelectedNodeIds().has(node.id as NodeId)
+      ) {
         return SELECTED_NODE_COLOR;
       }
       return RenderingManager.getColor(
