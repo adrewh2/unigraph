@@ -180,6 +180,7 @@
 
 .numberInputContainer {
   position: relative;
+  width: 60px; /* Reduce from 80px to 60px */
   display: flex;
   align-items: center;
 }

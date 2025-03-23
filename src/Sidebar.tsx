@@ -50,17 +50,30 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(mode === "full");
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [panelWidth, setPanelWidth] = useState(350); // Default width
+
+  // Get the config based on sidebar position
+  const {
+    leftSidebarConfig,
+    rightSidebarConfig,
+    setLeftPanelWidth,
+    setRightPanelWidth,
+  } = useWorkspaceConfigStore();
+
+  // Initialize from the correct config based on position
+  const configPanelWidth =
+    position === "left"
+      ? leftSidebarConfig.panelWidth
+      : rightSidebarConfig.panelWidth;
+
+  const [panelWidth, setPanelWidth] = useState(configPanelWidth);
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
-  const lastWidthRef = useRef<number>(350);
+  const lastWidthRef = useRef<number>(configPanelWidth);
 
   const {
     showToolbar,
-    leftSidebarConfig,
-    rightSidebarConfig,
     getActiveSection,
     setLeftActiveSection,
     setRightActiveSection,
@@ -175,6 +188,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     [isResizing, position]
   );
 
+  // Update panel width when config changes
+  useEffect(() => {
+    setPanelWidth(configPanelWidth);
+    lastWidthRef.current = configPanelWidth;
+  }, [configPanelWidth]);
+
   const handleResizeEnd = React.useCallback(() => {
     setIsResizing(false);
     resizeRef.current = null;
@@ -185,9 +204,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       rafRef.current = null;
     }
 
-    // Update the state only once at the end of resize
+    // Update the state AND the store
     setPanelWidth(lastWidthRef.current);
-  }, []);
+
+    // Update the global store
+    if (position === "left") {
+      setLeftPanelWidth(lastWidthRef.current);
+    } else {
+      setRightPanelWidth(lastWidthRef.current);
+    }
+  }, [position, setLeftPanelWidth, setRightPanelWidth]);
 
   useLayoutEffect(() => {
     if (isResizing) {

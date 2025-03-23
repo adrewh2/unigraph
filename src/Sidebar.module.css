@@ -456,7 +456,9 @@
   position: fixed;
   top: 0;
   height: 100vh;
-  width: 350px; /* Default width - now controlled dynamically */
+  width: 240px; /* Reduce from 280px/260px to 240px */
+  min-width: 180px; /* Reduce minimum width */
+  max-width: 360px; /* Reduce maximum width */
   background-color: #2d3748;
   overflow-y: auto;
   overflow-x: hidden; /* Add this to prevent horizontal scroll */
@@ -610,4 +612,8 @@
 .formGroup {
   max-width: 100%; /* Ensure no content exceeds container width */
   box-sizing: border-box;
+}
+
+.numberInputContainer {
+  width: 60px; /* Reduce from 80px to 60px for better fit in narrower panel */
 }

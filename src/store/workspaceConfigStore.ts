@@ -14,7 +14,7 @@ export const DEFAULT_SIDEBAR_CONFIG = (): ISidebarConfig => {
     mode: "collapsed",
     minimal: false,
     activeSectionId: null,
-    panelWidth: 350,
+    panelWidth: 240, // Reduce from 260px to 240px
   };
 };
 
@@ -77,6 +77,11 @@ const useWorkspaceConfigStore = create<WorkspaceConfigState>((set) => ({
     })),
 }));
 
+// Debug helper
+const logWidthChange = (position: string, width: number) => {
+  console.log(`Setting ${position} panel width to ${width}px`);
+};
+
 export const setShowToolbar = (show: boolean) => {
   useWorkspaceConfigStore.getState().setShowToolbar(show);
 };
@@ -106,10 +111,12 @@ export const setRightActiveSection = (sectionId: string | null) => {
 };
 
 export const setLeftPanelWidth = (width: number) => {
+  logWidthChange("left", width);
   useWorkspaceConfigStore.getState().setLeftPanelWidth(width);
 };
 
 export const setRightPanelWidth = (width: number) => {
+  logWidthChange("right", width);
   useWorkspaceConfigStore.getState().setRightPanelWidth(width);
 };
 
