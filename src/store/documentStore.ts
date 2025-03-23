@@ -33,6 +33,10 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
   activeDocument: null,
 
   createDocument: (nodeId) => {
+    if (get().documents[nodeId]) {
+      console.log(`Document for ${nodeId} alraedy exists.`);
+      return;
+    }
     set((state) => ({
       documents: {
         ...state.documents,
