@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { SceneGraph } from "../core/model/SceneGraph";
+import { getSelectedNodeIds } from "../store/graphInteractionStore";
 import GraphSearch from "./common/GraphSearch";
 import "./UniAppToolbar.css";
 
@@ -120,13 +121,15 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
     const isSimulation = simulationList.includes(activeView);
     return (
       <div className="tab-container">
-        <button
-          className={`tab ${activeView === "Editor" ? "active" : ""}`}
-          style={{ maxWidth: "10px" }}
-          onClick={() => onViewChange("Editor")}
-        >
-          Editor
-        </button>
+        {getSelectedNodeIds().size > 0 && (
+          <button
+            className={`tab ${activeView === "Editor" ? "active" : ""}`}
+            style={{ maxWidth: "10px" }}
+            onClick={() => onViewChange("Editor")}
+          >
+            Editor
+          </button>
+        )}
         <button
           className={`tab ${activeView === "Yasgui" ? "active" : ""}`}
           style={{ maxWidth: "10px" }}

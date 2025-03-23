@@ -47,6 +47,7 @@ import YasguiPanel from "./components/YasguiPanel";
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
+import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -117,10 +118,12 @@ import useAppConfigStore, {
   setAppConfig,
 } from "./store/appConfigStore";
 import useDialogStore from "./store/dialogStore";
+import { useActiveDocument, useDocumentStore } from "./store/documentStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import useGraphInteractionStore, {
   clearSelections,
   getHoveredNodeIds,
+  getSelectedNodeId,
   selectEdgeIdsByTag,
   selectEdgeIdsByType,
   selectNodeIdsByType,
@@ -175,7 +178,8 @@ export type RenderingView =
   | "ReactFlow"
   | "Gallery" // Add new view type
   | "Simulation"
-  | "Yasgui"; // Add new view type
+  | "Yasgui" // Add new view type
+  | "Editor"; // Add new view type
 
 const AppContent: React.FC<{
   defaultGraph?: string;
@@ -233,6 +237,9 @@ const AppContent: React.FC<{
 
   // eslint-disable-next-line unused-imports/no-unused-vars
   const { mousePosition, setMousePosition } = useMousePosition();
+
+  const activeDocument = useActiveDocument();
+  const { setActiveDocument } = useDocumentStore();
 
   const clearUrlOfQueryParams = useCallback(() => {
     const url = new URL(window.location.href);
@@ -1632,6 +1639,29 @@ const AppContent: React.FC<{
     );
   }, [activeView, currentSceneGraph]);
 
+  const maybeRenderNodeDocumentEditor = () => {
+    // Return nothing if not in Editor view or no active document
+    if (!getSelectedNodeId()) {
+      return null;
+    }
+    if (activeView !== "Editor" || !activeDocument) {
+      return null;
+    }
+
+    return (
+      <div className="document-editor-overlay">
+        <NodeDocumentEditor
+          nodeId={activeDocument.nodeId}
+          onClose={() => {
+            // Return to previous view
+            setActiveView("ForceGraph3d");
+            setActiveDocument(null);
+          }}
+        />
+      </div>
+    );
+  };
+
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
       <div
@@ -1672,6 +1702,7 @@ const AppContent: React.FC<{
             {maybeRenderForceGraph3D}
             {maybeRenderReactFlow}
             {maybeRenderYasgui}
+            {maybeRenderNodeDocumentEditor()}
             {activeView === "Gallery" && (
               <ImageGalleryV3
                 sceneGraph={currentSceneGraph}

@@ -20,7 +20,6 @@ import useAppConfigStore from "../../store/appConfigStore";
 import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
 import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
-import NodeDocumentEditor from "../NodeDocumentEditor";
 import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
@@ -317,38 +316,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
       <div className={styles.content}>
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
         <main className={styles.main}>
-          {activeView === "Editor" ? (
-            activeDocument ? (
-              <NodeDocumentEditor
-                nodeId={activeDocument.nodeId}
-                onClose={() => {
-                  // Return to previous view
-                  onViewChange("ForceGraph3d");
-                  const { setActiveDocument } = useDocumentStore.getState();
-                  setActiveDocument(null);
-                }}
-              />
-            ) : (
-              <div className={styles.emptyEditor}>
-                <p>
-                  No document selected. Please select a node to edit its
-                  document.
-                </p>
-              </div>
-            )
-          ) : activeDocument ? (
-            <div className={styles.documentEditorContainer}>
-              <NodeDocumentEditor
-                nodeId={activeDocument.nodeId}
-                onClose={() => {
-                  const { setActiveDocument } = useDocumentStore.getState();
-                  setActiveDocument(null);
-                }}
-              />
-            </div>
-          ) : (
-            <div className={styles.graphContainer}>{children}</div>
-          )}
+          {/* Remove the NodeDocumentEditor rendering logic and just show the graph */}
+          <div className={styles.graphContainer}>{children}</div>
         </main>
         <div className={styles.sidebarLayer}>{renderRightSideBar}</div>
       </div>
