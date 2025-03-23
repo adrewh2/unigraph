@@ -286,6 +286,7 @@ const ReactFlowConfigEditor: React.FC<ReactFlowConfigEditorProps> = ({
 
     const updatedFormData = { ...formData, [name]: newValue };
     setFormData(updatedFormData);
+
     onApply(updatedFormData);
 
     if (errors[name]) {

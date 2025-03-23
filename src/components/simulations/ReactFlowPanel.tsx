@@ -29,7 +29,10 @@ import {
   setSelectedNodeId,
   setSelectedNodeIds,
 } from "../../store/graphInteractionStore";
-import { getReactFlowConfig } from "../../store/reactFlowConfigStore";
+import {
+  getReactFlowConfig,
+  subscribeToReactFlowConfigChanges,
+} from "../../store/reactFlowConfigStore";
 import { setRightActiveSection } from "../../store/workspaceConfigStore";
 import CustomNode from "../CustomNode";
 
@@ -243,6 +246,40 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     },
     [onLoad]
   );
+
+  // Subscribe to ReactFlowConfig changes
+  useEffect(() => {
+    const unsubscribe = subscribeToReactFlowConfigChanges((newConfig) => {
+      // Update ReactFlow instance with the new configuration
+      if (reactFlowInstance.current) {
+        reactFlowInstance.current.setNodes((currentNodes) =>
+          currentNodes.map((node) => ({
+            ...node,
+            style: {
+              ...node.style,
+              borderRadius: `${newConfig.nodeBorderRadius}px`,
+              fontSize: `${newConfig.nodeFontSize}px`,
+            },
+          }))
+        );
+
+        reactFlowInstance.current.setEdges((currentEdges) =>
+          currentEdges.map((edge) => ({
+            ...edge,
+            style: {
+              ...edge.style,
+              strokeWidth: newConfig.edgeStrokeWidth,
+              fontSize: newConfig.edgeFontSize,
+            },
+          }))
+        );
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   return (
     <div

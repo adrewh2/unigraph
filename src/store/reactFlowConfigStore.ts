@@ -8,16 +8,36 @@ import {
 interface ReactFlowConfigState {
   config: ReactFlowRenderConfig;
   setConfig: (config: ReactFlowRenderConfig) => void;
+  subscribeToConfigChanges: (
+    callback: (config: ReactFlowRenderConfig) => void
+  ) => () => void;
 }
 
 const useReactFlowConfigStore = create(
-  immer<ReactFlowConfigState>((set) => ({
-    config: DEFAULT_REACTFLOW_CONFIG,
-    setConfig: (config: ReactFlowRenderConfig) =>
-      set((state) => {
-        state.config = { ...state.config, ...config };
-      }),
-  }))
+  immer<ReactFlowConfigState>((set, get) => {
+    const subscribers: ((config: ReactFlowRenderConfig) => void)[] = [];
+
+    return {
+      config: DEFAULT_REACTFLOW_CONFIG,
+      setConfig: (config: ReactFlowRenderConfig) => {
+        set((state) => {
+          state.config = { ...state.config, ...config };
+        });
+
+        // Notify all subscribers of the config change
+        subscribers.forEach((callback) => callback(get().config));
+      },
+      subscribeToConfigChanges: (callback) => {
+        subscribers.push(callback);
+        return () => {
+          const index = subscribers.indexOf(callback);
+          if (index !== -1) {
+            subscribers.splice(index, 1);
+          }
+        };
+      },
+    };
+  })
 );
 
 export const applyReactFlowConfig = (config: ReactFlowRenderConfig) => {
@@ -44,6 +64,12 @@ export const applyReactFlowConfig = (config: ReactFlowRenderConfig) => {
 
 export const getReactFlowConfig = (): ReactFlowRenderConfig => {
   return useReactFlowConfigStore.getState().config;
+};
+
+export const subscribeToReactFlowConfigChanges = (
+  callback: (config: ReactFlowRenderConfig) => void
+) => {
+  return useReactFlowConfigStore.getState().subscribeToConfigChanges(callback);
 };
 
 export default useReactFlowConfigStore;
