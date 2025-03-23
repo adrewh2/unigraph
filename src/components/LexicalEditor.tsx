@@ -35,7 +35,6 @@ const PlaceholderPlugin = ({
 interface LexicalEditorProps {
   initialContent?: string;
   onChange?: (markdown: string, html?: string) => void;
-  //   isDarkMode?: boolean;
   showPreview?: boolean;
   onSave?: (content: string) => void;
 }
@@ -43,12 +42,10 @@ interface LexicalEditorProps {
 const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   initialContent = "",
   onChange,
-  //   isDarkMode = false,
   onSave,
 }) => {
   const [markdown, setMarkdown] = useState(initialContent);
   const [_editorState, setEditorState] = useState<EditorState | null>(null);
-  const isDarkMode = false;
 
   // Define theme
   const theme = {
@@ -185,9 +182,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   };
 
   return (
-    <div
-      className={`lexical-editor-container ${isDarkMode ? "dark-mode" : ""}`}
-    >
+    <div className="lexical-editor-container">
       {/* Toolbar */}
       <div className="lexical-toolbar">
         <button
