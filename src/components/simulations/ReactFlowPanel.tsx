@@ -33,7 +33,9 @@ import {
   getReactFlowConfig,
   subscribeToReactFlowConfigChanges,
 } from "../../store/reactFlowConfigStore";
-import { setRightActiveSection } from "../../store/workspaceConfigStore";
+import useWorkspaceConfigStore, {
+  setRightActiveSection,
+} from "../../store/workspaceConfigStore";
 import CustomNode from "../CustomNode";
 
 import "@xyflow/react/dist/style.css";
@@ -98,6 +100,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   const selectionChangeRef = useRef(false);
 
   const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
+  const { getActiveSection } = useWorkspaceConfigStore();
 
   // Get configuration from the store
   const reactFlowConfig = getReactFlowConfig();
@@ -185,14 +188,16 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
       if (selectedNodes.length === 1) {
         // Single node selection
         setSelectedNodeId(selectedNodes[0].id as NodeId);
-        setRightActiveSection("node-details");
+        if (getActiveSection("right") === null) {
+          setRightActiveSection("node-details");
+        }
       } else {
         // Multi-node selection
         const nodeIds = selectedNodes.map((node) => node.id as NodeId);
         setSelectedNodeIds(new EntityIds(nodeIds));
       }
     },
-    []
+    [getActiveSection]
   );
 
   // Handle node hover
