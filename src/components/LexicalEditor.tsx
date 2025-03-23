@@ -19,14 +19,23 @@ import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { $getRoot, $getSelection, EditorState, LexicalEditor } from "lexical";
 import { Download, Save } from "lucide-react";
-import React, { useState } from "react";
+import React, { JSX, useState } from "react";
 import "./LexicalEditor.css";
 import { ToolbarPlugin } from "./lexical/plugins/ToolbarPlugin";
+
+// Create a separate PlaceholderPlugin component
+const PlaceholderPlugin = ({
+  placeholder,
+}: {
+  placeholder: string;
+}): JSX.Element => {
+  return <div className="editor-placeholder">{placeholder}</div>;
+};
 
 interface LexicalEditorProps {
   initialContent?: string;
   onChange?: (markdown: string, html?: string) => void;
-  isDarkMode?: boolean;
+  //   isDarkMode?: boolean;
   showPreview?: boolean;
   onSave?: (content: string) => void;
 }
@@ -34,11 +43,12 @@ interface LexicalEditorProps {
 const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   initialContent = "",
   onChange,
-  isDarkMode = false,
+  //   isDarkMode = false,
   onSave,
 }) => {
   const [markdown, setMarkdown] = useState(initialContent);
   const [_editorState, setEditorState] = useState<EditorState | null>(null);
+  const isDarkMode = false;
 
   // Define theme
   const theme = {
@@ -126,6 +136,8 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
       LinkNode,
       HashtagNode,
     ],
+    // Add initial content to the editor if provided
+    editorState: initialContent ? initialContent : undefined,
   };
 
   // Handle editor updates
@@ -204,7 +216,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               <RichTextPlugin
                 contentEditable={<ContentEditable className="editor-input" />}
                 placeholder={
-                  <div className="editor-placeholder">Enter some text...</div>
+                  <PlaceholderPlugin placeholder="Enter some text..." />
                 }
                 // eslint-disable-next-line unused-imports/no-unused-vars
                 ErrorBoundary={({ children }) => (

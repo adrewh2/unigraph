@@ -30,7 +30,7 @@ import {
   Heading3,
   Italic,
   ListOrdered,
-  //   ListUl,
+  List as ListUl,
   Quote,
   Redo,
   Strikethrough,
@@ -195,7 +195,7 @@ export const ToolbarPlugin: React.FC = () => {
         className="toolbar-item"
         title="Bulleted List"
       >
-        {/* <ListUl size={16} /> */}
+        <ListUl size={16} />
       </button>
       <button onClick={formatQuote} className="toolbar-item" title="Quote">
         <Quote size={16} />

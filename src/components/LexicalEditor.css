@@ -116,6 +116,34 @@
   color: #666;
 }
 
+/* Hide placeholder when editor has content */
+.editor-input[data-lexical-editor="true"][contenteditable="true"]:focus
+  + .editor-placeholder,
+.editor-input[data-lexical-editor="true"]:not(:empty) + .editor-placeholder {
+  display: none;
+}
+
+/* Make sure the placeholder is not shown when the editor has content */
+.editor-input[data-lexical-editor="true"]:not(.editor-empty)
+  ~ .editor-placeholder {
+  display: none;
+}
+
+/* Hide placeholder when focused even if empty */
+.editor-inner:focus-within .editor-placeholder {
+  display: none;
+}
+
+/* Additional styles for better editor experience */
+.editor-input:focus {
+  outline: none;
+}
+
+.editor-paragraph {
+  margin: 0;
+  position: relative;
+}
+
 .preview-section {
   flex: 1;
   border-left: 1px solid #ddd;
