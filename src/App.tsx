@@ -117,7 +117,7 @@ import useAppConfigStore, {
 } from "./store/appConfigStore";
 import useDialogStore from "./store/dialogStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
-import {
+import useGraphInteractionStore, {
   clearSelections,
   getHoveredNodeIds,
   selectEdgeIdsByTag,
@@ -218,6 +218,8 @@ const AppContent: React.FC<{
     nodeLegendUpdateTime,
     edgeLegendUpdateTime,
   } = useActiveLegendConfigStore();
+
+  const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
 
   const { activeFilter, setActiveFilter } = useActiveFilterStore();
 
@@ -1270,6 +1272,8 @@ const AppContent: React.FC<{
     activeFilter,
     currentSceneGraph,
     forceGraphInstance,
+    selectedNodeIds,
+    selectedEdgeIds,
   ]);
 
   useEffect(() => {
