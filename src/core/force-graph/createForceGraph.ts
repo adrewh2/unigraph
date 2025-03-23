@@ -281,7 +281,11 @@ export const bindEventsToGraphInstance = (
   graph.onNodeClick((node) => {
     setSelectedNodeId(node?.id as NodeId);
     setRightActiveSection("node-details");
+
+    // Force refresh to update node colors immediately
+    updateHighlight(graph);
   });
+
   graph.onNodeHover((node) => {
     // no state change
     // if (!node && !sceneGraph.getAppState().hoveredNodes.has(node.id as string)) {
@@ -358,11 +362,15 @@ export const applyCameraAndControls = (
 };
 
 function updateHighlight(graph: ForceGraph3DInstance) {
-  graph
-    .nodeColor(graph.nodeColor())
-    .linkColor(graph.linkColor())
-    .linkWidth(graph.linkWidth())
-    .linkDirectionalParticles(graph.linkDirectionalParticles());
+  // Force complete refresh of all node and link appearances
+  graph.nodeColor(graph.nodeColor());
+  graph.linkColor(graph.linkColor());
+  graph.linkWidth(graph.linkWidth());
+
+  // Add explicit refresh to ensure immediate visual update
+  requestAnimationFrame(() => {
+    graph.refresh();
+  });
 }
 
 export const getNodePosition = (
