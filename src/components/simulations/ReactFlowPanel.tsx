@@ -211,26 +211,15 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
 
-  // Fix the onInit handler to use the correct type
+  // Fix the onInit handler to use the correct type and avoid camera flickering
   const handleInit: OnInit = useCallback(
     (instance: ReactFlowInstance) => {
       reactFlowInstance.current = instance;
       if (onLoad) {
         onLoad(instance);
       }
-      instance.fitView({ padding: 0.1 });
 
-      // Focus on selected node if there is one
-      const selectedNodeId = getSelectedNodeId();
-      if (selectedNodeId) {
-        const selectedNode = instance.getNode(selectedNodeId);
-        if (selectedNode) {
-          instance.fitView({
-            nodes: [selectedNode],
-            padding: 0.5,
-          });
-        }
-      }
+      instance.fitView({ padding: 0.1 });
     },
     [onLoad]
   );
