@@ -14,6 +14,7 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
@@ -122,13 +123,29 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
     setTags(newTags);
   };
 
+  // Handle editor updates - define before initialConfig to avoid reference errors
+  const handleEditorChange = (
+    editorState: EditorState,
+    editor: LexicalEditor
+  ) => {
+    setEditorState(editorState);
+
+    editorState.read(() => {
+      const root = $getRoot();
+      const _selection = $getSelection();
+      const textContent = root.getTextContent();
+      setMarkdown(textContent);
+
+      if (onChange) {
+        onChange(textContent);
+      }
+    });
+  };
+
   // Define initial config for LexicalComposer
   const initialConfig = {
     namespace: "LexicalEditor",
     theme,
-    onError: (error: Error) => {
-      console.error(error);
-    },
     nodes: [
       HeadingNode,
       ListNode,
@@ -142,31 +159,11 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
       LinkNode,
       HashtagNode,
     ],
-    // Add initial content to the editor if provided
     editorState: initialContent ? initialContent : undefined,
-  };
-
-  // Handle editor updates
-  const handleEditorChange = (
-    editorState: EditorState,
-    editor: LexicalEditor
-  ) => {
-    setEditorState(editorState);
-
-    // You would need to implement a proper conversion to markdown here
-    editorState.read(() => {
-      const root = $getRoot();
-      const _selection = $getSelection();
-
-      // For now, we'll just get the text content
-      // In a real implementation, you'd convert the editor state to markdown
-      const textContent = root.getTextContent();
-      setMarkdown(textContent);
-
-      if (onChange) {
-        onChange(textContent);
-      }
-    });
+    onError: (error: Error) => {
+      console.error(error);
+    },
+    onChange: handleEditorChange, // Connect the handler here
   };
 
   // Handle save button click
@@ -238,6 +235,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               <CheckListPlugin />
               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
               <ClearEditorPlugin />
+              <OnChangePlugin onChange={handleEditorChange} />
             </div>
           </div>
         </LexicalComposer>
