@@ -20,12 +20,18 @@ import useAppConfigStore from "../../store/appConfigStore";
 import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
 import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
-import LexicalEditorV2 from "../LexicalEditor";
+import NodeDocumentEditor from "../NodeDocumentEditor";
 import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
-const sidebarDisabledViews = ["Yasgui", "Gallery", "Simulation", "Lexical"];
+const sidebarDisabledViews = [
+  "Yasgui",
+  "Gallery",
+  "Simulation",
+  "Lexical",
+  "Editor",
+];
 
 interface WorkspaceProps {
   menuConfig: IMenuConfig;
@@ -311,13 +317,32 @@ const Workspace: React.FC<WorkspaceProps> = ({
       <div className={styles.content}>
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
         <main className={styles.main}>
-          {activeDocument ? (
+          {activeView === "Editor" ? (
+            activeDocument ? (
+              <NodeDocumentEditor
+                nodeId={activeDocument.nodeId}
+                onClose={() => {
+                  // Return to previous view
+                  onViewChange("ForceGraph3d");
+                  const { setActiveDocument } = useDocumentStore.getState();
+                  setActiveDocument(null);
+                }}
+              />
+            ) : (
+              <div className={styles.emptyEditor}>
+                <p>
+                  No document selected. Please select a node to edit its
+                  document.
+                </p>
+              </div>
+            )
+          ) : activeDocument ? (
             <div className={styles.documentEditorContainer}>
-              <LexicalEditorV2
-                id={activeDocument.id}
-                initialContent={activeDocument.content}
-                onSave={(content, tags) => {
-                  console.log("Saving document:", content, tags);
+              <NodeDocumentEditor
+                nodeId={activeDocument.nodeId}
+                onClose={() => {
+                  const { setActiveDocument } = useDocumentStore.getState();
+                  setActiveDocument(null);
                 }}
               />
             </div>

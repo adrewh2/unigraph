@@ -121,6 +121,13 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
     return (
       <div className="tab-container">
         <button
+          className={`tab ${activeView === "Editor" ? "active" : ""}`}
+          style={{ maxWidth: "10px" }}
+          onClick={() => onViewChange("Editor")}
+        >
+          Editor
+        </button>
+        <button
           className={`tab ${activeView === "Yasgui" ? "active" : ""}`}
           style={{ maxWidth: "10px" }}
           onClick={() => onViewChange("Yasgui")}

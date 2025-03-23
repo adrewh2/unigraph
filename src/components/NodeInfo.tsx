@@ -7,7 +7,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { NodeId } from "../core/model/Node";
-import { getCurrentSceneGraph } from "../store/appConfigStore";
+import useAppConfigStore, {
+  getCurrentSceneGraph,
+} from "../store/appConfigStore";
 import { useDocumentStore } from "../store/documentStore";
 import { getSelectedNodeId } from "../store/graphInteractionStore";
 import { Badge } from "./Badge";
@@ -34,6 +36,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   const sceneGraph = getCurrentSceneGraph();
 
   const { setActiveDocument, createDocument } = useDocumentStore();
+  const { setActiveView } = useAppConfigStore();
 
   if (!activeNodeId) {
     return (
@@ -87,6 +90,8 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
     // Ensure document exists first
     createDocument(activeNodeId);
     setActiveDocument(activeNodeId);
+    // Switch to Editor view
+    setActiveView("Editor");
   };
 
   // Different layout for compact mode
