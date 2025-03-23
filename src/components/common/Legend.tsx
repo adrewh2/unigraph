@@ -113,11 +113,8 @@ const Legend: React.FC<LegendProps> = ({
           >
             <div
               className="legend-item-label"
-              onClick={(e) => {
-                // Only trigger label selection if not clicking the checkbox
-                if (!(e.target as HTMLElement).closest(".legend-checkbox")) {
-                  onLabelSelected?.(key);
-                }
+              onClick={(_e) => {
+                onLabelSelected?.(key);
               }}
             >
               <input
