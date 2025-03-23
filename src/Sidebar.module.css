@@ -44,7 +44,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden; /* Prevent horizontal scrollbar */
-  padding: 16px 0;
+  padding: 8px 0; /* Reduce horizontal padding */
 }
 
 .nav {
@@ -557,7 +557,7 @@
 
 .sidePanelContent {
   flex: 1;
-  padding: 16px;
+  padding: 8px;
   overflow-y: auto;
   overflow-x: hidden; /* Prevent horizontal scroll */
   width: 100%;
