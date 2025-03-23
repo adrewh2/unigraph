@@ -28,9 +28,15 @@ import {
   getSelectedNodeIds,
   setHoveredEdgeId,
   setHoveredNodeId,
+  setSelectedEdgeId,
+  setSelectedEdgeIds,
   setSelectedNodeId,
+  setSelectedNodeIds,
 } from "../../store/graphInteractionStore";
-import { setRightActiveSection } from "../../store/workspaceConfigStore";
+import {
+  getActiveSection,
+  setRightActiveSection,
+} from "../../store/workspaceConfigStore";
 import { ILayoutEngineResult } from "../layouts/LayoutEngine";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EdgeId } from "../model/Edge";
@@ -290,6 +296,23 @@ export const bindEventsToGraphInstance = (
     setRightActiveSection("node-details");
 
     // Force refresh to update node colors immediately
+    updateHighlight(graph);
+  });
+
+  // Add a background click handler to clear selections
+  graph.onBackgroundClick((_event) => {
+    // Clear all selections when clicking on background
+    setSelectedNodeId(null);
+    setSelectedNodeIds([]);
+    setSelectedEdgeId(null);
+    setSelectedEdgeIds([]);
+
+    // Close the node details panel if it's open
+    if (getActiveSection("right") === "node-details") {
+      setRightActiveSection(null);
+    }
+
+    // Force refresh to update visual state
     updateHighlight(graph);
   });
 
