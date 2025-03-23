@@ -31,6 +31,8 @@
   border-bottom: 1px solid #e0e0e0;
   background-color: #f8f8f8;
   flex-shrink: 0; /* Prevent toolbar from shrinking */
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .lexical-toolbar-button {
@@ -274,4 +276,88 @@
   background-color: #ffebee;
   border-radius: 4px;
   margin: 8px 0;
+}
+
+/* Tag Input styles */
+.tag-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-right: 8px;
+  flex: 1;
+}
+
+.tag-icon {
+  color: #666;
+}
+
+.tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #f0f7ff;
+  border: 1px solid #c8e1ff;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #0366d6;
+}
+
+.tag-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #0366d6;
+}
+
+.tag-remove:hover {
+  color: #024dab;
+}
+
+.tag-input {
+  border: none;
+  outline: none;
+  padding: 4px;
+  font-size: 14px;
+  flex: 1;
+  min-width: 100px;
+}
+
+/* Tag styles */
+.tags-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+/* Style for hashtags in the editor */
+[data-lexical-text] [data-hashtag] {
+  color: #0366d6;
+  font-weight: 500;
+}
+
+/* Update the theme to include hashtag styling */
+.editor-text-hashtag {
+  color: #0366d6;
+  font-weight: 500;
 }

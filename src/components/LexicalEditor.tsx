@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-vars */
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { HashtagNode } from "@lexical/hashtag";
 import { LinkNode } from "@lexical/link";
@@ -21,6 +22,7 @@ import { $getRoot, $getSelection, EditorState, LexicalEditor } from "lexical";
 import { Download, Save } from "lucide-react";
 import React, { JSX, useState } from "react";
 import "./LexicalEditor.css";
+import { TagPlugin } from "./lexical/plugins/TagPlugin";
 import { ToolbarPlugin } from "./lexical/plugins/ToolbarPlugin";
 
 // Create a separate PlaceholderPlugin component
@@ -36,7 +38,7 @@ interface LexicalEditorProps {
   initialContent?: string;
   onChange?: (markdown: string, html?: string) => void;
   showPreview?: boolean;
-  onSave?: (content: string) => void;
+  onSave?: (content: string, tags?: string[]) => void;
 }
 
 const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
@@ -46,6 +48,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
 }) => {
   const [markdown, setMarkdown] = useState(initialContent);
   const [_editorState, setEditorState] = useState<EditorState | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
 
   // Define theme
   const theme = {
@@ -77,6 +80,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
       strikethrough: "editor-text-strikethrough",
       underlineStrikethrough: "editor-text-underlineStrikethrough",
       code: "editor-text-code",
+      hashtag: "editor-text-hashtag", // Add hashtag styling
     },
     code: "editor-code",
     codeHighlight: {
@@ -111,6 +115,11 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
       url: "editor-tokenOperator",
       variable: "editor-tokenVariable",
     },
+  };
+
+  // Handle tags change
+  const handleTagsChange = (newTags: string[]) => {
+    setTags(newTags);
   };
 
   // Define initial config for LexicalComposer
@@ -163,7 +172,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   // Handle save button click
   const handleSave = () => {
     if (onSave) {
-      onSave(markdown);
+      onSave(markdown, tags);
     } else {
       console.log("Save function not provided");
     }
@@ -185,6 +194,15 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
     <div className="lexical-editor-container">
       {/* Toolbar */}
       <div className="lexical-toolbar">
+        {tags.length > 0 && (
+          <div className="tags-display">
+            {tags.map((tag) => (
+              <span key={tag} className="tag">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
         <button
           className="lexical-toolbar-button"
           onClick={handleSave}
@@ -211,9 +229,8 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               <RichTextPlugin
                 contentEditable={<ContentEditable className="editor-input" />}
                 placeholder={
-                  <PlaceholderPlugin placeholder="Enter some text..." />
+                  <PlaceholderPlugin placeholder="Enter some text... (Use #tag to create tags)" />
                 }
-                // eslint-disable-next-line unused-imports/no-unused-vars
                 ErrorBoundary={({ children }) => (
                   <div className="editor-error">
                     An error occurred while rendering the editor.
@@ -222,15 +239,14 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               />
               <HistoryPlugin />
               <AutoFocusPlugin />
-              {/* <CodeHighlightPlugin /> */}
               <ListPlugin />
               <LinkPlugin />
               <HashtagPlugin />
+              <TagPlugin onTagsChange={handleTagsChange} />
               <TablePlugin />
               <CheckListPlugin />
               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
               <ClearEditorPlugin />
-              {/* Add any other plugins as needed */}
             </div>
           </div>
         </LexicalComposer>
