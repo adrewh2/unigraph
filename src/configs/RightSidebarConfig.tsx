@@ -1,8 +1,7 @@
 import { FileText, Info, List, Settings2, Table2, ZoomIn } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
-import MultiNodeInfo from "../components/MultiNodeInfo";
-import NodeInfo from "../components/NodeInfo";
+import NodeDetailsPanel from "../components/NodeDetailsPanel";
 import styles from "../Sidebar.module.css";
 import { getActiveFilter } from "../store/activeFilterStore";
 import {
@@ -33,9 +32,6 @@ export const createDefaultRightMenus = (
   isForceGraph3dActive: boolean,
   isDarkMode: boolean
 ): MenuItem[] => {
-  const selectedNodeIds = getSelectedNodeIds();
-  const multipleNodesSelected = selectedNodeIds.size > 1;
-
   const baseMenuItems = [
     {
       id: "legends",
@@ -77,19 +73,16 @@ export const createDefaultRightMenus = (
     },
   ];
 
-  // Add the right panel type based on selection state
-  if (selectedNodeIds.size > 0) {
+  // Add node details section if any nodes are selected
+  if (getSelectedNodeIds().size > 0) {
     baseMenuItems.push({
       id: "node-details",
       icon: <Info size={20} className={styles.menuIcon} />,
-      label: multipleNodesSelected
-        ? `Nodes (${selectedNodeIds.size})`
-        : "Node Details",
-      content: multipleNodesSelected ? (
-        <MultiNodeInfo nodeIds={Array.from(selectedNodeIds)} />
-      ) : (
-        <NodeInfo />
-      ),
+      label:
+        getSelectedNodeIds().size > 1
+          ? `Nodes (${getSelectedNodeIds().size})`
+          : "Node Details",
+      content: <NodeDetailsPanel />,
     });
   }
 
