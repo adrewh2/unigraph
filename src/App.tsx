@@ -120,6 +120,10 @@ import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import {
   clearSelections,
   getHoveredNodeIds,
+  selectEdgeIdsByTag,
+  selectEdgeIdsByType,
+  selectNodeIdsByType,
+  selectNodesIdsByTag,
   setHoveredEdgeIds,
   setHoveredNodeId,
   setHoveredNodeIds,
@@ -792,6 +796,10 @@ const AppContent: React.FC<{
       legendMode === "type"
         ? graphStatistics?.nodeTypeToCount
         : graphStatistics?.nodeTagsToCount;
+
+    const onSelectLabel =
+      legendMode === "type" ? selectNodeIdsByType : selectNodesIdsByTag;
+
     return (
       <Legend
         title="Node"
@@ -809,6 +817,7 @@ const AppContent: React.FC<{
         sceneGraph={currentSceneGraph}
         onMouseHoverItem={handleMouseHoverLegendItem("Node")}
         onMouseUnhoverItem={handleMouseUnhoverLegendItem("Node")}
+        onLabelSelected={onSelectLabel}
       />
     );
   }, [
@@ -829,6 +838,10 @@ const AppContent: React.FC<{
       legendMode === "type"
         ? graphStatistics?.edgeTypeToCount
         : graphStatistics?.edgeTagsToCount;
+
+    const onSelectLabel =
+      legendMode === "type" ? selectEdgeIdsByType : selectEdgeIdsByTag;
+
     return (
       <Legend
         title="Edge"
@@ -844,6 +857,7 @@ const AppContent: React.FC<{
         totalCount={graphStatistics?.edgeCount}
         statistics={statistics}
         sceneGraph={currentSceneGraph}
+        onLabelSelected={onSelectLabel}
       />
     );
   }, [

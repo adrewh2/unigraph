@@ -15,6 +15,7 @@ interface LegendProps {
   sceneGraph: SceneGraph;
   onMouseHoverItem?: (key: string) => void;
   onMouseUnhoverItem?: (key: string) => void;
+  onLabelSelected?: (key: string) => void;
 }
 
 const Legend: React.FC<LegendProps> = ({
@@ -31,6 +32,7 @@ const Legend: React.FC<LegendProps> = ({
   sceneGraph,
   onMouseHoverItem,
   onMouseUnhoverItem,
+  onLabelSelected,
 }) => {
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>(
     Object.entries(displayConfig).reduce(
@@ -115,6 +117,7 @@ const Legend: React.FC<LegendProps> = ({
                 checked={checkedItems[key]}
                 onChange={() => handleCheckboxChange(key)}
                 className="legend-checkbox"
+                onClick={(_e) => onLabelSelected?.(key)} // Ensure click doesn't propagate
               />
               <span className={`legend-text ${theme}`}>{key}</span>
             </div>
