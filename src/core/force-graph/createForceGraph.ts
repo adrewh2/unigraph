@@ -44,8 +44,8 @@ import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
 import { exportGraphDataForReactFlow } from "../react-flow/exportGraphDataForReactFlow";
 import { flyToNode } from "../webgl/webglHelpers";
-import { updateVisibleEntitiesInForceGraphInstance } from "./forceGraphHelpers";
 import { ForceGraphManager } from "./ForceGraphManager";
+import { updateVisibleEntitiesInForceGraphInstance } from "./forceGraphHelpers";
 
 export const MOUSE_HOVERED_NODE_COLOR = "rgb(243, 255, 16)";
 export const SELECTED_NODE_COLOR = "rgb(254, 148, 9)";

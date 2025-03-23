@@ -1253,10 +1253,6 @@ const AppContent: React.FC<{
   useEffect(() => {
     if (activeView === "ForceGraph3d") {
       if (forceGraphInstance) {
-        console.log(
-          "refreshing on layout mode change",
-          forceGraph3dOptions.layout
-        );
         refreshForceGraphInstance(
           forceGraphInstance,
           currentSceneGraph,
