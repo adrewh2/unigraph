@@ -8,6 +8,7 @@ import {
 import React from "react";
 import { NodeId } from "../core/model/Node";
 import { getCurrentSceneGraph } from "../store/appConfigStore";
+import { useDocumentStore } from "../store/documentStore";
 import { getSelectedNodeId } from "../store/graphInteractionStore";
 import { Badge } from "./Badge";
 import styles from "./NodeInfo.module.css";
@@ -31,6 +32,8 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   // Use provided nodeId, or fallback to selected node id from global state
   const activeNodeId = nodeId || getSelectedNodeId();
   const sceneGraph = getCurrentSceneGraph();
+
+  const { setActiveDocument } = useDocumentStore();
 
   if (!activeNodeId) {
     return (
@@ -147,7 +150,10 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
           </button>
           <button
             className={styles.actionButton}
-            onClick={() => console.log("Add document for node:", node.getId())}
+            onClick={() => {
+              console.log("setting active document");
+              setActiveDocument(node.getId());
+            }}
             title="Add Document"
           >
             <FileText size={18} />

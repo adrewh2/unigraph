@@ -17,8 +17,10 @@ import Sidebar from "../../Sidebar";
 import useActiveFilterStore from "../../store/activeFilterStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
+import { useActiveDocument } from "../../store/documentStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
 import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
+import LexicalEditorV2 from "../LexicalEditor";
 import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
@@ -78,6 +80,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleFitToView,
   handleShowEntityTables,
 }) => {
+  const activeDocument = useActiveDocument();
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
@@ -300,7 +303,20 @@ const Workspace: React.FC<WorkspaceProps> = ({
       <div className={styles.content}>
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
         <main className={styles.main}>
-          <div className={styles.graphContainer}>{children}</div>
+          {activeDocument ? (
+            <div className={styles.documentEditorContainer}>
+              <LexicalEditorV2
+                id={activeDocument.id}
+                initialContent={activeDocument.content}
+                onSave={(content, tags) => {
+                  // Handle saving document changes
+                  console.log("Document saved:", content, tags);
+                }}
+              />
+            </div>
+          ) : (
+            <div className={styles.graphContainer}>{children}</div>
+          )}
         </main>
         <div className={styles.sidebarLayer}>{renderRightSideBar}</div>
       </div>
