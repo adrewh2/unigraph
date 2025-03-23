@@ -348,7 +348,15 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           }
         >
           <Controls />
-          {reactFlowConfig.minimap && <MiniMap />}
+          {reactFlowConfig.minimap && (
+            <MiniMap
+              style={{
+                position: "absolute",
+                bottom: 5,
+                right: 60 + 5, // Position to the left of the right sidebar
+              }}
+            />
+          )}
           <Background
             variant={
               reactFlowConfig.backgroundVariant || BackgroundVariant.Dots
