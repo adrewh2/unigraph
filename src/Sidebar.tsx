@@ -339,7 +339,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={handleCloseSection} // Use the new handler here
                 className={styles.closeButton}
               >
-                <ChevronLeft size={16} />
+                {position === "left" ? (
+                  <ChevronLeft size={16} />
+                ) : (
+                  <ChevronRight size={16} />
+                )}
               </button>
             </div>
             <div className={styles.sidePanelContent}>

@@ -1,6 +1,8 @@
-import { FileText, List, Settings2, Table2, ZoomIn } from "lucide-react";
+import { FileText, Info, List, Settings2, Table2, ZoomIn } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
+import MultiNodeInfo from "../components/MultiNodeInfo";
+import NodeInfo from "../components/NodeInfo";
 import styles from "../Sidebar.module.css";
 import { getActiveFilter } from "../store/activeFilterStore";
 import {
@@ -9,6 +11,7 @@ import {
   getForceGraph3dLayoutMode,
   setForceGraph3dLayoutMode,
 } from "../store/appConfigStore";
+import { getSelectedNodeIds } from "../store/graphInteractionStore";
 
 export interface SubMenuItem {
   label: string;
@@ -29,46 +32,69 @@ export const createDefaultRightMenus = (
   renderLegends: () => React.ReactNode,
   isForceGraph3dActive: boolean,
   isDarkMode: boolean
-): MenuItem[] => [
-  {
-    id: "legends",
-    icon: <List size={20} className={styles.menuIcon} />,
-    label: "Legends",
-    content: (
-      <div className={styles.optionsPanelContainer}>{renderLegends()}</div>
-    ),
-  },
-  {
-    id: "settings",
-    icon: <Settings2 size={20} className={styles.menuIcon} />,
-    label: "Settings",
-    content: (
-      <div className={styles.optionsPanelContainer}>
-        {isForceGraph3dActive && (
-          <ForceGraphLayoutRadio
-            layout={getForceGraph3dLayoutMode()}
-            onLayoutChange={setForceGraph3dLayoutMode}
-            isDarkMode={isDarkMode}
+): MenuItem[] => {
+  const selectedNodeIds = getSelectedNodeIds();
+  const multipleNodesSelected = selectedNodeIds.size > 1;
+
+  const baseMenuItems = [
+    {
+      id: "legends",
+      icon: <List size={20} className={styles.menuIcon} />,
+      label: "Legends",
+      content: (
+        <div className={styles.optionsPanelContainer}>{renderLegends()}</div>
+      ),
+    },
+    {
+      id: "settings",
+      icon: <Settings2 size={20} className={styles.menuIcon} />,
+      label: "Settings",
+      content: (
+        <div className={styles.optionsPanelContainer}>
+          {isForceGraph3dActive && (
+            <ForceGraphLayoutRadio
+              layout={getForceGraph3dLayoutMode()}
+              onLayoutChange={setForceGraph3dLayoutMode}
+              isDarkMode={isDarkMode}
+            />
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "sceneGraphInfo",
+      icon: <FileText size={20} className={styles.menuIcon} />,
+      label: "SceneGraph Info",
+      content: (
+        <div className={styles.infoPanel}>
+          <SceneGraphInfoPanel
+            sceneGraphName={getCurrentSceneGraph().getMetadata().name ?? ""}
+            activeLayout={getActiveLayout()}
+            activeFilter={getActiveFilter()?.name}
           />
-        )}
-      </div>
-    ),
-  },
-  {
-    id: "sceneGraphInfo",
-    icon: <FileText size={20} className={styles.menuIcon} />,
-    label: "SceneGraph Info",
-    content: (
-      <div className={styles.infoPanel}>
-        <SceneGraphInfoPanel
-          sceneGraphName={getCurrentSceneGraph().getMetadata().name ?? ""}
-          activeLayout={getActiveLayout()}
-          activeFilter={getActiveFilter()?.name}
-        />
-      </div>
-    ),
-  },
-];
+        </div>
+      ),
+    },
+  ];
+
+  // Add the right panel type based on selection state
+  if (selectedNodeIds.size > 0) {
+    baseMenuItems.push({
+      id: "node-details",
+      icon: <Info size={20} className={styles.menuIcon} />,
+      label: multipleNodesSelected
+        ? `Nodes (${selectedNodeIds.size})`
+        : "Node Details",
+      content: multipleNodesSelected ? (
+        <MultiNodeInfo nodeIds={Array.from(selectedNodeIds)} />
+      ) : (
+        <NodeInfo />
+      ),
+    });
+  }
+
+  return baseMenuItems;
+};
 
 // Info panel component for SceneGraph details
 const SceneGraphInfoPanel = ({
