@@ -1,5 +1,5 @@
 import { Info } from "lucide-react";
-import React, { useMemo } from "react"; // Add useRef import
+import React, { useMemo } from "react";
 import {
   createDefaultLeftMenus,
   leftFooterContent,
@@ -45,7 +45,7 @@ interface WorkspaceProps {
   renderEdgeLegend: React.ReactNode;
   showPathAnalysis: () => void;
   showLoadSceneGraphWindow: () => void;
-  showSaveSceneGraphDialog: () => void; // Add the prop
+  showSaveSceneGraphDialog: () => void;
   showLayoutManager: (mode: "save" | "load") => void;
   handleLoadLayout: (nodePositionData: NodePositionData) => void;
   handleFitToView: (activeView: string) => void;
@@ -158,7 +158,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onClearFilters: clearFilters,
           onShowPathAnalysis: showPathAnalysis,
           onShowLoadSceneGraphWindow: showLoadSceneGraphWindow,
-          onShowSaveSceneGraphDialog: showSaveSceneGraphDialog, // Pass the handler
+          onShowSaveSceneGraphDialog: showSaveSceneGraphDialog,
           showLayoutManager: (mode: "save" | "load") => showLayoutManager(mode),
           handleLoadLayout: handleLoadLayout,
         })}
@@ -221,7 +221,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
       );
 
       if (!nodeDetailsExists) {
-        menuItems.unshift({
+        // Use push instead of unshift to add the node details at the end of the menu
+        menuItems.push({
           id: "node-details",
           icon: <Info size={20} className={styles.menuIcon} />,
           label: "Node Details",
