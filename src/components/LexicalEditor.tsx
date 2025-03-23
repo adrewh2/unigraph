@@ -71,12 +71,33 @@ const CustomOnChangePlugin: React.FC<{
   return null;
 };
 
+// Add a new AutoSavePlugin component
+const AutoSavePlugin: React.FC<{
+  saveContent: () => void;
+  saveState: () => void;
+  interval: number;
+}> = ({ saveContent, saveState, interval }) => {
+  useEffect(() => {
+    // Set up periodic autosave
+    const intervalId = setInterval(() => {
+      saveContent();
+      saveState();
+    }, interval);
+
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
+  }, [saveContent, saveState, interval]);
+
+  return null;
+};
+
 interface LexicalEditorProps {
   id?: string; // Add an ID prop to identify this editor instance
   initialContent?: string;
   onChange?: (markdown: string, html?: string) => void;
   showPreview?: boolean;
   onSave?: (content: string, tags?: string[]) => void;
+  autoSaveInterval?: number; // Add this new prop
 }
 
 // Create a debounced save function that we'll use later
@@ -107,6 +128,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   initialContent = "",
   onChange,
   onSave,
+  autoSaveInterval = 5000, // Default autosave interval of 5 seconds
 }) => {
   // Use a stable storage key based on the provided ID
   const storageKey = `lexical-editor-content-${id}`;
@@ -335,6 +357,44 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
     URL.revokeObjectURL(link.href);
   };
 
+  // Create explicit save actions that we can call programmatically
+  const saveContentNow = React.useCallback(() => {
+    const currentContent = markdownRef.current;
+    localStorage.setItem(storageKey, currentContent);
+
+    // Show autosave indicator (we'll add this to the UI)
+    const timestamp = new Date().toLocaleTimeString();
+    console.log("Content autosaved at", timestamp);
+
+    // Set the autosave status temporarily
+    // setAutosaveStatus(`Last saved at ${timestamp}`);
+  }, [storageKey]);
+
+  const saveStateNow = React.useCallback(() => {
+    if (editorState) {
+      try {
+        const serializedState = JSON.stringify(editorState.toJSON());
+        localStorage.setItem(stateStorageKey, serializedState);
+        setSavedState(serializedState);
+      } catch (e) {
+        console.warn("Failed to save state:", e);
+      }
+    }
+  }, [editorState, stateStorageKey]);
+
+  // Add autosave status indicator
+  const [autosaveStatus, setAutosaveStatus] = useState<string | null>(null);
+
+  // Clear status after a delay
+  useEffect(() => {
+    if (autosaveStatus) {
+      const timer = setTimeout(() => {
+        setAutosaveStatus(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [autosaveStatus]);
+
   return (
     <div className="lexical-editor-container">
       {tags.length > 0 && (
@@ -351,6 +411,9 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
         <LexicalComposer initialConfig={initialConfig}>
           <div className="editor-wrapper">
             <ToolbarPlugin onSave={handleSave} onExport={handleExport} />
+            {autosaveStatus && (
+              <div className="autosave-indicator">{autosaveStatus}</div>
+            )}
             <div className="editor-inner">
               <RichTextPlugin
                 contentEditable={<ContentEditable className="editor-input" />}
@@ -377,6 +440,12 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               <ClearEditorPlugin />
               {/* Replace OnChangePlugin with our optimized version */}
               <CustomOnChangePlugin onChange={handleEditorChange} />
+              {/* Add the AutoSavePlugin */}
+              <AutoSavePlugin
+                saveContent={saveContentNow}
+                saveState={saveStateNow}
+                interval={autoSaveInterval}
+              />
             </div>
           </div>
         </LexicalComposer>
