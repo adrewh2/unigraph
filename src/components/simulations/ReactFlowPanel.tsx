@@ -1,6 +1,7 @@
 import {
   Background,
   BackgroundVariant,
+  ConnectionLineType,
   Controls,
   Edge,
   MiniMap,
@@ -28,6 +29,7 @@ import {
   setSelectedNodeId,
   setSelectedNodeIds,
 } from "../../store/graphInteractionStore";
+import { getReactFlowConfig } from "../../store/reactFlowConfigStore";
 import { setRightActiveSection } from "../../store/workspaceConfigStore";
 import CustomNode from "../CustomNode";
 
@@ -90,6 +92,9 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const selectionChangeRef = useRef(false);
+
+  // Get configuration from the store
+  const reactFlowConfig = getReactFlowConfig();
 
   // PRE-PROCESS nodes to include selection state from global store
   const processedNodes = useMemo(() => {
@@ -281,21 +286,38 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           fitView={true}
           minZoom={0.1}
           maxZoom={200}
+          connectionLineType={ConnectionLineType.Bezier}
+          snapToGrid={reactFlowConfig.snapToGrid}
+          snapGrid={reactFlowConfig.snapGrid}
           defaultEdgeOptions={{
-            type: "smoothstep",
-            animated: false,
+            type: reactFlowConfig.connectionLineStyle || "smoothstep",
+            style: {
+              strokeWidth: reactFlowConfig.edgeStrokeWidth,
+              fontSize: reactFlowConfig.edgeFontSize,
+            },
           }}
-          nodeTypes={nodeTypes} // Use the custom node types
-          style={{
-            width: "100%",
-            height: "100%",
-            margin: 0,
-            padding: 0,
-          }}
+          nodeTypes={nodeTypes}
+          style={
+            {
+              width: "100%",
+              height: "100%",
+              margin: 0,
+              padding: 0,
+              "--node-border-radius": `${reactFlowConfig.nodeBorderRadius}px`,
+              "--node-stroke-width": `${reactFlowConfig.nodeStrokeWidth}px`,
+              "--node-font-size": `${reactFlowConfig.nodeFontSize}px`,
+            } as React.CSSProperties
+          }
         >
           <Controls />
-          <MiniMap />
-          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+          {reactFlowConfig.minimap && <MiniMap />}
+          <Background
+            variant={
+              reactFlowConfig.backgroundVariant || BackgroundVariant.Dots
+            }
+            gap={reactFlowConfig.backgroundGap}
+            size={reactFlowConfig.backgroundSize}
+          />
         </ReactFlow>
       </ReactFlowProvider>
     </div>

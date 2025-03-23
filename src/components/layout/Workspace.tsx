@@ -161,6 +161,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onShowSaveSceneGraphDialog: showSaveSceneGraphDialog,
           showLayoutManager: (mode: "save" | "load") => showLayoutManager(mode),
           handleLoadLayout: handleLoadLayout,
+          activeView: activeView, // Make sure this is correctly passed
         })}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
