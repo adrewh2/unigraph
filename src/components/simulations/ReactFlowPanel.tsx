@@ -41,6 +41,21 @@ const nodeTypes = {
   resizerNode: ResizerNode,
 };
 
+// Add a style tag for selected nodes
+const selectedNodeStyle = document.createElement("style");
+selectedNodeStyle.textContent = `
+  .react-flow__node.selected {
+    box-shadow: 0 0 0 2px #ff8800 !important;
+    border: 2px solid #ff8800 !important;
+    border-radius: 4px !important;
+  }
+
+  .react-flow__node-customNode.selected, .react-flow__node-resizerNode.selected {
+    outline: 2px solid #ff8800 !important;
+    outline-offset: 2px;
+  }
+`;
+
 const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   nodes: initialNodes,
   edges: initialEdges,
@@ -53,6 +68,14 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+
+  // Add the selection styles to the document head
+  useEffect(() => {
+    document.head.appendChild(selectedNodeStyle);
+    return () => {
+      document.head.removeChild(selectedNodeStyle);
+    };
+  }, []);
 
   // Handle selection change in ReactFlow
   const handleSelectionChange = useCallback(
