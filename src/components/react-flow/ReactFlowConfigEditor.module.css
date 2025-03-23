@@ -1,7 +1,6 @@
 .editorContainer {
   color: #ffffff;
   font-size: 13px;
-  padding: 12px 8px;
 }
 
 .mainHeader {
@@ -181,58 +180,74 @@
 
 .numberInputContainer {
   position: relative;
-  width: 80px; /* Compact width for number inputs */
+  display: flex;
+  align-items: center;
 }
 
 .numberInput {
-  width: 100%;
-  padding: 4px 20px 4px 6px; /* Adjusted padding to accommodate spinner buttons */
-  background-color: #1f2937;
-  color: #ffffff;
+  width: 2rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid #374151;
   border-radius: 4px;
-  font-size: 12px;
-  outline: none;
-  appearance: textfield; /* Remove default browser spinner */
-  -moz-appearance: textfield;
+  text-align: right;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+  color: #ffffff;
+  background-color: #1f2937;
 }
 
+.numberInput:focus {
+  outline: none;
+  border-color: #60a5fa;
+}
+
+.spinnerButtons {
+  display: flex;
+  flex-direction: column;
+  margin-left: -1px;
+}
+
+.spinUp,
+.spinDown {
+  padding: 0;
+  width: 16px;
+  height: 12px;
+  line-height: 8px;
+  font-size: 8px;
+  border: 1px solid #374151;
+  background-color: #1f2937;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: background-color 0.2s;
+  color: #94a3b8;
+}
+
+.spinUp:hover,
+.spinDown:hover {
+  color: #ffffff;
+}
+
+.spinUp {
+  border-top-right-radius: 4px;
+}
+
+.spinDown {
+  border-bottom-right-radius: 4px;
+  margin-top: -1px;
+}
+
+/* Remove browser's default number input spinners */
 .numberInput::-webkit-outer-spin-button,
 .numberInput::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-.numberInput:focus {
-  border-color: #60a5fa;
-}
-
-.spinnerButtons {
-  position: absolute;
-  right: 3px;
-  top: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.spinUp,
-.spinDown {
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  font-size: 8px;
-  padding: 0;
-  width: 12px;
-  height: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.spinUp:hover,
-.spinDown:hover {
-  color: #ffffff;
+.numberInput[type="number"] {
+  -moz-appearance: textfield;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }

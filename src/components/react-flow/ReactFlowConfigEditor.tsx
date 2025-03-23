@@ -295,7 +295,6 @@ const ReactFlowConfigEditor: React.FC<ReactFlowConfigEditorProps> = ({
 
   return (
     <div className={styles.editorContainer}>
-      <h3 className={styles.mainHeader}>ReactFlow Display Settings</h3>
       <form>
         {Object.keys(formSchema).map((fieldName) => (
           <FormField
