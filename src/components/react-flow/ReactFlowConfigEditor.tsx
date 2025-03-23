@@ -1,5 +1,6 @@
 import { BackgroundVariant } from "@xyflow/react";
 import React, { useEffect, useState } from "react";
+import styles from "./ReactFlowConfigEditor.module.css";
 
 interface ReactFlowConfigEditorProps {
   isDarkMode?: boolean;
@@ -42,321 +43,295 @@ export const DEFAULT_REACTFLOW_CONFIG: ReactFlowRenderConfig = {
   snapGrid: [15, 15],
 };
 
+interface FormSchemaField {
+  validate: (value: number | boolean | string) => string | null;
+  label: string;
+  type: "number" | "checkbox" | "select";
+  options?: { value: string; label: string }[];
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+interface FormSchema {
+  [key: string]: FormSchemaField;
+}
+
+const formSchema: FormSchema = {
+  nodeBorderRadius: {
+    validate: (value) => {
+      if (value === null || value === undefined)
+        return "Border radius is required";
+      if (isNaN(Number(value)) || Number(value) < 0)
+        return "Must be non-negative";
+      return null;
+    },
+    label: "Border Radius",
+    type: "number",
+    min: 0,
+    max: 20,
+    step: 1,
+  },
+  nodeStrokeWidth: {
+    validate: (value) => {
+      if (value === null || value === undefined)
+        return "Stroke width is required";
+      if (isNaN(Number(value)) || Number(value) < 0)
+        return "Must be non-negative";
+      return null;
+    },
+    label: "Stroke Width",
+    type: "number",
+    min: 0,
+    step: 0.5,
+  },
+  nodeFontSize: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Font size is required";
+      if (isNaN(Number(value)) || Number(value) < 8)
+        return "Must be at least 8px";
+      return null;
+    },
+    label: "Font Size",
+    type: "number",
+    min: 8,
+    step: 1,
+  },
+  edgeStrokeWidth: {
+    validate: (value) => {
+      if (value === null || value === undefined)
+        return "Edge width is required";
+      if (isNaN(Number(value)) || Number(value) < 0.5)
+        return "Must be at least 0.5";
+      return null;
+    },
+    label: "Edge Width",
+    type: "number",
+    min: 0.5,
+    step: 0.5,
+  },
+  connectionLineStyle: {
+    validate: () => null,
+    label: "Connection Style",
+    type: "select",
+    options: [
+      { value: "default", label: "Default" },
+      { value: "straight", label: "Straight" },
+      { value: "step", label: "Step" },
+      { value: "smoothstep", label: "Smooth Step" },
+      { value: "bezier", label: "Bezier" },
+    ],
+  },
+  backgroundVariant: {
+    validate: () => null,
+    label: "Background Style",
+    type: "select",
+    options: [
+      { value: BackgroundVariant.Dots, label: "Dots" },
+      { value: BackgroundVariant.Lines, label: "Lines" },
+      { value: BackgroundVariant.Cross, label: "Cross" },
+    ],
+  },
+  backgroundGap: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Gap is required";
+      if (isNaN(Number(value)) || Number(value) < 5)
+        return "Must be at least 5px";
+      return null;
+    },
+    label: "Background Gap",
+    type: "number",
+    min: 5,
+    step: 1,
+  },
+  minimap: {
+    validate: () => null,
+    label: "Show Minimap",
+    type: "checkbox",
+  },
+  snapToGrid: {
+    validate: () => null,
+    label: "Snap to Grid",
+    type: "checkbox",
+  },
+};
+
+interface FormFieldProps {
+  name: string;
+  value: number | boolean | string;
+  error: string | null;
+  onChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => void;
+  schema: FormSchema;
+}
+
+const FormField: React.FC<FormFieldProps> = ({
+  name,
+  value,
+  error,
+  onChange,
+  schema,
+}) => {
+  const field = schema[name];
+
+  const handleIncrement = () => {
+    if (field.type !== "number") return;
+    const step = field.step || 1;
+    const newValue = Number(value) + step;
+    if (field.max !== undefined && newValue > field.max) return;
+
+    onChange({
+      target: { name, value: String(newValue), type: "number" },
+    } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  const handleDecrement = () => {
+    if (field.type !== "number") return;
+    const step = field.step || 1;
+    const newValue = Number(value) - step;
+    if (field.min !== undefined && newValue < field.min) return;
+
+    onChange({
+      target: { name, value: String(newValue), type: "number" },
+    } as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  if (field.type === "checkbox") {
+    return (
+      <div className={styles.checkboxContainer}>
+        <input
+          type="checkbox"
+          id={name}
+          name={name}
+          checked={Boolean(value)}
+          onChange={onChange}
+          className={styles.checkbox}
+        />
+        <label className={styles.checkboxLabel} htmlFor={name}>
+          {field.label}
+        </label>
+        {error && <div className={styles.error}>{error}</div>}
+      </div>
+    );
+  }
+
+  if (field.type === "select") {
+    return (
+      <div className={styles.controlGroup}>
+        <label className={styles.label} htmlFor={name}>
+          {field.label}
+        </label>
+        <select
+          id={name}
+          name={name}
+          value={value as string}
+          onChange={onChange}
+          className={styles.select}
+        >
+          {field.options?.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        {error && <div className={styles.error}>{error}</div>}
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.controlGroup}>
+      <div className={styles.row}>
+        <label className={styles.label} htmlFor={name}>
+          {field.label}
+        </label>
+        <div className={styles.numberInputContainer}>
+          <input
+            type="number"
+            id={name}
+            name={name}
+            value={value as number}
+            onChange={onChange}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            className={styles.numberInput}
+          />
+          <div className={styles.spinnerButtons}>
+            <button
+              type="button"
+              onClick={handleIncrement}
+              className={styles.spinUp}
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={handleDecrement}
+              className={styles.spinDown}
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      </div>
+      {error && <div className={styles.error}>{error}</div>}
+    </div>
+  );
+};
+
 const ReactFlowConfigEditor: React.FC<ReactFlowConfigEditorProps> = ({
   isDarkMode = true,
   onApply,
   initialConfig = DEFAULT_REACTFLOW_CONFIG,
 }) => {
-  const [config, setConfig] = useState<ReactFlowRenderConfig>(
-    initialConfig || DEFAULT_REACTFLOW_CONFIG
-  );
+  const [formData, setFormData] =
+    useState<ReactFlowRenderConfig>(initialConfig);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
 
   useEffect(() => {
-    setConfig(initialConfig || DEFAULT_REACTFLOW_CONFIG);
+    setFormData(initialConfig);
   }, [initialConfig]);
 
+  const validateField = (
+    name: string,
+    value: number | boolean | string
+  ): string | null => {
+    return formSchema[name].validate(value);
+  };
+
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type } = event.target as HTMLInputElement;
+    const { name, value, type } = e.target;
+    const newValue =
+      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
 
-    let parsedValue: any = value;
-    if (type === "number") {
-      parsedValue = parseFloat(value);
-    } else if (type === "checkbox") {
-      parsedValue = (event.target as HTMLInputElement).checked;
+    const updatedFormData = { ...formData, [name]: newValue };
+    setFormData(updatedFormData);
+    onApply(updatedFormData);
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: null }));
     }
-
-    setConfig({
-      ...config,
-      [name]: parsedValue,
-    });
-  };
-
-  const handleApply = () => {
-    onApply(config);
-  };
-
-  const formStyle = {
-    color: isDarkMode ? "#e2e8f0" : "#1f2937",
-    fontSize: "13px",
-    padding: "8px 0",
-  };
-
-  const labelStyle = {
-    display: "block",
-    marginBottom: "2px",
-    fontSize: "11px",
-    color: isDarkMode ? "#94a3b8" : "#4b5563",
-  };
-
-  const controlGroupStyle = {
-    marginBottom: "8px",
-  };
-
-  const sectionStyle = {
-    marginBottom: "8px",
-    borderBottom: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
-    paddingBottom: "6px",
-  };
-
-  const headerStyle = {
-    fontSize: "12px",
-    marginTop: 0,
-    marginBottom: "4px",
-    fontWeight: "500",
-    color: isDarkMode ? "#d1d5db" : "#111827",
-  };
-
-  const mainHeaderStyle = {
-    fontSize: "14px",
-    marginTop: 0,
-    marginBottom: "8px",
-    fontWeight: "600",
-    paddingBottom: "6px",
-    borderBottom: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
-    color: isDarkMode ? "#f3f4f6" : "#111827",
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "4px 6px",
-    height: "26px",
-    backgroundColor: isDarkMode ? "#1f2937" : "#f9fafb",
-    color: isDarkMode ? "#f3f4f6" : "#1f2937",
-    border: `1px solid ${isDarkMode ? "#374151" : "#d1d5db"}`,
-    borderRadius: "4px",
-    fontSize: "11px",
-    outline: "none",
-  };
-
-  const rangeContainerStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  };
-
-  const rangeStyle = {
-    ...inputStyle,
-    flex: 1,
-    height: "4px",
-    padding: 0,
-  };
-
-  const _valueStyle = {
-    fontSize: "10px",
-    color: isDarkMode ? "#94a3b8" : "#6b7280",
-    width: "24px",
-    textAlign: "right" as const,
-  };
-
-  const checkboxContainerStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    marginBottom: "6px",
-  };
-
-  const checkboxStyle = {
-    margin: 0,
-  };
-
-  const checkboxLabelStyle = {
-    fontSize: "11px",
-    margin: 0,
-  };
-
-  const buttonStyle = {
-    padding: "6px 12px",
-    backgroundColor: isDarkMode ? "#3b82f6" : "#2563eb",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "12px",
-    width: "100%",
   };
 
   return (
-    <div style={formStyle}>
-      <h3 style={mainHeaderStyle}>ReactFlow Display Settings</h3>
-
-      <div style={sectionStyle}>
-        <h4 style={headerStyle}>Node Settings</h4>
-
-        <div style={controlGroupStyle}>
-          <label style={labelStyle} htmlFor="nodeBorderRadius">
-            Border Radius: {config.nodeBorderRadius}px
-          </label>
-          <div style={rangeContainerStyle}>
-            <input
-              type="range"
-              id="nodeBorderRadius"
-              name="nodeBorderRadius"
-              min="0"
-              max="20"
-              step="1"
-              value={config.nodeBorderRadius}
-              onChange={handleChange}
-              style={rangeStyle}
-            />
-          </div>
-        </div>
-
-        <div style={controlGroupStyle}>
-          <label style={labelStyle} htmlFor="nodeStrokeWidth">
-            Stroke Width: {config.nodeStrokeWidth}px
-          </label>
-          <div style={rangeContainerStyle}>
-            <input
-              type="range"
-              id="nodeStrokeWidth"
-              name="nodeStrokeWidth"
-              min="0"
-              max="5"
-              step="0.5"
-              value={config.nodeStrokeWidth}
-              onChange={handleChange}
-              style={rangeStyle}
-            />
-          </div>
-        </div>
-
-        <div style={controlGroupStyle}>
-          <label style={labelStyle} htmlFor="nodeFontSize">
-            Font Size: {config.nodeFontSize}px
-          </label>
-          <div style={rangeContainerStyle}>
-            <input
-              type="range"
-              id="nodeFontSize"
-              name="nodeFontSize"
-              min="8"
-              max="20"
-              step="1"
-              value={config.nodeFontSize}
-              onChange={handleChange}
-              style={rangeStyle}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div style={sectionStyle}>
-        <h4 style={headerStyle}>Edge Settings</h4>
-
-        <div style={controlGroupStyle}>
-          <label style={labelStyle} htmlFor="edgeStrokeWidth">
-            Stroke Width: {config.edgeStrokeWidth}px
-          </label>
-          <div style={rangeContainerStyle}>
-            <input
-              type="range"
-              id="edgeStrokeWidth"
-              name="edgeStrokeWidth"
-              min="0.5"
-              max="5"
-              step="0.5"
-              value={config.edgeStrokeWidth}
-              onChange={handleChange}
-              style={rangeStyle}
-            />
-          </div>
-        </div>
-
-        <div style={controlGroupStyle}>
-          <label style={labelStyle} htmlFor="connectionLineStyle">
-            Connection Style
-          </label>
-          <select
-            id="connectionLineStyle"
-            name="connectionLineStyle"
-            value={config.connectionLineStyle}
+    <div className={styles.editorContainer}>
+      <h3 className={styles.mainHeader}>ReactFlow Display Settings</h3>
+      <form>
+        {Object.keys(formSchema).map((fieldName) => (
+          <FormField
+            key={fieldName}
+            name={fieldName}
+            value={(formData as any)[fieldName]}
+            error={errors[fieldName]}
             onChange={handleChange}
-            style={inputStyle}
-          >
-            <option value="default">Default</option>
-            <option value="straight">Straight</option>
-            <option value="step">Step</option>
-            <option value="smoothstep">Smooth Step</option>
-            <option value="bezier">Bezier</option>
-          </select>
-        </div>
-      </div>
-
-      <div style={sectionStyle}>
-        <h4 style={headerStyle}>Background</h4>
-
-        <div style={controlGroupStyle}>
-          <label style={labelStyle} htmlFor="backgroundVariant">
-            Style
-          </label>
-          <select
-            id="backgroundVariant"
-            name="backgroundVariant"
-            value={config.backgroundVariant}
-            onChange={handleChange}
-            style={inputStyle}
-          >
-            <option value={BackgroundVariant.Dots}>Dots</option>
-            <option value={BackgroundVariant.Lines}>Lines</option>
-            <option value={BackgroundVariant.Cross}>Cross</option>
-          </select>
-        </div>
-
-        <div style={controlGroupStyle}>
-          <label style={labelStyle} htmlFor="backgroundGap">
-            Gap: {config.backgroundGap}px
-          </label>
-          <div style={rangeContainerStyle}>
-            <input
-              type="range"
-              id="backgroundGap"
-              name="backgroundGap"
-              min="5"
-              max="30"
-              step="1"
-              value={config.backgroundGap}
-              onChange={handleChange}
-              style={rangeStyle}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: "12px" }}>
-        <div style={checkboxContainerStyle}>
-          <input
-            type="checkbox"
-            id="minimap"
-            name="minimap"
-            checked={config.minimap}
-            onChange={handleChange}
-            style={checkboxStyle}
+            schema={formSchema}
           />
-          <label style={checkboxLabelStyle} htmlFor="minimap">
-            Show Minimap
-          </label>
-        </div>
-
-        <div style={checkboxContainerStyle}>
-          <input
-            type="checkbox"
-            id="snapToGrid"
-            name="snapToGrid"
-            checked={config.snapToGrid}
-            onChange={handleChange}
-            style={checkboxStyle}
-          />
-          <label style={checkboxLabelStyle} htmlFor="snapToGrid">
-            Snap to Grid
-          </label>
-        </div>
-      </div>
-
-      <button style={buttonStyle} onClick={handleApply}>
-        Apply Settings
-      </button>
+        ))}
+      </form>
     </div>
   );
 };
