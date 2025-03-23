@@ -1648,13 +1648,15 @@ const AppContent: React.FC<{
       return null;
     }
 
+    const previousView = useDocumentStore.getState().previousView;
+
     return (
       <div className="document-editor-overlay">
         <NodeDocumentEditor
           nodeId={activeDocument.nodeId}
           onClose={() => {
-            // Return to previous view
-            setActiveView("ForceGraph3d");
+            // Return to the previously stored view
+            setActiveView(previousView || "ForceGraph3d");
             setActiveDocument(null);
           }}
         />

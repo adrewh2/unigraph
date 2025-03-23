@@ -36,7 +36,7 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
   const sceneGraph = getCurrentSceneGraph();
 
   const { setActiveDocument, createDocument } = useDocumentStore();
-  const { setActiveView } = useAppConfigStore();
+  const { setActiveView, activeView } = useAppConfigStore();
 
   if (!activeNodeId) {
     return (
@@ -89,7 +89,8 @@ const NodeInfo: React.FC<NodeInfoProps> = ({
     console.log("Document button clicked for node:", activeNodeId);
     // Ensure document exists first
     createDocument(activeNodeId);
-    setActiveDocument(activeNodeId);
+    // Store the current view before switching to Editor
+    setActiveDocument(activeNodeId, activeView);
     // Switch to Editor view
     setActiveView("Editor");
   };

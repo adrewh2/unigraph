@@ -14,6 +14,7 @@ interface DocumentStore {
   // State
   documents: Record<NodeId, DocumentState>;
   activeDocument: NodeId | null;
+  previousView: string; // Track previous view
 
   // Actions
   createDocument: (nodeId: NodeId) => void;
@@ -23,14 +24,16 @@ interface DocumentStore {
     lexicalState: string,
     tags?: string[]
   ) => void;
-  setActiveDocument: (nodeId: NodeId | null) => void;
+  setActiveDocument: (nodeId: NodeId | null, previousView?: string) => void;
   deleteDocument: (nodeId: NodeId) => void;
   getDocumentByNodeId: (nodeId: NodeId) => DocumentState | null;
+  getPreviousView: () => string;
 }
 
 export const useDocumentStore = create<DocumentStore>((set, get) => ({
   documents: {},
   activeDocument: null,
+  previousView: "ForceGraph3d", // Default view
 
   createDocument: (nodeId) => {
     if (get().documents[nodeId]) {
@@ -72,14 +75,21 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
     });
   },
 
-  setActiveDocument: (nodeId) => {
+  setActiveDocument: (nodeId, previousView) => {
     console.log("Setting active document:", nodeId);
     // Create document if it doesn't exist
     if (nodeId && !get().documents[nodeId]) {
       console.log("Creating new document for:", nodeId);
       get().createDocument(nodeId);
     }
-    set({ activeDocument: nodeId });
+
+    // If previousView is provided, save it
+    if (previousView) {
+      set({ activeDocument: nodeId, previousView });
+    } else {
+      set({ activeDocument: nodeId });
+    }
+
     console.log("New active document state:", get().activeDocument);
   },
 
@@ -96,6 +106,10 @@ export const useDocumentStore = create<DocumentStore>((set, get) => ({
 
   getDocumentByNodeId: (nodeId) => {
     return get().documents[nodeId] || null;
+  },
+
+  getPreviousView: () => {
+    return get().previousView;
   },
 }));
 
