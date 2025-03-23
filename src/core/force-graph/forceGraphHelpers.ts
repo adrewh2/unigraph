@@ -96,9 +96,9 @@ export const updateVisibleEntitiesInForceGraphInstance = (
     }
     newNodeList.push({
       id: node.getId(),
-      x: layoutMode === "Layout" ? node.getPosition().x : 0,
-      y: layoutMode === "Layout" ? node.getPosition().y : 0,
-      z: layoutMode === "Layout" ? node.getPosition().z : 0,
+      x: layoutMode === "Layout" ? node.getPosition().x : Math.random() * 5,
+      y: layoutMode === "Layout" ? node.getPosition().y : Math.random() * 5,
+      z: layoutMode === "Layout" ? node.getPosition().z : Math.random() * 5,
     });
   });
 
