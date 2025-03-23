@@ -259,6 +259,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
               ...node.style,
               borderRadius: `${newConfig.nodeBorderRadius}px`,
               fontSize: `${newConfig.nodeFontSize}px`,
+              borderWidth: `${newConfig.nodeStrokeWidth}px`,
             },
           }))
         );
