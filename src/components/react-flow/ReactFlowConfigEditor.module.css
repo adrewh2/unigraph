@@ -171,3 +171,68 @@
   color: #ffffff;
   padding: 8px;
 }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.numberInputContainer {
+  position: relative;
+  width: 80px; /* Compact width for number inputs */
+}
+
+.numberInput {
+  width: 100%;
+  padding: 4px 20px 4px 6px; /* Adjusted padding to accommodate spinner buttons */
+  background-color: #1f2937;
+  color: #ffffff;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  font-size: 12px;
+  outline: none;
+  appearance: textfield; /* Remove default browser spinner */
+  -moz-appearance: textfield;
+}
+
+.numberInput::-webkit-outer-spin-button,
+.numberInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numberInput:focus {
+  border-color: #60a5fa;
+}
+
+.spinnerButtons {
+  position: absolute;
+  right: 3px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.spinUp,
+.spinDown {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 8px;
+  padding: 0;
+  width: 12px;
+  height: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinUp:hover,
+.spinDown:hover {
+  color: #ffffff;
+}
