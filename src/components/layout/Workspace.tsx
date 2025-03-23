@@ -23,7 +23,7 @@ import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
-const sidebarDisabledViews = ["Yasgui", "Gallery", "Simulation"];
+const sidebarDisabledViews = ["Yasgui", "Gallery", "Simulation", "Lexical"];
 
 interface WorkspaceProps {
   menuConfig: IMenuConfig;

@@ -24,6 +24,7 @@
     "@jsonforms/core": "^3.5.1",
     "@jsonforms/material-renderers": "^3.5.1",
     "@jsonforms/react": "^3.5.1",
+    "@lexical/react": "^0.28.0",
     "@mui/material": "^6.4.0",
     "@mui/styles": "^6.4.0",
     "@triply/yasgui": "^4.2.28",

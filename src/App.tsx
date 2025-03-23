@@ -46,6 +46,7 @@ import YasguiPanel from "./components/YasguiPanel";
 
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
+import LexicalEditorV2 from "./components/LexicalEditor";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -139,6 +140,7 @@ const getSimulations = (
   sceneGraph: SceneGraph
 ): ObjectOf<React.JSX.Element> => {
   return {
+    Lexical: <LexicalEditorV2 />,
     "ImageBox Creator": <ImageBoxCreator sceneGraph={sceneGraph} />,
     ImageGalleryV2: <ImageGalleryV2 />,
     // ParticleStickFigure: <ParticleStickFigure />,
