@@ -45,7 +45,19 @@ const NodeDocumentEditor: React.FC<NodeDocumentEditorProps> = ({
   }
 
   const handleSave = (content: string, tags?: string[]) => {
+    // Save to document store
     updateDocument(nodeId, content, document.lexicalState, tags || nodeTags);
+
+    // Also save to node's userData
+    const node = sceneGraph.getNodeById(nodeId);
+    if (node) {
+      node.setUserData("document", {
+        content,
+        lexicalState: document.lexicalState,
+        tags: tags || nodeTags,
+        lastModified: Date.now(),
+      });
+    }
   };
 
   return (
