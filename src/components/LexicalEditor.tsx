@@ -23,6 +23,10 @@ import { $getRoot, EditorState, LexicalEditor } from "lexical";
 import { debounce, throttle } from "lodash";
 import React, { JSX, useEffect, useState } from "react";
 import "./LexicalEditor.css";
+import {
+  EntityReferenceNode,
+  EntityReferencePlugin,
+} from "./lexical/plugins/EntityReferencePlugin";
 import { TagPlugin } from "./lexical/plugins/TagPlugin";
 import { ToolbarPlugin } from "./lexical/plugins/ToolbarPlugin";
 
@@ -256,6 +260,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
         underlineStrikethrough: "editor-text-underlineStrikethrough",
         code: "editor-text-code",
         hashtag: "editor-text-hashtag", // Add hashtag styling
+        entityReference: "editor-text-entity-reference",
       },
       code: "editor-code",
       codeHighlight: {
@@ -312,6 +317,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
         TableRowNode,
         LinkNode,
         HashtagNode,
+        EntityReferenceNode,
       ],
       onError: (error: Error) => {
         console.error(error);
@@ -446,6 +452,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
                 saveState={saveStateNow}
                 interval={autoSaveInterval}
               />
+              <EntityReferencePlugin />
             </div>
           </div>
         </LexicalComposer>

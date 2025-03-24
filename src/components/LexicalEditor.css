@@ -429,3 +429,18 @@ span[data-hashtag="true"] {
   color: #007bff;
   font-weight: bold;
 }
+
+/* Entity reference styles */
+.editor-text-entity-reference {
+  color: #7c3aed;
+  background-color: rgba(124, 58, 237, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin: 0 1px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.editor-text-entity-reference:hover {
+  background-color: rgba(124, 58, 237, 0.2);
+}
