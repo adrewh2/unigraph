@@ -113,6 +113,16 @@ export class Graph {
     return this.nodes.maybeGet(id);
   }
 
+  maybeGetEdge(id: EdgeId): Edge | undefined {
+    return this.edges.maybeGet(id);
+  }
+
+  maybeGetEntity(id: string): IEntity | undefined {
+    return (
+      this.nodes.maybeGet(id as NodeId) ?? this.edges.maybeGet(id as EdgeId)
+    );
+  }
+
   removeNode(id: NodeId): void {
     if (this.strict && !this.nodes.has(id)) {
       throw new Error("Cannot remove non-existent node in strict mode: " + id);
