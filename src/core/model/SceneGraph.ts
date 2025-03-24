@@ -33,6 +33,7 @@ export interface ISceneGraphMetadata {
   name?: string;
   description?: string;
   source?: string;
+  notes?: string;
 }
 
 export const DEFAULT_SCENE_GRAPH_DATA = (): SceneGraphData => {

@@ -2,6 +2,8 @@ import { FileText, Info, List, Scan, Settings2, Table2 } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
 import NodeDetailsPanel from "../components/NodeDetailsPanel";
+import SceneGraphNoteEditor from "../components/SceneGraphNoteEditor";
+import SceneGraphTitle from "../components/SceneGraphTitle";
 import styles from "../Sidebar.module.css";
 import { getActiveFilter } from "../store/activeFilterStore";
 import {
@@ -33,6 +35,20 @@ export const createDefaultRightMenus = (
   isDarkMode: boolean
 ): MenuItem[] => {
   const baseMenuItems = [
+    {
+      id: "scene-info",
+      icon: <Info size={20} className="menu-icon" />,
+      label: "Scene Info",
+      content: (
+        <div className="sidebar-section">
+          <SceneGraphTitle
+            title={getCurrentSceneGraph().getMetadata().name ?? ""}
+            description={getCurrentSceneGraph().getMetadata().description ?? ""}
+            // canEdit={true}
+          />
+        </div>
+      ),
+    },
     {
       id: "legends",
       icon: <List size={20} className={styles.menuIcon} />,
@@ -67,6 +83,10 @@ export const createDefaultRightMenus = (
             sceneGraphName={getCurrentSceneGraph().getMetadata().name ?? ""}
             activeLayout={getActiveLayout()}
             activeFilter={getActiveFilter()?.name}
+          />
+          <SceneGraphNoteEditor
+            sceneGraph={getCurrentSceneGraph()}
+            isDarkMode={isDarkMode}
           />
         </div>
       ),
