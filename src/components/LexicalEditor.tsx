@@ -23,10 +23,9 @@ import { $getRoot, EditorState, LexicalEditor } from "lexical";
 import { debounce, throttle } from "lodash";
 import React, { JSX, useEffect, useState } from "react";
 import "./LexicalEditor.css";
-import {
-  EntityReferenceNode,
-  EntityReferencePlugin,
-} from "./lexical/plugins/EntityReferencePlugin";
+import { MentionNode } from "./lexical/nodes/MentionNode";
+import { EntityReferenceNode } from "./lexical/plugins/EntityReferencePlugin";
+import NewMentionsPlugin from "./lexical/plugins/MentionsPlugin";
 import { TagPlugin } from "./lexical/plugins/TagPlugin";
 import { ToolbarPlugin } from "./lexical/plugins/ToolbarPlugin";
 
@@ -318,6 +317,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
         LinkNode,
         HashtagNode,
         EntityReferenceNode,
+        MentionNode,
       ],
       onError: (error: Error) => {
         console.error(error);
@@ -452,7 +452,8 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
                 saveState={saveStateNow}
                 interval={autoSaveInterval}
               />
-              <EntityReferencePlugin />
+              {/* <EntityReferencePlugin /> */}
+              <NewMentionsPlugin />
             </div>
           </div>
         </LexicalComposer>
