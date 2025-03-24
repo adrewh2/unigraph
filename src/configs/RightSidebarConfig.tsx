@@ -2,12 +2,10 @@ import { FileText, Info, List, Scan, Settings2, Table2 } from "lucide-react";
 import React from "react";
 import ForceGraphLayoutRadio from "../components/force-graph/ForceGraphLayoutRadio";
 import NodeDetailsPanel from "../components/NodeDetailsPanel";
-import SceneGraphNoteEditor from "../components/SceneGraphNoteEditor";
+import SceneGraphInfoEditor from "../components/SceneGraphInfoEditor";
 import SceneGraphTitle from "../components/SceneGraphTitle";
 import styles from "../Sidebar.module.css";
-import { getActiveFilter } from "../store/activeFilterStore";
 import {
-  getActiveLayout,
   getCurrentSceneGraph,
   getForceGraph3dLayoutMode,
   setForceGraph3dLayoutMode,
@@ -78,17 +76,10 @@ export const createDefaultRightMenus = (
       icon: <FileText size={20} className={styles.menuIcon} />,
       label: "SceneGraph Info",
       content: (
-        <div className={styles.infoPanel}>
-          <SceneGraphInfoPanel
-            sceneGraphName={getCurrentSceneGraph().getMetadata().name ?? ""}
-            activeLayout={getActiveLayout()}
-            activeFilter={getActiveFilter()?.name}
-          />
-          <SceneGraphNoteEditor
-            sceneGraph={getCurrentSceneGraph()}
-            isDarkMode={isDarkMode}
-          />
-        </div>
+        <SceneGraphInfoEditor
+          sceneGraph={getCurrentSceneGraph()}
+          isDarkMode={isDarkMode}
+        />
       ),
     },
   ];
@@ -119,7 +110,7 @@ export const createDefaultRightMenus = (
 };
 
 // Info panel component for SceneGraph details
-const SceneGraphInfoPanel = ({
+const _SceneGraphInfoPanel = ({
   sceneGraphName,
   activeLayout,
   activeFilter,

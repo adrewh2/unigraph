@@ -1,0 +1,195 @@
+.scenegraph-info-editor {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.scenegraph-info-editor.dark {
+  background-color: #222;
+  color: #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.scenegraph-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eaeaea;
+  background-color: #f8f9fa;
+}
+
+.scenegraph-info-editor.dark .scenegraph-info-header {
+  background-color: #333;
+  border-bottom: 1px solid #444;
+}
+
+.scenegraph-info-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+}
+
+.scenegraph-info-editor.dark .scenegraph-info-title h2 {
+  color: #e0e0e0;
+}
+
+.scenegraph-info-title-edit {
+  flex: 1;
+}
+
+.title-input {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.scenegraph-info-editor.dark .title-input {
+  background-color: #444;
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+.scenegraph-info-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #555;
+}
+
+.action-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.scenegraph-info-editor.dark .action-button {
+  color: #aaa;
+}
+
+.scenegraph-info-editor.dark .action-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.scenegraph-info-content {
+  padding: 16px;
+}
+
+.scenegraph-info-section {
+  margin-bottom: 20px;
+}
+
+.scenegraph-info-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.scenegraph-info-editor.dark .section-title {
+  color: #aaa;
+}
+
+.section-content {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.notes-content {
+  min-height: 60px;
+}
+
+.empty-placeholder {
+  color: #999;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.scenegraph-info-editor.dark .empty-placeholder {
+  color: #777;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #555;
+  font-weight: 500;
+}
+
+.scenegraph-info-editor.dark label {
+  color: #aaa;
+}
+
+.description-input,
+.notes-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 80px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.scenegraph-info-editor.dark .description-input,
+.scenegraph-info-editor.dark .notes-input {
+  background-color: #444;
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.info-value {
+  color: #333;
+}
+
+.filter-active {
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+.scenegraph-info-editor.dark .info-label {
+  color: #aaa;
+}
+
+.scenegraph-info-editor.dark .info-value {
+  color: #e0e0e0;
+}
+
+.scenegraph-info-editor.dark .filter-active {
+  color: #fcd34d;
+}
