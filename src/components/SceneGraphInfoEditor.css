@@ -12,33 +12,49 @@
   align-items: center;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+  gap: 8px; /* Add gap between elements */
+}
+
+.scenegraph-info-title {
+  flex: 1; /* Allow title to grow */
+  min-width: 0; /* Prevent overflow */
 }
 
 .scenegraph-info-title h2 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: #ffffff; /* Changed from #e0e0e0 to #ffffff for bright white */
 }
 
 .scenegraph-info-title-edit {
-  flex: 1;
-  margin-right: 8px; /* Add spacing between input and buttons */
+  display: flex; /* Make edit container flex */
+  gap: 8px; /* Space between input and buttons */
+  width: 100%; /* Take full width */
+  align-items: center; /* Center items vertically */
 }
 
 .title-input {
+  flex: 1; /* Allow input to grow */
+  min-width: 0; /* Prevent overflow */
   width: 100%;
   padding: 6px 8px;
   font-size: 14px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
-  background-color: rgba(0, 0, 0, 0.2);
-  color: #e0e0e0;
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.3
+  ); /* Darker background for better contrast */
+  color: #ffffff; /* Brighter text */
 }
 
 .scenegraph-info-actions {
   display: flex;
   gap: 4px;
+  flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
 .action-button {
@@ -75,8 +91,8 @@
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 6px;
-  color: #b0b0b0;
-  opacity: 0.7;
+  color: #d8d8d8; /* Reduced brightness from #ffffff */
+  opacity: 0.9;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -86,7 +102,7 @@
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #e0e0e0;
+  color: #ffffff; /* Brightest color for main content */
 }
 
 .notes-content {
@@ -100,15 +116,16 @@
   opacity: 0.5;
   font-style: italic;
   font-size: 13px;
-  color: #b0b0b0;
+  color: #888888; /* Lighter gray for better visibility */
 }
 
 label {
   display: block;
   font-size: 12px;
   margin-bottom: 4px;
-  opacity: 0.7;
+  opacity: 0.9;
   font-weight: 500;
+  color: #d8d8d8; /* Reduced brightness from #d0d0d0 */
 }
 
 .description-input,
@@ -121,14 +138,14 @@ label {
   min-height: 60px;
   font-size: 13px;
   font-family: inherit;
-  background-color: rgba(0, 0, 0, 0.2);
-  color: #e0e0e0;
+  background-color: rgba(0, 0, 0, 0.3); /* Darker background */
+  color: #ffffff; /* Brighter text */
 }
 
 .description-input::placeholder,
 .notes-input::placeholder,
 .title-input::placeholder {
-  color: #808080;
+  color: #a0a0a0; /* Lighter placeholder text */
 }
 
 .info-item {
@@ -140,11 +157,11 @@ label {
 
 .info-label {
   font-weight: 500;
-  color: #b0b0b0;
+  color: #d8d8d8; /* Reduced brightness from #d0d0d0 */
 }
 
 .info-value {
-  color: #e0e0e0;
+  color: #ffffff; /* Brightest color for values */
 }
 
 .filter-active {
