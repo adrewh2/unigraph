@@ -1,4 +1,4 @@
-import { Edit, Save, X } from "lucide-react";
+import { Download, Edit, Save, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { getActiveFilter } from "../store/activeFilterStore";
@@ -46,6 +46,19 @@ const SceneGraphInfoEditor: React.FC<SceneGraphInfoEditorProps> = ({
     setDescription(sceneGraph.getMetadata().description || "");
     setNotes(sceneGraph.getMetadata().notes || "");
     setIsEditing(false);
+  };
+
+  const handleExport = () => {
+    const data = JSON.stringify(sceneGraph, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${sceneGraph.getMetadata().name || "scene-graph"}.json`;
+    link.click();
+
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -170,6 +183,17 @@ const SceneGraphInfoEditor: React.FC<SceneGraphInfoEditorProps> = ({
             </div>
           </>
         )}
+      </div>
+
+      <div className="scenegraph-info-footer">
+        <button
+          className="export-button"
+          onClick={handleExport}
+          title="Export as JSON"
+        >
+          <Download size={16} />
+          <span>Export Graph</span>
+        </button>
       </div>
     </div>
   );
