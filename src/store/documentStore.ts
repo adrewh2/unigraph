@@ -200,4 +200,11 @@ export const loadDocumentsFromSceneGraph = (sceneGraph: SceneGraph) => {
   }
 };
 
+export const saveDocumentsToSceneGraph = (sceneGraph: SceneGraph) => {
+  const store = useDocumentStore.getState();
+  for (const key in store.documents) {
+    sceneGraph.setDocument(key, getDocument(key as NodeId));
+  }
+};
+
 export default useDocumentStore;

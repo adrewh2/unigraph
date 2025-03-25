@@ -130,6 +130,10 @@ export class SceneGraph {
     return this.data.documents[storageKey];
   }
 
+  // clearDocuments() {
+  //   this.data.documents = {};
+  // }
+
   commitDisplayConfig() {
     this.data.committed_DisplayConfig = CLONE_RENDERING_CONFIG(
       this.data.displayConfig
