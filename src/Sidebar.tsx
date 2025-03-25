@@ -9,7 +9,10 @@ import {
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/RightSidebarConfig";
-import useWorkspaceConfigStore from "./store/workspaceConfigStore";
+import useWorkspaceConfigStore, {
+  getSectionWidth,
+  updateSectionWidth,
+} from "./store/workspaceConfigStore";
 
 interface SidebarProps {
   position: "left" | "right";
@@ -65,7 +68,26 @@ const Sidebar: React.FC<SidebarProps> = ({
       ? leftSidebarConfig.panelWidth
       : rightSidebarConfig.panelWidth;
 
-  const [panelWidth, setPanelWidth] = useState(configPanelWidth);
+  const activeSectionId =
+    position === "left"
+      ? leftSidebarConfig.activeSectionId
+      : rightSidebarConfig.activeSectionId;
+
+  const [panelWidth, setPanelWidth] = useState(
+    activeSectionId ? getSectionWidth(activeSectionId) : configPanelWidth
+  );
+  console.log(
+    "section width is ",
+    getSectionWidth(activeSectionId ?? ""),
+    activeSectionId
+  );
+
+  useEffect(() => {
+    const defaultWidth = getSectionWidth(activeSectionId ?? "");
+    setPanelWidth(defaultWidth);
+    lastWidthRef.current = defaultWidth;
+  }, [activeSectionId]);
+
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -182,17 +204,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         // Directly update the DOM element style for better performance
         if (panelRef.current) {
           panelRef.current.style.width = `${newWidth}px`;
+          updateSectionWidth(activeSectionId ?? "", configPanelWidth);
         }
       });
     },
-    [isResizing, position]
+    [activeSectionId, configPanelWidth, isResizing, position]
   );
 
   // Update panel width when config changes
   useEffect(() => {
     setPanelWidth(configPanelWidth);
     lastWidthRef.current = configPanelWidth;
-  }, [configPanelWidth]);
+  }, [activeSectionId, configPanelWidth]);
 
   const handleResizeEnd = React.useCallback(() => {
     setIsResizing(false);

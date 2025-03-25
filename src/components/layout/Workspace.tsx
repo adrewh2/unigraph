@@ -3,6 +3,7 @@ import React, { useEffect, useMemo } from "react";
 import {
   createDefaultLeftMenus,
   leftFooterContent,
+  MenuItem,
 } from "../../configs/LeftSidebarConfig";
 import {
   createDefaultRightMenus,
@@ -19,7 +20,11 @@ import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
-import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
+import useWorkspaceConfigStore, {
+  defaultSectionWidth,
+  getSectionWidth,
+  updateSectionWidth,
+} from "../../store/workspaceConfigStore";
 import NodeInfo from "../NodeInfo";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
@@ -313,6 +318,28 @@ const Workspace: React.FC<WorkspaceProps> = ({
     selectedNodeId,
     forceGraphInstance,
   ]);
+
+  const _renderSidebarPanel = (menu: MenuItem, isActive: boolean) => {
+    // Get the section width or use a default
+    const panelWidth = getSectionWidth(menu.id) || defaultSectionWidth;
+
+    return (
+      <div
+        className={`sidebar-panel ${isActive ? "active" : ""}`}
+        style={{
+          width: panelWidth,
+          // ...other styles
+        }}
+      >
+        {menu.content}
+      </div>
+    );
+  };
+
+  // You might also need to update the sidebar resize handling to save changes
+  const _handleSidebarResize = (id: string, newWidth: number) => {
+    updateSectionWidth(id, newWidth);
+  };
 
   return (
     <div className={styles.workspace}>

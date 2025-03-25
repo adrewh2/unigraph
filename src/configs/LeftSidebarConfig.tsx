@@ -22,6 +22,7 @@ import {
   applyReactFlowConfig,
   getReactFlowConfig,
 } from "../store/reactFlowConfigStore";
+import { getSectionWidth } from "../store/workspaceConfigStore";
 
 const allLayoutLabels = [
   ...Object.values(GraphvizLayoutType),
@@ -73,11 +74,12 @@ export const createDefaultLeftMenus = ({
   const isReactFlow = normalizedActiveView === "reactflow";
 
   return [
-    // Add the Projects section at the top
+    // Add the Projects section at the top with its custom width
     {
       id: "projects",
       icon: <FolderOpen size={20} className={styles.menuIcon} />,
       label: "Projects",
+      width: getSectionWidth("projects"), // Use width from store
       content: (
         <ProjectManager
           onProjectSelected={(loadedSceneGraph: SceneGraph) => {
@@ -92,6 +94,7 @@ export const createDefaultLeftMenus = ({
       id: "project",
       icon: <Home size={20} className={styles.menuIcon} />,
       label: "Project",
+      width: getSectionWidth("project"), // Use width from store
       content: (
         <div style={{ padding: "8px" }}>
           <div
