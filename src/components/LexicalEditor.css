@@ -168,18 +168,30 @@
   background-color: #f8f8f8;
 }
 
+/* Toolbar container that wraps toolbar and autosave indicator */
+.toolbar-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f8f8;
+  width: 100%;
+  position: relative;
+}
+
 /* Toolbar styles */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   padding: 8px;
-  border-bottom: 1px solid #e0e0e0;
-  background-color: #f8f8f8;
   flex-shrink: 0; /* Prevent toolbar from shrinking */
-  width: 100%; /* Ensure full width */
   margin: 0; /* Remove any margin */
   box-sizing: border-box; /* Include padding in width calculation */
   align-items: center;
+  flex: 1; /* Let toolbar take available space */
+  width: calc(100% - 150px); /* Reserve space for the autosave indicator */
 }
 
 .toolbar-left {
@@ -196,7 +208,9 @@
 .toolbar-right {
   display: flex;
   gap: 8px;
-  margin-left: 8px;
+  margin-left: auto; /* Push to the right */
+  padding-right: 8px;
+  z-index: 2; /* Ensure buttons appear above other elements */
 }
 
 .toolbar-item {
@@ -443,4 +457,171 @@ span[data-hashtag="true"] {
 
 .editor-text-entity-reference:hover {
   background-color: rgba(124, 58, 237, 0.2);
+}
+
+/* Mention plugin styles */
+.mention-dropdown {
+  position: fixed; /* Changed from absolute to fixed for better positioning */
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px; /* Increased width */
+  max-width: 320px; /* Added max-width */
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 10000;
+}
+
+.mention-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.mention-dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+.mention-dropdown-item.selected {
+  background-color: #e8f0fe;
+}
+
+.mention-dropdown-empty {
+  padding: 8px 12px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Dark mode styles */
+.dark .mention-dropdown {
+  background-color: #1e1e1e;
+  border-color: #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark .mention-dropdown-item {
+  color: #e0e0e0;
+}
+
+.dark .mention-dropdown-item:hover {
+  background-color: #2c2c2c;
+}
+
+.dark .mention-dropdown-item.selected {
+  background-color: #2c3e50;
+}
+
+.dark .mention-dropdown-empty {
+  color: #999;
+}
+
+/* Updated Mentions Plugin Styles */
+.mentions-menu {
+  position: fixed;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  min-width: 220px;
+  max-width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 10000;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mentions-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  font-size: 14px;
+}
+
+.mentions-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 2px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #333;
+  transition: background-color 0.1s ease;
+}
+
+.mentions-menu-item:hover {
+  background-color: #f5f7f9;
+}
+
+.mentions-menu-item.selected {
+  background-color: #edf2f7;
+  color: #1a56db;
+}
+
+.mentions-menu-item-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mentions-menu-item-type {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #666;
+  opacity: 0.7;
+}
+
+.dark .mentions-menu-item-type {
+  color: #999;
+}
+
+/* Dark mode styles */
+.dark .mentions-menu {
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .mentions-menu-item {
+  color: #e0e0e0;
+}
+
+.dark .mentions-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .mentions-menu-item.selected {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #60a5fa;
+}
+
+/* Autosave indicator */
+.autosave-indicator {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #666;
+  background-color: rgba(240, 240, 240, 0.9);
+  border-radius: 4px;
+  white-space: nowrap;
+  border: 1px solid #e0e0e0;
+  z-index: 5; /* Above editor content but below dropdowns */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.autosave-indicator.persistent {
+  opacity: 0.8;
+}
+
+/* Dark mode styles for the autosave indicator */
+.dark-mode .autosave-indicator {
+  color: #ccc;
+  background-color: rgba(40, 40, 40, 0.7);
+  border-color: #444;
 }

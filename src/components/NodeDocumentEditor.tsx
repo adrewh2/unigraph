@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import { NodeId } from "../core/model/Node";
-import { getCurrentSceneGraph } from "../store/appConfigStore";
+import useAppConfigStore from "../store/appConfigStore";
 import { useDocument, useDocumentStore } from "../store/documentStore";
 import LexicalEditorV2 from "./LexicalEditor";
 import "./NodeDocumentEditor.css";
@@ -15,15 +15,73 @@ const NodeDocumentEditor: React.FC<NodeDocumentEditorProps> = ({
   nodeId,
   onClose,
 }) => {
-  const sceneGraph = getCurrentSceneGraph();
-  const node = sceneGraph.getNodeById(nodeId);
-  const document = useDocument(nodeId);
-  const { updateDocument } = useDocumentStore();
+  const { currentSceneGraph } = useAppConfigStore();
 
-  // Get node details
-  const nodeLabel = node?.getLabel() || `Node ${nodeId}`;
+  // Add better debugging for node lookup
+  console.log(`NodeDocumentEditor: Looking up node ID "${nodeId}"`);
+  if (!nodeId) {
+    console.error("NodeDocumentEditor: Received undefined or null nodeId");
+  }
+
+  // Safer node lookup with validation
+  const node = nodeId ? currentSceneGraph.getNodeById(nodeId) : null;
+
+  if (!node && nodeId) {
+    console.error(
+      `NodeDocumentEditor: Node with ID "${nodeId}" not found in SceneGraph`
+    );
+    console.log(
+      "Available node IDs:",
+      Array.from(currentSceneGraph.getNodes().getIds())
+    );
+  }
+
+  const document = useDocument(nodeId);
+  const { createDocument, updateDocument } = useDocumentStore();
+
+  // Get node details with safer fallbacks
+  const nodeLabel = node?.getLabel() || `Node ${nodeId || "Unknown"}`;
   const nodeType = node?.getType() || "Unknown";
   const nodeTags = Array.from(node?.getTags() || []);
+
+  // Initialize document if it doesn't exist
+  useEffect(() => {
+    if (!nodeId) {
+      console.error("Cannot create document for undefined nodeId");
+      return;
+    }
+
+    if (!document) {
+      console.log("Creating new document for node:", nodeId);
+      createDocument(nodeId);
+    } else if (
+      nodeTags.length > 0 &&
+      (!document.tags || document.tags.length === 0)
+    ) {
+      // Initialize tags from node if document doesn't have any
+      console.log("Initializing document tags from node:", nodeId);
+      updateDocument(nodeId, document.content, document.lexicalState, nodeTags);
+    }
+  }, [nodeId, document, createDocument, updateDocument, nodeTags]);
+
+  // Add error state for missing nodeId
+  if (!nodeId) {
+    return (
+      <div className="node-document-editor">
+        <div className="node-document-header">
+          <div className="node-document-title">
+            <h2>Error: Missing Node ID</h2>
+          </div>
+          <button className="close-button" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+        <div className="node-document-loading">
+          Cannot open document editor: Node ID is undefined
+        </div>
+      </div>
+    );
+  }
 
   if (!document) {
     return (
@@ -37,27 +95,15 @@ const NodeDocumentEditor: React.FC<NodeDocumentEditorProps> = ({
             <X size={20} />
           </button>
         </div>
-        <div className="node-document-loading">
-          Document not found. Please try again.
-        </div>
+        <div className="node-document-loading">Initializing document...</div>
       </div>
     );
   }
 
   const handleSave = (content: string, tags?: string[]) => {
-    // Save to document store
-    updateDocument(nodeId, content, document.lexicalState, tags || nodeTags);
-
-    // Also save to node's userData
-    const node = sceneGraph.getNodeById(nodeId);
-    if (node) {
-      node.setUserData("document", {
-        content,
-        lexicalState: document.lexicalState,
-        tags: tags || nodeTags,
-        lastModified: Date.now(),
-      });
-    }
+    // This is called when the user explicitly clicks Save
+    const mergedTags = tags?.length ? tags : nodeTags;
+    updateDocument(nodeId, content, document.lexicalState, mergedTags);
   };
 
   return (
@@ -86,7 +132,7 @@ const NodeDocumentEditor: React.FC<NodeDocumentEditorProps> = ({
 
       <div className="node-document-content">
         <LexicalEditorV2
-          id={document.id}
+          id={nodeId}
           initialContent={document.content}
           onSave={handleSave}
           autoSaveInterval={10000}

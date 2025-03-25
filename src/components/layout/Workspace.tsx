@@ -57,6 +57,7 @@ interface WorkspaceProps {
   handleLoadLayout: (nodePositionData: NodePositionData) => void;
   handleFitToView: (activeView: string) => void;
   handleShowEntityTables: () => void;
+  handleLoadSceneGraph: (sceneGraph: any) => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -84,6 +85,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleLoadLayout,
   handleFitToView,
   handleShowEntityTables,
+  handleLoadSceneGraph,
 }) => {
   const activeDocument = useActiveDocument();
   const { documents } = useDocumentStore();
@@ -179,6 +181,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           handleLoadLayout: handleLoadLayout,
           activeView: activeView, // Make sure this is correctly passed
           activeFilter: activeFilter,
+          handleLoadSceneGraph: handleLoadSceneGraph,
         })}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
@@ -204,6 +207,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showSaveSceneGraphDialog,
     handleLoadLayout,
     activeFilter,
+    handleLoadSceneGraph,
     applyNewLayout,
     showLayoutManager,
   ]);

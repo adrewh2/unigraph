@@ -22,10 +22,13 @@ import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { $getRoot, EditorState, LexicalEditor } from "lexical";
 import { debounce, throttle } from "lodash";
 import React, { JSX, useEffect, useState } from "react";
+import { NodeId } from "../core/model/Node";
+import { getCurrentSceneGraph } from "../store/appConfigStore";
+import { useDocumentStore } from "../store/documentStore";
 import "./LexicalEditor.css";
 import { MentionNode } from "./lexical/nodes/MentionNode";
 import { EntityReferenceNode } from "./lexical/plugins/EntityReferencePlugin";
-import NewMentionsPlugin from "./lexical/plugins/MentionsPlugin";
+import MentionsPlugin from "./lexical/plugins/MentionsPlugin";
 import { TagPlugin } from "./lexical/plugins/TagPlugin";
 import { ToolbarPlugin } from "./lexical/plugins/ToolbarPlugin";
 
@@ -137,27 +140,46 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   const storageKey = `lexical-editor-content-${id}`;
   const stateStorageKey = `lexical-editor-state-${id}`;
 
-  // Load content from localStorage on initial render
-  const savedContent = React.useMemo(() => {
+  const { updateDocument, getDocumentByNodeId } = useDocumentStore();
+
+  // Load content with proper precedence:
+  // 1. First try localStorage (for persistence between sessions)
+  // 2. Then try documentStore (for application state)
+  // 3. Fall back to initialContent prop
+  const initialData = React.useMemo(() => {
     try {
-      const saved = localStorage.getItem(storageKey);
-      console.log("Loading content from storage", storageKey, saved);
-      return saved || initialContent;
+      // First try localStorage
+      const savedContent = localStorage.getItem(storageKey);
+      const savedState = localStorage.getItem(stateStorageKey);
+
+      if (savedContent && savedState) {
+        console.log("Loading content from localStorage:", id);
+        return { content: savedContent, state: savedState };
+      }
+
+      // Then try documentStore
+      const doc = getDocumentByNodeId(id as NodeId);
+      if (doc && doc.lexicalState) {
+        console.log("Loading content from documentStore:", id);
+        return {
+          content: doc.content,
+          state: doc.lexicalState,
+        };
+      }
+
+      // Fall back to initialContent
+      console.log("Using initialContent for:", id);
+      return { content: initialContent, state: null };
     } catch (e) {
-      console.warn("Failed to load from localStorage:", e);
-      return initialContent;
+      console.warn("Error loading content:", e);
+      return { content: initialContent, state: null };
     }
-  }, [storageKey, initialContent]);
+  }, [id, initialContent, storageKey, stateStorageKey, getDocumentByNodeId]);
 
   // Load saved state
-  const [savedState, setSavedState] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(stateStorageKey);
-    } catch (e) {
-      console.warn("Failed to load state from localStorage:", e);
-      return null;
-    }
-  });
+  const [savedState, setSavedState] = useState<string | null>(
+    initialData.state
+  );
 
   // Move these outside of the render function to prevent recreation
   const saveContent = React.useRef(
@@ -181,30 +203,67 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   ).current;
 
   // Use refs for internal state that shouldn't trigger rerenders
-  const markdownRef = React.useRef(savedContent);
+  const markdownRef = React.useRef(initialData.content);
   const tagsRef = React.useRef<string[]>([]);
+  const serializedEditorStateRef = React.useRef<string | null>(
+    initialData.state
+  );
 
   // These are still needed for UI updates
-  const [markdown, setMarkdown] = useState(savedContent);
+  const [markdown, setMarkdown] = useState(initialData.content);
   const [editorState, setEditorState] = useState<EditorState | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+
+  // Unified save function that saves to all storage locations
+  const saveToAllStorages = React.useCallback(
+    (content: string, serializedEditorState: string, currentTags: string[]) => {
+      // 1. Save to localStorage
+      localStorage.setItem(storageKey, content);
+      localStorage.setItem(stateStorageKey, serializedEditorState);
+
+      // 2. Save to documentStore
+      updateDocument(id as NodeId, content, serializedEditorState, currentTags);
+
+      // 3. Save to SceneGraph
+      const currentSceneGraph = getCurrentSceneGraph();
+      if (currentSceneGraph) {
+        const document = getDocumentByNodeId(id as NodeId);
+        if (document) {
+          currentSceneGraph.setDocument(id as NodeId, document);
+        }
+      }
+
+      // Update timestamp for UI
+      const timestamp = new Date().toLocaleTimeString();
+      setAutosaveStatus(`Last saved at ${timestamp}`);
+    },
+    [id, storageKey, stateStorageKey, updateDocument, getDocumentByNodeId]
+  );
 
   // Optimize change handler
   const handleEditorChange = React.useCallback(
     (editorState: EditorState, editor: LexicalEditor) => {
-      // We update the ref first
+      // Store the editor state reference
       setEditorState(editorState);
 
       editorState.read(() => {
         const root = $getRoot();
         const textContent = root.getTextContent();
+        const serializedState = JSON.stringify(editorState.toJSON());
 
-        // Update ref directly - no UI impact
+        // Update refs directly - no UI impact
         markdownRef.current = textContent;
+        serializedEditorStateRef.current = serializedState;
 
         // Throttled storage updates
-        saveState(JSON.stringify(editorState.toJSON()));
-        saveContent(textContent);
+        // saveContent(textContent);
+        // saveState(serializedState);
+
+        // Update document store and SceneGraph with debouncing
+        const debouncedSave = debounce(() => {
+          saveToAllStorages(textContent, serializedState, tagsRef.current);
+        }, 1000);
+        debouncedSave();
 
         // Only update state (causing re-render) occasionally
         // This makes the UI much more responsive
@@ -218,14 +277,26 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
         }
       });
     },
-    [onChange, saveContent, saveState]
+    [onChange, saveToAllStorages]
   );
 
   // Handle tags change
-  const handleTagsChange = React.useCallback((newTags: string[]) => {
-    tagsRef.current = newTags;
-    setTags(newTags);
-  }, []);
+  const handleTagsChange = React.useCallback(
+    (newTags: string[]) => {
+      tagsRef.current = newTags;
+      setTags(newTags);
+
+      // Make sure tags are saved to all storages when they change
+      if (serializedEditorStateRef.current) {
+        saveToAllStorages(
+          markdownRef.current,
+          serializedEditorStateRef.current,
+          newTags
+        );
+      }
+    },
+    [saveToAllStorages]
+  );
 
   // Define theme inside useMemo
   const theme = React.useMemo(
@@ -330,16 +401,70 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
   const handleSave = React.useCallback(() => {
     const currentContent = markdownRef.current;
     const currentTags = tagsRef.current;
+    const currentState = serializedEditorStateRef.current;
 
+    if (currentState) {
+      // Save immediately to all storages
+      saveToAllStorages(currentContent, currentState, currentTags);
+    }
+
+    // Call custom save handler if provided
     if (onSave) {
       onSave(currentContent, currentTags);
-    } else {
-      // Force save to localStorage
-      saveContent.flush();
-      saveState.flush();
-      console.log("Save function not provided - saved to localStorage");
     }
-  }, [onSave, saveContent, saveState]);
+  }, [onSave, saveToAllStorages]);
+
+  // Create explicit save actions that we can call programmatically
+  const saveDocumentToLocalStorageNow = React.useCallback(() => {
+    const currentContent = markdownRef.current;
+    const currentState = serializedEditorStateRef.current;
+
+    if (currentState) {
+      saveToAllStorages(currentContent, currentState, tagsRef.current);
+    }
+  }, [saveToAllStorages]);
+
+  const saveStateNow = React.useCallback(() => {
+    if (editorState) {
+      try {
+        const serializedState = JSON.stringify(editorState.toJSON());
+        serializedEditorStateRef.current = serializedState;
+        setSavedState(serializedState);
+
+        // Save to all storage locations
+        saveToAllStorages(
+          markdownRef.current,
+          serializedState,
+          tagsRef.current
+        );
+      } catch (e) {
+        console.warn("Failed to save state:", e);
+      }
+    }
+  }, [editorState, saveToAllStorages]);
+
+  // Add autosave status indicator
+  const [autosaveStatus, setAutosaveStatus] = useState<string>(
+    getDocumentByNodeId(id as NodeId)?.lastModified
+      ? `Last saved at ${new Date(
+          getDocumentByNodeId(id as NodeId)!.lastModified
+        ).toLocaleTimeString()}`
+      : "Not saved yet"
+  );
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      console.log("Editor unmounting, forcing save");
+      if (serializedEditorStateRef.current) {
+        saveToAllStorages(
+          markdownRef.current,
+          serializedEditorStateRef.current,
+          tagsRef.current
+        );
+      }
+    };
+  }, [saveToAllStorages]);
 
   // Handle export button click
   const handleExport = () => {
@@ -363,44 +488,6 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
     URL.revokeObjectURL(link.href);
   };
 
-  // Create explicit save actions that we can call programmatically
-  const saveContentNow = React.useCallback(() => {
-    const currentContent = markdownRef.current;
-    localStorage.setItem(storageKey, currentContent);
-
-    // Show autosave indicator (we'll add this to the UI)
-    const timestamp = new Date().toLocaleTimeString();
-    console.log("Content autosaved at", timestamp);
-
-    // Set the autosave status temporarily
-    // setAutosaveStatus(`Last saved at ${timestamp}`);
-  }, [storageKey]);
-
-  const saveStateNow = React.useCallback(() => {
-    if (editorState) {
-      try {
-        const serializedState = JSON.stringify(editorState.toJSON());
-        localStorage.setItem(stateStorageKey, serializedState);
-        setSavedState(serializedState);
-      } catch (e) {
-        console.warn("Failed to save state:", e);
-      }
-    }
-  }, [editorState, stateStorageKey]);
-
-  // Add autosave status indicator
-  const [autosaveStatus, setAutosaveStatus] = useState<string | null>(null);
-
-  // Clear status after a delay
-  useEffect(() => {
-    if (autosaveStatus) {
-      const timer = setTimeout(() => {
-        setAutosaveStatus(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [autosaveStatus]);
-
   return (
     <div className="lexical-editor-container">
       {tags.length > 0 && (
@@ -416,11 +503,15 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
       <div className="lexical-content">
         <LexicalComposer initialConfig={initialConfig}>
           <div className="editor-wrapper">
-            <ToolbarPlugin onSave={handleSave} onExport={handleExport} />
-            {autosaveStatus && (
-              <div className="autosave-indicator">{autosaveStatus}</div>
-            )}
+            <div className="toolbar-container">
+              <ToolbarPlugin onSave={handleSave} onExport={handleExport} />
+            </div>
             <div className="editor-inner">
+              {/* Last saved indicator in top-right of editor area */}
+              <div className="autosave-indicator persistent">
+                {autosaveStatus}
+              </div>
+
               <RichTextPlugin
                 contentEditable={<ContentEditable className="editor-input" />}
                 placeholder={
@@ -432,6 +523,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
                   </div>
                 )}
               />
+
               {/* Add our EditorStateInitializer to properly set initial content */}
               <EditorStateInitializer savedState={savedState} />
               <HistoryPlugin />
@@ -444,16 +536,18 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
               <CheckListPlugin />
               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
               <ClearEditorPlugin />
+
               {/* Replace OnChangePlugin with our optimized version */}
               <CustomOnChangePlugin onChange={handleEditorChange} />
+
               {/* Add the AutoSavePlugin */}
               <AutoSavePlugin
-                saveContent={saveContentNow}
+                saveContent={saveDocumentToLocalStorageNow}
                 saveState={saveStateNow}
                 interval={autoSaveInterval}
               />
-              {/* <EntityReferencePlugin /> */}
-              <NewMentionsPlugin />
+
+              <MentionsPlugin />
             </div>
           </div>
         </LexicalComposer>

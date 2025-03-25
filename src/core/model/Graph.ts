@@ -1,5 +1,10 @@
 import { Edge, EdgeId } from "./Edge";
-import { EntityDataArgs, IEntity } from "./entity/abstractEntity";
+import {
+  Entity,
+  EntityDataArgs,
+  EntityId,
+  IEntity,
+} from "./entity/abstractEntity";
 import { EntitiesContainer } from "./entity/entitiesContainer";
 import { EntityIds } from "./entity/entityIds";
 import { Node, NodeDataArgs, NodeId } from "./Node";
@@ -33,6 +38,13 @@ export class Graph {
       source: fromNode,
       target: toNode,
     });
+  }
+
+  getAllEntities(): EntitiesContainer<EntityId, Entity> {
+    return new EntitiesContainer([
+      ...this.nodes.toArray(),
+      ...this.edges.toArray(),
+    ]);
   }
 
   createNode(id: NodeId | string, args?: NodeDataArgs): Node {

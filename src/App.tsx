@@ -118,7 +118,11 @@ import useAppConfigStore, {
   setAppConfig,
 } from "./store/appConfigStore";
 import useDialogStore from "./store/dialogStore";
-import { useActiveDocument, useDocumentStore } from "./store/documentStore";
+import {
+  loadDocumentsFromSceneGraph,
+  useActiveDocument,
+  useDocumentStore,
+} from "./store/documentStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
 import useGraphInteractionStore, {
   clearSelections,
@@ -136,6 +140,8 @@ import useGraphInteractionStore, {
 import useWorkspaceConfigStore, {
   setRightActiveSection,
 } from "./store/workspaceConfigStore";
+
+// Import the persistent store
 
 export type ObjectOf<T> = { [key: string]: T };
 
@@ -641,6 +647,7 @@ const AppContent: React.FC<{
     async (graph: SceneGraph, clearQueryParams: boolean = true) => {
       const tick = Date.now();
       console.log("Loading SceneGraph", graph.getMetadata().name, "...");
+      loadDocumentsFromSceneGraph(graph); // clears existing store, and loads in new documents
       if (clearQueryParams) {
         clearUrlOfQueryParams();
       }
@@ -1653,7 +1660,7 @@ const AppContent: React.FC<{
     return (
       <div className="document-editor-overlay">
         <NodeDocumentEditor
-          nodeId={activeDocument.nodeId}
+          nodeId={getSelectedNodeId()!}
           onClose={() => {
             // Return to the previously stored view
             setActiveView(previousView || "ForceGraph3d");
@@ -1697,6 +1704,7 @@ const AppContent: React.FC<{
           handleLoadLayout={handleLoadLayout}
           handleFitToView={handleFitToView}
           handleShowEntityTables={() => setShowEntityTables(true)}
+          handleLoadSceneGraph={handleLoadSceneGraph}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>

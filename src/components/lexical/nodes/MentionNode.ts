@@ -65,6 +65,7 @@ export class MentionNode extends TextNode {
   constructor(mentionName: string, text?: string, key?: NodeKey) {
     super(text ?? mentionName, key);
     this.__mention = mentionName;
+    this.__mode = 2;
   }
 
   exportJSON(): SerializedMentionNode {
@@ -78,7 +79,8 @@ export class MentionNode extends TextNode {
     const dom = super.createDOM(config);
     dom.style.cssText = mentionStyle;
     dom.className = "mention";
-    dom.spellcheck = false;
+    dom.setAttribute("data-mention", this.__mention);
+    dom.setAttribute("data-lexical-mention", "true");
     return dom;
   }
 
@@ -117,18 +119,30 @@ export class MentionNode extends TextNode {
   canInsertTextAfter(): boolean {
     return false;
   }
+
+  isSegmented(): boolean {
+    return false; // Prevent splitting the node
+  }
+
+  isSimpleText(): boolean {
+    return false; // Make it behave as a complex node
+  }
+
+  isInert(): boolean {
+    return true; // Prevent any internal modifications
+  }
+
+  isToken(): boolean {
+    return true; // Treat as an atomic token
+  }
 }
 
 export function $createMentionNode(
   mentionName: string,
   textContent?: string
 ): MentionNode {
-  const mentionNode = new MentionNode(
-    mentionName,
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    (textContent = mentionName)
-  );
-  mentionNode.setMode("segmented").toggleDirectionless();
+  const mentionNode = new MentionNode(mentionName, textContent);
+  mentionNode.setMode("token").toggleDirectionless();
   return $applyNodeReplacement(mentionNode);
 }
 
