@@ -15,7 +15,7 @@ export interface SectionWidthConfig {
 
 // Default widths for specific sections
 const defaultSectionWidths: SectionWidthConfig = {
-  projects: 800, // Wider default for Projects section
+  projects: 500, // Wider default for Projects section
   layouts: 300,
   filters: 300,
   analysis: 300,
@@ -41,8 +41,6 @@ type WorkspaceConfigState = {
   showToolbar: boolean;
   leftSidebarConfig: ISidebarConfig;
   rightSidebarConfig: ISidebarConfig;
-  leftSidebarWidth: number;
-  rightSidebarWidth: number;
   sectionWidths: SectionWidthConfig;
 
   setShowToolbar: (show: boolean) => void;
@@ -59,8 +57,6 @@ const useWorkspaceConfigStore = create<WorkspaceConfigState>((set) => ({
   showToolbar: true,
   leftSidebarConfig: DEFAULT_SIDEBAR_CONFIG(),
   rightSidebarConfig: DEFAULT_SIDEBAR_CONFIG(),
-  leftSidebarWidth: 300,
-  rightSidebarWidth: 300,
   sectionWidths: defaultSectionWidths,
 
   getActiveSection: (sidebar): string | null => {

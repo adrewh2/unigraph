@@ -73,20 +73,29 @@ const Sidebar: React.FC<SidebarProps> = ({
       ? leftSidebarConfig.activeSectionId
       : rightSidebarConfig.activeSectionId;
 
-  const [panelWidth, setPanelWidth] = useState(
-    activeSectionId ? getSectionWidth(activeSectionId) : configPanelWidth
-  );
-  console.log(
-    "section width is ",
-    getSectionWidth(activeSectionId ?? ""),
-    activeSectionId
-  );
+  // Initialize panel width from section width or config
+  const initialWidth = activeSectionId
+    ? getSectionWidth(activeSectionId)
+    : configPanelWidth;
 
+  const [panelWidth, setPanelWidth] = useState(initialWidth);
+
+  // Update panel width when active section changes
   useEffect(() => {
-    const defaultWidth = getSectionWidth(activeSectionId ?? "");
-    setPanelWidth(defaultWidth);
-    lastWidthRef.current = defaultWidth;
-  }, [activeSectionId]);
+    if (activeSectionId) {
+      const sectionWidth = getSectionWidth(activeSectionId);
+      setPanelWidth(sectionWidth);
+      lastWidthRef.current = sectionWidth;
+
+      // Update DOM directly for immediate response
+      if (panelRef.current) {
+        panelRef.current.style.width = `${sectionWidth}px`;
+      }
+    } else {
+      setPanelWidth(configPanelWidth);
+      lastWidthRef.current = configPanelWidth;
+    }
+  }, [activeSectionId, configPanelWidth]);
 
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
@@ -204,11 +213,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         // Directly update the DOM element style for better performance
         if (panelRef.current) {
           panelRef.current.style.width = `${newWidth}px`;
-          updateSectionWidth(activeSectionId ?? "", configPanelWidth);
         }
       });
     },
-    [activeSectionId, configPanelWidth, isResizing, position]
+    [isResizing, position]
   );
 
   // Update panel width when config changes
@@ -217,6 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     lastWidthRef.current = configPanelWidth;
   }, [activeSectionId, configPanelWidth]);
 
+  // Handle resize end updated to save section width
   const handleResizeEnd = React.useCallback(() => {
     setIsResizing(false);
     resizeRef.current = null;
@@ -227,16 +236,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       rafRef.current = null;
     }
 
-    // Update the state AND the store
-    setPanelWidth(lastWidthRef.current);
+    const newWidth = lastWidthRef.current;
+    setPanelWidth(newWidth);
 
-    // Update the global store
-    if (position === "left") {
-      setLeftPanelWidth(lastWidthRef.current);
-    } else {
-      setRightPanelWidth(lastWidthRef.current);
+    // Save the width to both the section config and panel width
+    if (activeSectionId) {
+      updateSectionWidth(activeSectionId, newWidth);
     }
-  }, [position, setLeftPanelWidth, setRightPanelWidth]);
+
+    if (position === "left") {
+      setLeftPanelWidth(newWidth);
+    } else {
+      setRightPanelWidth(newWidth);
+    }
+  }, [position, setLeftPanelWidth, setRightPanelWidth, activeSectionId]);
 
   useLayoutEffect(() => {
     if (isResizing) {
