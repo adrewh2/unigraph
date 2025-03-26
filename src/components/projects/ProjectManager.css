@@ -233,7 +233,7 @@
 
 .project-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -269,6 +269,29 @@
 .dark .project-action-button:hover {
   background-color: rgba(255, 255, 255, 0.15);
   color: #ff8080;
+}
+
+/* Add styles for the name input */
+.project-name-input {
+  background: transparent;
+  border: 1px solid #4285f4;
+  border-radius: 4px;
+  color: inherit;
+  font-size: inherit;
+  padding: 2px 6px;
+  width: 100%;
+  max-width: 200px;
+}
+
+.dark .project-name-input {
+  border-color: #5294ff;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.project-name-input:focus {
+  outline: none;
+  border-color: #5294ff;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Tree view for demo graphs */

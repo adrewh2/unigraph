@@ -1,8 +1,10 @@
 import {
   ChevronDown,
   ChevronRight,
+  Copy,
   Database,
   Download,
+  Edit2,
   FilePlus,
   Folder,
   FolderOpen,
@@ -62,6 +64,10 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
 
   // Add state for the save dialog
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  // Add state for editing project name
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   // Initialize tree data for demo graphs
   useEffect(() => {
@@ -409,6 +415,65 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
     setShowLoadDialog(true);
   };
 
+  // Add handlers for edit and copy actions
+  const handleStartEdit = (
+    e: React.MouseEvent,
+    project: StoredSceneGraphInfo
+  ) => {
+    e.stopPropagation();
+    setEditingProjectId(project.id);
+    setEditingName(project.name);
+  };
+
+  const handleSaveEdit = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    try {
+      const project = projects.find((p) => p.id === projectId);
+      if (!project) return;
+
+      // Load the existing scene graph
+      const sceneGraph = await persistentStore.loadSceneGraph(projectId);
+      if (!sceneGraph) {
+        throw new Error("Failed to load scene graph for editing");
+      }
+
+      // Update the metadata with the new name
+      sceneGraph.setMetadata({
+        ...sceneGraph.getMetadata(),
+        name: editingName,
+      });
+
+      // Update the scene graph with the new name
+      await persistentStore.updateSceneGraph(projectId, sceneGraph);
+
+      await loadProjects(); // Refresh list
+      setEditingProjectId(null);
+    } catch (err) {
+      console.error("Error updating project name:", err);
+      setError("Failed to update project name");
+    }
+  };
+
+  const handleCopy = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    try {
+      const sceneGraph = await persistentStore.loadSceneGraph(projectId);
+      if (sceneGraph) {
+        setShowSaveDialog(true);
+        // Update the scene graph with a "Copy of" prefix
+        const metadata = sceneGraph.getMetadata();
+        sceneGraph.setMetadata({
+          ...metadata,
+          name: `Copy of ${metadata.name || "Untitled"}`,
+        });
+        onProjectSelected(sceneGraph);
+      }
+    } catch (err) {
+      console.error("Error copying project:", err);
+      setError("Failed to copy project");
+    }
+  };
+
   return (
     <div className={`project-manager ${isDarkMode ? "dark" : ""}`}>
       {/* Header */}
@@ -489,7 +554,27 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
                     <Folder size={18} />
                   </div>
                   <div className="project-details">
-                    <div className="project-name">{project.name}</div>
+                    <div className="project-name">
+                      {editingProjectId === project.id ? (
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleSaveEdit(e as any, project.id);
+                            } else if (e.key === "Escape") {
+                              setEditingProjectId(null);
+                            }
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="project-name-input"
+                          autoFocus
+                        />
+                      ) : (
+                        project.name
+                      )}
+                    </div>
                     <div className="project-dates">
                       <span className="project-date-label">Modified:</span>
                       <span className="project-date">
@@ -506,6 +591,24 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
                     </div>
                   </div>
                   <div className="project-actions">
+                    <button
+                      title="Edit Name"
+                      onClick={(e) =>
+                        editingProjectId === project.id
+                          ? handleSaveEdit(e, project.id)
+                          : handleStartEdit(e, project)
+                      }
+                      className="project-action-button"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      title="Copy"
+                      onClick={(e) => handleCopy(e, project.id)}
+                      className="project-action-button"
+                    >
+                      <Copy size={14} />
+                    </button>
                     <button
                       title="Export"
                       onClick={(e) => {

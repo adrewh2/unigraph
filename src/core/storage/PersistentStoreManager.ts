@@ -54,6 +54,50 @@ export class PersistentStoreManager implements IPersistentStore {
   }
 
   /**
+   * Check if a scene graph ID already exists
+   */
+  private async checkIdExists(id: string): Promise<boolean> {
+    const db = await this.openDB();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = db.transaction([this.storeName], "readonly");
+        const objectStore = transaction.objectStore(this.storeName);
+        const request = objectStore.get(id);
+
+        request.onsuccess = (event) => {
+          db.close();
+          const result = (event.target as IDBRequest).result;
+          resolve(!!result);
+        };
+
+        request.onerror = (event) => {
+          db.close();
+          reject(
+            new Error(
+              `Failed to check ID: ${(event.target as IDBRequest).error}`
+            )
+          );
+        };
+      } catch (error) {
+        db.close();
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Generate a unique ID for a new scene graph
+   */
+  private async generateUniqueId(): Promise<string> {
+    let id = uuidv4();
+    while (await this.checkIdExists(id)) {
+      id = uuidv4();
+    }
+    return id;
+  }
+
+  /**
    * Generate a thumbnail for the scene graph (simplified implementation)
    */
   private async generateThumbnail(_sceneGraph: SceneGraph): Promise<string> {
@@ -69,8 +113,19 @@ export class PersistentStoreManager implements IPersistentStore {
     sceneGraph: SceneGraph,
     options: { id?: string; createThumbnail?: boolean } = {}
   ): Promise<string> {
+    // If an ID is provided, verify it doesn't already exist
+    if (options.id) {
+      const exists = await this.checkIdExists(options.id);
+      if (exists) {
+        throw new Error(
+          `Scene graph with ID ${options.id} already exists. Use updateSceneGraph to modify existing scene graphs.`
+        );
+      }
+    }
+
+    // Generate a new unique ID if none provided
+    const id = options.id || (await this.generateUniqueId());
     const db = await this.openDB();
-    const id = options.id || uuidv4();
 
     return new Promise((resolve, reject) => {
       try {
