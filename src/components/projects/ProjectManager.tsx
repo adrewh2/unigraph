@@ -5,13 +5,13 @@ import {
   Database,
   Download,
   Edit2,
-  FilePlus,
   Folder,
   FolderOpen,
   MinusSquare,
   Plus,
   PlusSquare,
   RefreshCw,
+  Save,
   Trash2,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -488,7 +488,7 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
             onClick={handleSaveCurrent}
             className="action-button"
           >
-            <FilePlus size={16} />
+            <Save size={16} />
           </button>
           <button
             title="Import"
