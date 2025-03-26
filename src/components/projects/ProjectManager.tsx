@@ -18,7 +18,9 @@ import { loadSceneGraphFromFile } from "../../core/serializers/sceneGraphLoader"
 import { StoredSceneGraphInfo } from "../../core/storage/IPersistentStore";
 import { persistentStore } from "../../core/storage/PersistentStoreManager";
 import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
-import useAppConfigStore from "../../store/appConfigStore";
+import useAppConfigStore, {
+  setActiveProjectId,
+} from "../../store/appConfigStore";
 import LoadSceneGraphDialog from "../common/LoadSceneGraphDialog";
 import "./ProjectManager.css";
 import SaveProjectDialog from "./SaveProjectDialog"; // Import the new component
@@ -49,7 +51,11 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [activeTab, setActiveTab] = useState<"myProjects" | "demoGraphs">(
     "myProjects"
   );
-  const { currentSceneGraph } = useAppConfigStore();
+  const { currentSceneGraph, activeProjectId } = useAppConfigStore();
+
+  useEffect(() => {
+    setSelectedProjectId(activeProjectId);
+  }, [activeProjectId]);
 
   // Demo Graphs tree state
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
@@ -158,6 +164,7 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
 
       if (sceneGraph) {
         setSelectedProjectId(projectId);
+        setActiveProjectId(projectId);
         setSelectedDemoId(null);
         onProjectSelected(sceneGraph);
       } else {
@@ -192,6 +199,7 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
 
       setSelectedDemoId(graphId);
       setSelectedProjectId(null);
+      setActiveProjectId(null);
       onProjectSelected(sceneGraph);
     } catch (err) {
       console.error("Error loading demo graph:", err);

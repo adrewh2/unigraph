@@ -61,6 +61,36 @@ describe("SceneGraph Serialization Roundtrip, add properties to node and edges",
   });
 });
 
+describe("SceneGraph Serialization Roundtrip, displayConfig, positions", () => {
+  const sceneGraph = demo_sceneGraph_academicsKG();
+
+  sceneGraph.getGraph().createNode("newNode1", {
+    label: "newNode1",
+    type: "newType",
+    dimensions: { width: 123, height: 456 },
+    color: "blue",
+    isVisible: false,
+  });
+
+  sceneGraph.getGraph().createNode("newNode2", {
+    label: "newNode2",
+    type: "newType",
+    dimensions: { width: 234, height: 567 },
+  });
+
+  sceneGraph.getGraph().createEdge("newNode1", "newNode2", {
+    label: "newEdge",
+    type: "newType",
+  });
+
+  const serialized = serializeSceneGraphToJson(sceneGraph);
+  const deserialized = deserializeSceneGraphFromJson(serialized);
+
+  test("should correctly serialize and deserialize scene graph", () => {
+    expect(compareEquality(sceneGraph, deserialized)).toBe(true);
+  });
+});
+
 // TODO: Make EntityCache serialized/deserialized roundtrip
 // describe("SceneGraph Serialization Roundtrip, add entities to cache", () => {
 //   const sceneGraph = demo_sceneGraph_academicsKG();
