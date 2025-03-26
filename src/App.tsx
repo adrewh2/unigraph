@@ -91,6 +91,7 @@ import {
   SetCurrentDisplayConfigOf,
 } from "./core/model/utils";
 import { exportGraphDataForReactFlow } from "./core/react-flow/exportGraphDataForReactFlow";
+import { persistentStore } from "./core/storage/PersistentStoreManager";
 import { IMAGE_ANNOTATION_ENTITIES } from "./core/types/ImageAnnotation";
 import { flyToNode } from "./core/webgl/webglHelpers";
 import {
@@ -115,6 +116,7 @@ import useAppConfigStore, {
   getForceGraphInstance,
   getLegendMode,
   setActiveLayout,
+  setActiveProjectId,
   setAppConfig,
 } from "./store/appConfigStore";
 import useDialogStore from "./store/dialogStore";
@@ -699,6 +701,27 @@ const AppContent: React.FC<{
 
   const handleSetSceneGraph = useCallback(
     async (key: string, clearUrlOfQueryParams: boolean = true) => {
+      // First try to load from persistent store
+      try {
+        const persistedGraph = await persistentStore.loadSceneGraph(key);
+        if (persistedGraph) {
+          handleLoadSceneGraph(persistedGraph, clearUrlOfQueryParams);
+          setActiveProjectId(key); // Set the active project ID
+
+          // Update the URL query parameter
+          const url = new URL(window.location.href);
+          url.searchParams.set("graph", key);
+          url.searchParams.delete("svgUrl");
+          window.history.pushState({}, "", url.toString());
+          return;
+        }
+      } catch (err) {
+        console.log(
+          `Key not found in persistent store, checking demo graphs ${err}`
+        );
+      }
+
+      // Fall back to demo graphs if not in persistent store
       const graphGenerator = getSceneGraph(key);
 
       if (!graphGenerator) {
@@ -715,6 +738,7 @@ const AppContent: React.FC<{
       }
 
       handleLoadSceneGraph(graph, clearUrlOfQueryParams);
+      setActiveProjectId(null); // Clear project ID since this is a demo graph
 
       // Update the URL query parameter
       const url = new URL(window.location.href);
