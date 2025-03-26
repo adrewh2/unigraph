@@ -20,7 +20,7 @@
   pointer-events: auto;
   min-width: 240px;
   max-width: 480px;
-  animation: slideIn 0.3s ease-out;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .notification.info {
@@ -62,13 +62,11 @@
   color: #374151;
 }
 
-@keyframes slideIn {
+@keyframes fadeIn {
   from {
-    transform: translateX(100%);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
     opacity: 1;
   }
 }
