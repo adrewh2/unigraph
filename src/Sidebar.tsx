@@ -6,11 +6,16 @@ import {
   ChevronsRight,
   Menu,
 } from "lucide-react";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import styles from "./Sidebar.module.css";
 import { SubMenuItem } from "./configs/RightSidebarConfig";
 import useWorkspaceConfigStore, {
-  getSectionWidth,
   updateSectionWidth,
 } from "./store/workspaceConfigStore";
 
@@ -60,6 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     rightSidebarConfig,
     setLeftPanelWidth,
     setRightPanelWidth,
+    sectionWidths,
   } = useWorkspaceConfigStore();
 
   // Initialize from the correct config based on position
@@ -73,35 +79,35 @@ const Sidebar: React.FC<SidebarProps> = ({
       ? leftSidebarConfig.activeSectionId
       : rightSidebarConfig.activeSectionId;
 
-  // Initialize panel width from section width or config
-  const initialWidth = activeSectionId
-    ? getSectionWidth(activeSectionId)
-    : configPanelWidth;
+  // Get the initial width directly from sectionWidths or fall back to config
+  const getInitialWidth = useCallback(
+    (sectionId: string | null) => {
+      if (!sectionId) return configPanelWidth;
+      return sectionWidths[sectionId] || configPanelWidth;
+    },
+    [configPanelWidth, sectionWidths]
+  );
 
-  const [panelWidth, setPanelWidth] = useState(initialWidth);
+  // Remove panelWidth state and use ref to track current width during resize
+  const lastWidthRef = useRef<number>(getInitialWidth(activeSectionId));
 
-  // Update panel width when active section changes
+  // Update the width when active section changes
   useEffect(() => {
     if (activeSectionId) {
-      const sectionWidth = getSectionWidth(activeSectionId);
-      setPanelWidth(sectionWidth);
-      lastWidthRef.current = sectionWidth;
+      const width = getInitialWidth(activeSectionId);
+      lastWidthRef.current = width;
 
-      // Update DOM directly for immediate response
+      // Apply width immediately to DOM
       if (panelRef.current) {
-        panelRef.current.style.width = `${sectionWidth}px`;
+        panelRef.current.style.width = `${width}px`;
       }
-    } else {
-      setPanelWidth(configPanelWidth);
-      lastWidthRef.current = configPanelWidth;
     }
-  }, [activeSectionId, configPanelWidth]);
+  }, [activeSectionId, getInitialWidth]);
 
   const [isResizing, setIsResizing] = useState(false);
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
-  const lastWidthRef = useRef<number>(configPanelWidth);
 
   const {
     showToolbar,
@@ -219,12 +225,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     [isResizing, position]
   );
 
-  // Update panel width when config changes
-  useEffect(() => {
-    setPanelWidth(configPanelWidth);
-    lastWidthRef.current = configPanelWidth;
-  }, [activeSectionId, configPanelWidth]);
-
   // Handle resize end updated to save section width
   const handleResizeEnd = React.useCallback(() => {
     setIsResizing(false);
@@ -237,13 +237,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
 
     const newWidth = lastWidthRef.current;
-    setPanelWidth(newWidth);
 
     // Save the width to both the section config and panel width
     if (activeSectionId) {
       updateSectionWidth(activeSectionId, newWidth);
     }
 
+    // Update panel width in store
     if (position === "left") {
       setLeftPanelWidth(newWidth);
     } else {
@@ -388,7 +388,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               height: showToolbar
                 ? `calc(100vh - var(--toolbar-height, ${toolbarHeight}))`
                 : "100vh",
-              width: `${panelWidth}px`, // Apply dynamic width
+              width: `${getInitialWidth(activeSectionId)}px`, // Apply dynamic width
               willChange: isResizing ? "width" : "auto", // Add will-change for better performance during resize
               transitionProperty: isResizing ? "none" : "width", // Disable transitions during resize
             }}
