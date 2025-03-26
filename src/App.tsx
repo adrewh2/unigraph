@@ -251,14 +251,6 @@ const AppContent: React.FC<{
 
   const clearUrlOfQueryParams = useCallback(() => {
     const url = new URL(window.location.href);
-    // url.searchParams.delete('graph');
-    // url.searchParams.delete('svgUrl');
-    // url.searchParams.delete('view');
-    // url.searchParams.delete('layout');
-    url.searchParams.delete("showOptionsPanel");
-    url.searchParams.delete("showLegendBars");
-    url.searchParams.delete("showGraphLayoutToolbar");
-    url.searchParams.delete("showRenderConfig");
     window.history.pushState({}, "", url.toString());
   }, []);
 
