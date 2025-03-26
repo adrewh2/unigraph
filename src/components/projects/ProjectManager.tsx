@@ -19,7 +19,9 @@ import { StoredSceneGraphInfo } from "../../core/storage/IPersistentStore";
 import { persistentStore } from "../../core/storage/PersistentStoreManager";
 import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import useAppConfigStore from "../../store/appConfigStore";
+import LoadSceneGraphDialog from "../common/LoadSceneGraphDialog";
 import "./ProjectManager.css";
+import SaveProjectDialog from "./SaveProjectDialog"; // Import the new component
 
 interface ProjectManagerProps {
   onProjectSelected: (sceneGraph: SceneGraph) => void;
@@ -55,6 +57,12 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
 
   // Add search functionality
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Add state for showing the load dialog
+  const [showLoadDialog, setShowLoadDialog] = useState(false);
+
+  // Add state for the save dialog
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // Initialize tree data for demo graphs
   useEffect(() => {
@@ -96,27 +104,47 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
     loadProjects();
   }, []);
 
-  // Save current scene graph
+  // Save current scene graph - updated to show dialog for new projects
   const handleSaveCurrent = async () => {
     try {
       if (selectedProjectId) {
-        // If we have a selected project, update it
+        // If we have a selected project, update it directly
         await persistentStore.updateSceneGraph(
           selectedProjectId,
           currentSceneGraph
         );
         console.log(`Updated existing project: ${selectedProjectId}`);
+        await loadProjects(); // Refresh the list
       } else {
-        // Create a new scene graph
-        const id = await persistentStore.saveSceneGraph(currentSceneGraph, {
-          createThumbnail: true,
-        });
-        setSelectedProjectId(id);
-        console.log(`Created new project: ${id}`);
+        // If no project is selected, show the save dialog
+        setShowSaveDialog(true);
       }
+    } catch (err) {
+      console.error("Error saving project:", err);
+      setError("Failed to save project");
+    }
+  };
 
+  // Add handler for save dialog submit
+  const handleSaveDialogSubmit = async (name: string, description: string) => {
+    try {
+      // Update the metadata in the scene graph
+      const metadata = currentSceneGraph.getMetadata() || {};
+      currentSceneGraph.setMetadata({
+        ...metadata,
+        name,
+        description,
+      });
+
+      // Save the scene graph
+      const id = await persistentStore.saveSceneGraph(currentSceneGraph, {
+        createThumbnail: true,
+      });
+
+      setSelectedProjectId(id);
       await loadProjects(); // Refresh the list
       setActiveTab("myProjects"); // Switch to My Projects tab
+      setShowSaveDialog(false); // Close the dialog
     } catch (err) {
       console.error("Error saving project:", err);
       setError("Failed to save project");
@@ -377,12 +405,20 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
     );
   };
 
+  // Add function to handle opening the new graph dialog
+  const handleNew = () => {
+    setShowLoadDialog(true);
+  };
+
   return (
     <div className={`project-manager ${isDarkMode ? "dark" : ""}`}>
       {/* Header */}
       <div className="project-manager-header">
         <h3>Projects</h3>
         <div className="project-manager-actions">
+          <button title="New" onClick={handleNew} className="action-button">
+            <Plus size={16} />
+          </button>
           <button
             title="Save Current"
             onClick={handleSaveCurrent}
@@ -533,6 +569,35 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
           </div>
         )}
       </div>
+
+      {/* Add LoadSceneGraphDialog */}
+      {showLoadDialog && (
+        <LoadSceneGraphDialog
+          onClose={() => setShowLoadDialog(false)}
+          onSelect={(key) => {
+            handleLoadDemoGraph(key);
+            setShowLoadDialog(false);
+          }}
+          isDarkMode={isDarkMode}
+          handleLoadSceneGraph={(sceneGraph) => {
+            onProjectSelected(sceneGraph);
+            setShowLoadDialog(false);
+          }}
+        />
+      )}
+
+      {/* Add Save Dialog */}
+      {showSaveDialog && (
+        <SaveProjectDialog
+          onSave={handleSaveDialogSubmit}
+          onCancel={() => setShowSaveDialog(false)}
+          isDarkMode={isDarkMode}
+          initialName={currentSceneGraph.getMetadata()?.name || ""}
+          initialDescription={
+            currentSceneGraph.getMetadata()?.description || ""
+          }
+        />
+      )}
     </div>
   );
 };

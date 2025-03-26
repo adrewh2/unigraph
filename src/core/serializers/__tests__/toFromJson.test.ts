@@ -38,6 +38,8 @@ describe("SceneGraph Serialization Roundtrip, add properties to node and edges",
     label: "newNode1",
     type: "newType",
     dimensions: { width: 123, height: 456 },
+    color: "blue",
+    isVisible: false,
   });
 
   sceneGraph.getGraph().createNode("newNode2", {
