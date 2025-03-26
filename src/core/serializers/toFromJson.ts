@@ -39,3 +39,7 @@ export function deserializeSceneGraphFromJson(json: JSONString): SceneGraph {
     graph,
   });
 }
+
+export const compareEquality = (a: SceneGraph, b: SceneGraph) => {
+  return JSON.stringify(a) === JSON.stringify(b);
+};

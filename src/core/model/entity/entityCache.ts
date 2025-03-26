@@ -31,6 +31,13 @@ export class EntityCache {
     return Array.from(this.cache.keys());
   }
 
+  public getSize(): number {
+    return Array.from(this.cache.values()).reduce(
+      (acc, entities) => acc + entities.size(),
+      0
+    );
+  }
+
   // public maybeGetEntityById(type: string, id: string): IEntity | null {
   //   return this.cache.get(type)?.maybeGet(id);
   // }
