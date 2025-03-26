@@ -99,15 +99,20 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   // Save current scene graph
   const handleSaveCurrent = async () => {
     try {
-      // Check if we're saving a new scene graph or updating an existing one
-      const id =
-        selectedProjectId ||
-        (await persistentStore.saveSceneGraph(currentSceneGraph, {
+      if (selectedProjectId) {
+        // If we have a selected project, update it
+        await persistentStore.updateSceneGraph(
+          selectedProjectId,
+          currentSceneGraph
+        );
+        console.log(`Updated existing project: ${selectedProjectId}`);
+      } else {
+        // Create a new scene graph
+        const id = await persistentStore.saveSceneGraph(currentSceneGraph, {
           createThumbnail: true,
-        }));
-
-      if (!selectedProjectId) {
+        });
         setSelectedProjectId(id);
+        console.log(`Created new project: ${id}`);
       }
 
       await loadProjects(); // Refresh the list
@@ -450,8 +455,19 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
                   </div>
                   <div className="project-details">
                     <div className="project-name">{project.name}</div>
-                    <div className="project-date">
-                      {new Date(project.lastModified).toLocaleString()}
+                    <div className="project-dates">
+                      <span className="project-date-label">Modified:</span>
+                      <span className="project-date">
+                        {new Date(project.lastModified).toLocaleString()}
+                      </span>
+                      {project.createdAt && (
+                        <>
+                          <span className="project-date-label">Created:</span>
+                          <span className="project-date">
+                            {new Date(project.createdAt).toLocaleString()}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="project-actions">

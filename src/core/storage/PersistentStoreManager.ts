@@ -301,6 +301,98 @@ export class PersistentStoreManager implements IPersistentStore {
       reader.readAsText(file);
     });
   }
+
+  /**
+   * Update a scene graph in IndexedDB
+   */
+  public async updateSceneGraph(
+    id: string,
+    sceneGraph: SceneGraph,
+    options?: { createThumbnail?: boolean }
+  ): Promise<string> {
+    const db = await this.openDB();
+
+    return new Promise((resolve, reject) => {
+      try {
+        const transaction = db.transaction(
+          [this.storeName, this.metadataStoreName],
+          "readwrite"
+        );
+
+        const objectStore = transaction.objectStore(this.storeName);
+        const request = objectStore.get(id);
+
+        request.onsuccess = async (event) => {
+          const existingGraph = (event.target as IDBRequest).result;
+
+          if (!existingGraph) {
+            db.close();
+            reject(new Error(`Scene graph with ID ${id} not found`));
+            return;
+          }
+
+          saveAppConfigToSceneGraph(sceneGraph);
+
+          // Capture SceneGraph data as a serializable object
+          const serializedGraph = {
+            id,
+            data: serializeSceneGraphToJson(sceneGraph),
+          };
+
+          // Save the graph itself
+          objectStore.put(serializedGraph);
+
+          // Generate metadata
+          const thumbnailPromise = options?.createThumbnail
+            ? this.generateThumbnail(sceneGraph)
+            : Promise.resolve(existingGraph.thumbnailUrl);
+
+          const thumbnail = await thumbnailPromise;
+
+          const metadata: StoredSceneGraphInfo = {
+            id,
+            name:
+              sceneGraph.getMetadata().name ||
+              `Scene Graph ${id.substring(0, 6)}`,
+            description: sceneGraph.getMetadata().description,
+            lastModified: Date.now(),
+            thumbnailUrl: thumbnail,
+            tags: existingGraph.tags || [],
+          };
+
+          // Save metadata
+          const metadataStore = transaction.objectStore(this.metadataStoreName);
+          metadataStore.put(metadata);
+
+          transaction.oncomplete = () => {
+            db.close();
+            resolve(id);
+          };
+
+          transaction.onerror = (event) => {
+            db.close();
+            reject(
+              new Error(
+                `Failed to update scene graph: ${(event.target as IDBTransaction).error}`
+              )
+            );
+          };
+        };
+
+        request.onerror = (event) => {
+          db.close();
+          reject(
+            new Error(
+              `Failed to update scene graph: ${(event.target as IDBRequest).error}`
+            )
+          );
+        };
+      } catch (error) {
+        db.close();
+        reject(error);
+      }
+    });
+  }
 }
 
 // Create and export a singleton instance

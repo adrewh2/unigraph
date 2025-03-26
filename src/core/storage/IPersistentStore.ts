@@ -8,6 +8,7 @@ export interface StoredSceneGraphInfo {
   name: string;
   description?: string;
   lastModified: number;
+  createdAt?: number; // Add created timestamp
   thumbnailUrl?: string;
   tags?: string[];
 }
@@ -63,4 +64,16 @@ export interface IPersistentStore {
    * @returns The ID of the imported scene graph
    */
   importSceneGraph(file: File): Promise<string>;
+
+  /**
+   * Updates an existing scene graph
+   * @param id The ID of the scene graph to update
+   * @param sceneGraph The updated scene graph
+   * @returns The ID of the updated scene graph
+   */
+  updateSceneGraph(
+    id: string,
+    sceneGraph: SceneGraph,
+    options?: { createThumbnail?: boolean }
+  ): Promise<string>;
 }
