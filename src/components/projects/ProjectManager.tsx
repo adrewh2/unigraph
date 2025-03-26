@@ -45,17 +45,10 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [projects, setProjects] = useState<StoredSceneGraphInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
-    null
-  );
   const [activeTab, setActiveTab] = useState<"myProjects" | "demoGraphs">(
     "myProjects"
   );
   const { currentSceneGraph, activeProjectId } = useAppConfigStore();
-
-  useEffect(() => {
-    setSelectedProjectId(activeProjectId);
-  }, [activeProjectId]);
 
   // Demo Graphs tree state
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
@@ -113,13 +106,13 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   // Save current scene graph - updated to show dialog for new projects
   const handleSaveCurrent = async () => {
     try {
-      if (selectedProjectId) {
+      if (activeProjectId) {
         // If we have a selected project, update it directly
         await persistentStore.updateSceneGraph(
-          selectedProjectId,
+          activeProjectId,
           currentSceneGraph
         );
-        console.log(`Updated existing project: ${selectedProjectId}`);
+        console.log(`Updated existing project: ${activeProjectId}`);
         await loadProjects(); // Refresh the list
       } else {
         // If no project is selected, show the save dialog
@@ -147,7 +140,7 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
         createThumbnail: true,
       });
 
-      setSelectedProjectId(id);
+      setActiveProjectId(id);
       await loadProjects(); // Refresh the list
       setActiveTab("myProjects"); // Switch to My Projects tab
       setShowSaveDialog(false); // Close the dialog
@@ -163,7 +156,6 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
       const sceneGraph = await persistentStore.loadSceneGraph(projectId);
 
       if (sceneGraph) {
-        setSelectedProjectId(projectId);
         setActiveProjectId(projectId);
         setSelectedDemoId(null);
         onProjectSelected(sceneGraph);
@@ -198,7 +190,6 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
       }
 
       setSelectedDemoId(graphId);
-      setSelectedProjectId(null);
       setActiveProjectId(null);
       onProjectSelected(sceneGraph);
     } catch (err) {
@@ -213,8 +204,8 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
       try {
         await persistentStore.deleteSceneGraph(projectId);
 
-        if (selectedProjectId === projectId) {
-          setSelectedProjectId(null);
+        if (activeProjectId === projectId) {
+          setActiveProjectId(null);
         }
 
         await loadProjects(); // Refresh the list
@@ -484,14 +475,14 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
                   className="new-project-button"
                   onClick={handleSaveCurrent}
                 >
-                  <Plus size={16} /> Save Current Project
+                  <Plus size={16} /> Save Current as Project
                 </button>
               </div>
             ) : (
               projects.map((project) => (
                 <div
                   key={project.id}
-                  className={`project-item ${selectedProjectId === project.id ? "selected" : ""}`}
+                  className={`project-item ${activeProjectId === project.id ? "selected" : ""}`}
                   onClick={() => handleLoadProject(project.id)}
                 >
                   <div className="project-icon">
