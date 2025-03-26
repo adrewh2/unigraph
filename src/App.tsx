@@ -139,6 +139,7 @@ import useGraphInteractionStore, {
   setHoveredNodeIds,
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
+import { addNotification } from "./store/notificationStore";
 import useWorkspaceConfigStore, {
   setRightActiveSection,
 } from "./store/workspaceConfigStore";
@@ -685,6 +686,10 @@ const AppContent: React.FC<{
 
         const tock = Date.now();
         console.log("TOTAL TIME", tock - tick);
+        addNotification({
+          message: `Loaded SceneGraph: ${graph.getMetadata().name}`,
+          type: "success",
+        });
       });
     },
     [

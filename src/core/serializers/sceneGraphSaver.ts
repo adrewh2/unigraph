@@ -2,7 +2,7 @@ import {
   getEdgeLegendConfig,
   getNodeLegendConfig,
 } from "../../store/activeLegendConfigStore";
-import { getLegendMode } from "../../store/appConfigStore";
+import { getAppConfig, getLegendMode } from "../../store/appConfigStore";
 import { SceneGraph } from "../model/SceneGraph";
 
 export const saveAppConfigToSceneGraph = (sceneGraph: SceneGraph) => {
@@ -15,5 +15,6 @@ export const saveAppConfigToSceneGraph = (sceneGraph: SceneGraph) => {
   }
   sceneGraph.getData().displayConfig.mode = getLegendMode();
   sceneGraph.commitDisplayConfig();
+  sceneGraph.getData().defaultAppConfig = getAppConfig();
   return sceneGraph;
 };

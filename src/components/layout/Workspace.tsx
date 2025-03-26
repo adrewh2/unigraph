@@ -26,6 +26,7 @@ import useWorkspaceConfigStore, {
   updateSectionWidth,
 } from "../../store/workspaceConfigStore";
 import NodeInfo from "../NodeInfo";
+import NotificationManager from "../notifications/NotificationManager";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
@@ -344,6 +345,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   return (
     <div className={styles.workspace}>
       {renderUniappToolbar}
+      <NotificationManager />
       <div className={styles.content}>
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
         <main className={styles.main}>
