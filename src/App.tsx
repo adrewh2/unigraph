@@ -262,6 +262,12 @@ const AppContent: React.FC<{
     window.history.pushState({}, "", url.toString());
   }, []);
 
+  const clearGraphFromUrl = useCallback(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("graph");
+    window.history.pushState({}, "", url.toString());
+  }, []);
+
   const [simulations, setSimulations] = useState<{
     [key: string]: JSX.Element;
   }>({});
@@ -652,6 +658,7 @@ const AppContent: React.FC<{
       loadDocumentsFromSceneGraph(graph); // clears existing store, and loads in new documents
       if (clearQueryParams) {
         clearUrlOfQueryParams();
+        clearGraphFromUrl();
       }
       clearSelections();
       safeComputeLayout(graph, activeLayout).then(() => {
@@ -690,6 +697,7 @@ const AppContent: React.FC<{
     },
     [
       activeLayout,
+      clearGraphFromUrl,
       clearUrlOfQueryParams,
       forceGraphInstance,
       handleDisplayConfigChanged,
@@ -722,29 +730,30 @@ const AppContent: React.FC<{
       }
 
       // Fall back to demo graphs if not in persistent store
-      const graphGenerator = getSceneGraph(key);
+      try {
+        const graphGenerator = getSceneGraph(key);
+        let graph: SceneGraph;
+        if (typeof graphGenerator === "function") {
+          graph = await graphGenerator();
+        } else {
+          graph = graphGenerator;
+        }
 
-      if (!graphGenerator) {
+        handleLoadSceneGraph(graph, clearUrlOfQueryParams);
+        setActiveProjectId(null); // Clear project ID since this is a demo graph
+
+        // Update the URL query parameter
+        const url = new URL(window.location.href);
+        url.searchParams.set("graph", key);
+        url.searchParams.delete("svgUrl");
+        window.history.pushState({}, "", url.toString());
+        // eslint-disable-next-line unused-imports/no-unused-vars
+      } catch (err) {
         console.error(`Graph ${key} not found`);
         console.log(`Available graphs are: ${getAllDemoSceneGraphKeys()}`);
+        handleLoadSceneGraph(new SceneGraph(), true);
         return;
       }
-
-      let graph: SceneGraph;
-      if (typeof graphGenerator === "function") {
-        graph = await graphGenerator();
-      } else {
-        graph = graphGenerator;
-      }
-
-      handleLoadSceneGraph(graph, clearUrlOfQueryParams);
-      setActiveProjectId(null); // Clear project ID since this is a demo graph
-
-      // Update the URL query parameter
-      const url = new URL(window.location.href);
-      url.searchParams.set("graph", key);
-      url.searchParams.delete("svgUrl");
-      window.history.pushState({}, "", url.toString());
     },
     [handleLoadSceneGraph]
   );
