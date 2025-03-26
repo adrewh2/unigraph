@@ -6,7 +6,7 @@
   color: #e0e0e0;
   background-color: #1a2942;
   transition: background-color 0.3s ease;
-  overflow: hidden; /* Prevent outer scrollbar */
+  overflow: hidden; /* Ensure outer container has no scrollbar */
 }
 
 /* Dark mode styles - even darker blue */
@@ -100,7 +100,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Prevent outer scrollbar */
+  overflow: hidden; /* Prevent scrollbar at this level */
   min-height: 0; /* Fix nested flexbox scrolling issues */
 }
 
@@ -124,9 +124,11 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Contain scrolling to the list content */
+  overflow-y: auto; /* Only allow scrolling here */
+  overflow-x: hidden; /* No horizontal scrollbar */
   border-radius: 4px;
   background-color: rgba(255, 255, 255, 0.03);
+  position: relative; /* For context menus */
 }
 
 .projects-loading,
@@ -236,6 +238,7 @@
   gap: 2px;
   opacity: 0;
   transition: opacity 0.2s;
+  position: relative; /* This ensures menu is positioned relative to actions container */
 }
 
 .project-item:hover .project-actions {
@@ -448,4 +451,70 @@
 
 .project-date {
   margin-right: 8px;
+}
+
+.options-menu {
+  position: fixed; /* Change to fixed positioning */
+  background: #1a2942;
+  border: 1px solid #31415e;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  min-width: 160px;
+  padding: 4px 0;
+  z-index: 1000;
+}
+
+.dark .options-menu {
+  background: #162035;
+  border-color: #263859;
+}
+
+.options-menu button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.options-menu button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.options-menu .delete-option {
+  color: #ef4444;
+  width: 100%;
+  text-align: left;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.options-menu .delete-option:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.dark .options-menu .delete-option {
+  color: #f87171;
+}
+
+.dark .options-menu .delete-option:hover {
+  background-color: rgba(248, 113, 113, 0.1);
+}
+
+/* Fix for Firefox to prevent unwanted scrollbars */
+@-moz-document url-prefix() {
+  .project-manager {
+    overflow-x: hidden;
+    overflow-y: hidden;
+  }
+
+  .tab-content {
+    overflow: hidden;
+  }
 }

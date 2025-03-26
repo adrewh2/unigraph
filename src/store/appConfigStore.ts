@@ -173,8 +173,16 @@ export const setAppConfig = (appConfig: AppConfig) => {
   useAppConfigStore.setState(() => appConfig);
 };
 
-export const getAppConfig = () => {
-  return useAppConfigStore.getState();
+export const getAppConfig = (): AppConfig => {
+  const state = useAppConfigStore.getState();
+  return {
+    activeView: state.activeView,
+    activeSceneGraph: state.activeSceneGraph,
+    windows: state.windows,
+    forceGraph3dOptions: state.forceGraph3dOptions,
+    activeLayout: state.activeLayout,
+    legendMode: state.legendMode,
+  };
 };
 
 export const setIsDarkMode = (isDarkMode: boolean) => {

@@ -577,8 +577,8 @@
 .sidePanelContent {
   flex: 1;
   padding: 8px;
-  overflow-y: auto;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-y: hidden;
+  overflow-x: hidden;
   width: 100%;
   box-sizing: border-box;
 }

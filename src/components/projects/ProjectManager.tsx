@@ -8,11 +8,11 @@ import {
   Folder,
   FolderOpen,
   MinusSquare,
+  MoreVertical,
   Plus,
   PlusSquare,
   RefreshCw,
   Save,
-  Trash2,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { SceneGraph } from "../../core/model/SceneGraph";
@@ -23,7 +23,9 @@ import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import useAppConfigStore, {
   setActiveProjectId,
 } from "../../store/appConfigStore";
+import { addNotification } from "../../store/notificationStore"; // Add import for notifications
 import LoadSceneGraphDialog from "../common/LoadSceneGraphDialog";
+import SaveSceneGraphDialog from "../common/SaveSceneGraphDialog";
 import "./ProjectManager.css";
 import SaveProjectDialog from "./SaveProjectDialog"; // Import the new component
 
@@ -39,6 +41,49 @@ interface TreeNode {
   isGraph: boolean;
   isOpen?: boolean;
 }
+
+interface OptionsMenuProps {
+  onClose: () => void;
+  onExportAs: () => void;
+  onDeleteProject: () => void;
+  buttonRect: DOMRect | null; // Add this prop
+}
+
+const OptionsMenu: React.FC<OptionsMenuProps> = ({
+  onClose,
+  onExportAs,
+  onDeleteProject,
+  buttonRect,
+}) => {
+  useEffect(() => {
+    const handleClickOutside = () => onClose();
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [onClose]);
+
+  return (
+    <div
+      className="options-menu"
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        position: "fixed",
+        top: buttonRect ? buttonRect.bottom + 4 : 0,
+        left: buttonRect ? buttonRect.left : 0,
+      }}
+    >
+      <button onClick={onExportAs}>Export As...</button>
+      <button
+        className="delete-option"
+        onClick={() => {
+          onClose();
+          onDeleteProject();
+        }}
+      >
+        Delete
+      </button>
+    </div>
+  );
+};
 
 const ProjectManager: React.FC<ProjectManagerProps> = ({
   onProjectSelected,
@@ -63,11 +108,17 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   const [showLoadDialog, setShowLoadDialog] = useState(false);
 
   // Add state for the save dialog
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState<string | null>(null);
 
   // Add state for editing project name
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+
+  // Add state for options menu
+  const [optionsMenu, setOptionsMenu] = useState<{
+    id: string;
+    buttonRect: DOMRect | null;
+  } | null>(null);
 
   // Initialize tree data for demo graphs
   useEffect(() => {
@@ -113,20 +164,28 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   const handleSaveCurrent = async () => {
     try {
       if (activeProjectId) {
-        // If we have a selected project, update it directly
         await persistentStore.updateSceneGraph(
           activeProjectId,
           currentSceneGraph
         );
         console.log(`Updated existing project: ${activeProjectId}`);
-        await loadProjects(); // Refresh the list
+        await loadProjects();
+        addNotification({
+          message: "Project saved successfully",
+          type: "success",
+          duration: 8000,
+        });
       } else {
-        // If no project is selected, show the save dialog
-        setShowSaveDialog(true);
+        setShowSaveDialog("saveAs");
       }
     } catch (err) {
       console.error("Error saving project:", err);
       setError("Failed to save project");
+      addNotification({
+        message: "Failed to save project",
+        type: "error",
+        duration: 8000,
+      });
     }
   };
 
@@ -149,10 +208,20 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
       setActiveProjectId(id);
       await loadProjects(); // Refresh the list
       setActiveTab("myProjects"); // Switch to My Projects tab
-      setShowSaveDialog(false); // Close the dialog
+      setShowSaveDialog(null); // Close the dialog
+      addNotification({
+        message: `Project "${name}" saved successfully`,
+        type: "success",
+        duration: 8000,
+      });
     } catch (err) {
       console.error("Error saving project:", err);
       setError("Failed to save project");
+      addNotification({
+        message: "Failed to save new project",
+        type: "error",
+        duration: 8000,
+      });
     }
   };
 
@@ -208,16 +277,25 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
   const handleDeleteProject = async (projectId: string) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
       try {
+        const project = projects.find((p) => p.id === projectId);
         await persistentStore.deleteSceneGraph(projectId);
-
         if (activeProjectId === projectId) {
           setActiveProjectId(null);
         }
-
-        await loadProjects(); // Refresh the list
+        await loadProjects();
+        addNotification({
+          message: `Project "${project?.name || projectId}" deleted`,
+          type: "info",
+          duration: 8000,
+        });
       } catch (err) {
         console.error("Error deleting project:", err);
         setError("Failed to delete project");
+        addNotification({
+          message: "Failed to delete project",
+          type: "error",
+          duration: 8000,
+        });
       }
     }
   };
@@ -241,9 +319,19 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
         });
         await loadProjects(); // Refresh the list
         setActiveTab("myProjects"); // Switch to My Projects tab
+        addNotification({
+          message: `Imported "${file.name}" successfully`,
+          type: "success",
+          duration: 8000,
+        });
       } catch (err) {
         console.error("Error importing project:", err);
         setError("Failed to import project");
+        addNotification({
+          message: `Failed to import "${file.name}"`,
+          type: "error",
+          duration: 8000,
+        });
       }
     };
 
@@ -263,9 +351,20 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
+
+      addNotification({
+        message: `Exported "${fileName}" successfully`,
+        type: "success",
+        duration: 8000,
+      });
     } catch (err) {
       console.error("Error exporting project:", err);
       setError("Failed to export project");
+      addNotification({
+        message: "Failed to export project",
+        type: "error",
+        duration: 8000,
+      });
     }
   };
 
@@ -448,9 +547,19 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
 
       await loadProjects(); // Refresh list
       setEditingProjectId(null);
+      addNotification({
+        message: `Renamed project to "${editingName}"`,
+        type: "success",
+        duration: 8000,
+      });
     } catch (err) {
       console.error("Error updating project name:", err);
       setError("Failed to update project name");
+      addNotification({
+        message: "Failed to rename project",
+        type: "error",
+        duration: 8000,
+      });
     }
   };
 
@@ -459,7 +568,7 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
     try {
       const sceneGraph = await persistentStore.loadSceneGraph(projectId);
       if (sceneGraph) {
-        setShowSaveDialog(true);
+        setShowSaveDialog("saveAs");
         // Update the scene graph with a "Copy of" prefix
         const metadata = sceneGraph.getMetadata();
         sceneGraph.setMetadata({
@@ -467,11 +576,27 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
           name: `Copy of ${metadata.name || "Untitled"}`,
         });
         onProjectSelected(sceneGraph);
+        addNotification({
+          message: "Ready to save copy of project",
+          type: "info",
+          duration: 8000,
+        });
       }
     } catch (err) {
       console.error("Error copying project:", err);
       setError("Failed to copy project");
+      addNotification({
+        message: "Failed to copy project",
+        type: "error",
+        duration: 8000,
+      });
     }
+  };
+
+  const handleOptionsClick = (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation();
+    const buttonRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setOptionsMenu({ id: projectId, buttonRect });
   };
 
   return (
@@ -620,14 +745,11 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
                       <Download size={14} />
                     </button>
                     <button
-                      title="Delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteProject(project.id);
-                      }}
+                      title="Options"
+                      onClick={(e) => handleOptionsClick(e, project.id)}
                       className="project-action-button"
                     >
-                      <Trash2 size={14} />
+                      <MoreVertical size={14} />
                     </button>
                   </div>
                 </div>
@@ -689,15 +811,34 @@ const ProjectManager: React.FC<ProjectManagerProps> = ({
       )}
 
       {/* Add Save Dialog */}
-      {showSaveDialog && (
+      {showSaveDialog === "saveAs" && (
         <SaveProjectDialog
           onSave={handleSaveDialogSubmit}
-          onCancel={() => setShowSaveDialog(false)}
+          onCancel={() => setShowSaveDialog(null)}
           isDarkMode={isDarkMode}
           initialName={currentSceneGraph.getMetadata()?.name || ""}
           initialDescription={
             currentSceneGraph.getMetadata()?.description || ""
           }
+        />
+      )}
+      {showSaveDialog === "exportAs" && (
+        <SaveSceneGraphDialog
+          onClose={() => setShowSaveDialog(null)}
+          sceneGraph={currentSceneGraph}
+        />
+      )}
+
+      {/* Add Options Menu */}
+      {optionsMenu && (
+        <OptionsMenu
+          buttonRect={optionsMenu.buttonRect}
+          onClose={() => setOptionsMenu(null)}
+          onExportAs={() => {
+            setShowSaveDialog("exportAs");
+            setOptionsMenu(null);
+          }}
+          onDeleteProject={() => handleDeleteProject(optionsMenu.id)}
         />
       )}
     </div>

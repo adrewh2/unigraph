@@ -3,7 +3,6 @@ import {
   BookOpen,
   Filter,
   FolderOpen,
-  Home,
   Settings2,
   Share2,
 } from "lucide-react";
@@ -57,8 +56,6 @@ export const createDefaultLeftMenus = ({
   onShowFilterManager,
   onClearFilters,
   onShowPathAnalysis,
-  onShowLoadSceneGraphWindow,
-  onShowSaveSceneGraphDialog,
   showLayoutManager,
   handleLoadLayout,
   activeView, // Important prop for determining which editor to show
@@ -89,57 +86,6 @@ export const createDefaultLeftMenus = ({
           isDarkMode={isDarkMode}
         />
       ),
-    },
-    {
-      id: "project",
-      icon: <Home size={20} className={styles.menuIcon} />,
-      label: "Project",
-      width: getSectionWidth("project"), // Use width from store
-      content: (
-        <div style={{ padding: "8px" }}>
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginBottom: "16px",
-            }}
-          >
-            <button
-              className={styles.submenuButton}
-              style={{ flex: 1 }}
-              onClick={onShowSaveSceneGraphDialog}
-            >
-              Save As
-            </button>
-            <button className={styles.submenuButton} style={{ flex: 1 }}>
-              Save
-            </button>
-            <button
-              className={styles.submenuButton}
-              style={{ flex: 1 }}
-              onClick={onShowLoadSceneGraphWindow}
-            >
-              Load
-            </button>
-          </div>
-          <div>
-            <span>
-              <strong>{sceneGraph.getMetadata().name}</strong>
-            </span>
-          </div>
-        </div>
-      ),
-      subMenus: [
-        { label: "Overview", onClick: () => console.log("Overview clicked") },
-        {
-          label: "Analytics",
-          onClick: () => console.log("Analytics clicked"),
-        },
-        {
-          label: "Statistics",
-          onClick: () => console.log("Statistics clicked"),
-        },
-      ],
     },
     {
       id: "layouts",

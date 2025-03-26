@@ -689,6 +689,7 @@ const AppContent: React.FC<{
         addNotification({
           message: `Loaded SceneGraph: ${graph.getMetadata().name}`,
           type: "success",
+          groupId: "load-scene-graph",
         });
       });
     },
