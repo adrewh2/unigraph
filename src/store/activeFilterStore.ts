@@ -63,4 +63,8 @@ export const saveFiltersToSceneGraph = (sceneGraph: SceneGraph) => {
   }
 };
 
+export const getFilterByName = (filterName: string) => {
+  return getSavedFilters()[filterName];
+};
+
 export default useActiveFilterStore;
