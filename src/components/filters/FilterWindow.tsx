@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { RenderingManager } from "../../controllers/RenderingManager";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { Filter, saveFilter } from "../../store/activeFilterStore";
+import { setActiveFilter } from "../../store/appConfigStore";
 import MultiSelectDropdown from "../common/MultiSelectDropdown";
 import {
   FilterOperator,
@@ -597,8 +598,13 @@ const FilterWindow: React.FC<FilterWindowProps> = ({
 
   const handleApplyFromPreview = useCallback(() => {
     onApplyFilter(filteredItems.map((item) => item.id));
+    setActiveFilter({
+      name: "Custom Filter",
+      description: "Custom Filter Description",
+      filterRules: filterRules,
+    });
     onClose();
-  }, [filteredItems, onApplyFilter, onClose]);
+  }, [filterRules, filteredItems, onApplyFilter, onClose]);
 
   const handleSaveFilter = useCallback(
     (name: string, description: string) => {
