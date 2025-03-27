@@ -4,7 +4,7 @@ import { FilterRuleDefinition } from "../components/filters/FilterRuleDefinition
 import { SceneGraph } from "../core/model/SceneGraph";
 
 export interface Filter {
-  name?: string;
+  name: string;
   description?: string;
   filterRules: FilterRuleDefinition[];
 }

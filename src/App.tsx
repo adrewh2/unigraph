@@ -11,7 +11,7 @@ import React, {
 import { toDot } from "ts-graphviz";
 import { v4 as uuidv4 } from "uuid";
 import "./App.css";
-import { AppConfig } from "./AppConfig";
+import { AppConfig, DEFAULT_APP_CONFIG } from "./AppConfig";
 import PathAnalysisWizard, {
   IPathArgs,
 } from "./components/analysis/PathAnalysisWizard";
@@ -24,7 +24,6 @@ import LayoutManager from "./components/common/LayoutManager";
 import Legend from "./components/common/Legend";
 import LegendModeRadio from "./components/common/LegendModeRadio";
 import FilterManager from "./components/filters/FilterManager";
-import { FilterRuleDefinition } from "./components/filters/FilterRuleDefinition";
 import FilterWindow from "./components/filters/FilterWindow";
 import ImageGalleryV2 from "./components/imageView/ImageGalleryV2";
 import ImageGalleryV3 from "./components/imageView/ImageGalleryV3";
@@ -71,6 +70,7 @@ import {
   Compute_Layout,
   ILayoutEngineResult,
   LayoutEngineOption,
+  LayoutEngineOptionLabels,
   PresetLayoutType,
 } from "./core/layouts/LayoutEngine";
 import { fitToRect, NodePositionData } from "./core/layouts/layoutHelpers";
@@ -98,6 +98,11 @@ import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
+import {
+  getLayoutByName,
+  getSavedLayouts,
+  loadLayoutsFromSceneGraph,
+} from "./store/activeLayoutStore";
 import useActiveLegendConfigStore, {
   setEdgeKeyColor,
   setEdgeKeyVisibility,
@@ -406,40 +411,64 @@ const AppContent: React.FC<{
   );
 
   const handleSetActiveFilterPreset = useCallback(
-    (preset: string | undefined, filterRules: FilterRuleDefinition[]) => {
+    (filter: Filter) => {
       DisplayManager.applyVisibilityFromFilterRulesToGraph(
         currentSceneGraph.getGraph(),
-        filterRules
+        filter.filterRules
       );
       SetNodeAndEdgeLegendsForOnlyVisibleEntities(
         currentSceneGraph,
         legendMode,
-        filterRules
+        filter.filterRules
       );
-      setActiveFilter({ name: preset, filterRules });
+      setActiveFilter(filter);
     },
     [currentSceneGraph, legendMode, setActiveFilter]
   );
 
   const handleSetVisibleNodes = useCallback(
     (nodeIds: string[]) => {
-      handleSetActiveFilterPreset("node id selection", [
-        {
-          id: "node id selection",
-          operator: "include",
-          ruleMode: "entities",
-          conditions: {
-            nodes: nodeIds,
+      handleSetActiveFilterPreset({
+        name: "node id selection",
+        filterRules: [
+          {
+            id: "node id selection",
+            operator: "include",
+            ruleMode: "entities",
+            conditions: {
+              nodes: nodeIds,
+            },
           },
-        },
-      ]);
+        ],
+      });
     },
     [handleSetActiveFilterPreset]
   );
 
   let isComputing = false;
   const safeComputeLayout = useCallback(
-    async (sceneGraph: SceneGraph, layout: LayoutEngineOption) => {
+    async (
+      sceneGraph: SceneGraph,
+      layout: LayoutEngineOption | string | null
+    ) => {
+      if (Object.keys(getSavedLayouts()).includes(layout as string)) {
+        console.log("Skipping layout computation for saved layout", layout);
+        currentSceneGraph.setNodePositions(
+          getLayoutByName(layout as string).positions
+        );
+        setLayoutResult({
+          layoutType: PresetLayoutType.Preset,
+          positions: getLayoutByName(layout as string).positions,
+        });
+        return;
+      }
+      if (
+        layout != null &&
+        !LayoutEngineOptionLabels.includes(layout as LayoutEngineOption)
+      ) {
+        console.error("Invalid layout option", layout);
+      }
+
       if (isComputing) {
         console.log("Already computing layout. Skipping.");
         return;
@@ -459,7 +488,10 @@ const AppContent: React.FC<{
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
       isComputing = true;
-      const output = await Compute_Layout(sceneGraph, layout);
+      const output = await Compute_Layout(
+        sceneGraph,
+        (layout ?? DEFAULT_APP_CONFIG().activeLayout) as LayoutEngineOption
+      );
       if (!output) {
         throw new Error(`Failed to compute layout for ${layout}`);
       }
@@ -472,7 +504,7 @@ const AppContent: React.FC<{
             ...sceneGraph.getDisplayConfig(),
             nodePositions: fitToRect(50, 50, output.positions),
           },
-          layout
+          (layout ?? DEFAULT_APP_CONFIG().activeLayout) as LayoutEngineOption
         );
         const dot = toDot(g);
         const graphviz = await Graphviz.load();
@@ -650,12 +682,16 @@ const AppContent: React.FC<{
       console.log("Loading SceneGraph", graph.getMetadata().name, "...");
       loadDocumentsFromSceneGraph(graph); // clears existing store, and loads in new documents
       loadFiltersFromSceneGraph(graph);
+      loadLayoutsFromSceneGraph(graph);
       if (clearQueryParams) {
         clearUrlOfQueryParams();
         clearGraphFromUrl();
       }
       clearSelections();
-      safeComputeLayout(graph, activeLayout).then(() => {
+      safeComputeLayout(
+        graph,
+        graph.getData().defaultAppConfig?.activeLayout ?? null
+      ).then(() => {
         setCurrentSceneGraph(graph);
         if (graph.getData().defaultAppConfig) {
           setAppConfig(graph.getData().defaultAppConfig!);
@@ -710,7 +746,6 @@ const AppContent: React.FC<{
       });
     },
     [
-      activeLayout,
       clearGraphFromUrl,
       clearUrlOfQueryParams,
       forceGraphInstance,
@@ -1753,6 +1788,7 @@ const AppContent: React.FC<{
           handleFitToView={handleFitToView}
           handleShowEntityTables={() => setShowEntityTables(true)}
           handleLoadSceneGraph={handleLoadSceneGraph}
+          handleSetActiveFilter={handleSetActiveFilterPreset}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>

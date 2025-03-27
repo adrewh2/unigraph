@@ -518,3 +518,39 @@
     overflow: hidden;
   }
 }
+
+/* Ensure the filter manager container takes full height of its parent */
+.filter-manager-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; /* Hide any overflow on the outer container */
+  flex: 1;
+}
+
+/* Critical fix: Ensure the list container scrolls properly */
+.filter-list-container {
+  flex: 1;
+  min-height: 0; /* Critical for nested flex containers in Firefox */
+  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  position: relative; /* Ensure proper stacking context */
+}
+
+/* Additional styles for Firefox */
+@-moz-document url-prefix() {
+  .filter-list-container {
+    overflow-y: scroll; /* Force scrollbar in Firefox */
+    scrollbar-width: thin; /* Use a thin scrollbar in Firefox */
+  }
+}
+
+/* Style for WebKit browsers (Chrome, Safari) */
+.filter-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-list-container::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, 0.5);
+  border-radius: 3px;
+}

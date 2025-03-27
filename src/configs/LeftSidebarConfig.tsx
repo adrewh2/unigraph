@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-vars */
 import {
   Activity,
   BookOpen,
@@ -9,6 +10,7 @@ import {
 import React from "react";
 import FilterManagerV2 from "../components/filters/FilterManagerV2";
 import ForceGraphRenderConfigEditor from "../components/force-graph/ForceGraphRenderConfigEditor";
+import LayoutManagerV2 from "../components/layouts/LayoutManagerV2";
 import ProjectManager from "../components/projects/ProjectManager"; // Import the new component
 import ReactFlowConfigEditor from "../components/react-flow/ReactFlowConfigEditor";
 import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
@@ -18,7 +20,7 @@ import { PresetLayoutType } from "../core/layouts/LayoutEngine";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { extractPositionsFromNodes } from "../data/graphs/blobMesh";
 import styles from "../Sidebar.module.css";
-import { setActiveFilter } from "../store/appConfigStore";
+import { Filter as FFilter } from "../store/activeFilterStore";
 import {
   applyReactFlowConfig,
   getReactFlowConfig,
@@ -63,6 +65,9 @@ export const createDefaultLeftMenus = ({
   activeView, // Important prop for determining which editor to show
   activeFilter,
   handleLoadSceneGraph,
+  handleSetActiveFilter,
+  currentPositions, // Make sure to pass this from the parent,
+  applyNewLayout,
 }: any) => {
   // Add debugging to confirm the activeView value
   console.log("Current active view for display settings:", activeView);
@@ -94,52 +99,28 @@ export const createDefaultLeftMenus = ({
       icon: <Share2 size={20} className={styles.menuIcon} />,
       label: "Layouts",
       content: (
-        <div style={{ padding: "8px" }}>
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginBottom: "16px",
-            }}
-          >
-            <button
-              className={styles.submenuButton}
-              style={{ flex: 1 }}
-              onClick={() => showLayoutManager("save")}
-            >
-              Save
-            </button>
-            <button
-              className={styles.submenuButton}
-              style={{ flex: 1 }}
-              onClick={() => showLayoutManager("load")}
-            >
-              Load
-            </button>
-            <button
-              className={styles.submenuButton}
-              style={{ flex: 1 }}
-              onClick={() => {
-                const positions = extractPositionsFromNodes(sceneGraph);
-                sceneGraph.setNodePositions(positions);
-                handleLoadLayout(positions);
-              }}
-            >
-              Reset
-            </button>
-          </div>
-          <select
-            value={activeLayout}
-            onChange={(e) => onLayoutChange(e.target.value)}
-            className={styles.layoutSelect}
-          >
-            {allLayoutLabels.map((layout) => (
-              <option key={layout} value={layout}>
-                {layout}
-              </option>
-            ))}
-          </select>
-        </div>
+        <LayoutManagerV2
+          onLayoutSelected={(layout) => {
+            // For predefined layouts that don't have positions
+            if (Object.keys(layout.positions).length === 0) {
+              onLayoutChange(layout.name);
+            } else {
+              handleLoadLayout(layout.positions);
+            }
+          }}
+          onSaveCurrentLayout={() => {
+            // This will prompt for name and save
+          }}
+          onShowLayoutManager={() => {}}
+          onResetLayout={() => {
+            const positions = extractPositionsFromNodes(sceneGraph);
+            sceneGraph.setNodePositions(positions);
+            handleLoadLayout(positions);
+          }}
+          sceneGraph={sceneGraph}
+          currentPositions={currentPositions || {}}
+          applyPredefinedLayout={applyNewLayout}
+        />
       ),
     },
     {
@@ -187,7 +168,9 @@ export const createDefaultLeftMenus = ({
           </div>
           {
             <FilterManagerV2
-              onFilterSelected={setActiveFilter}
+              onFilterSelected={(filter: FFilter | null) => {
+                handleSetActiveFilter(filter);
+              }}
               onShowFilter={onShowFilter}
               onShowFilterManager={onShowFilterManager}
               onClearFilters={onClearFilters}

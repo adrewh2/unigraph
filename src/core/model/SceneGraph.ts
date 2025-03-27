@@ -6,6 +6,7 @@ import {
   RenderingManager,
 } from "../../controllers/RenderingManager";
 import { Filter } from "../../store/activeFilterStore";
+import { Layout } from "../../store/activeLayoutStore";
 import { DocumentState } from "../../store/documentStore";
 import { IForceGraphRenderConfig } from "../../store/forceGraphConfigStore";
 import { NodePositionData, Position } from "../layouts/layoutHelpers";
@@ -64,6 +65,7 @@ export type SceneGraphData = {
   graph: Graph;
   displayConfig: RenderingConfig;
   savedFilters?: ObjectOf<Filter>;
+  savedLayouts?: ObjectOf<Layout>;
   displayConfigPresets?: ObjectOf<RenderingConfig>;
   forceGraphDisplayConfig: IForceGraphRenderConfig;
   metadata: ISceneGraphMetadata;
@@ -96,6 +98,13 @@ export class SceneGraph {
 
   getCommittedDisplayConfig() {
     return this.data.committed_DisplayConfig;
+  }
+
+  saveLayout(layout: Layout) {
+    if (!this.data.savedLayouts) {
+      this.data.savedLayouts = {};
+    }
+    this.data.savedLayouts[layout.name] = layout;
   }
 
   // Improved document handling

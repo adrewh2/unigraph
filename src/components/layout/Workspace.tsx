@@ -15,6 +15,7 @@ import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import { DisplayManager } from "../../core/model/DisplayManager";
 import { flyToNode } from "../../core/webgl/webglHelpers";
 import Sidebar from "../../Sidebar";
+import { Filter } from "../../store/activeFilterStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
@@ -63,6 +64,7 @@ interface WorkspaceProps {
   handleFitToView: (activeView: string) => void;
   handleShowEntityTables: () => void;
   handleLoadSceneGraph: (sceneGraph: any) => void;
+  handleSetActiveFilter: (filter: Filter) => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -91,6 +93,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleFitToView,
   handleShowEntityTables,
   handleLoadSceneGraph,
+  handleSetActiveFilter,
 }) => {
   const activeDocument = useActiveDocument();
   const { documents } = useDocumentStore();
@@ -187,6 +190,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
           activeView: activeView, // Make sure this is correctly passed
           activeFilter: activeFilter,
           handleLoadSceneGraph: handleLoadSceneGraph,
+          handleSetActiveFilter: handleSetActiveFilter,
+          applyNewLayout: applyNewLayout,
         })}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
@@ -213,6 +218,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     handleLoadLayout,
     activeFilter,
     handleLoadSceneGraph,
+    handleSetActiveFilter,
     applyNewLayout,
     showLayoutManager,
   ]);
