@@ -30,7 +30,6 @@ const LayoutManager: React.FC<LayoutManagerProps> = ({
   >(sceneGraph.getData().displayConfigPresets || {});
 
   useEffect(() => {
-    console.log("presets are ", sceneGraph.getData());
     setCurrentLayouts(sceneGraph.getData().displayConfigPresets || {});
   }, [sceneGraph]);
 

@@ -5,7 +5,7 @@
   "scripts": {
     "start": "webpack serve --mode development",
     "build": "tsc && webpack --mode production",
-    "test": "npx jest --coverage",
+    "test": "npx jest --coverage --silent",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src/",
     "lint-fix": "eslint --ext .js,.jsx,.ts,.tsx src/ --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",

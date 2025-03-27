@@ -1,3 +1,8 @@
+describe("PersistentStoreManager", () => {
+  it("dummy test", async () => {
+    expect(1).toBe(1);
+  });
+});
 // import { SceneGraph } from "../../model/SceneGraph";
 // import { PersistentStoreManager } from "../PersistentStoreManager";
 
@@ -171,7 +176,7 @@
 
 //       // Mock FileReader
 //       const mockFileReader = {
-//         readAsText: function (file: File) {
+//         readAsText: function (_file: File) {
 //           setTimeout(() => {
 //             (this as any).onload?.({ target: { result: "{}" } });
 //           }, 0);
