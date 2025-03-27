@@ -3,17 +3,12 @@ import {
   Download,
   Edit2,
   Folder,
-  FolderOpen,
   MoreVertical,
   Plus,
   RefreshCw,
   Save,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { SceneGraph } from "../../core/model/SceneGraph";
-import { StoredSceneGraphInfo } from "../../core/storage/IPersistentStore";
-import { persistentStore } from "../../core/storage/PersistentStoreManager";
-import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import useActiveFilterStore, {
   deleteFilter,
   Filter,
@@ -21,26 +16,15 @@ import useActiveFilterStore, {
   getSavedFilters,
   saveFilter,
 } from "../../store/activeFilterStore";
-import useAppConfigStore, {
-  setActiveFilter,
-  setActiveProjectId,
-} from "../../store/appConfigStore";
+import useAppConfigStore, { setActiveFilter } from "../../store/appConfigStore";
 import { addNotification } from "../../store/notificationStore"; // Add import for notifications
-import LoadSceneGraphDialog from "../common/LoadSceneGraphDialog";
-import SaveSceneGraphDialog from "../common/SaveSceneGraphDialog";
 import "./FilterManagerV2.css";
-import SaveFilterDialog from "./SaveFilterDialog";
 
 interface FilterManagerV2Props {
   onFilterSelected: (filter: Filter) => void;
-}
-
-interface TreeNode {
-  id: string;
-  label: string;
-  children?: TreeNode[];
-  isGraph: boolean;
-  isOpen?: boolean;
+  onShowFilter: () => void;
+  onShowFilterManager: () => void;
+  onClearFilters: () => void;
 }
 
 interface OptionsMenuProps {
@@ -88,6 +72,9 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
 
 const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
   onFilterSelected,
+  onShowFilter,
+  onShowFilterManager,
+  onClearFilters,
 }) => {
   const { activeFilter } = useAppConfigStore();
   const { savedFilters } = useActiveFilterStore();
@@ -96,7 +83,7 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Add search functionality
-  const [searchTerm, setSearchTerm] = useState("");
+  //   const [searchTerm, setSearchTerm] = useState("");
 
   // Add state for showing the load dialog
   const [showLoadDialog, setShowLoadDialog] = useState(false);
@@ -113,25 +100,6 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
     id: string;
     buttonRect: DOMRect | null;
   } | null>(null);
-
-  // Initialize tree data for demo graphs
-  useEffect(() => {
-    const initialTreeData: TreeNode[] = Object.entries(DEMO_SCENE_GRAPHS).map(
-      ([category, { graphs }]) => ({
-        id: category,
-        label: category,
-        isGraph: false,
-        isOpen: false,
-        children: Object.keys(graphs).map((graphId) => ({
-          id: graphId,
-          label: graphId,
-          isGraph: true,
-        })),
-      })
-    );
-
-    setTreeData(initialTreeData);
-  }, []);
 
   // Load the list of projects
   const loadFilters = async () => {
@@ -156,15 +124,12 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
   // Save current scene graph - updated to show dialog for new projects
   const handleSaveCurrent = async () => {
     try {
-      if (activeProjectId) {
-        await persistentStore.updateSceneGraph(
-          activeProjectId,
-          currentSceneGraph
-        );
-        console.log(`Updated existing project: ${activeProjectId}`);
+      if (activeFilter) {
+        saveFilter(activeFilter);
+        console.log(`Updated existing filter: ${activeFilter.name}`);
         await loadFilters();
         addNotification({
-          message: "Project saved successfully",
+          message: "Filter saved successfully",
           type: "success",
           duration: 8000,
         });
@@ -172,46 +137,10 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
         setShowSaveDialog("saveAs");
       }
     } catch (err) {
-      console.error("Error saving project:", err);
-      setError("Failed to save project");
+      console.error("Error saving filter:", err);
+      setError("Failed to save filter");
       addNotification({
-        message: "Failed to save project",
-        type: "error",
-        duration: 8000,
-      });
-    }
-  };
-
-  // Add handler for save dialog submit
-  const handleSaveDialogSubmit = async (name: string, description: string) => {
-    try {
-      // Update the metadata in the scene graph
-      const metadata = currentSceneGraph.getMetadata() || {};
-      currentSceneGraph.setMetadata({
-        ...metadata,
-        name,
-        description,
-      });
-
-      // Save the scene graph
-      const id = await persistentStore.saveSceneGraph(currentSceneGraph, {
-        createThumbnail: true,
-      });
-
-      setActiveProjectId(id);
-      await loadFilters(); // Refresh the list
-      setActiveTab("myProjects"); // Switch to My Projects tab
-      setShowSaveDialog(null); // Close the dialog
-      addNotification({
-        message: `Project "${name}" saved successfully`,
-        type: "success",
-        duration: 8000,
-      });
-    } catch (err) {
-      console.error("Error saving project:", err);
-      setError("Failed to save project");
-      addNotification({
-        message: "Failed to save new project",
+        message: "Failed to save filter",
         type: "error",
         duration: 8000,
       });
@@ -219,54 +148,21 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
   };
 
   // Load a project from persistent storage
-  const handleLoadProject = async (projectId: string) => {
+  const handleLoadFilter = (filterName: string) => {
     try {
-      const sceneGraph = await persistentStore.loadSceneGraph(projectId);
-
-      if (sceneGraph) {
-        setActiveProjectId(projectId);
-        setSelectedDemoId(null);
-        onProjectSelected(sceneGraph);
+      const filter = getFilterByName(filterName);
+      if (filter) {
+        setActiveFilter(filter);
       } else {
-        setError("Project not found");
+        setError("Filter not found");
       }
     } catch (err) {
-      console.error("Error loading project:", err);
-      setError("Failed to load project");
+      console.error("Error loading filter:", err);
+      setError("Failed to load filter");
     }
   };
 
-  // Load a demo graph
-  const handleLoadDemoGraph = async (graphId: string) => {
-    try {
-      // Find the category that contains this graph
-      const category = Object.entries(DEMO_SCENE_GRAPHS).find(
-        ([_, { graphs }]) => Object.keys(graphs).includes(graphId)
-      )?.[0];
-
-      if (!category) {
-        throw new Error(`Graph ${graphId} not found in any category`);
-      }
-
-      const graph = DEMO_SCENE_GRAPHS[category].graphs[graphId];
-      let sceneGraph: SceneGraph;
-
-      if (typeof graph === "function") {
-        sceneGraph = await graph();
-      } else {
-        sceneGraph = graph;
-      }
-
-      setSelectedDemoId(graphId);
-      setActiveProjectId(null);
-      onProjectSelected(sceneGraph);
-    } catch (err) {
-      console.error("Error loading demo graph:", err);
-      setError("Failed to load demo graph");
-    }
-  };
-
-  // Delete a project
+  // Delete a filter
   const handleDeleteFilter = async (filterName: string) => {
     if (window.confirm("Are you sure you want to delete this filter?")) {
       try {
@@ -350,13 +246,9 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
   };
 
   // Add handlers for edit and copy actions
-  const handleStartEdit = (
-    e: React.MouseEvent,
-    project: StoredSceneGraphInfo
-  ) => {
+  const handleStartEdit = (e: React.MouseEvent, filter: Filter) => {
     e.stopPropagation();
-    setEditingFilterId(project.id);
-    setEditingName(project.name);
+    setEditingName(filter.name!);
   };
 
   const handleSaveEdit = async (e: React.MouseEvent, filterName: string) => {
@@ -425,9 +317,9 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
     <div className={`project-manager`}>
       {/* Header */}
       <div className="project-manager-header">
-        <h3>Projects</h3>
+        <h3>Filters</h3>
         <div className="project-manager-actions">
-          <button title="New" onClick={handleNew} className="action-button">
+          <button title="New" onClick={onShowFilter} className="action-button">
             <Plus size={16} />
           </button>
           <button
@@ -436,13 +328,6 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
             className="action-button"
           >
             <Save size={16} />
-          </button>
-          <button
-            title="Import"
-            onClick={handleImport}
-            className="action-button"
-          >
-            <FolderOpen size={16} />
           </button>
           <button
             title="Refresh"
@@ -462,37 +347,31 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
         {/* My Projects Tab */}
         <div className="projects-list">
           {loading ? (
-            <div className="projects-loading">Loading projects...</div>
+            <div className="projects-loading">Loading filters...</div>
           ) : filters.length === 0 ? (
             <div className="projects-empty">
-              <p>No saved projects</p>
-              <button
-                className="new-project-button"
-                onClick={handleSaveCurrent}
-              >
-                <Plus size={16} /> Save Current as Project
-              </button>
+              <p>No saved Filters</p>
             </div>
           ) : (
             filters.map((filter) => (
               <div
                 key={filter.name}
                 className={`project-item ${filter.name === filter.name ? "selected" : ""}`}
-                onClick={() => handleLoadFilter(filter)}
+                onClick={() => handleLoadFilter(filter.name!)}
               >
                 <div className="project-icon">
                   <Folder size={18} />
                 </div>
                 <div className="project-details">
                   <div className="project-name">
-                    {editingFilterId === project.id ? (
+                    {editingFilterId === filter.name ? (
                       <input
                         type="text"
                         value={editingName}
                         onChange={(e) => setEditingName(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
-                            handleSaveEdit(e as any, project.id);
+                            handleSaveEdit(e as any, filter.name!);
                           } else if (e.key === "Escape") {
                             setEditingFilterId(null);
                           }
@@ -502,21 +381,7 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
                         autoFocus
                       />
                     ) : (
-                      project.name
-                    )}
-                  </div>
-                  <div className="project-dates">
-                    <span className="project-date-label">Modified:</span>
-                    <span className="project-date">
-                      {new Date(project.lastModified).toLocaleString()}
-                    </span>
-                    {project.createdAt && (
-                      <>
-                        <span className="project-date-label">Created:</span>
-                        <span className="project-date">
-                          {new Date(project.createdAt).toLocaleString()}
-                        </span>
-                      </>
+                      filter.name
                     )}
                   </div>
                 </div>
@@ -524,9 +389,9 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
                   <button
                     title="Edit Name"
                     onClick={(e) =>
-                      editingFilterId === project.id
-                        ? handleSaveEdit(e, project.id)
-                        : handleStartEdit(e, project)
+                      editingFilterId === filter.name
+                        ? handleSaveEdit(e, filter.name)
+                        : handleStartEdit(e, filter)
                     }
                     className="project-action-button"
                   >
@@ -534,7 +399,7 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
                   </button>
                   <button
                     title="Copy"
-                    onClick={(e) => handleCopy(e, project.id)}
+                    onClick={(e) => handleCopy(e, filter.name!)}
                     className="project-action-button"
                   >
                     <Copy size={14} />
@@ -543,7 +408,7 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
                     title="Export"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleExport(project.id);
+                      handleExport(filter.name!);
                     }}
                     className="project-action-button"
                   >
@@ -551,7 +416,7 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
                   </button>
                   <button
                     title="Options"
-                    onClick={(e) => handleOptionsClick(e, project.id)}
+                    onClick={(e) => handleOptionsClick(e, filter.name!)}
                     className="project-action-button"
                   >
                     <MoreVertical size={14} />
@@ -563,7 +428,7 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
         </div>
       </div>
 
-      {/* Add LoadSceneGraphDialog */}
+      {/* Add LoadSceneGraphDialog
       {showLoadDialog && (
         <LoadSceneGraphDialog
           onClose={() => setShowLoadDialog(false)}
@@ -571,16 +436,15 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
             handleLoadDemoGraph(key);
             setShowLoadDialog(false);
           }}
-          isDarkMode={isDarkMode}
           handleLoadSceneGraph={(sceneGraph) => {
             onProjectSelected(sceneGraph);
             setShowLoadDialog(false);
           }}
         />
-      )}
+      )} */}
 
       {/* Add Save Dialog */}
-      {showSaveDialog === "saveAs" && (
+      {/* {showSaveDialog === "saveAs" && (
         <SaveFilterDialog
           onSave={handleSaveDialogSubmit}
           onClose={() => setShowSaveDialog(null)}
@@ -590,13 +454,13 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
           // currentSceneGraph.getMetadata()?.description || ""
           //   }
         />
-      )}
-      {showSaveDialog === "exportAs" && (
+      )} */}
+      {/* {showSaveDialog === "exportAs" && (
         <SaveSceneGraphDialog
           onClose={() => setShowSaveDialog(null)}
           sceneGraph={currentSceneGraph}
         />
-      )}
+      )} */}
 
       {/* Add Options Menu */}
       {optionsMenu && (
@@ -607,7 +471,7 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
             setShowSaveDialog("exportAs");
             setOptionsMenu(null);
           }}
-          onDeleteProject={() => handleDeleteFilter(optionsMenu.id)}
+          onDeleteFilter={() => handleDeleteFilter(optionsMenu.id)}
         />
       )}
     </div>

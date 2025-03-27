@@ -7,6 +7,7 @@ import {
   Share2,
 } from "lucide-react";
 import React from "react";
+import FilterManagerV2 from "../components/filters/FilterManagerV2";
 import ForceGraphRenderConfigEditor from "../components/force-graph/ForceGraphRenderConfigEditor";
 import ProjectManager from "../components/projects/ProjectManager"; // Import the new component
 import ReactFlowConfigEditor from "../components/react-flow/ReactFlowConfigEditor";
@@ -17,6 +18,7 @@ import { PresetLayoutType } from "../core/layouts/LayoutEngine";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { extractPositionsFromNodes } from "../data/graphs/blobMesh";
 import styles from "../Sidebar.module.css";
+import { setActiveFilter } from "../store/appConfigStore";
 import {
   applyReactFlowConfig,
   getReactFlowConfig,
@@ -152,35 +154,45 @@ export const createDefaultLeftMenus = ({
       ),
       label: "Filters",
       content: (
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            padding: "8px",
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            onClick={onShowFilter}
-            className={styles.submenuButton}
-            style={{ flex: "1", minWidth: "70px" }}
+        <div>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              padding: "8px",
+              flexWrap: "wrap",
+            }}
           >
-            Create
-          </button>
-          <button
-            onClick={onShowFilterManager}
-            className={styles.submenuButton}
-            style={{ flex: "1", minWidth: "70px" }}
-          >
-            Load
-          </button>
-          <button
-            onClick={onClearFilters}
-            className={styles.submenuButton}
-            style={{ flex: "1", minWidth: "70px" }}
-          >
-            Clear
-          </button>
+            <button
+              onClick={onShowFilter}
+              className={styles.submenuButton}
+              style={{ flex: "1", minWidth: "70px" }}
+            >
+              Create
+            </button>
+            <button
+              onClick={onShowFilterManager}
+              className={styles.submenuButton}
+              style={{ flex: "1", minWidth: "70px" }}
+            >
+              Load
+            </button>
+            <button
+              onClick={onClearFilters}
+              className={styles.submenuButton}
+              style={{ flex: "1", minWidth: "70px" }}
+            >
+              Clear
+            </button>
+          </div>
+          {
+            <FilterManagerV2
+              onFilterSelected={setActiveFilter}
+              onShowFilter={onShowFilter}
+              onShowFilterManager={onShowFilterManager}
+              onClearFilters={onClearFilters}
+            />
+          }
         </div>
       ),
     },
