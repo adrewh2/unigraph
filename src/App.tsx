@@ -136,7 +136,12 @@ import useGraphInteractionStore, {
 } from "./store/graphInteractionStore";
 import { addNotification } from "./store/notificationStore";
 import useWorkspaceConfigStore, {
+  getLeftSidebarConfig,
+  getRightSidebarConfig,
+  setLeftActiveSection,
+  setLeftSidebarConfig,
   setRightActiveSection,
+  setRightSidebarConfig,
 } from "./store/workspaceConfigStore";
 
 // Import the persistent store
@@ -681,6 +686,19 @@ const AppContent: React.FC<{
         // graph.getEntityCache().addEntities(IMAGE_ANNOTATION_ENTITIES());
 
         setActiveFilter(graph.getData().defaultAppConfig?.activeFilter ?? null);
+
+        if (graph.getData()?.defaultAppConfig?.workspaceConfig) {
+          setLeftSidebarConfig(
+            graph.getData()!.defaultAppConfig!.workspaceConfig!
+              .leftSidebarConfig
+          );
+          setLeftActiveSection(getLeftSidebarConfig().activeSectionId);
+          setRightSidebarConfig(
+            graph.getData()!.defaultAppConfig!.workspaceConfig!
+              .rightSidebarConfig
+          );
+          setRightActiveSection(getRightSidebarConfig().activeSectionId);
+        }
 
         const tock = Date.now();
         console.log("TOTAL TIME", tock - tick);

@@ -2,6 +2,7 @@ import { RenderingManager__DisplayMode } from "./controllers/RenderingManager";
 import { CustomLayoutType } from "./core/layouts/CustomLayoutEngine";
 import { LayoutEngineOption } from "./core/layouts/LayoutEngine";
 import { Filter } from "./store/activeFilterStore";
+import { ISidebarConfig } from "./store/workspaceConfigStore";
 // import { SceneGraph } from "./core/model/SceneGraph";
 
 export type ForceGraph3dLayoutMode = "Physics" | "Layout";
@@ -20,6 +21,10 @@ export type AppConfig = {
   activeLayout: LayoutEngineOption;
   activeFilter: Filter | null;
   legendMode: RenderingManager__DisplayMode;
+  workspaceConfig?: {
+    leftSidebarConfig: ISidebarConfig;
+    rightSidebarConfig: ISidebarConfig;
+  };
 };
 
 export const DEFAULT_APP_CONFIG = (): AppConfig => {

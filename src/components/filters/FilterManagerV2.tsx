@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-vars */
 import {
   Copy,
   Download,
@@ -107,7 +108,8 @@ const FilterManagerV2: React.FC<FilterManagerV2Props> = ({
     setError(null);
 
     try {
-      setFilters(Object.values(getSavedFilters()));
+      const savedFilters = [...Object.values(getSavedFilters())];
+      setFilters(savedFilters);
     } catch (err) {
       console.error("Error loading projects:", err);
       setError("Failed to load projects");
