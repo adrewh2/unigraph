@@ -1,30 +1,66 @@
 import { create } from "zustand";
+import { ObjectOf } from "../App";
 import { FilterRuleDefinition } from "../components/filters/FilterRuleDefinition";
+import { SceneGraph } from "../core/model/SceneGraph";
 
-interface Filter {
+export interface Filter {
   name?: string;
   description?: string;
   filterRules: FilterRuleDefinition[];
 }
 
 interface ActiveFiltersState {
-  activeFilter: Filter | null;
-  setActiveFilter: (activeFilter: Filter | null) => void;
-  getActiveFilter: () => Filter | null;
+  savedFilters: ObjectOf<Filter>;
+  saveFilter: (filter: Filter) => void;
+  deleteFilter: (filterName: string) => void;
+  getSavedFilters: () => ObjectOf<Filter>;
+  clearFilters: () => void;
 }
 
 const useActiveFilterStore = create<ActiveFiltersState>((set, get) => ({
-  activeFilter: null,
-  setActiveFilter: (activeFilter) => set({ activeFilter }),
-  getActiveFilter: () => get().activeFilter,
+  savedFilters: {},
+  saveFilter: (filter) => {
+    const savedFilters = { ...get().savedFilters };
+    savedFilters[filter.name!] = filter;
+    set({ savedFilters });
+  },
+  deleteFilter: (filterName) => {
+    const savedFilters = { ...get().savedFilters };
+    delete savedFilters[filterName];
+    set({ savedFilters });
+  },
+  getSavedFilters: () => get().savedFilters,
+
+  clearFilters: () => {
+    set({ savedFilters: {} });
+  },
 }));
 
-export const setActiveFilter = (activeFilter: Filter | null) => {
-  useActiveFilterStore.getState().setActiveFilter(activeFilter);
+export const saveFilter = (filter: Filter) => {
+  useActiveFilterStore.getState().saveFilter(filter);
 };
 
-export const getActiveFilter = () => {
-  return useActiveFilterStore.getState().getActiveFilter();
+export const deleteFilter = (filterName: string) => {
+  useActiveFilterStore.getState().deleteFilter(filterName);
+};
+
+export const getSavedFilters = () => {
+  return useActiveFilterStore.getState().getSavedFilters();
+};
+
+export const loadFiltersFromSceneGraph = (sceneGraph: SceneGraph) => {
+  const savedFilters = sceneGraph.getSavedFilters() ?? {};
+  for (const filterName in savedFilters) {
+    saveFilter(savedFilters[filterName]);
+  }
+};
+
+export const saveFiltersToSceneGraph = (sceneGraph: SceneGraph) => {
+  sceneGraph.clearFilters();
+  const savedFilters = getSavedFilters();
+  for (const filterName in savedFilters) {
+    sceneGraph.saveFilter(filterName, savedFilters[filterName]);
+  }
 };
 
 export default useActiveFilterStore;

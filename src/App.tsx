@@ -24,10 +24,7 @@ import LayoutManager from "./components/common/LayoutManager";
 import Legend from "./components/common/Legend";
 import LegendModeRadio from "./components/common/LegendModeRadio";
 import FilterManager from "./components/filters/FilterManager";
-import {
-  FilterPreset,
-  FilterRuleDefinition,
-} from "./components/filters/FilterRuleDefinition";
+import { FilterRuleDefinition } from "./components/filters/FilterRuleDefinition";
 import FilterWindow from "./components/filters/FilterWindow";
 import ImageGalleryV2 from "./components/imageView/ImageGalleryV2";
 import ImageGalleryV3 from "./components/imageView/ImageGalleryV3";
@@ -66,7 +63,6 @@ import {
   updateNodePositions,
   zoomToFit,
 } from "./core/force-graph/createForceGraph";
-import { songAnnotation247_2_entities } from "./core/force-graph/dynamics/247-2";
 import { syncMissingNodesAndEdgesInForceGraph } from "./core/force-graph/forceGraphHelpers";
 import { ForceGraphManager } from "./core/force-graph/ForceGraphManager";
 import { enableZoomAndPanOnSvg } from "./core/graphviz/appHelpers";
@@ -92,7 +88,6 @@ import {
 } from "./core/model/utils";
 import { exportGraphDataForReactFlow } from "./core/react-flow/exportGraphDataForReactFlow";
 import { persistentStore } from "./core/storage/PersistentStoreManager";
-import { IMAGE_ANNOTATION_ENTITIES } from "./core/types/ImageAnnotation";
 import { flyToNode } from "./core/webgl/webglHelpers";
 import {
   getAllDemoSceneGraphKeys,
@@ -102,7 +97,7 @@ import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
-import useActiveFilterStore from "./store/activeFilterStore";
+import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
 import useActiveLegendConfigStore, {
   setEdgeKeyColor,
   setEdgeKeyVisibility,
@@ -236,7 +231,7 @@ const AppContent: React.FC<{
 
   const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
 
-  const { activeFilter, setActiveFilter } = useActiveFilterStore();
+  const { activeFilter, setActiveFilter } = useAppConfigStore();
 
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -649,6 +644,7 @@ const AppContent: React.FC<{
       const tick = Date.now();
       console.log("Loading SceneGraph", graph.getMetadata().name, "...");
       loadDocumentsFromSceneGraph(graph); // clears existing store, and loads in new documents
+      loadFiltersFromSceneGraph(graph);
       if (clearQueryParams) {
         clearUrlOfQueryParams();
         clearGraphFromUrl();
@@ -681,8 +677,10 @@ const AppContent: React.FC<{
         });
 
         // DEV LOGIC
-        graph.getEntityCache().addEntities(songAnnotation247_2_entities);
-        graph.getEntityCache().addEntities(IMAGE_ANNOTATION_ENTITIES());
+        // graph.getEntityCache().addEntities(songAnnotation247_2_entities);
+        // graph.getEntityCache().addEntities(IMAGE_ANNOTATION_ENTITIES());
+
+        setActiveFilter(graph.getData().defaultAppConfig?.activeFilter ?? null);
 
         const tock = Date.now();
         console.log("TOTAL TIME", tock - tick);
@@ -700,6 +698,7 @@ const AppContent: React.FC<{
       forceGraphInstance,
       handleDisplayConfigChanged,
       safeComputeLayout,
+      setActiveFilter,
       setCurrentSceneGraph,
       setLegendMode,
     ]
@@ -1606,18 +1605,18 @@ const AppContent: React.FC<{
   };
 
   const handleLoadFilter = useCallback(
-    (preset: FilterPreset) => {
+    (preset: Filter) => {
       DisplayManager.applyVisibilityFromFilterRulesToGraph(
         currentSceneGraph.getGraph(),
-        preset.rules
+        preset.filterRules
       );
       SetNodeAndEdgeLegendsForOnlyVisibleEntities(
         currentSceneGraph,
         legendMode,
-        preset.rules
+        preset.filterRules
       );
       setShowFilterManager(false);
-      setActiveFilter({ name: preset.name, filterRules: preset.rules });
+      setActiveFilter({ name: preset.name, filterRules: preset.filterRules });
     },
     [currentSceneGraph, legendMode, setActiveFilter]
   );

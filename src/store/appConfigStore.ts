@@ -4,10 +4,13 @@ import { RenderingManager__DisplayMode } from "../controllers/RenderingManager";
 import { LayoutEngineOption } from "../core/layouts/LayoutEngine";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { ActiveView, AppConfig, DEFAULT_APP_CONFIG } from "./../AppConfig";
+import { Filter } from "./activeFilterStore";
 
 export type AppConfigActions = {
   setActiveView: (activeView: ActiveView) => void;
   setActiveSceneGraph: (activeSceneGraph: string) => void;
+  setActiveFilter(filter: Filter | null): void;
+  getActiveFilter(): Filter | null;
   setWindows: (windows: { showEntityDataCard: boolean }) => void;
   setForceGraph3dOptions: (forceGraph3dOptions: {
     layout: "Physics" | "Layout";
@@ -46,6 +49,11 @@ export type AppState = AppConfig &
 const DEFAULTS = DEFAULT_APP_CONFIG();
 
 const useAppConfigStore = create<AppState>((set) => ({
+  activeFilter: null,
+  setActiveFilter: (activeFilter: Filter | null) => set({ activeFilter }),
+  getActiveFilter: (): Filter | null =>
+    useAppConfigStore.getState().activeFilter,
+
   activeProjectId: "undefined",
   getActiveProjectId: (): string | null =>
     useAppConfigStore.getState().activeProjectId,
@@ -182,6 +190,7 @@ export const getAppConfig = (): AppConfig => {
     forceGraph3dOptions: state.forceGraph3dOptions,
     activeLayout: state.activeLayout,
     legendMode: state.legendMode,
+    activeFilter: state.activeFilter,
   };
 };
 
@@ -242,6 +251,16 @@ export const setActiveProjectId = (activeProjectId: string | null) => {
 
 export const getActiveProjectId = () => {
   return useAppConfigStore.getState().activeProjectId;
+};
+
+export const setActiveFilter = (activeFilter: Filter | null) => {
+  useAppConfigStore.setState(() => ({
+    activeFilter,
+  }));
+};
+
+export const getActiveFilter = () => {
+  return useAppConfigStore.getState().activeFilter;
 };
 
 export default useAppConfigStore;

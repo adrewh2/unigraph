@@ -1,8 +1,7 @@
 import { Download, Edit, Save, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { SceneGraph } from "../core/model/SceneGraph";
-import { getActiveFilter } from "../store/activeFilterStore";
-import { getActiveLayout } from "../store/appConfigStore";
+import useAppConfigStore from "../store/appConfigStore";
 import "./SceneGraphInfoEditor.css";
 
 interface SceneGraphInfoEditorProps {
@@ -18,9 +17,7 @@ const SceneGraphInfoEditor: React.FC<SceneGraphInfoEditorProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
-
-  const activeLayout = getActiveLayout();
-  const activeFilter = getActiveFilter()?.name;
+  const { activeFilter, activeLayout } = useAppConfigStore();
 
   // Load data from scene graph metadata
   useEffect(() => {
@@ -164,7 +161,7 @@ const SceneGraphInfoEditor: React.FC<SceneGraphInfoEditorProps> = ({
                 <div className="info-item">
                   <span className="info-label">Active Filter:</span>
                   <span className="info-value filter-active">
-                    {activeFilter}
+                    {activeFilter.name ?? "Unnamed Filter"}
                   </span>
                 </div>
               )}

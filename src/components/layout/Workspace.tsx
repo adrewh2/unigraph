@@ -15,7 +15,6 @@ import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import { DisplayManager } from "../../core/model/DisplayManager";
 import { flyToNode } from "../../core/webgl/webglHelpers";
 import Sidebar from "../../Sidebar";
-import useActiveFilterStore from "../../store/activeFilterStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
@@ -108,7 +107,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
   const { activeView, activeLayout, forceGraph3dOptions, forceGraphInstance } =
     useAppConfigStore();
 
-  const { setActiveFilter, activeFilter } = useActiveFilterStore();
+  const { setActiveFilter, activeFilter } = useAppConfigStore();
 
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {

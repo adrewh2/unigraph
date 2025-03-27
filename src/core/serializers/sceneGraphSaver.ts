@@ -1,3 +1,4 @@
+import { getSavedFilters } from "../../store/activeFilterStore";
 import {
   getEdgeLegendConfig,
   getNodeLegendConfig,
@@ -15,6 +16,7 @@ export const saveAppConfigToSceneGraph = (sceneGraph: SceneGraph) => {
   }
   sceneGraph.getData().displayConfig.mode = getLegendMode();
   sceneGraph.commitDisplayConfig();
+  sceneGraph.getData().savedFilters = getSavedFilters();
   sceneGraph.getData().defaultAppConfig = getAppConfig();
   return sceneGraph;
 };

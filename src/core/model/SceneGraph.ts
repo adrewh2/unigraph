@@ -1,11 +1,11 @@
 import { AppConfig } from "../../AppConfig";
-import { FilterPreset } from "../../components/filters/FilterRuleDefinition";
 import {
   CLONE_RENDERING_CONFIG,
   GET_DEFAULT_RENDERING_CONFIG,
   RenderingConfig,
   RenderingManager,
 } from "../../controllers/RenderingManager";
+import { Filter } from "../../store/activeFilterStore";
 import { DocumentState } from "../../store/documentStore";
 import { IForceGraphRenderConfig } from "../../store/forceGraphConfigStore";
 import { NodePositionData, Position } from "../layouts/layoutHelpers";
@@ -63,7 +63,7 @@ export type ISceneGraphArgs = Partial<SceneGraphData>;
 export type SceneGraphData = {
   graph: Graph;
   displayConfig: RenderingConfig;
-  filterPresets?: ObjectOf<FilterPreset>;
+  savedFilters?: ObjectOf<Filter>;
   displayConfigPresets?: ObjectOf<RenderingConfig>;
   forceGraphDisplayConfig: IForceGraphRenderConfig;
   metadata: ISceneGraphMetadata;
@@ -308,15 +308,19 @@ export class SceneGraph {
     );
   }
 
-  saveFilterPreset(name: string, preset: FilterPreset) {
-    if (!this.data.filterPresets) {
-      this.data.filterPresets = {};
+  saveFilter(name: string, filter: Filter) {
+    if (!this.data.savedFilters) {
+      this.data.savedFilters = {};
     }
-    this.data.filterPresets[name] = preset;
+    this.data.savedFilters[name] = filter;
   }
 
-  getFilterPresets() {
-    return this.data.filterPresets || {};
+  getSavedFilters() {
+    return this.data.savedFilters;
+  }
+
+  clearFilters() {
+    this.data.savedFilters = {};
   }
 
   getNodesByType(type: string) {

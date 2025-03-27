@@ -1,6 +1,7 @@
 import { RenderingManager__DisplayMode } from "./controllers/RenderingManager";
 import { CustomLayoutType } from "./core/layouts/CustomLayoutEngine";
 import { LayoutEngineOption } from "./core/layouts/LayoutEngine";
+import { Filter } from "./store/activeFilterStore";
 // import { SceneGraph } from "./core/model/SceneGraph";
 
 export type ForceGraph3dLayoutMode = "Physics" | "Layout";
@@ -17,6 +18,7 @@ export type AppConfig = {
     layout: ForceGraph3dLayoutMode;
   };
   activeLayout: LayoutEngineOption;
+  activeFilter: Filter | null;
   legendMode: RenderingManager__DisplayMode;
 };
 
@@ -32,5 +34,6 @@ export const DEFAULT_APP_CONFIG = (): AppConfig => {
     },
     activeLayout: CustomLayoutType.Random,
     legendMode: "type",
+    activeFilter: null,
   };
 };
