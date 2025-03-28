@@ -11,11 +11,12 @@ import {
 } from "../../configs/RightSidebarConfig";
 import { findNodeInForceGraph } from "../../core/force-graph/forceGraphHelpers";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
-import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import { DisplayManager } from "../../core/model/DisplayManager";
+import { SceneGraph } from "../../core/model/SceneGraph";
 import { flyToNode } from "../../core/webgl/webglHelpers";
 import Sidebar from "../../Sidebar";
 import { Filter } from "../../store/activeFilterStore";
+import { Layout } from "../../store/activeLayoutStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
@@ -60,10 +61,10 @@ interface WorkspaceProps {
   showLoadSceneGraphWindow: () => void;
   showSaveSceneGraphDialog: () => void;
   showLayoutManager: (mode: "save" | "load") => void;
-  handleLoadLayout: (nodePositionData: NodePositionData) => void;
+  handleLoadLayout: (layout: Layout) => void;
   handleFitToView: (activeView: string) => void;
   handleShowEntityTables: () => void;
-  handleLoadSceneGraph: (sceneGraph: any) => void;
+  handleLoadSceneGraph: (sceneGraph: SceneGraph) => void;
   handleSetActiveFilter: (filter: Filter) => void;
 }
 

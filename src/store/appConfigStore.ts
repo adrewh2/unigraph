@@ -167,7 +167,7 @@ export const getForceGraph3dOptions = () => {
   return useAppConfigStore.getState().forceGraph3dOptions;
 };
 
-export const setActiveLayout = (activeLayout: LayoutEngineOption) => {
+export const setActiveLayout = (activeLayout: LayoutEngineOption | string) => {
   useAppConfigStore.setState(() => ({
     activeLayout,
     forceGraph3dOptions: { layout: "Layout" },

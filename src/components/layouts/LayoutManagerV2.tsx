@@ -16,6 +16,7 @@ import { LayoutEngineOptionLabels } from "../../core/layouts/LayoutEngine";
 import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import useActiveLayoutStore, {
+  getLayoutByName,
   Layout,
   saveLayout,
 } from "../../store/activeLayoutStore";
@@ -102,6 +103,12 @@ const LayoutManagerV2: React.FC<LayoutManagerV2Props> = ({
 
   // Get current active layout
   const currentActiveLayout = useAppConfigStore((state) => state.activeLayout);
+
+  useEffect(() => {
+    if (currentActiveLayout) {
+      setActiveLayout(getLayoutByName(currentActiveLayout));
+    }
+  }, [currentActiveLayout]);
 
   // Convert savedLayouts object to array for rendering
   const layoutsList = Object.values(savedLayouts).sort(

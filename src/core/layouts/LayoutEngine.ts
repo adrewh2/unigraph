@@ -31,7 +31,7 @@ export const LayoutEngineOptionLabels = [
 export interface ILayoutEngineResult {
   positions: NodePositionData;
   svg?: string;
-  layoutType: LayoutEngineOption;
+  layoutType: LayoutEngineOption | string;
 }
 
 export class LayoutEngine {

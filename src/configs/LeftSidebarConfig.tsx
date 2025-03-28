@@ -105,7 +105,7 @@ export const createDefaultLeftMenus = ({
             if (Object.keys(layout.positions).length === 0) {
               onLayoutChange(layout.name);
             } else {
-              handleLoadLayout(layout.positions);
+              handleLoadLayout(layout);
             }
           }}
           onSaveCurrentLayout={() => {
@@ -115,7 +115,7 @@ export const createDefaultLeftMenus = ({
           onResetLayout={() => {
             const positions = extractPositionsFromNodes(sceneGraph);
             sceneGraph.setNodePositions(positions);
-            handleLoadLayout(positions);
+            handleLoadLayout({ name: "reset", positions });
           }}
           sceneGraph={sceneGraph}
           currentPositions={currentPositions || {}}

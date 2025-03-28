@@ -18,7 +18,7 @@ export type AppConfig = {
   forceGraph3dOptions: {
     layout: ForceGraph3dLayoutMode;
   };
-  activeLayout: LayoutEngineOption;
+  activeLayout: LayoutEngineOption | string;
   activeFilter: Filter | null;
   legendMode: RenderingManager__DisplayMode;
   workspaceConfig?: {

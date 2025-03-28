@@ -101,6 +101,7 @@ import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
 import {
   getLayoutByName,
   getSavedLayouts,
+  Layout,
   loadLayoutsFromSceneGraph,
 } from "./store/activeLayoutStore";
 import useActiveLegendConfigStore, {
@@ -457,7 +458,7 @@ const AppContent: React.FC<{
           getLayoutByName(layout as string).positions
         );
         setLayoutResult({
-          layoutType: PresetLayoutType.Preset,
+          layoutType: layout!,
           positions: getLayoutByName(layout as string).positions,
         });
         return;
@@ -823,9 +824,12 @@ const AppContent: React.FC<{
     [simulations]
   );
 
-  const handleSetActiveLayout = useCallback((layout: LayoutEngineOption) => {
-    setActiveLayout(layout);
-  }, []);
+  const handleSetActiveLayout = useCallback(
+    (layout: LayoutEngineOption | string) => {
+      setActiveLayout(layout);
+    },
+    []
+  );
 
   const graphvizFitToView = useCallback((element: HTMLDivElement) => {
     enableZoomAndPanOnSvg(element);
@@ -1042,16 +1046,27 @@ const AppContent: React.FC<{
   const [editingNodeId, setEditingNodeId] = useState<NodeId | null>(null);
 
   const handleLoadLayout = useCallback(
-    (positions: NodePositionData) => {
-      currentSceneGraph.getDisplayConfig().nodePositions = positions;
+    (layout: Layout) => {
+      // Add safety check to ensure positions exist
+      if (!layout || !layout.positions) {
+        console.warn("Cannot load layout: missing position data");
+        addNotification({
+          message: "Failed to apply layout: missing position data",
+          type: "error",
+          duration: 3000,
+        });
+        return;
+      }
+
+      currentSceneGraph.getDisplayConfig().nodePositions = layout.positions;
       DisplayManager.applyNodePositions(
         currentSceneGraph.getGraph(),
-        positions
+        layout.positions
       );
-      handleSetActiveLayout(PresetLayoutType.Preset);
-      setLayoutResult({ positions, layoutType: PresetLayoutType.Preset });
+      handleSetActiveLayout(layout.name);
+      setLayoutResult({ positions: layout.positions, layoutType: layout.name });
       if (forceGraphInstance && activeView === "ForceGraph3d") {
-        updateNodePositions(forceGraphInstance, positions);
+        updateNodePositions(forceGraphInstance, layout.positions);
       } else if (activeView === "ReactFlow") {
         setGraphModelUpdateTime(Date.now()); //hack
       }
