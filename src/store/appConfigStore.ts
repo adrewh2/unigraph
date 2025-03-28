@@ -1,12 +1,17 @@
+import { ForceGraph3DInstance } from "3d-force-graph";
 import { create } from "zustand";
 import { RenderingManager__DisplayMode } from "../controllers/RenderingManager";
 import { LayoutEngineOption } from "../core/layouts/LayoutEngine";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { ActiveView, AppConfig, DEFAULT_APP_CONFIG } from "./../AppConfig";
+import { Filter } from "./activeFilterStore";
+import { getLeftSidebarConfig } from "./workspaceConfigStore";
 
 export type AppConfigActions = {
   setActiveView: (activeView: ActiveView) => void;
   setActiveSceneGraph: (activeSceneGraph: string) => void;
+  setActiveFilter(filter: Filter | null): void;
+  getActiveFilter(): Filter | null;
   setWindows: (windows: { showEntityDataCard: boolean }) => void;
   setForceGraph3dOptions: (forceGraph3dOptions: {
     layout: "Physics" | "Layout";
@@ -27,19 +32,46 @@ export type AppState = AppConfig &
     isDarkMode: boolean;
     selectedSimulation: string;
 
+    activeProjectId: string | null;
+    getActiveProjectId: () => string | null;
+    setActiveProjectId: (activeProjectId: string | null) => void;
+
     currentSceneGraph: SceneGraph;
     setCurrentSceneGraph: (sceneGraph: SceneGraph) => void;
     getCurrentSceneGraph: () => SceneGraph;
+
+    forceGraphInstance: ForceGraph3DInstance | null;
+    setForceGraphInstance: (
+      forceGraphInstance: ForceGraph3DInstance | null
+    ) => void;
+    getForceGraphInstance: () => ForceGraph3DInstance | null;
   };
 
 const DEFAULTS = DEFAULT_APP_CONFIG();
 
 const useAppConfigStore = create<AppState>((set) => ({
+  activeFilter: null,
+  setActiveFilter: (activeFilter: Filter | null) => set({ activeFilter }),
+  getActiveFilter: (): Filter | null =>
+    useAppConfigStore.getState().activeFilter,
+
+  activeProjectId: "undefined",
+  getActiveProjectId: (): string | null =>
+    useAppConfigStore.getState().activeProjectId,
+  setActiveProjectId: (activeProjectId: string | null) =>
+    set({ activeProjectId }),
+
   currentSceneGraph: new SceneGraph({ metadata: { name: "Unnamed" } }),
   setCurrentSceneGraph: (currentSceneGraph: SceneGraph) =>
     set({ currentSceneGraph }),
   getCurrentSceneGraph: (): SceneGraph =>
     useAppConfigStore.getState().currentSceneGraph,
+
+  forceGraphInstance: null,
+  setForceGraphInstance: (forceGraphInstance: ForceGraph3DInstance | null) =>
+    set({ forceGraphInstance }),
+  getForceGraphInstance: (): ForceGraph3DInstance | null =>
+    useAppConfigStore.getState().forceGraphInstance,
 
   activeView: DEFAULTS.activeView,
   activeSceneGraph: DEFAULTS.activeSceneGraph,
@@ -135,7 +167,7 @@ export const getForceGraph3dOptions = () => {
   return useAppConfigStore.getState().forceGraph3dOptions;
 };
 
-export const setActiveLayout = (activeLayout: LayoutEngineOption) => {
+export const setActiveLayout = (activeLayout: LayoutEngineOption | string) => {
   useAppConfigStore.setState(() => ({
     activeLayout,
     forceGraph3dOptions: { layout: "Layout" },
@@ -150,8 +182,21 @@ export const setAppConfig = (appConfig: AppConfig) => {
   useAppConfigStore.setState(() => appConfig);
 };
 
-export const getAppConfig = () => {
-  return useAppConfigStore.getState();
+export const getAppConfig = (): AppConfig => {
+  const state = useAppConfigStore.getState();
+  return {
+    activeView: state.activeView,
+    activeSceneGraph: state.activeSceneGraph,
+    windows: state.windows,
+    forceGraph3dOptions: state.forceGraph3dOptions,
+    activeLayout: state.activeLayout,
+    legendMode: state.legendMode,
+    activeFilter: state.activeFilter,
+    workspaceConfig: {
+      leftSidebarConfig: getLeftSidebarConfig(),
+      rightSidebarConfig: getLeftSidebarConfig(),
+    },
+  };
 };
 
 export const setIsDarkMode = (isDarkMode: boolean) => {
@@ -179,6 +224,48 @@ export const setLegendMode = (legendMode: RenderingManager__DisplayMode) => {
 
 export const getLegendMode = () => {
   return useAppConfigStore.getState().legendMode;
+};
+
+export const getCurrentSceneGraph = () => {
+  return useAppConfigStore.getState().currentSceneGraph;
+};
+
+export const setCurrentSceneGraph = (currentSceneGraph: SceneGraph) => {
+  useAppConfigStore.setState(() => ({
+    currentSceneGraph,
+  }));
+};
+
+export const getForceGraphInstance = () => {
+  return useAppConfigStore.getState().forceGraphInstance;
+};
+
+export const setForceGraphInstance = (
+  forceGraphInstance: ForceGraph3DInstance
+) => {
+  useAppConfigStore.setState(() => ({
+    forceGraphInstance,
+  }));
+};
+
+export const setActiveProjectId = (activeProjectId: string | null) => {
+  useAppConfigStore.setState(() => ({
+    activeProjectId,
+  }));
+};
+
+export const getActiveProjectId = () => {
+  return useAppConfigStore.getState().activeProjectId;
+};
+
+export const setActiveFilter = (activeFilter: Filter | null) => {
+  useAppConfigStore.setState(() => ({
+    activeFilter,
+  }));
+};
+
+export const getActiveFilter = () => {
+  return useAppConfigStore.getState().activeFilter;
 };
 
 export default useAppConfigStore;

@@ -12,7 +12,7 @@ export type Position = {
   y: number;
 };
 
-type DisplayConfigData = {
+export type DisplayConfigData = {
   color: string;
   isVisible: boolean;
 };

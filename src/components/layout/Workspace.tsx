@@ -1,24 +1,43 @@
-import React, { useMemo } from "react";
+import { Info } from "lucide-react";
+import React, { useEffect, useMemo } from "react";
 import {
   createDefaultLeftMenus,
   leftFooterContent,
+  MenuItem,
 } from "../../configs/LeftSidebarConfig";
 import {
   createDefaultRightMenus,
   rightFooterContent,
 } from "../../configs/RightSidebarConfig";
+import { findNodeInForceGraph } from "../../core/force-graph/forceGraphHelpers";
 import { LayoutEngineOption } from "../../core/layouts/LayoutEngine";
-import { NodePositionData } from "../../core/layouts/layoutHelpers";
 import { DisplayManager } from "../../core/model/DisplayManager";
+import { SceneGraph } from "../../core/model/SceneGraph";
+import { flyToNode } from "../../core/webgl/webglHelpers";
 import Sidebar from "../../Sidebar";
-import useActiveFilterStore from "../../store/activeFilterStore";
+import { Filter } from "../../store/activeFilterStore";
+import { Layout } from "../../store/activeLayoutStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
-import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
+import { useActiveDocument, useDocumentStore } from "../../store/documentStore";
+import { getSelectedNodeId } from "../../store/graphInteractionStore";
+import useWorkspaceConfigStore, {
+  defaultSectionWidth,
+  getSectionWidth,
+  updateSectionWidth,
+} from "../../store/workspaceConfigStore";
+import NodeInfo from "../NodeInfo";
+import NotificationManager from "../notifications/NotificationManager";
 import UniAppToolbar, { IMenuConfig } from "../UniAppToolbar";
 import styles from "./Workspace.module.css";
 
-const sidebarDisabledViews = ["Yasgui", "Gallery", "Simulation"];
+const sidebarDisabledViews = [
+  "Yasgui",
+  "Gallery",
+  "Simulation",
+  "Lexical",
+  "Editor",
+];
 
 interface WorkspaceProps {
   menuConfig: IMenuConfig;
@@ -40,11 +59,13 @@ interface WorkspaceProps {
   renderEdgeLegend: React.ReactNode;
   showPathAnalysis: () => void;
   showLoadSceneGraphWindow: () => void;
-  showSaveSceneGraphDialog: () => void; // Add the prop
+  showSaveSceneGraphDialog: () => void;
   showLayoutManager: (mode: "save" | "load") => void;
-  handleLoadLayout: (nodePositionData: NodePositionData) => void;
+  handleLoadLayout: (layout: Layout) => void;
   handleFitToView: (activeView: string) => void;
   handleShowEntityTables: () => void;
+  handleLoadSceneGraph: (sceneGraph: SceneGraph) => void;
+  handleSetActiveFilter: (filter: Filter) => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -72,13 +93,25 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleLoadLayout,
   handleFitToView,
   handleShowEntityTables,
+  handleLoadSceneGraph,
+  handleSetActiveFilter,
 }) => {
+  const activeDocument = useActiveDocument();
+  const { documents } = useDocumentStore();
+
+  // Add logging to track document state
+  useEffect(() => {
+    console.log("Active document changed:", activeDocument);
+    console.log("All documents:", documents);
+  }, [activeDocument, documents]);
+
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
-  const { activeView, activeLayout, forceGraph3dOptions } = useAppConfigStore();
+  const { activeView, activeLayout, forceGraph3dOptions, forceGraphInstance } =
+    useAppConfigStore();
 
-  const { activeFilter, setActiveFilter } = useActiveFilterStore();
+  const { setActiveFilter, activeFilter } = useAppConfigStore();
 
   const renderUniappToolbar = useMemo(() => {
     if (!showToolbar) {
@@ -152,9 +185,14 @@ const Workspace: React.FC<WorkspaceProps> = ({
           onClearFilters: clearFilters,
           onShowPathAnalysis: showPathAnalysis,
           onShowLoadSceneGraphWindow: showLoadSceneGraphWindow,
-          onShowSaveSceneGraphDialog: showSaveSceneGraphDialog, // Pass the handler
+          onShowSaveSceneGraphDialog: showSaveSceneGraphDialog,
           showLayoutManager: (mode: "save" | "load") => showLayoutManager(mode),
           handleLoadLayout: handleLoadLayout,
+          activeView: activeView, // Make sure this is correctly passed
+          activeFilter: activeFilter,
+          handleLoadSceneGraph: handleLoadSceneGraph,
+          handleSetActiveFilter: handleSetActiveFilter,
+          applyNewLayout: applyNewLayout,
         })}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
@@ -179,9 +217,15 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showLoadSceneGraphWindow,
     showSaveSceneGraphDialog,
     handleLoadLayout,
+    activeFilter,
+    handleLoadSceneGraph,
+    handleSetActiveFilter,
     applyNewLayout,
     showLayoutManager,
   ]);
+
+  // Monitor for selected node to show dynamic section
+  const selectedNodeId = getSelectedNodeId();
 
   const renderRightSideBar = useMemo(() => {
     if (
@@ -189,6 +233,62 @@ const Workspace: React.FC<WorkspaceProps> = ({
       sidebarDisabledViews.includes(activeView)
     ) {
       return null;
+    }
+
+    // Create base menu items with standard sections
+    const menuItems = createDefaultRightMenus(
+      () => (
+        <>
+          {renderLayoutModeRadio()}
+          {renderNodeLegend}
+          {renderEdgeLegend}
+        </>
+      ),
+      activeView === "ForceGraph3d",
+      isDarkMode
+    );
+
+    // Dynamically add Node Details section when a node is selected
+    if (selectedNodeId) {
+      // Find if node details already exists
+      const nodeDetailsExists = menuItems.some(
+        (item) => item.id === "node-details"
+      );
+
+      if (!nodeDetailsExists) {
+        // Use push instead of unshift to add the node details at the end of the menu
+        menuItems.push({
+          id: "node-details",
+          icon: <Info size={20} className={styles.menuIcon} />,
+          label: "Node Details",
+          content: (
+            <NodeInfo
+              onFocusNode={(nodeId) => {
+                if (forceGraphInstance && activeView === "ForceGraph3d") {
+                  const node = findNodeInForceGraph(
+                    forceGraphInstance!,
+                    nodeId
+                  );
+                  if (node) {
+                    flyToNode(forceGraphInstance!, node);
+                  }
+                }
+              }}
+              onZoomToNode={(nodeId) => {
+                if (forceGraphInstance && activeView === "ForceGraph3d") {
+                  const node = findNodeInForceGraph(
+                    forceGraphInstance!,
+                    nodeId
+                  );
+                  if (node) {
+                    flyToNode(forceGraphInstance!, node);
+                  }
+                }
+              }}
+            />
+          ),
+        });
+      }
     }
 
     return (
@@ -199,17 +299,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           top: 0,
         }}
         title="Controls"
-        menuItems={createDefaultRightMenus(
-          () => (
-            <>
-              {renderLayoutModeRadio()}
-              {renderNodeLegend}
-              {renderEdgeLegend}
-            </>
-          ),
-          activeView === "ForceGraph3d",
-          isDarkMode
-        )}
+        menuItems={menuItems}
         isDarkMode={isDarkMode}
         mode={rightSidebarConfig.mode}
         minimal={rightSidebarConfig.minimal}
@@ -217,12 +307,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
           rightFooterContent(isOpen, {
             onFitToView: () => handleFitToView(activeView),
             onViewEntities: () => handleShowEntityTables(),
-            details: {
-              sceneGraphName:
-                currentSceneGraph.getMetadata().name ?? "Untitled",
-              activeLayout: activeLayout,
-              activeFilter: activeFilter?.name, // Pass activeFilters name here
-            },
           })
         }
       />
@@ -236,19 +320,42 @@ const Workspace: React.FC<WorkspaceProps> = ({
     renderLayoutModeRadio,
     renderNodeLegend,
     renderEdgeLegend,
-    currentSceneGraph,
-    activeLayout,
-    activeFilter?.name,
     handleFitToView,
     handleShowEntityTables,
+    selectedNodeId,
+    forceGraphInstance,
   ]);
+
+  const _renderSidebarPanel = (menu: MenuItem, isActive: boolean) => {
+    // Get the section width or use a default
+    const panelWidth = getSectionWidth(menu.id) || defaultSectionWidth;
+
+    return (
+      <div
+        className={`sidebar-panel ${isActive ? "active" : ""}`}
+        style={{
+          width: panelWidth,
+          // ...other styles
+        }}
+      >
+        {menu.content}
+      </div>
+    );
+  };
+
+  // You might also need to update the sidebar resize handling to save changes
+  const _handleSidebarResize = (id: string, newWidth: number) => {
+    updateSectionWidth(id, newWidth);
+  };
 
   return (
     <div className={styles.workspace}>
       {renderUniappToolbar}
+      <NotificationManager />
       <div className={styles.content}>
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
         <main className={styles.main}>
+          {/* Remove the NodeDocumentEditor rendering logic and just show the graph */}
           <div className={styles.graphContainer}>{children}</div>
         </main>
         <div className={styles.sidebarLayer}>{renderRightSideBar}</div>
