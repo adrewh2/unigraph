@@ -49,6 +49,7 @@ export const getSavedFilters = () => {
 };
 
 export const loadFiltersFromSceneGraph = (sceneGraph: SceneGraph) => {
+  useActiveFilterStore.getState().clearFilters();
   const savedFilters = sceneGraph.getSavedFilters() ?? {};
   for (const filterName in savedFilters) {
     saveFilter(savedFilters[filterName]);
