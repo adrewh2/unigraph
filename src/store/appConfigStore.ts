@@ -36,6 +36,7 @@ export type AppState = AppConfig &
   AppConfigActions & {
     isDarkMode: boolean;
     selectedSimulation: string;
+    previousView: string | null;
 
     activeProjectId: string | null;
     getActiveProjectId: () => string | null;
@@ -59,6 +60,11 @@ export type AppState = AppConfig &
 const DEFAULTS = DEFAULT_APP_CONFIG();
 
 const useAppConfigStore = create<AppState>((set) => ({
+  previousView: null,
+  setPreviousView: (previousView: string | null) => set({ previousView }),
+  getPreviousView: (): string | null =>
+    useAppConfigStore.getState().previousView,
+
   reactFlowInstance: null,
   setReactFlowInstance: (reactFlowInstance: ReactFlowInstance | null) =>
     set({ reactFlowInstance }),
@@ -101,7 +107,8 @@ const useAppConfigStore = create<AppState>((set) => ({
   selectedSimulation: "Lumina",
   legendMode: DEFAULTS.legendMode,
 
-  setActiveView: (activeView: ActiveView) => set({ activeView }),
+  setActiveView: (activeView: ActiveView) =>
+    set({ previousView: useAppConfigStore.getState().activeView, activeView }),
   setActiveSceneGraph: (activeSceneGraph: string) => set({ activeSceneGraph }),
   setWindows: (windows: { showEntityDataCard: boolean }) => set({ windows }),
 
@@ -293,6 +300,15 @@ export const setActiveFilter = (activeFilter: Filter | null) => {
 
 export const getActiveFilter = () => {
   return useAppConfigStore.getState().activeFilter;
+};
+
+export const setPreviousView = (previousView: string | null) => {
+  useAppConfigStore.setState(() => ({
+    previousView,
+  }));
+};
+export const getPreviousView = () => {
+  return useAppConfigStore.getState().previousView;
 };
 
 export default useAppConfigStore;
