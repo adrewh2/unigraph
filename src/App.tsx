@@ -100,6 +100,7 @@ import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
 import {
+  getActiveLayoutResult,
   getLayoutByName,
   getSavedLayouts,
   Layout,
@@ -115,6 +116,7 @@ import useActiveLegendConfigStore, {
   setNodeLegendConfig,
 } from "./store/activeLegendConfigStore";
 import useAppConfigStore, {
+  getActiveView,
   getForceGraphInstance,
   getLegendMode,
   setActiveLayout,
@@ -246,6 +248,10 @@ const AppContent: React.FC<{
   const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
 
   const { activeFilter, setActiveFilter } = useAppConfigStore();
+
+  const [activeViewHistory, setActiveViewHistory] = React.useState<string[]>(
+    []
+  );
 
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -595,9 +601,9 @@ const AppContent: React.FC<{
 
   const initializeForceGraph = useCallback(() => {
     console.log(
-      "Creating new force graph instance",
-      getForceGraphInstance(),
-      currentSceneGraph.getDisplayConfig().nodePositions,
+      "Creating new force graph instance...",
+      currentSceneGraph.getDisplayConfig().nodePositions ??
+        getActiveLayoutResult()?.positions,
       forceGraph3dOptions.layout
     );
     const newInstance = createForceGraph(
@@ -1400,6 +1406,7 @@ const AppContent: React.FC<{
   ]);
 
   useEffect(() => {
+    console.log("active view history is ", activeViewHistory);
     if (
       layoutResult?.layoutType !== activeLayout &&
       (activeView === "Graphviz" || activeView === "ReactFlow")
@@ -1407,13 +1414,25 @@ const AppContent: React.FC<{
       if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
         safeComputeLayout(currentSceneGraph, activeLayout);
       }
-    } else if (activeView === "ForceGraph3d") {
-      console.log("Reinitializing");
+    } else if (
+      activeViewHistory[activeViewHistory.length - 2] !== "Editor" &&
+      activeView === "ForceGraph3d"
+    ) {
+      console.log("active view history Reinitializing");
       initializeForceGraph();
     }
 
+    if (activeViewHistory[activeViewHistory.length - 1] !== activeView) {
+      setActiveViewHistory((prev) => [...prev, activeView]);
+    }
+
     return () => {
-      if (getForceGraphInstance()) {
+      if (
+        getActiveView() !== "Editor" &&
+        getForceGraphInstance() &&
+        getActiveView() !== "ForceGraph3d"
+      ) {
+        console.log("destructor called");
         getForceGraphInstance()?._destructor();
         setForceGraphInstance(null);
       }
@@ -1427,6 +1446,7 @@ const AppContent: React.FC<{
     safeComputeLayout,
     layoutResult?.layoutType,
     setForceGraphInstance,
+    activeViewHistory,
   ]);
 
   useEffect(() => {
