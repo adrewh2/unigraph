@@ -56,14 +56,22 @@ const PlaceholderPlugin = ({
   return <div className="editor-placeholder">{placeholder}</div>;
 };
 
-// Create an EditorStateInitializer plugin to properly initialize content from saved state
+// Fix the EditorStateInitializer to run only once on mount
 const EditorStateInitializer: React.FC<{
   savedState: string | null;
   content: string;
 }> = ({ savedState, content }) => {
   const [editor] = useLexicalComposerContext();
+  const hasInitialized = React.useRef(false);
 
   useEffect(() => {
+    // Only initialize once when component mounts
+    if (hasInitialized.current) {
+      return;
+    }
+
+    hasInitialized.current = true;
+
     if (savedState) {
       try {
         // Try to parse and load the saved state
@@ -104,7 +112,7 @@ const EditorStateInitializer: React.FC<{
         }
       });
     }
-  }, [editor, savedState, content]);
+  }, [content, editor, savedState]); // Only depend on editor, not savedState or content
 
   return null;
 };
@@ -348,9 +356,13 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
     }
   }, [id, initialContent, storageKey, stateStorageKey, getDocumentByNodeId]);
 
+  // Capture the initial state value in a ref so it doesn't change
+  const initialStateRef = React.useRef(initialData.state);
+  const initialContentRef = React.useRef(initialData.content);
+
   // Load saved state
   const [savedState, setSavedState] = useState<string | null>(
-    initialData.state
+    initialStateRef.current
   );
 
   // Move these outside of the render function to prevent recreation
@@ -698,8 +710,8 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
 
               {/* Add our EditorStateInitializer to properly set initial content */}
               <EditorStateInitializer
-                savedState={savedState}
-                content={markdown}
+                savedState={initialStateRef.current}
+                content={initialContentRef.current}
               />
               <HistoryPlugin />
               <AutoFocusPlugin />

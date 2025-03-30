@@ -1403,7 +1403,7 @@ const AppContent: React.FC<{
     if (activeView === "Editor") {
       return;
     }
-    // console.log("active view history is ", activeViewHistory);
+
     if (
       layoutResult?.layoutType !== activeLayout &&
       (activeView === "Graphviz" || activeView === "ReactFlow")
@@ -1419,10 +1419,6 @@ const AppContent: React.FC<{
       console.log("active view history Reinitializing");
       initializeForceGraph();
     }
-
-    // if (activeViewHistory[activeViewHistory.length - 1] !== activeView) {
-    //   setActiveViewHistory((prev) => [...prev, activeView]);
-    // }
 
     return () => {
       if (
