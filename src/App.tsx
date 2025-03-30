@@ -1353,6 +1353,7 @@ const AppContent: React.FC<{
             bottom: 0,
             background: "black",
             zIndex: 1,
+            visibility: activeView === "Editor" ? "hidden" : "visible", // Hide but keep in DOM when in Editor view
           }}
         />
       );
