@@ -6,7 +6,10 @@ import { LayoutEngineOption } from "../core/layouts/LayoutEngine";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { ActiveView, AppConfig, DEFAULT_APP_CONFIG } from "./../AppConfig";
 import { Filter } from "./activeFilterStore";
-import { getLeftSidebarConfig } from "./workspaceConfigStore";
+import {
+  getLeftSidebarConfig,
+  getRightSidebarConfig,
+} from "./workspaceConfigStore";
 
 export type AppConfigActions = {
   setActiveView: (activeView: ActiveView) => void;
@@ -205,7 +208,7 @@ export const getAppConfig = (): AppConfig => {
     activeFilter: state.activeFilter,
     workspaceConfig: {
       leftSidebarConfig: getLeftSidebarConfig(),
-      rightSidebarConfig: getLeftSidebarConfig(),
+      rightSidebarConfig: getRightSidebarConfig(),
     },
   };
 };

@@ -59,7 +59,6 @@ import {
   attachRepulsiveForce,
   bindEventsToGraphInstance,
   createForceGraph,
-  refreshForceGraphInstance,
   updateNodePositions,
   zoomToFit,
 } from "./core/force-graph/createForceGraph";
@@ -1384,14 +1383,12 @@ const AppContent: React.FC<{
   );
 
   useEffect(() => {
-    if (activeView === "ForceGraph3d") {
-      if (forceGraphInstance) {
-        refreshForceGraphInstance(
-          forceGraphInstance,
-          currentSceneGraph,
-          forceGraph3dOptions.layout
-        );
-      }
+    if (activeView === "ForceGraph3d" && forceGraphInstance) {
+      ForceGraphManager.refreshForceGraphInstance(
+        forceGraphInstance,
+        currentSceneGraph,
+        forceGraph3dOptions.layout
+      );
     }
   }, [
     nodeLegendUpdateTime,
