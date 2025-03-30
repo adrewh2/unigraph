@@ -234,7 +234,7 @@ export const bindEventsToGraphInstance = (
 ) => {
   graph.onNodeClick((node) => {
     setSelectedNodeId(node?.id as NodeId);
-    setRightActiveSection("node-details");
+    // setRightActiveSection("node-details");
 
     // Force refresh to update node colors immediately
     updateHighlight(graph);

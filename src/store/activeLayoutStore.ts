@@ -72,13 +72,13 @@ export const saveLayoutsToSceneGraph = (sceneGraph: SceneGraph) => {
 };
 
 export const getLayoutByName = (layoutName: string) => {
-  if (getSavedLayouts()[layoutName] === undefined) {
-    throw new Error(
-      `Layout ${layoutName} not found. Available layouts: ${Object.keys(
-        getSavedLayouts()
-      ).join(", ")}`
-    );
-  }
+  // if (getSavedLayouts()[layoutName] === undefined) {
+  //   throw new Error(
+  //     `Layout ${layoutName} not found. Available layouts: ${Object.keys(
+  //       getSavedLayouts()
+  //     ).join(", ")}`
+  //   );
+  // }
   return getSavedLayouts()[layoutName];
 };
 

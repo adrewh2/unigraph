@@ -1524,7 +1524,7 @@ const AppContent: React.FC<{
           flyToNode(forceGraphInstance, node);
           handleHighlight(nodeId);
           setSelectedNodeId(nodeId as NodeId);
-          setRightActiveSection("node-details");
+          // setRightActiveSection("node-details");
         }
       }
     },
@@ -1927,7 +1927,7 @@ const AppContent: React.FC<{
             onClose={() => setShowEntityTables(false)}
             onNodeClick={(nodeId) => {
               setSelectedNodeId(nodeId as NodeId);
-              setRightActiveSection("node-details");
+              // setRightActiveSection("node-details");
               setShowEntityTables(false);
               if (activeView === "ForceGraph3d" && forceGraphInstance) {
                 const node = forceGraphInstance
