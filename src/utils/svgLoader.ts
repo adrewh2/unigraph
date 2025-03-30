@@ -1,10 +1,10 @@
 import { AppConfig } from "../AppConfig";
 import { GET_DEFAULT_RENDERING_CONFIG } from "../controllers/RenderingManager";
-import { IForceGraphRenderConfig } from "../core/force-graph/createForceGraph";
 import { PresetLayoutType } from "../core/layouts/LayoutEngine";
 import { NodePositionData } from "../core/layouts/layoutHelpers";
 import { Graph } from "../core/model/Graph";
 import { ISceneGraphMetadata, SceneGraph } from "../core/model/SceneGraph";
+import { IForceGraphRenderConfig } from "../store/forceGraphConfigStore";
 
 /**
  * Utility function to load SVG from a URL
@@ -138,16 +138,14 @@ export const loadSvgToSceneGraph = (
       activeView: "ForceGraph3d",
       activeSceneGraph: "attempt2",
       windows: {
-        showLegendBars: true,
-        showOptionsPanel: true,
-        showGraphLayoutToolbar: true,
         showEntityDataCard: false,
       },
       forceGraph3dOptions: {
         layout: "Layout",
-        showOptionsPanel: false,
       },
       activeLayout: PresetLayoutType.NodePositions,
+      legendMode: "type",
+      activeFilter: null,
       ...options?.appConfig,
     },
   });

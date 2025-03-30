@@ -12,7 +12,7 @@ export type Position = {
   y: number;
 };
 
-type DisplayConfigData = {
+export type DisplayConfigData = {
   color: string;
   isVisible: boolean;
 };
@@ -32,6 +32,12 @@ export type RenderingConfig = {
   svg?: string;
 };
 
+export const CLONE_RENDERING_CONFIG = (
+  config: RenderingConfig
+): RenderingConfig => {
+  return structuredClone(config);
+};
+
 export type RenderingManager__DisplayMode = "tag" | "type";
 
 export const GET_DEFAULT_RENDERING_CONFIG = (
@@ -39,13 +45,12 @@ export const GET_DEFAULT_RENDERING_CONFIG = (
   starterConfig?: RenderingConfig
 ): RenderingConfig => {
   const metadata = getGraphMetadata(graph);
-  console.log("metadata is ", metadata);
   const palette = "gentle";
 
-  const nodeTypeConfig: DisplayConfig = starterConfig?.nodeConfig.types ?? {};
-  const nodeTagConfig: DisplayConfig = starterConfig?.nodeConfig.tags ?? {};
-  const edgeTypeConfig: DisplayConfig = starterConfig?.edgeConfig.types ?? {};
-  const edgeTagConfig: DisplayConfig = starterConfig?.edgeConfig.tags ?? {};
+  const nodeTypeConfig: DisplayConfig = { ...starterConfig?.nodeConfig.types };
+  const nodeTagConfig: DisplayConfig = { ...starterConfig?.nodeConfig.tags };
+  const edgeTypeConfig: DisplayConfig = { ...starterConfig?.edgeConfig.types };
+  const edgeTagConfig: DisplayConfig = { ...starterConfig?.edgeConfig.tags };
   for (const tag of metadata.nodes.tags) {
     if (!nodeTagConfig[tag]) {
       nodeTagConfig[tag] = {

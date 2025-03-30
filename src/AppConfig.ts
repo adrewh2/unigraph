@@ -1,5 +1,8 @@
+import { RenderingManager__DisplayMode } from "./controllers/RenderingManager";
 import { CustomLayoutType } from "./core/layouts/CustomLayoutEngine";
 import { LayoutEngineOption } from "./core/layouts/LayoutEngine";
+import { Filter } from "./store/activeFilterStore";
+import { ISidebarConfig } from "./store/workspaceConfigStore";
 // import { SceneGraph } from "./core/model/SceneGraph";
 
 export type ForceGraph3dLayoutMode = "Physics" | "Layout";
@@ -10,16 +13,18 @@ export type AppConfig = {
 
   activeSceneGraph: string;
   windows: {
-    showLegendBars: boolean;
-    showOptionsPanel: boolean;
-    showGraphLayoutToolbar: boolean;
     showEntityDataCard: boolean; //dev tool
   };
   forceGraph3dOptions: {
     layout: ForceGraph3dLayoutMode;
-    showOptionsPanel: boolean;
   };
-  activeLayout: LayoutEngineOption;
+  activeLayout: LayoutEngineOption | string;
+  activeFilter: Filter | null;
+  legendMode: RenderingManager__DisplayMode;
+  workspaceConfig?: {
+    leftSidebarConfig: ISidebarConfig;
+    rightSidebarConfig: ISidebarConfig;
+  };
 };
 
 export const DEFAULT_APP_CONFIG = (): AppConfig => {
@@ -27,15 +32,13 @@ export const DEFAULT_APP_CONFIG = (): AppConfig => {
     activeView: "ForceGraph3d",
     activeSceneGraph: "AcademicsKG",
     windows: {
-      showLegendBars: true,
-      showOptionsPanel: true,
-      showGraphLayoutToolbar: true,
       showEntityDataCard: false,
     },
     forceGraph3dOptions: {
       layout: "Physics",
-      showOptionsPanel: true,
     },
     activeLayout: CustomLayoutType.Random,
+    legendMode: "type",
+    activeFilter: null,
   };
 };

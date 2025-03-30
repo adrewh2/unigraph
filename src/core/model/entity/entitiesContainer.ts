@@ -89,15 +89,23 @@ export class EntitiesContainer<
     );
   }
 
-  public getAll(ids: EntityIds<T>): EntitiesContainer<T, V> {
+  public getAll(
+    ids: EntityIds<T>,
+    strict: boolean = true
+  ): EntitiesContainer<T, V> {
     const container = new EntitiesContainer<T, V>();
     ids.toArray().forEach((id) => {
-      if (!this.has(id)) {
+      if (this.has(id)) {
+        container.addEntity(this.get(id));
+      } else if (strict) {
         throw new Error("getAll called for nonpresent entity id: " + id);
       }
-      container.addEntity(this.get(id));
     });
     return container;
+  }
+
+  public isEmpty(): boolean {
+    return this.entities.length === 0;
   }
 
   public removeEntities(ids: EntityIds<T>, strict: boolean = false) {
@@ -215,8 +223,6 @@ export class EntitiesContainer<
       throw new Error(
         `EntitiesContainer has duplicate entries: ${duplicates.join(", ")}`
       );
-    } else {
-      console.log("Validated container.");
     }
   }
 
@@ -225,8 +231,6 @@ export class EntitiesContainer<
   }
 
   public toJSON() {
-    console.log("entities JSON", this.entities);
-    console.log("entities JSON", JSON.stringify(this.entities));
     return this.entities;
   }
 

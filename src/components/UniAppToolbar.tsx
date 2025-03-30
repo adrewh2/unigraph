@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { SceneGraph } from "../core/model/SceneGraph";
 import GraphSearch from "./common/GraphSearch";
+import GraphViewTabs from "./toolbar/GraphViewTabs";
 import "./UniAppToolbar.css";
 
 export interface MenuItem {
@@ -25,6 +26,7 @@ interface UniAppToolbarProps {
   onViewChange: (view: string) => void;
   selectedSimulation: string;
   simulationList: string[];
+  style?: React.CSSProperties;
 }
 
 const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
@@ -38,6 +40,7 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
   onViewChange,
   selectedSimulation,
   simulationList,
+  style,
 }) => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
@@ -115,49 +118,13 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
   };
 
   const renderGraphViewButtons = () => {
-    const isSimulation = simulationList.includes(activeView);
     return (
-      <div className="tab-container">
-        <button
-          className={`tab ${activeView === "Yasgui" ? "active" : ""}`}
-          style={{ maxWidth: "10px" }}
-          onClick={() => onViewChange("Yasgui")}
-        >
-          Yasgui
-        </button>
-        <button
-          className={`tab ${activeView === "Gallery" ? "active" : ""}`}
-          style={{ maxWidth: "10px" }}
-          onClick={() => onViewChange("Gallery")}
-        >
-          Gallery
-        </button>
-        <button
-          className={`tab ${activeView === "Graphviz" ? "active" : ""}`}
-          style={{ maxWidth: "10px" }}
-          onClick={() => onViewChange("Graphviz")}
-        >
-          Graphviz
-        </button>
-        <button
-          className={`tab ${activeView === "ForceGraph3d" ? "active" : ""}`}
-          onClick={() => onViewChange("ForceGraph3d")}
-        >
-          3D
-        </button>
-        <button
-          className={`tab ${activeView === "ReactFlow" ? "active" : ""}`}
-          onClick={() => onViewChange("ReactFlow")}
-        >
-          Flow
-        </button>
-        <button
-          className={`tab ${isSimulation ? "active" : ""}`}
-          onClick={() => onViewChange(selectedSimulation)}
-        >
-          Sim
-        </button>
-      </div>
+      <GraphViewTabs
+        activeView={activeView}
+        onViewChange={onViewChange}
+        simulationList={simulationList}
+        selectedSimulation={selectedSimulation}
+      />
     );
   };
 
@@ -174,7 +141,7 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
   };
 
   return (
-    <nav className="uni-app-toolbar">
+    <nav className="uni-app-toolbar" style={style}>
       <div className="menu-left">{renderMenu(config)}</div>
       <div className="search-center">{renderGraphSearch()}</div>
       <div className="menu-right">{renderGraphViewButtons()}</div>

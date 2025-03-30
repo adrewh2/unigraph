@@ -11,14 +11,44 @@ import {
   CSS2DRenderer,
 } from "three/examples/jsm/renderers/CSS2DRenderer";
 import { ForceGraph3dLayoutMode } from "../../AppConfig";
+import { RenderingManager } from "../../controllers/RenderingManager";
+import {
+  getEdgeLegendConfig,
+  getNodeLegendConfig,
+} from "../../store/activeLegendConfigStore";
+import { getLegendMode } from "../../store/appConfigStore";
+import {
+  DEFAULT_FORCE_GRAPH_RENDER_CONFIG,
+  IForceGraphRenderConfig,
+} from "../../store/forceGraphConfigStore";
+import {
+  getHoveredEdgeIds,
+  getHoveredNodeIds,
+  getSelectedNodeId,
+  getSelectedNodeIds,
+  setHoveredEdgeId,
+  setHoveredNodeId,
+  setSelectedEdgeId,
+  setSelectedEdgeIds,
+  setSelectedNodeId,
+  setSelectedNodeIds,
+} from "../../store/graphInteractionStore";
+import {
+  getActiveSection,
+  setRightActiveSection,
+} from "../../store/workspaceConfigStore";
 import { ILayoutEngineResult } from "../layouts/LayoutEngine";
 import { NodePositionData } from "../layouts/layoutHelpers";
+import { EdgeId } from "../model/Edge";
 import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
 import { exportGraphDataForReactFlow } from "../react-flow/exportGraphDataForReactFlow";
 import { flyToNode } from "../webgl/webglHelpers";
-import { updateVisibleEntitiesInForceGraphInstance } from "./forceGraphHelpers";
 import { ForceGraphManager } from "./ForceGraphManager";
+import { updateVisibleEntitiesInForceGraphInstance } from "./forceGraphHelpers";
+
+export const MOUSE_HOVERED_NODE_COLOR = "rgb(243, 255, 16)";
+export const SELECTED_NODE_COLOR = "rgb(254, 148, 9)";
 
 export const refreshForceGraphInstance = (
   forceGraphInstance: ForceGraph3DInstance,
@@ -27,37 +57,40 @@ export const refreshForceGraphInstance = (
 ) => {
   console.log("Refreshing existing force graph instance...");
 
-  const renderingManager = sceneGraph.getRenderingManager();
-
   // Update visible nodes and edges (with smart position handling)
   updateVisibleEntitiesInForceGraphInstance(forceGraphInstance, sceneGraph);
 
   forceGraphInstance.nodeColor((node) => {
-    if (sceneGraph.getAppState().hoveredNodes.has(node.id as string)) {
-      return "rgb(242, 254, 9)";
+    if (getHoveredNodeIds().has(node.id as NodeId)) {
+      return MOUSE_HOVERED_NODE_COLOR;
     }
-    return renderingManager.getNodeColor(
-      sceneGraph.getGraph().getNode(node.id as NodeId)
+    if (
+      getSelectedNodeId() === node.id ||
+      getSelectedNodeIds().has(node.id as NodeId)
+    ) {
+      return SELECTED_NODE_COLOR;
+    }
+    return RenderingManager.getColor(
+      sceneGraph.getGraph().getNode(node.id as NodeId),
+      getNodeLegendConfig(),
+      getLegendMode()
     );
   });
 
   forceGraphInstance.linkColor((link) => {
     if (
-      sceneGraph
-        .getAppState()
-        .hoveredNodes.has((link.source as any).id as string)
+      getHoveredNodeIds().has((link.source as any).id) ||
+      getHoveredNodeIds().has((link.target as any).id)
     ) {
       return "yellow";
     }
-    if (
-      sceneGraph
-        .getAppState()
-        .hoveredNodes.has((link.target as any).id as string)
-    ) {
+    if (getHoveredEdgeIds().has((link as any).id)) {
       return "white";
     }
-    return renderingManager.getEdgeColor(
-      sceneGraph.getGraph().getEdge((link as any).id)
+    return RenderingManager.getColor(
+      sceneGraph.getGraph().getEdge((link as any).id),
+      getEdgeLegendConfig(),
+      getLegendMode()
     );
   });
 
@@ -75,27 +108,6 @@ export const refreshForceGraphInstance = (
   }
 };
 
-export interface IForceGraphRenderConfig {
-  nodeTextLabels: boolean;
-  linkWidth: number;
-  nodeSize: number;
-  linkTextLabels: boolean;
-  nodeOpacity: number;
-  linkOpacity: number;
-  chargeStrength: number;
-}
-
-export const DEFAULT_FORCE_GRAPH_RENDER_CONFIG: IForceGraphRenderConfig = {
-  nodeTextLabels: false,
-  linkWidth: 2,
-  nodeSize: 6,
-  linkTextLabels: true,
-  nodeOpacity: 1,
-  linkOpacity: 1,
-  //phyics
-  chargeStrength: -30, // default.
-};
-
 export const createForceGraph = (
   sceneGraph: SceneGraph,
   dom: HTMLElement,
@@ -103,10 +115,9 @@ export const createForceGraph = (
   options: IForceGraphRenderConfig = DEFAULT_FORCE_GRAPH_RENDER_CONFIG,
   layout: ForceGraph3dLayoutMode = "Physics"
 ): ForceGraph3DInstance => {
-  console.log("creating here", options, layout, positions);
+  // console.log("creating here", options, layout, positions);
   const data = exportGraphDataForReactFlow(sceneGraph);
-  console.log("data is ", data);
-  const renderingManager = sceneGraph.getRenderingManager();
+  // console.log("data is ", data);
 
   const graph = new ForceGraph3D(dom, {
     extraRenderers: [new CSS2DRenderer()],
@@ -114,32 +125,35 @@ export const createForceGraph = (
     .graphData({ nodes: data.nodes, links: data.edges })
     .nodeLabel("label")
     .nodeColor((node) => {
-      if (sceneGraph.getAppState().hoveredNodes.has(node.id as string)) {
-        return "rgb(242, 254, 9)";
+      if (getHoveredNodeIds().has(node.id as NodeId)) {
+        return MOUSE_HOVERED_NODE_COLOR;
+      } else if (
+        getSelectedNodeId() === node.id ||
+        getSelectedNodeIds().has(node.id as NodeId)
+      ) {
+        return SELECTED_NODE_COLOR;
       }
-      return renderingManager.getNodeColor(
-        sceneGraph.getGraph().getNode(node.id as NodeId)
+      return RenderingManager.getColor(
+        sceneGraph.getGraph().getNode(node.id as NodeId),
+        getNodeLegendConfig(),
+        getLegendMode()
       );
     })
     .linkColor((link) => {
       if (
-        sceneGraph
-          .getAppState()
-          .hoveredNodes.has((link.source as any).id as string)
+        getHoveredNodeIds().has((link.source as any).id) ||
+        getHoveredNodeIds().has((link.target as any).id)
       ) {
         return "yellow";
       }
-      if (
-        sceneGraph
-          .getAppState()
-          .hoveredNodes.has((link.target as any).id as string)
-      ) {
+      if (getHoveredEdgeIds().has((link as any).id)) {
         return "white";
       }
-      const x = renderingManager.getEdgeColor(
-        sceneGraph.getGraph().getEdge((link as any).id)
+      return RenderingManager.getColor(
+        sceneGraph.getGraph().getEdge((link as any).id),
+        getEdgeLegendConfig(),
+        getLegendMode()
       );
-      return x;
     })
     .linkLabel("type")
     .backgroundColor("#1a1a1a")
@@ -242,13 +256,15 @@ export const createForceGraph = (
         const nodeEl = document.createElement("div");
 
         nodeEl.textContent = `${node.id}` as string;
-        if (sceneGraph.getAppState()) {
-          if (sceneGraph.getAppState().hoveredNodes.has(n.getId())) {
-            nodeEl.style.color = "yellow";
-          }
+        if (getHoveredNodeIds().has(node.id as NodeId)) {
+          nodeEl.style.color = "yellow";
         }
 
-        nodeEl.style.color = renderingManager.getNodeColor(n);
+        nodeEl.style.color = RenderingManager.getColor(
+          sceneGraph.getGraph().getNode(node.id as NodeId),
+          getNodeLegendConfig(),
+          getLegendMode()
+        );
         nodeEl.className = "node-label";
         return new CSS2DObject(nodeEl);
       })
@@ -272,22 +288,44 @@ export const createForceGraph = (
 export const bindEventsToGraphInstance = (
   graph: ForceGraph3DInstance,
   sceneGraph: SceneGraph,
-  onNodeHovered: (node: NodeId | null) => void,
-  onNodeClicked: (node: NodeId | null) => void,
   onNodeRightClick?: (event: MouseEvent, nodeId: string | null) => void,
   onBackgroundRightClick?: (event: MouseEvent) => void
 ) => {
-  graph.onNodeClick((node) => onNodeClicked(node?.id as NodeId));
+  graph.onNodeClick((node) => {
+    setSelectedNodeId(node?.id as NodeId);
+    setRightActiveSection("node-details");
+
+    // Force refresh to update node colors immediately
+    updateHighlight(graph);
+  });
+
+  // Add a background click handler to clear selections
+  graph.onBackgroundClick((_event) => {
+    // Clear all selections when clicking on background
+    setSelectedNodeId(null);
+    setSelectedNodeIds([]);
+    setSelectedEdgeId(null);
+    setSelectedEdgeIds([]);
+
+    // Close the node details panel if it's open
+    if (getActiveSection("right") === "node-details") {
+      setRightActiveSection(null);
+    }
+
+    // Force refresh to update visual state
+    updateHighlight(graph);
+  });
+
   graph.onNodeHover((node) => {
     // no state change
     // if (!node && !sceneGraph.getAppState().hoveredNodes.has(node.id as string)) {
     //   return;
     // }
-    sceneGraph.getAppState().hoveredNodes.clear();
+    setHoveredNodeId(null);
     if (node) {
-      sceneGraph.getAppState().hoveredNodes.add(node.id as string);
+      setHoveredNodeId(node.id as NodeId);
     }
-    onNodeHovered(node?.id as NodeId);
+    setHoveredNodeId(node?.id as NodeId);
 
     // highlightNodes.clear();
     // highlightLinks.clear();
@@ -299,6 +337,11 @@ export const bindEventsToGraphInstance = (
 
     // hoverNode = node || null;
 
+    updateHighlight(graph);
+  });
+
+  graph.onLinkHover((link) => {
+    setHoveredEdgeId((link as any)?.id as EdgeId);
     updateHighlight(graph);
   });
 
@@ -349,11 +392,15 @@ export const applyCameraAndControls = (
 };
 
 function updateHighlight(graph: ForceGraph3DInstance) {
-  graph
-    .nodeColor(graph.nodeColor())
-    .linkColor(graph.linkColor())
-    .linkWidth(graph.linkWidth())
-    .linkDirectionalParticles(graph.linkDirectionalParticles());
+  // Force complete refresh of all node and link appearances
+  graph.nodeColor(graph.nodeColor());
+  graph.linkColor(graph.linkColor());
+  graph.linkWidth(graph.linkWidth());
+
+  // Add explicit refresh to ensure immediate visual update
+  requestAnimationFrame(() => {
+    graph.refresh();
+  });
 }
 
 export const getNodePosition = (

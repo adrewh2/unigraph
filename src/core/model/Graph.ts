@@ -1,5 +1,10 @@
 import { Edge, EdgeId } from "./Edge";
-import { EntityDataArgs, IEntity } from "./entity/abstractEntity";
+import {
+  Entity,
+  EntityDataArgs,
+  EntityId,
+  IEntity,
+} from "./entity/abstractEntity";
 import { EntitiesContainer } from "./entity/entitiesContainer";
 import { EntityIds } from "./entity/entityIds";
 import { Node, NodeDataArgs, NodeId } from "./Node";
@@ -33,6 +38,13 @@ export class Graph {
       source: fromNode,
       target: toNode,
     });
+  }
+
+  getAllEntities(): EntitiesContainer<EntityId, Entity> {
+    return new EntitiesContainer([
+      ...this.nodes.toArray(),
+      ...this.edges.toArray(),
+    ]);
   }
 
   createNode(id: NodeId | string, args?: NodeDataArgs): Node {
@@ -111,6 +123,16 @@ export class Graph {
 
   maybeGetNode(id: NodeId): Node | undefined {
     return this.nodes.maybeGet(id);
+  }
+
+  maybeGetEdge(id: EdgeId): Edge | undefined {
+    return this.edges.maybeGet(id);
+  }
+
+  maybeGetEntity(id: string): IEntity | undefined {
+    return (
+      this.nodes.maybeGet(id as NodeId) ?? this.edges.maybeGet(id as EdgeId)
+    );
   }
 
   removeNode(id: NodeId): void {
@@ -262,34 +284,30 @@ export class Graph {
   }
 
   // Returns all edges that connect between any of the given node ids.
-  getAllEdgesConnectingBetween(nodeIds: NodeIds): Edge[] {
-    return this.edges
-      .filter((edge) => {
-        return nodeIds.has(edge.getSource()) && nodeIds.has(edge.getTarget());
-      })
-      .toArray();
+  getAllEdgesConnectingBetween(nodeIds: NodeIds): EdgesContainer {
+    return this.edges.filter((edge) => {
+      return nodeIds.has(edge.getSource()) && nodeIds.has(edge.getTarget());
+    });
   }
 
   getEdgesConnectedToNodes(
     nodeIds: NodeIds | NodeId,
     mode: "both" | "from" | "to" = "both"
-  ): Edge[] {
+  ): EdgesContainer {
     if (typeof nodeIds === "string") {
       nodeIds = new EntityIds([nodeIds]);
     }
-    return this.edges
-      .filter((edge) => {
-        const isSource = nodeIds.has(edge.getSource());
-        const isTarget = nodeIds.has(edge.getTarget());
-        if (mode === "both") {
-          return isSource && isTarget;
-        } else if (mode === "from") {
-          return isSource;
-        } else {
-          return isTarget;
-        }
-      })
-      .toArray();
+    return this.edges.filter((edge) => {
+      const isSource = nodeIds.has(edge.getSource());
+      const isTarget = nodeIds.has(edge.getTarget());
+      if (mode === "both") {
+        return isSource && isTarget;
+      } else if (mode === "from") {
+        return isSource;
+      } else {
+        return isTarget;
+      }
+    });
   }
 
   setNodes = (nodes: NodesContainer): void => {

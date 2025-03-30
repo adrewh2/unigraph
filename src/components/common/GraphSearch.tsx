@@ -52,9 +52,7 @@ const GraphSearch: React.FC<GraphSearchProps> = ({
   const [showNoResults, setShowNoResults] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const [renderingManager, setRenderingManager] = useState<RenderingManager>(
-    sceneGraph.getRenderingManager()
-  );
+  const [renderingManager, setRenderingManager] = useState<RenderingManager>();
   const [, setSelectedValue] = useState<string | undefined>();
 
   useEffect(() => {
@@ -63,7 +61,7 @@ const GraphSearch: React.FC<GraphSearchProps> = ({
   }, []);
 
   useEffect(() => {
-    setRenderingManager(sceneGraph.getRenderingManager());
+    setRenderingManager(new RenderingManager(sceneGraph.getDisplayConfig()));
   }, [sceneGraph]);
 
   const performSearch = useCallback(
@@ -87,7 +85,10 @@ const GraphSearch: React.FC<GraphSearchProps> = ({
           const nodes = sceneGraph.getGraph().getNodes();
           const matchingNodes = nodes
             .filter((node) => {
-              const idMatch = node.getId().toLowerCase().includes(searchLower);
+              const labelMatch = node
+                .getLabel()
+                ?.toLowerCase()
+                .includes(searchLower);
               const typeMatch = node
                 .getType()
                 .toLowerCase()
@@ -95,11 +96,11 @@ const GraphSearch: React.FC<GraphSearchProps> = ({
               const tagsMatch = Array.from(node.getTags()).some((tag) =>
                 tag.toLowerCase().includes(searchLower)
               );
-              return idMatch || typeMatch || tagsMatch;
+              return labelMatch || typeMatch || tagsMatch;
             })
             .map((node) => ({
               id: node.getId(),
-              label: node.getId(),
+              label: node.getLabel() || node.getId(),
               type: node.getType(),
               tags: Array.from(node.getTags()),
               entityType: "Node" as GraphEntityType,
@@ -160,7 +161,6 @@ const GraphSearch: React.FC<GraphSearchProps> = ({
   }, [searchTerm, debouncedSearch]);
 
   useEffect(() => {
-    console.log("effect");
     const handleClickOutside = (event: MouseEvent) => {
       if (
         containerRef.current &&
@@ -277,7 +277,7 @@ const GraphSearch: React.FC<GraphSearchProps> = ({
                           onHighlight?.(result.id);
                           setIsVisible(false);
                         }}
-                        renderingManager={renderingManager}
+                        renderingManager={renderingManager!}
                       />
                     ))}
                 </>
@@ -301,7 +301,7 @@ const GraphSearch: React.FC<GraphSearchProps> = ({
                             onHighlight?.(result.id);
                             setIsVisible(false);
                           }}
-                          renderingManager={renderingManager}
+                          renderingManager={renderingManager!}
                         />
                       ))}
                   </>

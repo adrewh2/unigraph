@@ -3,6 +3,7 @@ import {
   RenderingConfig,
   RenderingManager,
 } from "../../controllers/RenderingManager";
+import { getNodeIsVisible } from "../../store/activeLegendConfigStore";
 import { GraphvizLayoutType } from "../layouts/GraphvizLayoutEngine";
 import { LayoutEngineOption } from "../layouts/LayoutEngine";
 import { Graph } from "./Graph";
@@ -25,12 +26,13 @@ export const ConvertSceneGraphToGraphviz = (
     if (isGraphvizLayoutType) {
       g.set("layout", layoutMode);
     } else if (nodePositions) {
-      console.log("SETTING TO NEATO");
       g.set("layout", "neato");
+    } else {
+      g.set("layout", "dot");
     }
 
     for (const node of graph.getNodes()) {
-      if (!renderingManager.getNodeIsVisible(node)) {
+      if (!getNodeIsVisible(node)) {
         continue;
       }
       const n = g.node(node.getId().replace(/:/g, "_"), {

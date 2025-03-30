@@ -1,6 +1,4 @@
 import { ForceGraph3DInstance } from "3d-force-graph";
-import { saveAs } from "file-saver";
-import { AppConfig } from "../AppConfig";
 import {
   attachSimulation,
   updateNodePositions,
@@ -35,52 +33,39 @@ import {
   Compute_Layout,
   LayoutEngineOption,
 } from "../core/layouts/LayoutEngine";
-import { NodePositionData } from "../core/layouts/layoutHelpers";
 import { DisplayManager } from "../core/model/DisplayManager";
 import { SceneGraph } from "../core/model/SceneGraph";
 import {
   getRandomNode,
   GetRandomNodeFromSceneGraph,
-  saveRenderingConfigToFile,
 } from "../core/model/utils";
 import { processImageNodesInSceneGraph } from "../core/processors/imageBoxProcessor";
-import { serializeSceneGraphToDot } from "../core/serializers/toDot";
-import { serializeSceneGraphToJson } from "../core/serializers/toFromJson";
-import { serializeSceneGraphToGraphml } from "../core/serializers/toGraphml";
+import { DEMO_SCENE_GRAPHS, SceneGraphCategory } from "../data/DemoSceneGraphs";
 import {
   extractPositionsFromNodes,
   extractPositionsFromUserData,
 } from "../data/graphs/blobMesh";
-import { SceneGraphCategory, sceneGraphs } from "../data/graphs/sceneGraphLib";
 import { demoSongAnnotations } from "../mp3/data";
 import { demoSongAnnotations2 } from "../mp3/demoSongAnnotations247";
+import { Layout } from "../store/activeLayoutStore";
+import {
+  getActiveView,
+  getShowEntityDataCard,
+  setShowEntityDataCard,
+} from "../store/appConfigStore";
+import { clearDocuments, getAllDocuments } from "../store/documentStore";
+import {
+  getLeftSidebarConfig,
+  getRightSidebarConfig,
+  setLeftActiveSection,
+  setLeftSidebarConfig,
+  setRightSidebarConfig,
+} from "../store/workspaceConfigStore";
 import { IMenuConfig, IMenuConfig as MenuConfigType } from "./UniAppToolbar";
 
-const handleExportDot = (sceneGraph: SceneGraph) => {
-  const dotContent = serializeSceneGraphToDot(sceneGraph);
-  const blob = new Blob([dotContent], { type: "text/plain;charset=utf-8" });
-  saveAs(blob, "graph.dot");
-};
-
-const handleExportGraphml = (sceneGraph: SceneGraph) => {
-  const graphmlContent = serializeSceneGraphToGraphml(sceneGraph);
-  const blob = new Blob([graphmlContent], {
-    type: "application/xml;charset=utf-8",
-  });
-  saveAs(blob, "graph.graphml");
-};
-
-const handleExportJson = (sceneGraph: SceneGraph) => {
-  const jsonContent = serializeSceneGraphToJson(sceneGraph);
-  const blob = new Blob([jsonContent], {
-    type: "application/json;charset=utf-8",
-  });
-  saveAs(blob, "graph.json");
-};
-
-const handleExportConfig = (sceneGraph: SceneGraph) => {
-  saveRenderingConfigToFile(sceneGraph.getDisplayConfig(), "renderConfig.json");
-};
+// const handleExportConfig = (sceneGraph: SceneGraph) => {
+//   saveRenderingConfigToFile(sceneGraph.getDisplayConfig(), "renderConfig.json");
+// };
 
 const graphVizMenuActions = (
   applyNewLayout: (
@@ -129,43 +114,33 @@ const customLayoutMenuActions = (
 
 export interface IMenuConfigCallbacks {
   handleImportConfig: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleImportFileToSceneGraph: (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
   handleFitToView: (activeView: string) => void;
   GraphMenuActions: () => { [key: string]: { action: () => void } };
   SimulationMenuActions: () => { [key: string]: { action: () => void } };
-  setShowPathAnalysis: (show: boolean) => void;
   applyNewLayout: (
     layoutType: LayoutEngineOption,
     sceneGraph: SceneGraph
   ) => void;
-  setAppConfig: React.Dispatch<React.SetStateAction<AppConfig>>;
   setShowNodeTable: (show: boolean) => void;
   setShowEdgeTable: (show: boolean) => void;
   showLayoutManager: (mode: "save" | "load") => void;
   showFilterWindow: () => void;
-  showFilterManager: () => void;
-  clearFilters: () => void;
-  handleLoadLayout: (positions: NodePositionData) => void;
-  showImportSvgFromUrlDialog: () => void;
+  handleLoadLayout: (layout: Layout) => void;
   showSceneGraphDetailView: (readOnly: boolean) => void;
+  showChatGptImporter: () => void;
 }
 
 export class MenuConfig {
   private callbacks: IMenuConfigCallbacks;
-  private appConfig: AppConfig;
   private sceneGraph: SceneGraph;
-  private forceGraphInstance: React.RefObject<ForceGraph3DInstance | null>;
+  private forceGraphInstance: ForceGraph3DInstance | null;
 
   constructor(
     callbacks: IMenuConfigCallbacks,
-    appConfig: AppConfig,
     sceneGraph: SceneGraph,
-    forceGraphInstance: React.RefObject<ForceGraph3DInstance | null>
+    forceGraphInstance: ForceGraph3DInstance | null
   ) {
     this.callbacks = callbacks;
-    this.appConfig = appConfig;
     this.sceneGraph = sceneGraph;
     this.forceGraphInstance = forceGraphInstance;
   }
@@ -182,8 +157,8 @@ export class MenuConfig {
 
   private buildGraphMenu(): IMenuConfig {
     const graphMenu: IMenuConfig = {};
-    Object.entries(sceneGraphs).forEach(([_categoryKey, category]) => {
-      graphMenu[category.name] = {
+    Object.entries(DEMO_SCENE_GRAPHS).forEach(([_categoryKey, category]) => {
+      graphMenu[category.label] = {
         submenu: this.createGraphSubmenu(category),
       };
     });
@@ -192,121 +167,16 @@ export class MenuConfig {
 
   getConfig(): MenuConfigType {
     return {
-      File: {
-        submenu: {
-          Export: {
-            submenu: {
-              Graph: {
-                submenu: {
-                  Dot: {
-                    action: () => handleExportDot(this.sceneGraph),
-                  },
-                  Graphml: {
-                    action: () => handleExportGraphml(this.sceneGraph),
-                  },
-                  JSON: {
-                    action: () => handleExportJson(this.sceneGraph),
-                  },
-                },
-              },
-              "Display Config": {
-                action: () => handleExportConfig(this.sceneGraph),
-              },
-            },
-          },
-          Import: {
-            submenu: {
-              Graph: {
-                submenu: {
-                  File: {
-                    action: () =>
-                      document
-                        .getElementById("import-file-to-scenegraph-input")
-                        ?.click(),
-                  },
-                  "SVG From URL": {
-                    action: () => {
-                      this.callbacks.showImportSvgFromUrlDialog();
-                    },
-                  },
-                },
-              },
-              "Import Config": {
-                action: () =>
-                  document.getElementById("import-config-input")?.click(),
-              },
-            },
-          },
-        },
-      },
       View: {
         submenu: {
           "Fit to View": {
-            action: () =>
-              this.callbacks.handleFitToView(this.appConfig.activeView),
+            action: () => this.callbacks.handleFitToView(getActiveView()),
           },
           Entities: {
             action: () => this.callbacks.setShowNodeTable(true),
           },
           "SceneGraph Details": {
             action: () => this.callbacks.showSceneGraphDetailView(false),
-          },
-        },
-      },
-      Window: {
-        submenu: {
-          Filters: {
-            action: () => {
-              this.callbacks.showFilterWindow();
-            },
-          },
-          OptionsPanel: {
-            checked: this.appConfig.windows.showOptionsPanel,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showOptionsPanel: !prev.windows.showOptionsPanel,
-                },
-              }));
-            },
-          },
-          Legend: {
-            checked: this.appConfig.windows.showLegendBars,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showLegendBars: !prev.windows.showLegendBars,
-                },
-              }));
-            },
-          },
-          "Layout Panel": {
-            checked: this.appConfig.windows.showGraphLayoutToolbar,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showGraphLayoutToolbar: !prev.windows.showGraphLayoutToolbar,
-                },
-              }));
-            },
-          },
-          "Force Graph Config Editor": {
-            checked: this.appConfig.forceGraph3dOptions.showOptionsPanel,
-            onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                forceGraph3dOptions: {
-                  ...prev.forceGraph3dOptions,
-                  showOptionsPanel: !prev.forceGraph3dOptions.showOptionsPanel,
-                },
-              }));
-            },
           },
         },
       },
@@ -328,14 +198,17 @@ export class MenuConfig {
               const positions = extractPositionsFromUserData(this.sceneGraph);
               this.sceneGraph.setNodePositions(positions);
               console.log(positions);
-              updateNodePositions(this.forceGraphInstance.current!, positions);
+              updateNodePositions(this.forceGraphInstance!, positions);
             },
           },
           reloadNodePositions: {
             action: () => {
               const positions = extractPositionsFromNodes(this.sceneGraph);
               this.sceneGraph.setNodePositions(positions);
-              this.callbacks.handleLoadLayout(positions);
+              this.callbacks.handleLoadLayout({
+                name: "reloadedPositions",
+                positions,
+              });
             },
           },
           Graphviz: {
@@ -358,50 +231,64 @@ export class MenuConfig {
           },
         },
       },
-      Filters: {
-        submenu: {
-          "New Filters": {
-            action: () => this.callbacks.showFilterWindow(),
-          },
-          "Load Filters": {
-            action: () => this.callbacks.showFilterManager(),
-          },
-          "Clear Filters": {
-            action: () => this.callbacks.clearFilters(),
-          },
-        },
-      },
-      Graph: { submenu: this.buildGraphMenu() },
+      Graphs: { submenu: this.buildGraphMenu() },
       Simulations: { submenu: this.callbacks.SimulationMenuActions() },
-      Analysis: {
-        submenu: {
-          "Path Analysis": {
-            action: () => this.callbacks.setShowPathAnalysis(true),
-          },
-        },
-      },
       Dev: {
         submenu: {
+          "TEST: Save documents to scenegraph": {
+            action: () => {
+              const documents = getAllDocuments();
+              for (const [key, doc] of Object.entries(documents)) {
+                this.sceneGraph.setDocument(key, doc);
+              }
+            },
+          },
+          "TEXT: Print documentStore": {
+            action: () => {
+              console.log(getAllDocuments());
+            },
+          },
+          "TEST: Clear documentStore": {
+            action: () => {
+              clearDocuments();
+            },
+          },
+          "TEST: Set Left Sidebar to Layouts": {
+            action: () => {
+              setLeftActiveSection("layouts");
+              console.log("Left sidebar section set to 'layouts'");
+            },
+          },
           "Print SceneGraph": {
             action: () => {
               console.log(this.sceneGraph);
             },
           },
+          "Toggle sidebar expansion": {
+            action: () => {
+              const leftConfig = getLeftSidebarConfig();
+              setLeftSidebarConfig({
+                mode: leftConfig.mode === "collapsed" ? "full" : "collapsed",
+                isVisible: true,
+                minimal: false,
+              });
+              const rightConfig = getRightSidebarConfig();
+              setRightSidebarConfig({
+                mode: rightConfig.mode === "collapsed" ? "full" : "collapsed",
+                isVisible: true,
+                minimal: false,
+              });
+            },
+          },
           "Show Entity Data Card": {
-            checked: this.appConfig.windows.showEntityDataCard,
+            checked: getShowEntityDataCard(),
             onChange: () => {
-              this.callbacks.setAppConfig((prev) => ({
-                ...prev,
-                windows: {
-                  ...prev.windows,
-                  showEntityDataCard: !prev.windows.showEntityDataCard,
-                },
-              }));
+              setShowEntityDataCard(!getShowEntityDataCard());
             },
           },
           "Run animation": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 Compute_Layout(
                   this.sceneGraph,
                   GraphvizLayoutType.Graphviz_dot
@@ -409,19 +296,19 @@ export class MenuConfig {
                   if (!result) {
                     return;
                   }
-                  attachSimulation(this.forceGraphInstance.current!, result);
+                  attachSimulation(this.forceGraphInstance!, result);
                 });
-                this.forceGraphInstance.current.resumeAnimation();
+                this.forceGraphInstance.resumeAnimation();
               }
             },
           },
           "Add cluster": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 addCluster(
                   10,
                   [getRandomNode(this.sceneGraph.getGraph()).getId()],
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   this.sceneGraph
                 );
               }
@@ -429,16 +316,16 @@ export class MenuConfig {
           },
           "Randomize visible": {
             action: () => {
-              if (this.forceGraphInstance.current) {
-                randomizeVisible(this.forceGraphInstance.current, 0.2);
+              if (this.forceGraphInstance) {
+                randomizeVisible(this.forceGraphInstance, 0.2);
               }
             },
           },
           "Randomize visible and physics": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 randomizeVisibleAndPhysics(
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   this.sceneGraph,
                   0.8
                 );
@@ -447,29 +334,29 @@ export class MenuConfig {
           },
           Compactify: {
             action: () => {
-              if (this.forceGraphInstance.current) {
-                compactify(this.forceGraphInstance.current);
+              if (this.forceGraphInstance) {
+                compactify(this.forceGraphInstance);
               }
             },
           },
           "Focus with transparency": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 focusWithTransparency(
                   GetRandomNodeFromSceneGraph(this.sceneGraph).getId(),
                   this.sceneGraph,
-                  this.forceGraphInstance.current
+                  this.forceGraphInstance
                 );
               }
             },
           },
           "Focus on degrees": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 focusOnDegrees(
                   GetRandomNodeFromSceneGraph(this.sceneGraph).getId(),
                   this.sceneGraph,
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   5
                 );
               }
@@ -477,17 +364,17 @@ export class MenuConfig {
           },
           Pulsate: {
             action: () => {
-              if (this.forceGraphInstance.current) {
-                pulsateNodes(this.forceGraphInstance.current, this.sceneGraph);
+              if (this.forceGraphInstance) {
+                pulsateNodes(this.forceGraphInstance, this.sceneGraph);
               }
             },
           },
           Transition: {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 // eslint-disable-next-line unused-imports/no-unused-vars
                 const cleanup = transitionToConfig(
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   {
                     nodeOpacity: 0.1,
                     linkOpacity: 0.2,
@@ -507,9 +394,9 @@ export class MenuConfig {
           },
           "Song Timeline": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 const timeline = createSongVisualizationTimeline(
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   demoSongAnnotations.toArray()
                 );
                 timeline.start();
@@ -518,9 +405,9 @@ export class MenuConfig {
           },
           "Random effects": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 applyRandomEffects(
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   demoSongAnnotations.toArray()
                 );
               }
@@ -528,9 +415,9 @@ export class MenuConfig {
           },
           "Staggered effects": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 applyStaggeredEffects(
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   demoSongAnnotations.toArray(),
                   {
                     minNodeSize: 2,
@@ -550,9 +437,9 @@ export class MenuConfig {
           },
           "Demo 2": {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 applyStaggeredEffects(
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   demoSongAnnotations2.toArray(),
                   {
                     minNodeSize: 2,
@@ -572,9 +459,9 @@ export class MenuConfig {
           },
           Spawner: {
             action: () => {
-              if (this.forceGraphInstance.current) {
+              if (this.forceGraphInstance) {
                 const spawner = createAnnotationNodeSpawner(
-                  this.forceGraphInstance.current,
+                  this.forceGraphInstance,
                   demoSongAnnotations2.getDatas(),
                   {
                     maxNodes: 5,
@@ -595,16 +482,13 @@ export class MenuConfig {
           },
           "Random Edge Spawner": {
             action: () => {
-              if (!this.forceGraphInstance.current) return;
+              if (!this.forceGraphInstance) return;
 
               // eslint-disable-next-line unused-imports/no-unused-vars
               const cleanup = runManagedAnimation(
-                this.forceGraphInstance.current,
+                this.forceGraphInstance,
                 () => {
-                  addRandomEdges(
-                    this.sceneGraph,
-                    this.forceGraphInstance.current!
-                  );
+                  addRandomEdges(this.sceneGraph, this.forceGraphInstance!);
                 },
                 {
                   duration: 30000, // 30 seconds
@@ -617,16 +501,13 @@ export class MenuConfig {
           },
           "Random Edge Spawner Burst": {
             action: () => {
-              if (!this.forceGraphInstance.current) return;
+              if (!this.forceGraphInstance) return;
 
               // eslint-disable-next-line unused-imports/no-unused-vars
               const cleanup = runManagedAnimation(
-                this.forceGraphInstance.current,
+                this.forceGraphInstance,
                 () => {
-                  addRandomEdges(
-                    this.sceneGraph,
-                    this.forceGraphInstance.current!
-                  );
+                  addRandomEdges(this.sceneGraph, this.forceGraphInstance!);
                 },
                 {
                   duration: 30000, // 30 seconds
@@ -639,16 +520,13 @@ export class MenuConfig {
           },
           "Random Node Spawner Burst": {
             action: () => {
-              if (!this.forceGraphInstance.current) return;
+              if (!this.forceGraphInstance) return;
 
               // eslint-disable-next-line unused-imports/no-unused-vars
               const cleanup = runManagedAnimation(
-                this.forceGraphInstance.current,
+                this.forceGraphInstance,
                 () => {
-                  addRandomNodes(
-                    this.sceneGraph,
-                    this.forceGraphInstance.current!
-                  );
+                  addRandomNodes(this.sceneGraph, this.forceGraphInstance!);
                 },
                 {
                   duration: 10000, // 30 seconds
@@ -666,21 +544,19 @@ export class MenuConfig {
             submenu: {
               Basic: {
                 action: () => {
-                  if (!this.forceGraphInstance.current) {
+                  if (!this.forceGraphInstance) {
                     return;
                   }
                   // eslint-disable-next-line unused-imports/no-unused-vars
                   const cleanup = runManagedAnimation(
-                    this.forceGraphInstance.current,
+                    this.forceGraphInstance,
                     (elapsedTime, frame) => {
                       // Do something with the graph
-                      this.forceGraphInstance.current?.nodeOpacity(
-                        Math.random() * 2
-                      );
-                      this.forceGraphInstance.current
+                      this.forceGraphInstance?.nodeOpacity(Math.random() * 2);
+                      this.forceGraphInstance
                         ?.d3Force("charge")
                         ?.strength(Math.random() * 200 - 100);
-                      this.forceGraphInstance.current?.d3ReheatSimulation();
+                      this.forceGraphInstance?.d3ReheatSimulation();
                       console.log(`Frame ${frame}: ${elapsedTime}ms elapsed`);
                     },
                     {
@@ -695,24 +571,21 @@ export class MenuConfig {
               },
               ConfigTransition: {
                 action: () => {
-                  if (!this.forceGraphInstance.current) {
+                  if (!this.forceGraphInstance) {
                     return;
                   }
-                  playConfigSequence(
-                    this.forceGraphInstance.current,
-                    demoConfig
-                  );
+                  playConfigSequence(this.forceGraphInstance, demoConfig);
                 },
               },
               FromAnnotations: {
                 action: () => {
-                  if (!this.forceGraphInstance.current) {
+                  if (!this.forceGraphInstance) {
                     return;
                   }
                   const configs = generateConfigsFromAnnotations(
                     songAnnotation247_2_entities.getDatas()
                   );
-                  playConfigSequence(this.forceGraphInstance.current, configs);
+                  playConfigSequence(this.forceGraphInstance, configs);
                 },
               },
             },
