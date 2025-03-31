@@ -5,11 +5,7 @@ import {
   CompletionCreateParams,
   MLCEngine,
 } from "@mlc-ai/web-llm";
-
-export interface ChatMessage {
-  role: "user" | "assistant" | "system";
-  content: string;
-}
+import { ChatMessage } from "../store/chatHistoryStore";
 
 export interface WebLLMClientConfig {
   model: string;

@@ -1,6 +1,5 @@
-import { Send, Settings } from "lucide-react";
+import { Send, Settings, Trash2 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { ChatMessage } from "../../services/WebLLMClient";
 import {
   getCurrentModel,
   getSharedLLMClient,
@@ -8,6 +7,7 @@ import {
   isModelLoading,
   switchModel,
 } from "../../services/llmService";
+import useChatHistoryStore, { ChatMessage } from "../../store/chatHistoryStore";
 import { addNotification } from "../../store/notificationStore";
 import "./AIChatPanel.css";
 
@@ -20,29 +20,17 @@ const AVAILABLE_MODELS = [
 
 type AvailableModel = (typeof AVAILABLE_MODELS)[number];
 
-interface Message {
-  id: string;
-  role: "user" | "assistant" | "system";
-  content: string;
-  timestamp: Date;
-}
-
 interface AIChatPanelProps {
   isDarkMode?: boolean;
 }
 
 const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hello! How can I help you today?",
-      timestamp: new Date(),
-    },
-  ]);
+  // Use chat history from persistent store
+  const { messages, addMessage, clearHistory } = useChatHistoryStore();
+
   const [inputValue, setInputValue] = useState("");
   const [selectedModel, setSelectedModel] = useState<AvailableModel>(
-    (getCurrentModel() as AvailableModel) || "Llama-3.2-1B-Instruct-q4f16_1-MLC"
+    (getCurrentModel() as AvailableModel) || "Llama-3.1-8B-Instruct-q4f32_1-MLC"
   );
   const [isLoading, setIsLoading] = useState(isModelLoading());
   const [isModelReady, setIsModelReady] = useState(isClientReady());
@@ -101,14 +89,15 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
       content: inputValue.trim(),
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    // Add user message to persistent store
+    addMessage(userMessage);
     setInputValue("");
     setIsLoading(true);
 
@@ -118,12 +107,19 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
 
       // Convert to ChatMessage format for WebLLMClient
       const chatMessages: ChatMessage[] = messages
-        .concat(userMessage)
+        .concat(userMessage) // Add the new user message
         .filter((msg) => msg.id !== "welcome" || messages.length <= 1) // Remove welcome message unless it's the only one
-        .map(({ role, content }) => ({ role, content }));
+        .map(({ role, content }) => ({
+          id: `${role}-${Date.now()}`,
+          role,
+          content,
+          timestamp: new Date(),
+        }));
 
       // Add a system message for context
       chatMessages.unshift({
+        id: "system",
+        timestamp: new Date(),
         role: "system",
         content:
           "You are a helpful AI assistant. Provide concise, accurate answers.",
@@ -135,16 +131,13 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
         prompt: "Continue the conversation.",
       });
 
-      // Add AI response to messages
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: response,
-          timestamp: new Date(),
-        },
-      ]);
+      // Add AI response to persistent store
+      addMessage({
+        id: `assistant-${Date.now()}`,
+        role: "assistant",
+        content: response,
+        timestamp: new Date(),
+      });
     } catch (error) {
       console.error("Error generating response:", error);
       addNotification({
@@ -153,16 +146,13 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
         duration: 5000,
       });
 
-      // Add error message to chat
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `error-${Date.now()}`,
-          role: "system",
-          content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}`,
-          timestamp: new Date(),
-        },
-      ]);
+      // Add error message to persistent store
+      addMessage({
+        id: `error-${Date.now()}`,
+        role: "system",
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        timestamp: new Date(),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -232,17 +222,26 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
               onChange={(e) => setTemperature(parseFloat(e.target.value))}
             />
           </div>
-          <button
-            className="load-model-button"
-            onClick={loadModel}
-            disabled={isLoading}
-          >
-            {isModelReady ? "Reload Model" : "Load Model"}
-          </button>
+          <div className="settings-actions">
+            <button
+              className="load-model-button"
+              onClick={loadModel}
+              disabled={isLoading}
+            >
+              {isModelReady ? "Reload Model" : "Load Model"}
+            </button>
+            <button
+              className="clear-history-button"
+              onClick={clearHistory}
+              title="Clear chat history"
+            >
+              <Trash2 size={16} /> Clear History
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Message history */}
+      {/* Message history - using messages from chatHistoryStore */}
       <div className="ai-chat-messages">
         {messages.map((message) => (
           <div key={message.id} className={`ai-chat-message ${message.role}`}>

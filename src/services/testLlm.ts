@@ -13,16 +13,36 @@ export async function main() {
 
   // Simple completion
   const reply = await webllmClient.chatCompletion([
-    { role: "system", content: "You are a helpful assistant." },
-    { role: "user", content: "Tell me a story about a cat." },
+    {
+      role: "system",
+      content: "You are a helpful assistant.",
+      id: "1",
+      timestamp: new Date(),
+    },
+    {
+      role: "user",
+      content: "Tell me a story about a cat.",
+      id: "2",
+      timestamp: new Date(),
+    },
   ]);
 
   console.log("Full Reply:", reply);
 
   // Streaming completion
   const reply2 = await webllmClient.streamChatCompletion([
-    { role: "system", content: "You are a helpful assistant." },
-    { role: "user", content: "Give me a joke." },
+    {
+      role: "system",
+      content: "You are a helpful assistant.",
+      id: "3",
+      timestamp: new Date(),
+    },
+    {
+      role: "user",
+      content: "Give me a joke.",
+      id: "4",
+      timestamp: new Date(),
+    },
   ]);
 
   console.log(reply2);

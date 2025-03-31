@@ -124,6 +124,43 @@
   cursor: not-allowed;
 }
 
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.clear-history-button {
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  color: #d32f2f;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clear-history-button:hover {
+  background-color: rgba(211, 47, 47, 0.1);
+  border-color: #d32f2f;
+}
+
+.ai-chat-panel.dark .clear-history-button {
+  background-color: #2c3e50;
+  border-color: #31415e;
+  color: #ff5252;
+}
+
+.ai-chat-panel.dark .clear-history-button:hover {
+  background-color: rgba(255, 82, 82, 0.15);
+  border-color: #ff5252;
+}
+
 /* Message history */
 .ai-chat-messages {
   flex-grow: 1;

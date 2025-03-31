@@ -1,8 +1,9 @@
 import { Save, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { NodeId } from "../../core/model/Node";
-import { ChatMessage, WebLLMClient } from "../../services/WebLLMClient";
+import { WebLLMClient } from "../../services/WebLLMClient";
 import useAppConfigStore from "../../store/appConfigStore";
+import { ChatMessage } from "../../store/chatHistoryStore";
 import { updateDocument, useDocumentStore } from "../../store/documentStore";
 import { addNotification } from "../../store/notificationStore";
 import "./ConversationAnalysis.css";
@@ -143,11 +144,15 @@ ${document.content}
       // Define messages for the chat completion
       const messages: ChatMessage[] = [
         {
+          id: crypto.randomUUID(),
+          timestamp: new Date(),
           role: "system",
           content:
             "You are an AI assistant analyzing conversations. Provide concise, insightful analysis.",
         },
         {
+          id: crypto.randomUUID(),
+          timestamp: new Date(),
           role: "user",
           content: analysisPrompt,
         },
