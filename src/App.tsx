@@ -94,6 +94,7 @@ import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
+import { main } from "./services/testLlm";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
 import {
   getActiveLayoutResult,
@@ -151,6 +152,8 @@ import useWorkspaceConfigStore, {
 } from "./store/workspaceConfigStore";
 
 // Import the persistent store
+
+main();
 
 export type ObjectOf<T> = { [key: string]: T };
 
