@@ -14,8 +14,8 @@ import "./AIChatPanel.css";
 // Available models for chat
 const AVAILABLE_MODELS = [
   "Llama-3.1-8B-Instruct-q4f32_1-MLC",
-  "TinyLlama-1.1B-Chat-v1.0-q4f32_1",
-  "Llama-2-7b-chat-hf-q4f32_1",
+  //   "TinyLlama-1.1B-Chat-v1.0-q4f32_1",
+  //   "Llama-2-7b-chat-hf-q4f32_1",
 ];
 
 type AvailableModel = (typeof AVAILABLE_MODELS)[number];

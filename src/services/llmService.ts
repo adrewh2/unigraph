@@ -22,7 +22,7 @@ export const getSharedLLMClient = async (): Promise<WebLLMClient> => {
       initProgressCallback: (report) => {
         if (report.progress % 20 === 0 || report.progress > 95) {
           addNotification({
-            message: `Loading ${currentModel}: ${report.progress.toFixed(0)}%`,
+            message: `Loading ${currentModel}: ${report.progress.toFixed(2)}%`,
             type: "info",
             duration: 2000,
           });

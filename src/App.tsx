@@ -94,7 +94,7 @@ import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
 import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
-import { main } from "./services/testLlm";
+import { getSharedLLMClient } from "./services/llmService";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
 import {
   getActiveLayoutResult,
@@ -153,7 +153,10 @@ import useWorkspaceConfigStore, {
 
 // Import the persistent store
 
-main();
+// main();
+
+// initialize shared llm client
+getSharedLLMClient();
 
 export type ObjectOf<T> = { [key: string]: T };
 
