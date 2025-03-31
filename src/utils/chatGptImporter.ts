@@ -356,6 +356,13 @@ export async function importChatGptConversation(
       description: `ChatGPT conversation imported from ${url}`,
     });
 
+    // Store the mapping between URL and node ID for later analysis
+    try {
+      localStorage.setItem(`imported-node-${url}`, conversationId);
+    } catch (e) {
+      console.warn("Failed to save node mapping to localStorage:", e);
+    }
+
     // Create a consolidated formatted document for the conversation thread
     const formattedConversation =
       createFormattedConversationDocument(conversation);
