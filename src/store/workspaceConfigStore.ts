@@ -20,6 +20,7 @@ const defaultSectionWidths: SectionWidthConfig = {
   filters: 500,
   analysis: 300,
   displaySettings: 350,
+  "chatgpt-import": 400,
   // Add other sections as needed
 };
 
@@ -32,7 +33,7 @@ export const DEFAULT_SIDEBAR_CONFIG = (): ISidebarConfig => {
     mode: "collapsed",
     minimal: false,
     activeSectionId: null,
-    panelWidth: 240, // Reduce from 260px to 240px
+    panelWidth: 300,
   };
 };
 

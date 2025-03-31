@@ -1,5 +1,5 @@
 import { FileJson, MessageSquare } from "lucide-react";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { GET_DEFAULT_RENDERING_CONFIG } from "../../controllers/RenderingManager";
 import useAppConfigStore, {
   getCurrentSceneGraph,
@@ -19,6 +19,7 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
   const [url, setUrl] = React.useState<string>("");
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [recentImports, setRecentImports] = React.useState<string[]>([]);
+  const [createMessageNodes, setCreateMessageNodes] = useState<boolean>(true); // Add checkbox state
   const { currentSceneGraph } = useAppConfigStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -65,7 +66,8 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
     try {
       const conversationNodeId = await importChatGptConversation(
         url,
-        currentSceneGraph
+        currentSceneGraph,
+        createMessageNodes // Pass the checkbox state
       );
       if (conversationNodeId) {
         // Save to recent imports
@@ -94,7 +96,8 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
     try {
       const conversationNodeId = await importChatGptFromFile(
         file,
-        currentSceneGraph
+        currentSceneGraph,
+        createMessageNodes // Pass the checkbox state
       );
       if (conversationNodeId) {
         const newRenderingConfig = GET_DEFAULT_RENDERING_CONFIG(
@@ -137,6 +140,24 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
           Import shared ChatGPT conversations to create a network of
           interconnected messages as graph nodes.
         </p>
+
+        <div className="import-options">
+          <label className="option-checkbox">
+            <input
+              type="checkbox"
+              checked={createMessageNodes}
+              onChange={(e) => setCreateMessageNodes(e.target.checked)}
+            />
+            <span className="checkbox-label">
+              Create individual nodes for each message
+            </span>
+            {/* <span className="option-description">
+              {createMessageNodes
+                ? "Each message will be its own node in the graph."
+                : "Only one node with the full conversation will be created."}
+            </span> */}
+          </label>
+        </div>
 
         <div className="chatgpt-url-container">
           <input

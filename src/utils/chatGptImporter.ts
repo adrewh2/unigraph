@@ -328,11 +328,13 @@ function getRoleLabel(role: string): string {
  * Imports a ChatGPT conversation from a shared URL into the scene graph
  * @param url The shared ChatGPT URL
  * @param sceneGraph The scene graph to import into
+ * @param createMessageNodes Whether to create individual nodes for each message (default: true)
  * @returns The root conversation node ID
  */
 export async function importChatGptConversation(
   url: string,
-  sceneGraph: SceneGraph
+  sceneGraph: SceneGraph,
+  createMessageNodes: boolean = true // Add parameter with default value
 ): Promise<NodeId | null> {
   try {
     const conversation = await fetchChatGptConversation(url);
@@ -369,45 +371,43 @@ export async function importChatGptConversation(
       tags: ["conversation", "chatgpt"],
     });
 
-    // Create nodes for each message - skip empty messages
-    let previousNodeId: NodeId | null = null;
-    for (const message of conversation.messages) {
-      // Skip empty messages
-      if (!message.content.trim()) {
-        continue;
-      }
+    // Only create individual message nodes if the flag is true
+    if (createMessageNodes) {
+      let previousNodeId: NodeId | null = null;
+      for (const message of conversation.messages) {
+        if (!message.content.trim()) {
+          continue;
+        }
 
-      const messageId = uuidv4() as NodeId;
-      const messageNode = sceneGraph.getGraph().createNode(messageId, {
-        label: getLabelForRole(message.role),
-        type: getTypeForRole(message.role),
-        description: message.content,
-      });
-
-      // Add tags based on role
-      messageNode.addTag(message.role);
-
-      // Connect message to conversation
-      sceneGraph.getGraph().createEdge(conversationId, messageId, {
-        type: "contains",
-        label: "contains",
-      });
-
-      // Connect messages in sequence
-      if (previousNodeId) {
-        sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
-          type: "nextMessage",
-          label: "followed by",
+        const messageId = uuidv4() as NodeId;
+        const messageNode = sceneGraph.getGraph().createNode(messageId, {
+          label: getLabelForRole(message.role),
+          type: getTypeForRole(message.role),
+          description: message.content,
         });
-      }
 
-      previousNodeId = messageId;
+        messageNode.addTag(message.role);
+
+        sceneGraph.getGraph().createEdge(conversationId, messageId, {
+          type: "contains",
+          label: "contains",
+        });
+
+        if (previousNodeId) {
+          sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
+            type: "nextMessage",
+            label: "followed by",
+          });
+        }
+
+        previousNodeId = messageId;
+      }
     }
 
-    // Notify graph changed to update the UI
-    // sceneGraph.notifyGraphChanged();
     addNotification({
-      message: `Imported conversation with ${conversation.messages.length} messages`,
+      message: createMessageNodes
+        ? `Imported conversation with ${conversation.messages.length} messages`
+        : `Imported conversation as a single document node`,
       type: "success",
       duration: 5000,
     });
@@ -467,11 +467,13 @@ function getTypeForRole(role: string): string {
  * Imports a ChatGPT conversation from a local JSON file
  * @param file The JSON file containing the conversation
  * @param sceneGraph The scene graph to import into
+ * @param createMessageNodes Whether to create individual nodes for each message (default: true)
  * @returns The root conversation node ID or array of IDs if multiple conversations were imported
  */
 export async function importChatGptFromFile(
   file: File,
-  sceneGraph: SceneGraph
+  sceneGraph: SceneGraph,
+  createMessageNodes: boolean = true // Add parameter with default value
 ): Promise<NodeId | NodeId[] | null> {
   try {
     // Validate file type
@@ -514,7 +516,8 @@ export async function importChatGptFromFile(
           const conversationId = await importParsedConversation(
             conversation,
             sceneGraph,
-            file.name
+            file.name,
+            createMessageNodes // Pass the parameter
           );
           if (conversationId) {
             conversationIds.push(conversationId);
@@ -547,7 +550,8 @@ export async function importChatGptFromFile(
         const conversationId = await importParsedConversation(
           conversations[0],
           sceneGraph,
-          file.name
+          file.name,
+          createMessageNodes // Pass the parameter
         );
         if (conversationId) {
           addNotification({
@@ -594,7 +598,8 @@ export async function importChatGptFromFile(
     const conversationId = await importParsedConversation(
       conversation,
       sceneGraph,
-      file.name
+      file.name,
+      createMessageNodes // Pass the parameter
     );
     return conversationId;
   } catch (error) {
@@ -616,12 +621,14 @@ export async function importChatGptFromFile(
  * @param conversation The parsed conversation
  * @param sceneGraph The scene graph
  * @param fileName The name of the source file
+ * @param createMessageNodes Whether to create individual nodes for each message
  * @returns The conversation node ID
  */
 async function importParsedConversation(
   conversation: ParsedConversation,
   sceneGraph: SceneGraph,
-  fileName: string
+  fileName: string,
+  createMessageNodes: boolean
 ): Promise<NodeId | null> {
   if (!conversation.messages || conversation.messages.length === 0) {
     console.error("No messages found in conversation");
@@ -651,55 +658,37 @@ async function importParsedConversation(
     tags: ["conversation", "chatgpt"],
   });
 
-  // Create nodes for each message
-  let previousNodeId: NodeId | null = null;
-  // const processedCount = 0;
+  if (createMessageNodes) {
+    let previousNodeId: NodeId | null = null;
+    for (const message of conversation.messages) {
+      if (!message.content.trim()) {
+        continue;
+      }
 
-  for (const message of conversation.messages) {
-    // Skip empty messages while maintaining the chain - using more robust check
-    if (!message.content || !message.content.trim()) {
-      console.log("Skipping empty message from role:", message.role);
-      continue;
-    }
-
-    // processedCount++;
-    const messageId = uuidv4() as NodeId;
-    const messageNode = sceneGraph.getGraph().createNode(messageId, {
-      label: getLabelForRole(message.role),
-      type: getTypeForRole(message.role),
-      description: message.content,
-    });
-
-    createDocument(messageNode.getId());
-    updateDocument(messageNode.getId(), {
-      id: messageNode.getId(),
-      nodeId: messageNode.getId(),
-      lastModified: Date.now(),
-      content: message.content,
-      lexicalState: "",
-      tags: [message.role],
-    });
-
-    // Add tags based on role
-    messageNode.addTag(message.role);
-
-    // Connect message to conversation
-    sceneGraph.getGraph().createEdge(conversationId, messageId, {
-      type: "contains",
-      label: "contains",
-    });
-
-    // Connect messages in sequence
-    if (previousNodeId) {
-      sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
-        type: "nextMessage",
-        label: "followed by",
+      const messageId = uuidv4() as NodeId;
+      const messageNode = sceneGraph.getGraph().createNode(messageId, {
+        label: getLabelForRole(message.role),
+        type: getTypeForRole(message.role),
+        description: message.content,
       });
-    }
 
-    previousNodeId = messageId;
+      messageNode.addTag(message.role);
+
+      sceneGraph.getGraph().createEdge(conversationId, messageId, {
+        type: "contains",
+        label: "contains",
+      });
+
+      if (previousNodeId) {
+        sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
+          type: "nextMessage",
+          label: "followed by",
+        });
+      }
+
+      previousNodeId = messageId;
+    }
   }
 
-  // console.log(`Successfully processed ${processedCount} messages`);
   return conversationId;
 }

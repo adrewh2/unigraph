@@ -4,6 +4,11 @@
   height: 100%;
   background-color: #ffffff;
   color: #333;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .chatgpt-panel.dark {
