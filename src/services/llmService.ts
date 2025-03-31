@@ -7,6 +7,7 @@ const DEFAULT_MODEL = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
 // Singleton instance
 let clientInstance: WebLLMClient | null = null;
 let isLoading = false;
+export let webllmIsLoaded = false;
 let currentModel = DEFAULT_MODEL;
 
 /**
@@ -43,6 +44,7 @@ export const getSharedLLMClient = async (): Promise<WebLLMClient> => {
         type: "success",
         duration: 3000,
       });
+      webllmIsLoaded = true;
     } catch (error) {
       console.error("Error loading LLM model:", error);
       addNotification({

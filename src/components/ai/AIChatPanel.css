@@ -329,3 +329,58 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Add loading spinner styles */
+.ai-chat-loading {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.spinner-icon {
+  animation: spin 1.5s linear infinite;
+  color: #4285f4;
+}
+
+.ai-chat-panel.dark .spinner-icon {
+  color: #5294ff;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.loading-subtext {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.ai-chat-panel.dark .loading-text {
+  color: #e0e0e0;
+}
+
+.ai-chat-panel.dark .loading-subtext {
+  color: #aaa;
+}

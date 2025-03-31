@@ -1,11 +1,11 @@
-import { Send, Settings, Trash2 } from "lucide-react";
+import { Loader2, Send, Settings, Trash2 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import {
   getCurrentModel,
   getSharedLLMClient,
-  isClientReady,
   isModelLoading,
   switchModel,
+  webllmIsLoaded,
 } from "../../services/llmService";
 import useChatHistoryStore, { ChatMessage } from "../../store/chatHistoryStore";
 import { addNotification } from "../../store/notificationStore";
@@ -33,31 +33,22 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
     (getCurrentModel() as AvailableModel) || "Llama-3.1-8B-Instruct-q4f32_1-MLC"
   );
   const [isLoading, setIsLoading] = useState(isModelLoading());
-  const [isModelReady, setIsModelReady] = useState(isClientReady());
   const [showSettings, setShowSettings] = useState(false);
   const [temperature, setTemperature] = useState(0.7);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize shared LLM client
   useEffect(() => {
-    if (!isClientReady()) {
+    if (!webllmIsLoaded) {
       setIsLoading(true);
       getSharedLLMClient()
-        .then(() => {
-          setIsModelReady(true);
-          setIsLoading(false);
-        })
-        .catch(() => {
-          setIsLoading(false);
-        });
-    } else {
-      setIsModelReady(true);
+        .then(() => setIsLoading(false))
+        .catch(() => setIsLoading(false));
     }
 
     // Set up an interval to check if model status changed
     const checkInterval = setInterval(() => {
       setIsLoading(isModelLoading());
-      setIsModelReady(isClientReady());
       if (selectedModel !== getCurrentModel()) {
         setSelectedModel(getCurrentModel() as AvailableModel);
       }
@@ -78,7 +69,6 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
     setIsLoading(true);
     try {
       await switchModel(selectedModel);
-      setIsModelReady(true);
     } catch (error) {
       console.error("Error switching model:", error);
     } finally {
@@ -228,7 +218,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
               onClick={loadModel}
               disabled={isLoading}
             >
-              {isModelReady ? "Reload Model" : "Load Model"}
+              {webllmIsLoaded ? "Reload Model" : "Load Model"}
             </button>
             <button
               className="clear-history-button"
@@ -241,53 +231,71 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
         </div>
       )}
 
-      {/* Message history - using messages from chatHistoryStore */}
-      <div className="ai-chat-messages">
-        {messages.map((message) => (
-          <div key={message.id} className={`ai-chat-message ${message.role}`}>
-            <div className="message-content">
-              {message.content.split("\n").map((line, i) => (
-                <React.Fragment key={i}>
-                  {line}
-                  {i < message.content.split("\n").length - 1 && <br />}
-                </React.Fragment>
-              ))}
-            </div>
-            <div className="message-timestamp">
-              {message.timestamp.toLocaleTimeString()}
-            </div>
+      {/* Loading spinner when initializing */}
+      {!webllmIsLoaded ? (
+        <div className="ai-chat-loading">
+          <div className="loading-spinner">
+            <Loader2 size={36} className="spinner-icon" />
           </div>
-        ))}
-        {isLoading && (
-          <div className="ai-chat-message assistant loading">
-            <div className="typing-indicator">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
+          <div className="loading-text">Loading model...</div>
+          <div className="loading-subtext">
+            This may take a moment on first use
           </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+        </div>
+      ) : (
+        <>
+          {/* Message history - only shown when not initializing */}
+          <div className="ai-chat-messages">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`ai-chat-message ${message.role}`}
+              >
+                <div className="message-content">
+                  {message.content.split("\n").map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i < message.content.split("\n").length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </div>
+                <div className="message-timestamp">
+                  {message.timestamp.toLocaleTimeString()}
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="ai-chat-message assistant loading">
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-      {/* Input area */}
-      <div className="ai-chat-input-container">
-        <textarea
-          className="ai-chat-input"
-          placeholder="Type a message..."
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isLoading && !isModelReady}
-        />
-        <button
-          className="ai-chat-send-button"
-          onClick={handleSendMessage}
-          disabled={!inputValue.trim() || (isLoading && !isModelReady)}
-        >
-          <Send size={18} />
-        </button>
-      </div>
+          {/* Input area - only shown when not initializing */}
+          <div className="ai-chat-input-container">
+            <textarea
+              className="ai-chat-input"
+              placeholder="Type a message..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isLoading && !webllmIsLoaded}
+            />
+            <button
+              className="ai-chat-send-button"
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || (isLoading && !webllmIsLoaded)}
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
