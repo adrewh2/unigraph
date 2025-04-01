@@ -33,6 +33,88 @@
   gap: 8px;
 }
 
+/* API status indicator */
+.api-status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 8px;
+}
+
+.api-status.connected {
+  color: #4caf50;
+  font-size: 24px;
+  line-height: 0;
+  margin-top: 2px;
+}
+
+.api-status.error {
+  color: #f44336;
+}
+
+.api-unavailable-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 16px;
+  padding: 12px;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-radius: 4px;
+  color: #d32f2f;
+}
+
+.ai-chat-panel.dark .api-unavailable-notice {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #ff5252;
+}
+
+.api-unavailable-notice p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.api-unavailable-notice code {
+  background-color: rgba(0, 0, 0, 0.06);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+.ai-chat-panel.dark .api-unavailable-notice code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-api-info {
+  font-size: 13px;
+  color: #666;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.ai-chat-panel.dark .settings-api-info {
+  color: #aaa;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.settings-api-info p {
+  margin: 0 0 4px 0;
+}
+
+.settings-api-info code {
+  display: block;
+  font-family: monospace;
+  padding: 4px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 3px;
+}
+
+.ai-chat-panel.dark .settings-api-info code {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
 .ai-chat-actions {
   display: flex;
   gap: 8px;
