@@ -61,7 +61,7 @@ async function analyzeDocumentForTags(
           timestamp: new Date(),
         },
       ],
-      { temperature: 0.3, prompt }
+      { temperature: 0.3, prompt, forceNewConvo: true }
     );
 
     // Extract JSON array from the response

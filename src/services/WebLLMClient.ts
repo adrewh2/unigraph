@@ -12,6 +12,13 @@ export interface WebLLMClientConfig {
   initProgressCallback?: (report: { progress: number }) => void;
 }
 
+// Extended params type to include our new singleMessage option
+export interface ExtendedCompletionParams
+  extends Omit<CompletionCreateParams, "messages"> {
+  singleMessage?: boolean;
+  forceNewConvo?: boolean;
+}
+
 export class WebLLMClient {
   private engine: MLCEngine | null = null;
   private model: string;
@@ -44,16 +51,39 @@ export class WebLLMClient {
     return this.engine !== null;
   }
 
+  /**
+   * Generate a response from the LLM for the given messages
+   * @param messages Array of chat messages
+   * @param params Additional parameters including temperature and whether to use only the last message
+   * @returns The generated text response
+   */
   public async chatCompletion(
     messages: ChatMessage[],
-    params?: Omit<CompletionCreateParams, "messages">
+    params?: ExtendedCompletionParams
   ): Promise<string> {
     if (!this.engine) throw new Error("Engine not loaded");
 
+    // Extract our custom params and standard MLCEngine params
+    const {
+      singleMessage = false,
+      forceNewConvo = false,
+      ...engineParams
+    } = params || {};
+
+    // If singleMessage is true, only use the last message in the array
+    const messagesToUse = singleMessage
+      ? [messages[messages.length - 1]]
+      : messages;
+
+    // If forceNewConvo is true, clear the conversation history first
+    if (forceNewConvo) {
+      await this.engine.resetChat();
+    }
+
     const reply = (await this.engine.chat.completions.create({
-      messages,
+      messages: messagesToUse,
       stream: false,
-      ...params,
+      ...engineParams,
     })) as ChatCompletion;
 
     return reply.choices[0]?.message?.content ?? "";
