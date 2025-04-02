@@ -334,7 +334,7 @@ function getRoleLabel(role: string): string {
 export async function importChatGptConversation(
   url: string,
   sceneGraph: SceneGraph,
-  createMessageNodes: boolean = true // Add parameter with default value
+  createMessageNodes: boolean = true
 ): Promise<NodeId | null> {
   try {
     const conversation = await fetchChatGptConversation(url);
@@ -475,12 +475,15 @@ function getTypeForRole(role: string): string {
  * @param file The JSON file containing the conversation
  * @param sceneGraph The scene graph to import into
  * @param createMessageNodes Whether to create individual nodes for each message (default: true)
+ * @param messageSampleRatio Ratio of messages to keep in each conversation (0.1 to 1.0, default: 1.0)
+ * @param conversationSampleRatio Ratio of conversations to keep (0.1 to 1.0, default: 1.0)
  * @returns The root conversation node ID or array of IDs if multiple conversations were imported
  */
 export async function importChatGptFromFile(
   file: File,
   sceneGraph: SceneGraph,
-  createMessageNodes: boolean = true // Add parameter with default value
+  createMessageNodes: boolean = true,
+  conversationSampleRatio: number = 1.0
 ): Promise<NodeId | NodeId[] | null> {
   try {
     // Validate file type
@@ -516,15 +519,24 @@ export async function importChatGptFromFile(
     ) {
       const conversations = parseConversationsJson(parsedData);
       console.log("Found ", conversations.length, " conversations");
-      if (conversations.length > 0) {
-        const conversationIds: NodeId[] = [];
 
-        for (const conversation of conversations) {
+      if (conversations.length > 0) {
+        // Downsample the conversations if needed
+        let processedConversations = conversations;
+        if (conversationSampleRatio < 1.0) {
+          processedConversations = downsampleConversations(
+            conversations,
+            conversationSampleRatio
+          );
+        }
+
+        const conversationIds: NodeId[] = [];
+        for (const conversation of processedConversations) {
           const conversationId = await importParsedConversation(
             conversation,
             sceneGraph,
             file.name,
-            createMessageNodes // Pass the parameter
+            createMessageNodes
           );
           if (conversationId) {
             conversationIds.push(conversationId);
@@ -629,6 +641,7 @@ export async function importChatGptFromFile(
  * @param sceneGraph The scene graph
  * @param fileName The name of the source file
  * @param createMessageNodes Whether to create individual nodes for each message
+ * @param messageSampleRatio Ratio of messages to keep in each conversation (0.1 to 1.0, default: 1.0)
  * @returns The conversation node ID
  */
 async function importParsedConversation(
@@ -698,4 +711,58 @@ async function importParsedConversation(
   }
 
   return conversationId;
+}
+
+/**
+ * Downsamples an array of conversations based on a ratio
+ * @param conversations The conversations to downsample
+ * @param ratio The ratio of conversations to keep (0.1 to 1.0)
+ * @returns A downsampled array of conversations
+ */
+function downsampleConversations(
+  conversations: ParsedConversation[],
+  ratio: number
+): ParsedConversation[] {
+  // Ensure we have a valid ratio
+  const validRatio = Math.max(0.1, Math.min(1, ratio));
+
+  // If ratio is 1 or we have very few conversations, return all
+  if (validRatio >= 1 || conversations.length <= 3) {
+    return conversations;
+  }
+
+  // Calculate how many conversations to keep
+  const targetCount = Math.max(
+    1,
+    Math.floor(conversations.length * validRatio)
+  );
+
+  // Always keep the first and last conversations for context
+  const result: ParsedConversation[] = [];
+
+  // Add the first conversation
+  result.push(conversations[0]);
+
+  // If we need more than just first and last, select from the middle
+  if (targetCount > 2) {
+    const middleConversations = conversations.slice(
+      1,
+      conversations.length - 1
+    );
+    const stride = middleConversations.length / (targetCount - 2);
+
+    for (let i = 0; i < targetCount - 2; i++) {
+      const index = Math.floor(i * stride);
+      if (index < middleConversations.length) {
+        result.push(middleConversations[index]);
+      }
+    }
+  }
+
+  // Add the last conversation if not already added and there is more than one conversation
+  if (conversations.length > 1 && targetCount > 1) {
+    result.push(conversations[conversations.length - 1]);
+  }
+
+  return result;
 }

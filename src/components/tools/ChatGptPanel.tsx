@@ -19,7 +19,8 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
   const [url, setUrl] = React.useState<string>("");
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [recentImports, setRecentImports] = React.useState<string[]>([]);
-  const [createMessageNodes, setCreateMessageNodes] = useState<boolean>(true); // Add checkbox state
+  const [createMessageNodes, setCreateMessageNodes] = useState<boolean>(false);
+  const [downsamplePercent, setDownsamplePercent] = useState<number>(100); // For conversation downsampling
   const { currentSceneGraph } = useAppConfigStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,7 +68,7 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
       const conversationNodeId = await importChatGptConversation(
         url,
         currentSceneGraph,
-        createMessageNodes // Pass the checkbox state
+        createMessageNodes
       );
       if (conversationNodeId) {
         // Save to recent imports
@@ -97,7 +98,8 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
       const conversationNodeId = await importChatGptFromFile(
         file,
         currentSceneGraph,
-        createMessageNodes // Pass the checkbox state
+        createMessageNodes,
+        downsamplePercent / 100 // Pass the conversation downsampling ratio
       );
       if (conversationNodeId) {
         const newRenderingConfig = GET_DEFAULT_RENDERING_CONFIG(
@@ -151,12 +153,29 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
             <span className="checkbox-label">
               Create individual nodes for each message
             </span>
-            {/* <span className="option-description">
-              {createMessageNodes
-                ? "Each message will be its own node in the graph."
-                : "Only one node with the full conversation will be created."}
-            </span> */}
           </label>
+
+          {/* Add downsampling slider for conversations */}
+          <div className="downsample-control">
+            <label htmlFor="downsample-slider">
+              Downsample conversations: {downsamplePercent}%
+            </label>
+            <input
+              id="downsample-slider"
+              type="range"
+              min="10"
+              max="100"
+              step="10"
+              value={downsamplePercent}
+              onChange={(e) => setDownsamplePercent(parseInt(e.target.value))}
+              className="downsample-slider"
+            />
+            <span className="downsample-hint">
+              {downsamplePercent < 100
+                ? `Import approximately ${downsamplePercent}% of conversations`
+                : "Import all conversations"}
+            </span>
+          </div>
         </div>
 
         <div className="chatgpt-url-container">
