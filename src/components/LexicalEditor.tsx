@@ -34,6 +34,7 @@ import {
 import { debounce, throttle } from "lodash";
 import React, { JSX, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid"; // Add this import
+import { GET_DEFAULT_RENDERING_CONFIG } from "../controllers/RenderingManager";
 import { NodeId } from "../core/model/Node";
 import useAppConfigStore, {
   getCurrentSceneGraph,
@@ -164,6 +165,7 @@ function ContextMenuPlugin(): JSX.Element | null {
     text: string;
   } | null>(null);
   const { currentSceneGraph } = useAppConfigStore();
+  const { activeDocument } = useDocumentStore();
 
   useEffect(() => {
     // Register for native DOM right-click event on the editor
@@ -225,12 +227,19 @@ function ContextMenuPlugin(): JSX.Element | null {
         label: contextMenu.text,
         type: "Note",
       });
-      // const newEdge = currentSceneGraph
-      //   .getGraph()
-      //   .createEdgeIfMissing(id as NodeId, newNode.getId(), {
-      //     type: "created",
-      //   });
 
+      const newEdge = currentSceneGraph
+        .getGraph()
+        .createEdge(activeDocument as NodeId, newNode.getId(), {
+          type: "contains",
+          label: "contains",
+        });
+
+      const newRenderingConfig = GET_DEFAULT_RENDERING_CONFIG(
+        getCurrentSceneGraph().getGraph(),
+        getCurrentSceneGraph().getDisplayConfig()
+      );
+      getCurrentSceneGraph().getData().displayConfig = newRenderingConfig;
       currentSceneGraph.notifyGraphChanged();
 
       // Show notification
