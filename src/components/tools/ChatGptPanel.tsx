@@ -1,6 +1,5 @@
 import { FileJson, MessageSquare, Workflow } from "lucide-react";
 import React, { useRef, useState } from "react";
-import { GET_DEFAULT_RENDERING_CONFIG } from "../../controllers/RenderingManager";
 import { importConversationsWithStructure } from "../../services/conversationsImporter";
 import useAppConfigStore, {
   getCurrentSceneGraph,
@@ -114,11 +113,7 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
         downsamplePercent / 100 // Pass the conversation downsampling ratio
       );
       if (conversationNodeId) {
-        const newRenderingConfig = GET_DEFAULT_RENDERING_CONFIG(
-          getCurrentSceneGraph().getGraph(),
-          getCurrentSceneGraph().getDisplayConfig()
-        );
-        getCurrentSceneGraph().getData().displayConfig = newRenderingConfig;
+        getCurrentSceneGraph().refreshDisplayConfig();
         getCurrentSceneGraph().notifyGraphChanged();
         addNotification({
           message: `Successfully imported conversation from ${file.name}`,
@@ -165,12 +160,7 @@ const ChatGptPanel: React.FC<ChatGptPanelProps> = ({ isDarkMode = false }) => {
       // Revoke the URL to free up memory
       URL.revokeObjectURL(fileUrl);
 
-      // Update rendering config to show the new nodes
-      const newRenderingConfig = GET_DEFAULT_RENDERING_CONFIG(
-        getCurrentSceneGraph().getGraph(),
-        getCurrentSceneGraph().getDisplayConfig()
-      );
-      getCurrentSceneGraph().getData().displayConfig = newRenderingConfig;
+      getCurrentSceneGraph().refreshDisplayConfig();
       getCurrentSceneGraph().notifyGraphChanged();
 
       // Show success notification with statistics
