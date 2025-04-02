@@ -96,7 +96,7 @@ export async function importConversations(
         // Connect the conversation node to the existing node
         sceneGraph
           .getGraph()
-          .createEdge(matchingNodeId, conversationNodeId.getId(), {
+          .createEdgeIfMissing(matchingNodeId, conversationNodeId.getId(), {
             label: "has conversation",
             type: "reference",
           });
@@ -182,7 +182,7 @@ export function createTopicNodes(sceneGraph: SceneGraph): {
 
     // Connect conversation node to topic node
     const topicNodeId = topicMap.get(topic)!;
-    sceneGraph.getGraph().createEdge(node.getId(), topicNodeId, {
+    sceneGraph.getGraph().createEdgeIfMissing(node.getId(), topicNodeId, {
       label: "has topic",
       type: "categorization",
     });
@@ -273,10 +273,12 @@ export function createKeywordNodes(
 
           // Connect conversation node to keyword node
           const keywordNodeId = keywordMap.get(normalizedKeyword)!;
-          sceneGraph.getGraph().createEdge(node.getId(), keywordNodeId, {
-            label: "has keyword",
-            type: "keyword",
-          });
+          sceneGraph
+            .getGraph()
+            .createEdgeIfMissing(node.getId(), keywordNodeId, {
+              label: "has keyword",
+              type: "keyword",
+            });
 
           connections++;
         }
