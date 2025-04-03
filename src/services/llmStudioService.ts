@@ -71,19 +71,21 @@ export async function callLLMStudioAPI(
     console.log("last message was ", lastMessage);
 
     // Format messages for the API - ensure role and content are present
+    // Include all messages including greetings for proper conversation context
     const formattedMessages = messages.map(({ role, content }) => ({
       role: role || "user", // Default to user if role is missing
       content: content || "", // Default to empty string if content is missing
     }));
 
-    // Enhanced system prompt that encourages the LLM to generate graph commands
+    // Ensure there's always a system prompt
     if (!formattedMessages.some((msg) => msg.role === "system")) {
+      // Add system message at the beginning of the array
       formattedMessages.unshift({
         role: "system",
         content: getEnhancedSystemPrompt(),
       });
     } else {
-      // Update existing system message with command information
+      // Update existing system message with command information if needed
       const systemMsgIndex = formattedMessages.findIndex(
         (msg) => msg.role === "system"
       );
@@ -100,7 +102,10 @@ export async function callLLMStudioAPI(
       }
     }
 
-    console.log("Formatted Messages:", formattedMessages);
+    console.log(
+      "Sending to API with full conversation history:",
+      formattedMessages
+    );
 
     const response = await fetch(API_URL, {
       method: "POST",
@@ -183,6 +188,7 @@ function getEnhancedSystemPrompt(): string {
 export async function checkLLMStudioAvailability(): Promise<boolean> {
   try {
     // Make sure we're sending a valid request with required fields
+    // Using a basic greeting exchange as a test
     const testRequest = {
       messages: [
         {
@@ -192,6 +198,10 @@ export async function checkLLMStudioAvailability(): Promise<boolean> {
         {
           role: "user",
           content: "Hello",
+        },
+        {
+          role: "assistant",
+          content: "Hello! How can I help you today?",
         },
       ],
       max_tokens: 1, // Minimal request just to check availability
