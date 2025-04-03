@@ -34,6 +34,7 @@ function getCommandsContextForLLM(): string {
     "When the user asks to modify the graph, you can directly use these commands with the proper API syntax in your response. " +
     "Commands must start with '/graph' followed by the command name and parameters. " +
     "For example: '/graph addNode type=Button label=Submit position=(100,200)'\n\n" +
+    "You can include multiple commands in a single response, one per line, and they will all be executed in sequence. " +
     "Your commands will be automatically processed and executed on the graph."
   );
 }
@@ -59,8 +60,12 @@ export async function callLLMStudioAPI(
 
     // Process last message if it contains commands, regardless of role
     if (sceneGraphController.containsCommandKeywords(lastMessage.content)) {
-      console.log("Detected command in message:", lastMessage.content);
-      return await sceneGraphController.executeCommand(lastMessage.content);
+      console.log("Detected command(s) in message:", lastMessage.content);
+      // Process all commands in the message
+      const commandResult = await sceneGraphController.processMultipleCommands(
+        lastMessage.content
+      );
+      return commandResult;
     }
 
     console.log("last message was ", lastMessage);
@@ -128,11 +133,22 @@ export async function callLLMStudioAPI(
 
     // Check if LLM response contains graph commands and process them if present
     if (sceneGraphController.containsCommandKeywords(generatedResponse)) {
-      console.log("LLM generated a graph command:", generatedResponse);
-      // We'll return both the command and its execution result
-      const commandResult =
-        await sceneGraphController.executeCommand(generatedResponse);
-      return `${generatedResponse}\n\n---\n${commandResult}`;
+      console.log("LLM generated graph command(s):", generatedResponse);
+
+      // Process all commands in the response
+      const commandResults =
+        await sceneGraphController.processMultipleCommands(generatedResponse);
+
+      // If the response is just a single command, only return the result
+      if (
+        generatedResponse.trim().startsWith("/graph") &&
+        !generatedResponse.includes("\n")
+      ) {
+        return commandResults;
+      }
+
+      // Otherwise, include both response and results
+      return `${generatedResponse}\n\n---\nCommand Results:\n${commandResults}`;
     }
 
     return generatedResponse;
@@ -154,6 +170,7 @@ function getEnhancedSystemPrompt(): string {
   const basePrompt =
     "You are a helpful assistant that can understand and generate graph modification commands. " +
     "When appropriate, you can directly create or modify graph elements by using the API commands below. " +
+    "You can issue multiple commands in sequence to build more complex structures. " +
     "The commands follow a strict format starting with '/graph' followed by the command name and parameters.";
 
   return `${basePrompt}\n\n${getCommandsContextForLLM()}`;

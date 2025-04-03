@@ -137,7 +137,88 @@ export class SceneGraphController {
       }
     }
 
+    // Check for commands in code blocks too
+    const codeBlockRegex = /```[\s\S]*?```|`[^`]+`/g;
+    let match;
+
+    while ((match = codeBlockRegex.exec(message)) !== null) {
+      const codeBlock = match[0].replace(/```/g, "").trim();
+      if (codeBlock.includes(this.COMMAND_PREFIX)) {
+        return true;
+      }
+    }
+
     return false;
+  }
+
+  /**
+   * Process a message that might contain multiple commands
+   * @param message Message that might contain one or more commands
+   * @returns Results from executing all commands found in the message
+   */
+  async processMultipleCommands(message: string): Promise<string> {
+    const results: string[] = [];
+    const lines = message.split("\n");
+    let processedAny = false;
+
+    // First, check for commands in plain text
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      // Skip markdown code markers or empty lines
+      if (
+        trimmedLine === "" ||
+        trimmedLine === "```" ||
+        trimmedLine.startsWith("```")
+      )
+        continue;
+
+      if (trimmedLine.startsWith(this.COMMAND_PREFIX)) {
+        const commandResult = await this.executeCommand(trimmedLine);
+        results.push(`Command: ${trimmedLine}\nResult: ${commandResult}`);
+        processedAny = true;
+      }
+    }
+
+    // Then check for commands in code blocks
+    const codeBlockRegex = /```([\s\S]*?)```|`([^`]+)`/g;
+    let codeMatch;
+
+    while ((codeMatch = codeBlockRegex.exec(message)) !== null) {
+      const codeBlock = (codeMatch[1] || codeMatch[2] || "").trim();
+      const codeLines = codeBlock.split("\n");
+
+      for (const codeLine of codeLines) {
+        const trimmedCodeLine = codeLine.trim();
+        if (trimmedCodeLine.startsWith(this.COMMAND_PREFIX)) {
+          const commandResult = await this.executeCommand(trimmedCodeLine);
+          results.push(`Command: ${trimmedCodeLine}\nResult: ${commandResult}`);
+          processedAny = true;
+        }
+      }
+    }
+
+    if (!processedAny) {
+      // If no commands were found, try one more approach - look for command lines
+      const commandRegex = new RegExp(
+        `${this.COMMAND_PREFIX}\\s+\\w+[^\\n]*`,
+        "g"
+      );
+      let commandMatch;
+
+      while ((commandMatch = commandRegex.exec(message)) !== null) {
+        const command = commandMatch[0].trim();
+        const commandResult = await this.executeCommand(command);
+        results.push(`Command: ${command}\nResult: ${commandResult}`);
+        processedAny = true;
+      }
+    }
+
+    if (results.length === 0) {
+      return "No valid graph commands found in message.";
+    }
+
+    return results.join("\n\n");
   }
 
   /**
