@@ -158,32 +158,23 @@ export class SceneGraphController {
    */
   async processMultipleCommands(message: string): Promise<string> {
     const results: string[] = [];
-    const lines = message.split("\n");
     let processedAny = false;
 
-    // First, check for commands in plain text
+    // Step 1: Extract all command lines from the message
+    const commandLines: string[] = [];
+
+    // Check for commands in plain text lines
+    const lines = message.split("\n");
     for (const line of lines) {
       const trimmedLine = line.trim();
-
-      // Skip markdown code markers or empty lines
-      if (
-        trimmedLine === "" ||
-        trimmedLine === "```" ||
-        trimmedLine.startsWith("```")
-      )
-        continue;
-
       if (trimmedLine.startsWith(this.COMMAND_PREFIX)) {
-        const commandResult = await this.executeCommand(trimmedLine);
-        results.push(`Command: ${trimmedLine}\nResult: ${commandResult}`);
-        processedAny = true;
+        commandLines.push(trimmedLine);
       }
     }
 
-    // Then check for commands in code blocks
-    const codeBlockRegex = /```([\s\S]*?)```|`([^`]+)`/g;
+    // Check for commands in code blocks
+    const codeBlockRegex = /```(?:[\w]*)\n?([\s\S]*?)```|`([^`]+)`/g;
     let codeMatch;
-
     while ((codeMatch = codeBlockRegex.exec(message)) !== null) {
       const codeBlock = (codeMatch[1] || codeMatch[2] || "").trim();
       const codeLines = codeBlock.split("\n");
@@ -191,30 +182,46 @@ export class SceneGraphController {
       for (const codeLine of codeLines) {
         const trimmedCodeLine = codeLine.trim();
         if (trimmedCodeLine.startsWith(this.COMMAND_PREFIX)) {
-          const commandResult = await this.executeCommand(trimmedCodeLine);
-          results.push(`Command: ${trimmedCodeLine}\nResult: ${commandResult}`);
-          processedAny = true;
+          commandLines.push(trimmedCodeLine);
         }
       }
     }
 
-    if (!processedAny) {
-      // If no commands were found, try one more approach - look for command lines
+    // If we haven't found any commands yet, try a more aggressive regex approach
+    if (commandLines.length === 0) {
       const commandRegex = new RegExp(
         `${this.COMMAND_PREFIX}\\s+\\w+[^\\n]*`,
         "g"
       );
       let commandMatch;
-
       while ((commandMatch = commandRegex.exec(message)) !== null) {
-        const command = commandMatch[0].trim();
-        const commandResult = await this.executeCommand(command);
-        results.push(`Command: ${command}\nResult: ${commandResult}`);
-        processedAny = true;
+        commandLines.push(commandMatch[0].trim());
       }
     }
 
-    if (results.length === 0) {
+    console.log(
+      `Found ${commandLines.length} command(s) in message:`,
+      commandLines
+    );
+
+    // Step 2: Execute each command and collect results
+    if (commandLines.length > 0) {
+      for (const commandLine of commandLines) {
+        try {
+          const commandResult = await this.executeCommand(commandLine);
+          results.push(`Command: ${commandLine}\nResult: ${commandResult}`);
+          processedAny = true;
+        } catch (error) {
+          results.push(
+            `Command: ${commandLine}\nError: ${error instanceof Error ? error.message : String(error)}`
+          );
+          processedAny = true;
+        }
+      }
+    }
+
+    // Return results
+    if (!processedAny) {
       return "No valid graph commands found in message.";
     }
 
@@ -374,11 +381,10 @@ export class SceneGraphController {
   async executeCommand(commandString: string): Promise<string> {
     try {
       // Check if the command is enclosed in backticks or has explanatory text
-      // We need to be more flexible in accepting commands
-      console.log("Original command string:", commandString);
+      console.log("Executing command:", commandString);
 
       const parsedCommand = this.parseCommand(commandString);
-      console.log("Executing command:", parsedCommand);
+      console.log("Parsed command:", parsedCommand);
 
       if (parsedCommand.action === "unknown") {
         // If we couldn't parse a command directly, look for it in code blocks
@@ -392,20 +398,20 @@ export class SceneGraphController {
             // Try parsing the code block content
             const codeCommand = this.parseCommand(potentialCommand);
             if (codeCommand.action !== "unknown") {
-              console.log(
-                "Successfully parsed command from code block:",
-                codeCommand
-              );
               return this.executeAction(codeCommand);
             }
           }
         }
+
+        return `Unrecognized command: ${commandString}. Available commands:\n${this.getCommandsDescription()}`;
       }
 
       return this.executeAction(parsedCommand);
     } catch (error) {
       console.error("Error executing graph command:", error);
-      return `Failed to execute graph command: ${error instanceof Error ? error.message : String(error)}`;
+      throw new Error(
+        `Failed to execute graph command: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 

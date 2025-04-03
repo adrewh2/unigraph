@@ -35,8 +35,11 @@ function getCommandsContextForLLM(): string {
     "When the user asks to modify the graph, you can directly use these commands with the proper API syntax in your response. " +
     "Commands must start with '/graph' followed by the command name and parameters. " +
     "For example: '/graph addNode type=Button label=Submit position=(100,200)'\n\n" +
-    "You can include multiple commands in a single response, one per line, and they will all be executed in sequence. " +
-    "Your commands will be automatically processed and executed on the graph."
+    "You can include multiple commands in a single response by putting each command on its own line:\n" +
+    "/graph addNode type=TextBox label=Title\n" +
+    "/graph addNode type=Button label=Submit\n" +
+    "/graph connectNodes sourceLabel=Title targetLabel=Submit\n\n" +
+    "All commands will be executed in sequence and the results will be shown."
   );
 }
 
@@ -63,10 +66,16 @@ export async function callLLMStudioAPI(
     if (sceneGraphController.containsCommandKeywords(lastMessage.content)) {
       console.log("Detected command(s) in message:", lastMessage.content);
       // Process all commands in the message
-      const commandResult = await sceneGraphController.processMultipleCommands(
-        lastMessage.content
-      );
-      return commandResult;
+      try {
+        const commandResult =
+          await sceneGraphController.processMultipleCommands(
+            lastMessage.content
+          );
+        return commandResult;
+      } catch (error) {
+        console.error("Error processing commands:", error);
+        return `Error processing commands: ${error instanceof Error ? error.message : String(error)}`;
+      }
     }
 
     console.log("last message was ", lastMessage);
@@ -151,20 +160,35 @@ export async function callLLMStudioAPI(
     if (sceneGraphController.containsCommandKeywords(generatedResponse)) {
       console.log("LLM generated graph command(s):", generatedResponse);
 
-      // Process all commands in the response
-      const commandResults =
-        await sceneGraphController.processMultipleCommands(generatedResponse);
+      try {
+        // Process all commands in the response
+        const commandResults =
+          await sceneGraphController.processMultipleCommands(generatedResponse);
 
-      // If the response is just a single command, only return the result
-      if (
-        generatedResponse.trim().startsWith("/graph") &&
-        !generatedResponse.includes("\n")
-      ) {
-        return commandResults;
+        // If the response is just commands with no explanation
+        interface Line {
+          trim: () => string;
+        }
+
+        const isOnlyCommands: boolean = generatedResponse
+          .split("\n")
+          .every(
+            (line: Line | string): boolean =>
+              line.trim() === "" ||
+              line.trim().startsWith("/graph") ||
+              line.trim().startsWith("```")
+          );
+
+        if (isOnlyCommands) {
+          return commandResults;
+        }
+
+        // Otherwise, include both response and results
+        return `${generatedResponse}\n\n---\nCommand Results:\n${commandResults}`;
+      } catch (error) {
+        console.error("Error processing LLM commands:", error);
+        return `${generatedResponse}\n\n---\nError processing commands: ${error instanceof Error ? error.message : String(error)}`;
       }
-
-      // Otherwise, include both response and results
-      return `${generatedResponse}\n\n---\nCommand Results:\n${commandResults}`;
     }
 
     return generatedResponse;
@@ -245,7 +269,7 @@ function getEnhancedSystemPrompt(): string {
   const basePrompt =
     "You are a helpful assistant that can understand and generate graph modification commands. " +
     "When appropriate, you can directly create or modify graph elements by using the API commands below. " +
-    "You can issue multiple commands in sequence to build more complex structures. " +
+    "You can issue multiple commands in sequence to build more complex structures by putting each command on a new line. " +
     "The commands follow a strict format starting with '/graph' followed by the command name and parameters.";
 
   return `${basePrompt}\n\n${getCommandsContextForLLM()}`;
