@@ -48,23 +48,13 @@ export class SceneGraphController {
       apiFormat: "/graph removeNode {id=<nodeId> | label=<nodeLabel>}",
     },
     {
-      name: "connectNodes",
-      description: "Connect two nodes in the scene graph",
-      examples: [
-        "/graph connectNodes source=node1 target=node2",
-        "/graph connectNodes sourceLabel=Button targetLabel=Image",
-      ],
-      keywords: ["connectnodes"],
-      apiFormat:
-        "/graph connectNodes {source=<sourceId> target=<targetId> | sourceLabel=<label1> targetLabel=<label2>}",
+      name: "createEdge",
+      description: "Connect two nodes in the scene graph with an edge",
+      examples: ["/graph createEdge source=node1 target=node2"],
+      keywords: ["createedge"],
+      apiFormat: "/graph createEdge source=<sourceId> target=<targetId>",
     },
-    {
-      name: "listNodes",
-      description: "List all nodes in the current scene graph",
-      examples: ["/graph listNodes"],
-      keywords: ["listnodes"],
-      apiFormat: "/graph listNodes",
-    },
+    // listNodes command is disabled as requested
   ];
 
   /**
@@ -292,17 +282,17 @@ export class SceneGraphController {
           parameters: params,
         };
 
-      case "connectnodes":
+      case "createedge":
         return {
-          action: "connectNodes",
+          action: "createEdge",
           parameters: {
             source: params.source || "",
             target: params.target || "",
-            sourceLabel: params.sourcelabel || "",
-            targetLabel: params.targetlabel || "",
           },
         };
 
+      // Keep the case for "listnodes" but it won't be triggered since it's
+      // no longer in the command registry
       case "listnodes":
         return {
           action: "listNodes",
@@ -424,10 +414,10 @@ export class SceneGraphController {
         return this.addNode(parsedCommand.parameters);
       case "removeNode":
         return this.removeNode(parsedCommand.target!, parsedCommand.parameters);
-      case "connectNodes":
-        return this.connectNodes(parsedCommand.parameters);
+      case "createEdge":
+        return this.createEdge(parsedCommand.parameters);
       case "listNodes":
-        return this.listNodes();
+        return "The listNodes command is disabled.";
       default:
         return `Unrecognized graph command. Available commands:\n${this.getCommandsDescription()}`;
     }
@@ -456,12 +446,15 @@ export class SceneGraphController {
       );
 
       // Create the node in the scene graph
-      const _newNode = getCurrentSceneGraph().getGraph().createNode({
-        label: nodeLabel,
-        type: nodeType,
-        position: params.position,
-      });
+      const _newNode = getCurrentSceneGraph()
+        .getGraph()
+        .createNodeIfMissing(nodeLabel, {
+          label: nodeLabel,
+          type: nodeType,
+          position: params.position,
+        });
 
+      getCurrentSceneGraph().refreshDisplayConfig();
       getCurrentSceneGraph().notifyGraphChanged();
 
       return `Added new ${nodeType} node with label "${nodeLabel}" to the graph at position (${params.position.x}, ${params.position.y})`;
@@ -513,73 +506,55 @@ export class SceneGraphController {
     }
   }
 
-  private connectNodes(params: any): string {
+  private createEdge(params: any): string {
     try {
       const sourceId = params.source;
       const targetId = params.target;
-      const sourceLabel = params.sourceLabel;
-      const targetLabel = params.targetLabel;
 
-      console.log(`Connecting nodes using params:`, params);
+      console.log(`Creating edge using params:`, params);
 
-      if (!sourceId && !sourceLabel) {
-        return "Please specify either source or sourceLabel";
+      if (!sourceId) {
+        return "Please specify source";
       }
 
-      if (!targetId && !targetLabel) {
-        return "Please specify either target or targetLabel";
+      if (!targetId) {
+        return "Please specify target";
       }
 
       const graph = getCurrentSceneGraph().getGraph();
 
-      // Helper function to find node by ID or label
-      const findNode = (
-        idOrLabel: string | undefined,
-        labelParam: string | undefined
-      ) => {
-        if (idOrLabel) {
-          const nodeById = graph.getNode(idOrLabel as NodeId);
-          if (nodeById) return nodeById.getId();
-        }
-
-        if (labelParam) {
-          const allNodes = graph.getNodes();
-          const nodeByLabel = allNodes
-            .toArray()
-            .find(
-              (node) =>
-                node.getLabel()?.toLowerCase() === labelParam.toLowerCase()
-            );
-          return nodeByLabel?.getId();
-        }
-
+      // Helper function to find node by ID
+      const findNode = (id: string) => {
+        const nodeById = graph.getNode(id as NodeId);
+        if (nodeById) return nodeById.getId();
         return undefined;
       };
 
-      const source = findNode(sourceId, sourceLabel);
-      const target = findNode(targetId, targetLabel);
+      const source = findNode(sourceId);
+      const target = findNode(targetId);
 
       if (!source) {
-        return `Source node ${sourceId || sourceLabel} not found`;
+        return `Source node ${sourceId} not found`;
       }
 
       if (!target) {
-        return `Target node ${targetId || targetLabel} not found`;
+        return `Target node ${targetId} not found`;
       }
 
       // Create the edge
       graph.createEdge(source, target);
 
+      getCurrentSceneGraph().refreshDisplayConfig();
       getCurrentSceneGraph().notifyGraphChanged();
 
-      return `Connected node "${sourceId || sourceLabel}" to node "${targetId || targetLabel}"`;
+      return `Created edge from node "${sourceId}" to node "${targetId}"`;
     } catch (error) {
-      console.error("Error connecting nodes:", error);
-      return `Failed to connect nodes: ${error instanceof Error ? error.message : String(error)}`;
+      console.error("Error creating edge:", error);
+      return `Failed to create edge: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 
-  private listNodes(): string {
+  private _listNodes(): string {
     try {
       const graph = getCurrentSceneGraph().getGraph();
       const nodes = graph.getNodes();

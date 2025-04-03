@@ -38,7 +38,7 @@ function getCommandsContextForLLM(): string {
     "You can include multiple commands in a single response by putting each command on its own line:\n" +
     "/graph addNode type=TextBox label=Title\n" +
     "/graph addNode type=Button label=Submit\n" +
-    "/graph connectNodes sourceLabel=Title targetLabel=Submit\n\n" +
+    "/graph createEdge source=node1 target=node2\n\n" +
     "All commands will be executed in sequence and the results will be shown."
   );
 }
