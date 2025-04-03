@@ -350,7 +350,8 @@ export async function importChatGptConversation(
 
     // Create a root conversation node
     const conversationId = uuidv4() as NodeId;
-    const _conversationNode = sceneGraph.getGraph().createNode(conversationId, {
+    const _conversationNode = sceneGraph.getGraph().createNode({
+      id: conversationId,
       label: conversation.title,
       type: "ConversationThread",
       description: `ChatGPT conversation imported from ${url}`,
@@ -387,7 +388,8 @@ export async function importChatGptConversation(
         }
 
         const messageId = uuidv4() as NodeId;
-        const messageNode = sceneGraph.getGraph().createNode(messageId, {
+        const messageNode = sceneGraph.getGraph().createNode({
+          id: messageId,
           label: getLabelForRole(message.role),
           type: getTypeForRole(message.role),
           description: message.content,
@@ -657,7 +659,8 @@ async function importParsedConversation(
 
   // Create a root conversation node
   const conversationId = uuidv4() as NodeId;
-  const _conversationNode = sceneGraph.getGraph().createNode(conversationId, {
+  const _conversationNode = sceneGraph.getGraph().createNode({
+    id: conversationId,
     label: conversation.title || "Imported Conversation",
     type: "ConversationThread",
     description: `ChatGPT conversation imported from ${fileName}`,
@@ -686,7 +689,8 @@ async function importParsedConversation(
       }
 
       const messageId = uuidv4() as NodeId;
-      const messageNode = sceneGraph.getGraph().createNode(messageId, {
+      const messageNode = sceneGraph.getGraph().createNode({
+        id: messageId,
         label: getLabelForRole(message.role),
         type: getTypeForRole(message.role),
         description: message.content,

@@ -75,23 +75,22 @@ export async function importConversations(
 
       if (matchingNodeId) {
         // Create a conversation node
-        const conversationNodeId = sceneGraph
-          .getGraph()
-          .createNode(conversation.id.toString() as NodeId, {
-            label: `Chat: ${conversation.title}`,
-            type: "conversation",
-            userData: {
-              id: conversation.id,
-              excerpt: conversation.excerpt,
-              message_count: conversation.message_count,
-              char_length: conversation.char_length,
-              summary: conversation.metadata.summary,
-              keywords: conversation.metadata.keywords,
-              sentiment: conversation.metadata.sentiment,
-              topic: conversation.metadata.topic,
-              timestamp: new Date(conversation.timestamp * 1000).toISOString(),
-            },
-          });
+        const conversationNodeId = sceneGraph.getGraph().createNode({
+          id: conversation.id.toString() as NodeId,
+          label: `Chat: ${conversation.title}`,
+          type: "conversation",
+          userData: {
+            id: conversation.id,
+            excerpt: conversation.excerpt,
+            message_count: conversation.message_count,
+            char_length: conversation.char_length,
+            summary: conversation.metadata.summary,
+            keywords: conversation.metadata.keywords,
+            sentiment: conversation.metadata.sentiment,
+            topic: conversation.metadata.topic,
+            timestamp: new Date(conversation.timestamp * 1000).toISOString(),
+          },
+        });
 
         // Connect the conversation node to the existing node
         sceneGraph
@@ -104,7 +103,8 @@ export async function importConversations(
         matched++;
       } else {
         // Create a standalone conversation node
-        sceneGraph.getGraph().createNode(conversation.id.toString() as NodeId, {
+        sceneGraph.getGraph().createNode({
+          id: conversation.id.toString() as NodeId,
           label: conversation.title,
           type: "conversation",
           userData: {
@@ -172,7 +172,8 @@ export function createTopicNodes(sceneGraph: SceneGraph): {
 
     // Create topic node if it doesn't exist yet
     if (!topicMap.has(topic)) {
-      const topicNodeId = sceneGraph.getGraph().createNode(`Topic: ${topic}`, {
+      const topicNodeId = sceneGraph.getGraph().createNode({
+        id: `Topic: ${topic}`,
         label: `Topic: ${topic}`,
         type: "topic",
         tags: ["topic"],
@@ -258,16 +259,15 @@ export function createKeywordNodes(
         if ((keywordCounts.get(normalizedKeyword) || 0) >= minOccurrences) {
           // Create keyword node if it doesn't exist yet
           if (!keywordMap.has(normalizedKeyword)) {
-            const keywordNodeId = sceneGraph
-              .getGraph()
-              .createNode(`keyword: ${keyword}`, {
-                label: keyword,
-                type: "keyword",
-                tags: ["keyword"],
-                userData: {
-                  occurrences: keywordCounts.get(normalizedKeyword),
-                },
-              });
+            const keywordNodeId = sceneGraph.getGraph().createNode({
+              id: `keyword: ${keyword}`,
+              label: keyword,
+              type: "keyword",
+              tags: ["keyword"],
+              userData: {
+                occurrences: keywordCounts.get(normalizedKeyword),
+              },
+            });
             keywordMap.set(normalizedKeyword, keywordNodeId.getId());
           }
 

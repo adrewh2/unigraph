@@ -234,13 +234,12 @@ ${document.content}
       });
 
       // Create a node for the analysis and link it to the conversation
-      const analysisNode = currentSceneGraph
-        .getGraph()
-        .createNode(analysisDocId, {
-          label: `Analysis of ${conversationTitle}`,
-          type: "ConversationAnalysis",
-          description: analysisResult.summary,
-        });
+      const analysisNode = currentSceneGraph.getGraph().createNode({
+        id: analysisDocId,
+        label: `Analysis of ${conversationTitle}`,
+        type: "ConversationAnalysis",
+        description: analysisResult.summary,
+      });
 
       // Add tags
       analysisNode.addTag("analysis");

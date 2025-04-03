@@ -33,8 +33,7 @@ import {
 } from "lexical";
 import { debounce, throttle } from "lodash";
 import React, { JSX, useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid"; // Add this import
-import { GET_DEFAULT_RENDERING_CONFIG } from "../controllers/RenderingManager";
+// Add this import
 import { NodeId } from "../core/model/Node";
 import useAppConfigStore, {
   getCurrentSceneGraph,
@@ -223,7 +222,7 @@ function ContextMenuPlugin(): JSX.Element | null {
 
   const handleCreateNode = () => {
     if (contextMenu && currentSceneGraph) {
-      const newNode = currentSceneGraph.getGraph().createNode(uuidv4(), {
+      const newNode = currentSceneGraph.getGraph().createNode({
         label: contextMenu.text,
         type: "Note",
       });
@@ -235,11 +234,7 @@ function ContextMenuPlugin(): JSX.Element | null {
           label: "contains",
         });
 
-      const newRenderingConfig = GET_DEFAULT_RENDERING_CONFIG(
-        getCurrentSceneGraph().getGraph(),
-        getCurrentSceneGraph().getDisplayConfig()
-      );
-      getCurrentSceneGraph().getData().displayConfig = newRenderingConfig;
+      currentSceneGraph.refreshDisplayConfig();
       currentSceneGraph.notifyGraphChanged();
 
       // Show notification

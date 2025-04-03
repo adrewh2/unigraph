@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { v4 as uuidv4 } from "uuid";
 import "./App.css";
 import { AppConfig, DEFAULT_APP_CONFIG } from "./AppConfig";
 import PathAnalysisWizard, {
@@ -573,9 +572,7 @@ const AppContent: React.FC<{
 
   const handleCreateNodeSubmit = useCallback(
     (newNodeData: NodeDataArgs) => {
-      const newNode = currentSceneGraph
-        .getGraph()
-        .createNode(uuidv4(), newNodeData);
+      const newNode = currentSceneGraph.getGraph().createNode(newNodeData);
       console.log("new node created is ", newNode);
       currentSceneGraph.notifyGraphChanged();
       setIsNodeEditorOpen(false);
