@@ -29,7 +29,13 @@ function getSystemPromptWithCommands(): string {
  * Get the command context string for the LLM
  */
 function getCommandsContextForLLM(): string {
-  return `AVAILABLE GRAPH COMMANDS:\n${sceneGraphController.getCommandsDescription()}\n\nWhen the user asks to modify the graph, suggest using one of these commands with proper syntax.`;
+  return (
+    `AVAILABLE GRAPH COMMANDS:\n${sceneGraphController.getCommandsDescription()}\n\n` +
+    "When the user asks to modify the graph, you can directly use these commands with the proper API syntax in your response. " +
+    "Commands must start with '/graph' followed by the command name and parameters. " +
+    "For example: '/graph addNode type=Button label=Submit position=(100,200)'\n\n" +
+    "Your commands will be automatically processed and executed on the graph."
+  );
 }
 
 /**
@@ -50,11 +56,10 @@ export async function callLLMStudioAPI(
 
     // Check if the last message contains graph modification commands
     const lastMessage = messages[messages.length - 1];
-    if (
-      // lastMessage.role === "user" &&
-      sceneGraphController.containsCommandKeywords(lastMessage.content)
-    ) {
-      console.log("Detected command in last message:", lastMessage.content);
+
+    // Process last message if it contains commands, regardless of role
+    if (sceneGraphController.containsCommandKeywords(lastMessage.content)) {
+      console.log("Detected command in message:", lastMessage.content);
       return await sceneGraphController.executeCommand(lastMessage.content);
     }
 
@@ -66,11 +71,11 @@ export async function callLLMStudioAPI(
       content: content || "", // Default to empty string if content is missing
     }));
 
-    // Add system message with available commands if not already present
+    // Enhanced system prompt that encourages the LLM to generate graph commands
     if (!formattedMessages.some((msg) => msg.role === "system")) {
       formattedMessages.unshift({
         role: "system",
-        content: getSystemPromptWithCommands(),
+        content: getEnhancedSystemPrompt(),
       });
     } else {
       // Update existing system message with command information
@@ -119,7 +124,18 @@ export async function callLLMStudioAPI(
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "";
+    const generatedResponse = data.choices?.[0]?.message?.content || "";
+
+    // Check if LLM response contains graph commands and process them if present
+    if (sceneGraphController.containsCommandKeywords(generatedResponse)) {
+      console.log("LLM generated a graph command:", generatedResponse);
+      // We'll return both the command and its execution result
+      const commandResult =
+        await sceneGraphController.executeCommand(generatedResponse);
+      return `${generatedResponse}\n\n---\n${commandResult}`;
+    }
+
+    return generatedResponse;
   } catch (error) {
     console.error("Error calling LLM Studio API:", error);
     addNotification({
@@ -129,6 +145,18 @@ export async function callLLMStudioAPI(
     });
     throw error;
   }
+}
+
+/**
+ * Generate an enhanced system prompt that encourages the LLM to generate graph commands
+ */
+function getEnhancedSystemPrompt(): string {
+  const basePrompt =
+    "You are a helpful assistant that can understand and generate graph modification commands. " +
+    "When appropriate, you can directly create or modify graph elements by using the API commands below. " +
+    "The commands follow a strict format starting with '/graph' followed by the command name and parameters.";
+
+  return `${basePrompt}\n\n${getCommandsContextForLLM()}`;
 }
 
 /**
