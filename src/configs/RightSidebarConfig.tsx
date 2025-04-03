@@ -2,6 +2,7 @@ import {
   FileText,
   Info,
   List,
+  MessageCircle,
   MessageSquare,
   Scan,
   Settings2,
@@ -21,6 +22,7 @@ import {
 import { getSelectedNodeIds } from "../store/graphInteractionStore";
 
 // Add this import
+import AIChatPanel from "../components/ai/AIChatPanel";
 import ChatGptPanel from "../components/tools/ChatGptPanel";
 
 export interface SubMenuItem {
@@ -99,6 +101,12 @@ export const createDefaultRightMenus = (
       icon: <MessageSquare size={20} className={styles.menuIcon} />,
       label: "ChatGPT",
       content: <ChatGptPanel isDarkMode={isDarkMode} />,
+    },
+    {
+      id: "ai-chat",
+      label: "AI Chat",
+      icon: <MessageCircle size={20} className={styles.menuIcon} />,
+      content: <AIChatPanel isDarkMode={isDarkMode} />,
     },
   ];
 

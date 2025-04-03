@@ -69,9 +69,6 @@ export const createDefaultLeftMenus = ({
   currentPositions, // Make sure to pass this from the parent,
   applyNewLayout,
 }: any) => {
-  // Add debugging to confirm the activeView value
-  console.log("Current active view for display settings:", activeView);
-
   // Ensure case consistency by converting to lowercase for comparison
   const normalizedActiveView = activeView ? activeView.toLowerCase() : "";
   const isForceGraph3D = normalizedActiveView === "forcegraph3d";

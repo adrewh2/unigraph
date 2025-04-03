@@ -134,7 +134,8 @@ export async function importChatGptConversation(
 
     // Create a root conversation node
     const conversationId = uuidv4() as NodeId;
-    const conversationNode = sceneGraph.getGraph().createNode(conversationId, {
+    const conversationNode = sceneGraph.getGraph().createNode({
+      id: conversationId,
       label: conversation.title,
       type: "ConversationThread",
       description: `ChatGPT conversation imported from ${url}`,
@@ -144,7 +145,8 @@ export async function importChatGptConversation(
     let previousNodeId: NodeId | null = null;
     for (const message of conversation.messages) {
       const messageId = uuidv4() as NodeId;
-      const messageNode = sceneGraph.getGraph().createNode(messageId, {
+      const messageNode = sceneGraph.getGraph().createNode({
+        id: messageId,
         label: message.role === "user" ? "User Message" : "ChatGPT Response",
         type: message.role === "user" ? "UserMessage" : "AssistantMessage",
         description: message.content,

@@ -328,11 +328,13 @@ function getRoleLabel(role: string): string {
  * Imports a ChatGPT conversation from a shared URL into the scene graph
  * @param url The shared ChatGPT URL
  * @param sceneGraph The scene graph to import into
+ * @param createMessageNodes Whether to create individual nodes for each message (default: true)
  * @returns The root conversation node ID
  */
 export async function importChatGptConversation(
   url: string,
-  sceneGraph: SceneGraph
+  sceneGraph: SceneGraph,
+  createMessageNodes: boolean = true
 ): Promise<NodeId | null> {
   try {
     const conversation = await fetchChatGptConversation(url);
@@ -348,11 +350,19 @@ export async function importChatGptConversation(
 
     // Create a root conversation node
     const conversationId = uuidv4() as NodeId;
-    const _conversationNode = sceneGraph.getGraph().createNode(conversationId, {
+    const _conversationNode = sceneGraph.getGraph().createNode({
+      id: conversationId,
       label: conversation.title,
       type: "ConversationThread",
       description: `ChatGPT conversation imported from ${url}`,
     });
+
+    // Store the mapping between URL and node ID for later analysis
+    try {
+      localStorage.setItem(`imported-node-${url}`, conversationId);
+    } catch (e) {
+      console.warn("Failed to save node mapping to localStorage:", e);
+    }
 
     // Create a consolidated formatted document for the conversation thread
     const formattedConversation =
@@ -369,45 +379,44 @@ export async function importChatGptConversation(
       tags: ["conversation", "chatgpt"],
     });
 
-    // Create nodes for each message - skip empty messages
-    let previousNodeId: NodeId | null = null;
-    for (const message of conversation.messages) {
-      // Skip empty messages
-      if (!message.content.trim()) {
-        continue;
-      }
+    // Only create individual message nodes if the flag is true
+    if (createMessageNodes) {
+      let previousNodeId: NodeId | null = null;
+      for (const message of conversation.messages) {
+        if (!message.content.trim()) {
+          continue;
+        }
 
-      const messageId = uuidv4() as NodeId;
-      const messageNode = sceneGraph.getGraph().createNode(messageId, {
-        label: getLabelForRole(message.role),
-        type: getTypeForRole(message.role),
-        description: message.content,
-      });
-
-      // Add tags based on role
-      messageNode.addTag(message.role);
-
-      // Connect message to conversation
-      sceneGraph.getGraph().createEdge(conversationId, messageId, {
-        type: "contains",
-        label: "contains",
-      });
-
-      // Connect messages in sequence
-      if (previousNodeId) {
-        sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
-          type: "nextMessage",
-          label: "followed by",
+        const messageId = uuidv4() as NodeId;
+        const messageNode = sceneGraph.getGraph().createNode({
+          id: messageId,
+          label: getLabelForRole(message.role),
+          type: getTypeForRole(message.role),
+          description: message.content,
         });
-      }
 
-      previousNodeId = messageId;
+        messageNode.addTag(message.role);
+
+        sceneGraph.getGraph().createEdge(conversationId, messageId, {
+          type: "contains",
+          label: "contains",
+        });
+
+        if (previousNodeId) {
+          sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
+            type: "nextMessage",
+            label: "followed by",
+          });
+        }
+
+        previousNodeId = messageId;
+      }
     }
 
-    // Notify graph changed to update the UI
-    // sceneGraph.notifyGraphChanged();
     addNotification({
-      message: `Imported conversation with ${conversation.messages.length} messages`,
+      message: createMessageNodes
+        ? `Imported conversation with ${conversation.messages.length} messages`
+        : `Imported conversation as a single document node`,
       type: "success",
       duration: 5000,
     });
@@ -467,11 +476,16 @@ function getTypeForRole(role: string): string {
  * Imports a ChatGPT conversation from a local JSON file
  * @param file The JSON file containing the conversation
  * @param sceneGraph The scene graph to import into
+ * @param createMessageNodes Whether to create individual nodes for each message (default: true)
+ * @param messageSampleRatio Ratio of messages to keep in each conversation (0.1 to 1.0, default: 1.0)
+ * @param conversationSampleRatio Ratio of conversations to keep (0.1 to 1.0, default: 1.0)
  * @returns The root conversation node ID or array of IDs if multiple conversations were imported
  */
 export async function importChatGptFromFile(
   file: File,
-  sceneGraph: SceneGraph
+  sceneGraph: SceneGraph,
+  createMessageNodes: boolean = true,
+  conversationSampleRatio: number = 1.0
 ): Promise<NodeId | NodeId[] | null> {
   try {
     // Validate file type
@@ -507,14 +521,24 @@ export async function importChatGptFromFile(
     ) {
       const conversations = parseConversationsJson(parsedData);
       console.log("Found ", conversations.length, " conversations");
-      if (conversations.length > 0) {
-        const conversationIds: NodeId[] = [];
 
-        for (const conversation of conversations) {
+      if (conversations.length > 0) {
+        // Downsample the conversations if needed
+        let processedConversations = conversations;
+        if (conversationSampleRatio < 1.0) {
+          processedConversations = downsampleConversations(
+            conversations,
+            conversationSampleRatio
+          );
+        }
+
+        const conversationIds: NodeId[] = [];
+        for (const conversation of processedConversations) {
           const conversationId = await importParsedConversation(
             conversation,
             sceneGraph,
-            file.name
+            file.name,
+            createMessageNodes
           );
           if (conversationId) {
             conversationIds.push(conversationId);
@@ -547,7 +571,8 @@ export async function importChatGptFromFile(
         const conversationId = await importParsedConversation(
           conversations[0],
           sceneGraph,
-          file.name
+          file.name,
+          createMessageNodes // Pass the parameter
         );
         if (conversationId) {
           addNotification({
@@ -594,7 +619,8 @@ export async function importChatGptFromFile(
     const conversationId = await importParsedConversation(
       conversation,
       sceneGraph,
-      file.name
+      file.name,
+      createMessageNodes // Pass the parameter
     );
     return conversationId;
   } catch (error) {
@@ -616,12 +642,15 @@ export async function importChatGptFromFile(
  * @param conversation The parsed conversation
  * @param sceneGraph The scene graph
  * @param fileName The name of the source file
+ * @param createMessageNodes Whether to create individual nodes for each message
+ * @param messageSampleRatio Ratio of messages to keep in each conversation (0.1 to 1.0, default: 1.0)
  * @returns The conversation node ID
  */
 async function importParsedConversation(
   conversation: ParsedConversation,
   sceneGraph: SceneGraph,
-  fileName: string
+  fileName: string,
+  createMessageNodes: boolean
 ): Promise<NodeId | null> {
   if (!conversation.messages || conversation.messages.length === 0) {
     console.error("No messages found in conversation");
@@ -630,7 +659,8 @@ async function importParsedConversation(
 
   // Create a root conversation node
   const conversationId = uuidv4() as NodeId;
-  const _conversationNode = sceneGraph.getGraph().createNode(conversationId, {
+  const _conversationNode = sceneGraph.getGraph().createNode({
+    id: conversationId,
     label: conversation.title || "Imported Conversation",
     type: "ConversationThread",
     description: `ChatGPT conversation imported from ${fileName}`,
@@ -651,55 +681,92 @@ async function importParsedConversation(
     tags: ["conversation", "chatgpt"],
   });
 
-  // Create nodes for each message
-  let previousNodeId: NodeId | null = null;
-  // const processedCount = 0;
+  if (createMessageNodes) {
+    let previousNodeId: NodeId | null = null;
+    for (const message of conversation.messages) {
+      if (!message.content.trim()) {
+        continue;
+      }
 
-  for (const message of conversation.messages) {
-    // Skip empty messages while maintaining the chain - using more robust check
-    if (!message.content || !message.content.trim()) {
-      console.log("Skipping empty message from role:", message.role);
-      continue;
-    }
-
-    // processedCount++;
-    const messageId = uuidv4() as NodeId;
-    const messageNode = sceneGraph.getGraph().createNode(messageId, {
-      label: getLabelForRole(message.role),
-      type: getTypeForRole(message.role),
-      description: message.content,
-    });
-
-    createDocument(messageNode.getId());
-    updateDocument(messageNode.getId(), {
-      id: messageNode.getId(),
-      nodeId: messageNode.getId(),
-      lastModified: Date.now(),
-      content: message.content,
-      lexicalState: "",
-      tags: [message.role],
-    });
-
-    // Add tags based on role
-    messageNode.addTag(message.role);
-
-    // Connect message to conversation
-    sceneGraph.getGraph().createEdge(conversationId, messageId, {
-      type: "contains",
-      label: "contains",
-    });
-
-    // Connect messages in sequence
-    if (previousNodeId) {
-      sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
-        type: "nextMessage",
-        label: "followed by",
+      const messageId = uuidv4() as NodeId;
+      const messageNode = sceneGraph.getGraph().createNode({
+        id: messageId,
+        label: getLabelForRole(message.role),
+        type: getTypeForRole(message.role),
+        description: message.content,
       });
-    }
 
-    previousNodeId = messageId;
+      messageNode.addTag(message.role);
+
+      sceneGraph.getGraph().createEdge(conversationId, messageId, {
+        type: "contains",
+        label: "contains",
+      });
+
+      if (previousNodeId) {
+        sceneGraph.getGraph().createEdge(previousNodeId, messageId, {
+          type: "nextMessage",
+          label: "followed by",
+        });
+      }
+
+      previousNodeId = messageId;
+    }
   }
 
-  // console.log(`Successfully processed ${processedCount} messages`);
   return conversationId;
+}
+
+/**
+ * Downsamples an array of conversations based on a ratio
+ * @param conversations The conversations to downsample
+ * @param ratio The ratio of conversations to keep (0.1 to 1.0)
+ * @returns A downsampled array of conversations
+ */
+function downsampleConversations(
+  conversations: ParsedConversation[],
+  ratio: number
+): ParsedConversation[] {
+  // Ensure we have a valid ratio
+  const validRatio = Math.max(0.1, Math.min(1, ratio));
+
+  // If ratio is 1 or we have very few conversations, return all
+  if (validRatio >= 1 || conversations.length <= 3) {
+    return conversations;
+  }
+
+  // Calculate how many conversations to keep
+  const targetCount = Math.max(
+    1,
+    Math.floor(conversations.length * validRatio)
+  );
+
+  // Always keep the first and last conversations for context
+  const result: ParsedConversation[] = [];
+
+  // Add the first conversation
+  result.push(conversations[0]);
+
+  // If we need more than just first and last, select from the middle
+  if (targetCount > 2) {
+    const middleConversations = conversations.slice(
+      1,
+      conversations.length - 1
+    );
+    const stride = middleConversations.length / (targetCount - 2);
+
+    for (let i = 0; i < targetCount - 2; i++) {
+      const index = Math.floor(i * stride);
+      if (index < middleConversations.length) {
+        result.push(middleConversations[index]);
+      }
+    }
+  }
+
+  // Add the last conversation if not already added and there is more than one conversation
+  if (conversations.length > 1 && targetCount > 1) {
+    result.push(conversations[conversations.length - 1]);
+  }
+
+  return result;
 }

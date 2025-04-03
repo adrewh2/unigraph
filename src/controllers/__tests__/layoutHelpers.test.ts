@@ -10,9 +10,9 @@ import { SceneGraph } from "../../core/model/SceneGraph";
 
 // Mock ModelGraph and SceneGraph
 const graph = new ModelGraph();
-graph.createNode("1", { type: "type1" });
-graph.createNode("2", { type: "type2" });
-graph.createNode("3", { type: "type1" });
+graph.createNode({ id: "1", type: "type1" });
+graph.createNode({ id: "2", type: "type2" });
+graph.createNode({ id: "3", type: "type1" });
 graph.createEdge("1", "2", { type: "edge1" });
 graph.createEdge("2", "3", { type: "edge2" });
 
