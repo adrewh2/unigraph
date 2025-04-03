@@ -8,6 +8,7 @@ export interface LLMStudioOptions {
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
+  model?: string;
 }
 
 // Interface for SceneGraph commands
@@ -71,18 +72,18 @@ export async function callLLMStudioAPI(
     console.log("last message was ", lastMessage);
 
     // Format messages for the API - ensure role and content are present
-    // Include all messages including greetings for proper conversation context
-    const formattedMessages = messages.map(({ role, content }) => ({
+    let formattedMessages = messages.map(({ role, content }) => ({
       role: role || "user", // Default to user if role is missing
       content: content || "", // Default to empty string if content is missing
     }));
 
     // Ensure there's always a system prompt
+    let systemPrompt = getEnhancedSystemPrompt();
     if (!formattedMessages.some((msg) => msg.role === "system")) {
       // Add system message at the beginning of the array
       formattedMessages.unshift({
         role: "system",
-        content: getEnhancedSystemPrompt(),
+        content: systemPrompt,
       });
     } else {
       // Update existing system message with command information if needed
@@ -99,11 +100,18 @@ export async function callLLMStudioAPI(
           formattedMessages[systemMsgIndex].content +=
             "\n\n" + getCommandsContextForLLM();
         }
+        systemPrompt = formattedMessages[systemMsgIndex].content;
+
+        // Remove system message from the array, we'll use it separately
+        // formattedMessages.splice(systemMsgIndex, 1);
       }
     }
 
+    // Ensure messages alternate user/assistant correctly
+    formattedMessages = normalizeMessages(formattedMessages);
+
     console.log(
-      "Sending to API with full conversation history:",
+      "Sending to API with normalized conversation history:",
       formattedMessages
     );
 
@@ -118,6 +126,9 @@ export async function callLLMStudioAPI(
         top_p: options.top_p || 1,
         max_tokens: options.max_tokens || 2048,
         stream: false,
+        model: options.model || "mistral-nemu-instruct-2407", // Explicitly specify the model
+        prompt_template:
+          "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% else %}{% set loop_messages = messages %}{% set system_message = '' %}{% endif %}{% if system_message != '' %}{{ system_message }}\n\n{% endif %}{% for message in loop_messages %}{% if message['role'] == 'user' %}{{ 'USER: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'ASSISTANT: ' + message['content'] + '\n\n' }}{% endif %}{% endfor %}ASSISTANT:",
       }),
     });
 
@@ -169,6 +180,65 @@ export async function callLLMStudioAPI(
 }
 
 /**
+ * Normalizes conversation messages to ensure they alternate user/assistant
+ * This is required by Mistral and similar models
+ */
+function normalizeMessages(
+  messages: { role: "user" | "assistant" | "system"; content: string }[]
+): { role: "user" | "assistant" | "system"; content: string }[] {
+  const result: { role: "user" | "assistant" | "system"; content: string }[] =
+    [];
+  let systemMsg: {
+    role: "user" | "assistant" | "system";
+    content: string;
+  } | null = null;
+
+  // Extract system message if present
+  if (messages.length > 0 && messages[0].role === "system") {
+    systemMsg = messages[0];
+    messages = messages.slice(1);
+  }
+
+  // If no messages after system, add a dummy user message to start the conversation
+  if (messages.length === 0) {
+    messages.push({ role: "user", content: "Hello" });
+  }
+
+  // Ensure first message is from user
+  if (messages[0].role !== "user") {
+    result.push({ role: "user", content: "Hello" });
+  }
+
+  // Process all messages ensuring alternation
+  let lastRole = "assistant"; // Start with assistant so first message must be user
+
+  for (const msg of messages) {
+    // If same role appears twice in sequence, insert dummy message from other role
+    if (msg.role === lastRole) {
+      const dummyRole = lastRole === "user" ? "assistant" : "user";
+      const dummyContent =
+        dummyRole === "user" ? "Continue." : "I'll continue.";
+      result.push({ role: dummyRole, content: dummyContent });
+    }
+
+    result.push(msg);
+    lastRole = msg.role;
+  }
+
+  // Ensure conversation ends with user message so model can respond
+  if (lastRole === "assistant") {
+    result.push({ role: "user", content: "Continue." });
+  }
+
+  // Add system message back at beginning if it existed
+  if (systemMsg) {
+    result.unshift(systemMsg);
+  }
+
+  return result;
+}
+
+/**
  * Generate an enhanced system prompt that encourages the LLM to generate graph commands
  */
 function getEnhancedSystemPrompt(): string {
@@ -188,7 +258,7 @@ function getEnhancedSystemPrompt(): string {
 export async function checkLLMStudioAvailability(): Promise<boolean> {
   try {
     // Make sure we're sending a valid request with required fields
-    // Using a basic greeting exchange as a test
+    // Using a properly alternating conversation format
     const testRequest = {
       messages: [
         {
@@ -199,13 +269,11 @@ export async function checkLLMStudioAvailability(): Promise<boolean> {
           role: "user",
           content: "Hello",
         },
-        {
-          role: "assistant",
-          content: "Hello! How can I help you today?",
-        },
       ],
       max_tokens: 1, // Minimal request just to check availability
       temperature: 0.7, // Include temperature to make the request more complete
+      prompt_template:
+        "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% else %}{% set loop_messages = messages %}{% set system_message = '' %}{% endif %}{% if system_message != '' %}{{ system_message }}\n\n{% endif %}{% for message in loop_messages %}{% if message['role'] == 'user' %}{{ 'USER: ' + message['content'] + '\n\n' }}{% elif message['role'] == 'assistant' %}{{ 'ASSISTANT: ' + message['content'] + '\n\n' }}{% endif %}{% endfor %}ASSISTANT:",
     };
 
     console.log("Testing API availability with:", testRequest);
