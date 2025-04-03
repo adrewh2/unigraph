@@ -1,5 +1,6 @@
 import { ChatMessage } from "../store/chatHistoryStore";
 import { addNotification } from "../store/notificationStore";
+import { sceneGraphController } from "./sceneGraphController";
 
 const API_URL = "http://localhost:1234/v1/chat/completions";
 
@@ -7,6 +8,28 @@ export interface LLMStudioOptions {
   temperature?: number;
   top_p?: number;
   max_tokens?: number;
+}
+
+// Interface for SceneGraph commands
+export interface SceneGraphCommand {
+  action: string;
+  parameters?: Record<string, any>;
+}
+
+/**
+ * Generate a system prompt with scene graph command information
+ */
+function getSystemPromptWithCommands(): string {
+  const basePrompt =
+    "You are a helpful assistant that can understand and suggest graph modification commands.";
+  return `${basePrompt}\n\n${getCommandsContextForLLM()}`;
+}
+
+/**
+ * Get the command context string for the LLM
+ */
+function getCommandsContextForLLM(): string {
+  return `AVAILABLE GRAPH COMMANDS:\n${sceneGraphController.getCommandsDescription()}\n\nWhen the user asks to modify the graph, suggest using one of these commands with proper syntax.`;
 }
 
 /**
@@ -25,11 +48,46 @@ export async function callLLMStudioAPI(
       throw new Error("'messages' field is required and cannot be empty");
     }
 
+    // Check if the last message contains graph modification commands
+    const lastMessage = messages[messages.length - 1];
+    if (
+      lastMessage.role === "user" &&
+      sceneGraphController.containsCommandKeywords(lastMessage.content)
+    ) {
+      return await sceneGraphController.executeCommand(lastMessage.content);
+    }
+
     // Format messages for the API - ensure role and content are present
     const formattedMessages = messages.map(({ role, content }) => ({
       role: role || "user", // Default to user if role is missing
       content: content || "", // Default to empty string if content is missing
     }));
+
+    // Add system message with available commands if not already present
+    if (!formattedMessages.some((msg) => msg.role === "system")) {
+      formattedMessages.unshift({
+        role: "system",
+        content: getSystemPromptWithCommands(),
+      });
+    } else {
+      // Update existing system message with command information
+      const systemMsgIndex = formattedMessages.findIndex(
+        (msg) => msg.role === "system"
+      );
+      if (systemMsgIndex >= 0) {
+        // Append command info if it's not already there
+        if (
+          !formattedMessages[systemMsgIndex].content.includes(
+            "AVAILABLE GRAPH COMMANDS"
+          )
+        ) {
+          formattedMessages[systemMsgIndex].content +=
+            "\n\n" + getCommandsContextForLLM();
+        }
+      }
+    }
+
+    console.log("Formatted Messages:", formattedMessages);
 
     const response = await fetch(API_URL, {
       method: "POST",
@@ -81,7 +139,7 @@ export async function checkLLMStudioAvailability(): Promise<boolean> {
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant.",
+          content: getSystemPromptWithCommands(),
         },
         {
           role: "user",
