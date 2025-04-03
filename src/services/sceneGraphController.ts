@@ -3,6 +3,8 @@
  * received from various sources including the LLM Studio service.
  */
 
+import { getCurrentSceneGraph } from "../store/appConfigStore";
+
 export interface SceneGraphCommand {
   action: string;
   target?: string;
@@ -75,6 +77,7 @@ export class SceneGraphController {
    */
   containsCommandKeywords(message: string): boolean {
     const lowerMessage = message.toLowerCase();
+    console.log("Checking for command keywords in message:", lowerMessage);
     return this.commandRegistry.some((cmd) =>
       cmd.keywords.some((keyword) => lowerMessage.includes(keyword))
     );
@@ -86,6 +89,7 @@ export class SceneGraphController {
   parseCommand(commandString: string): SceneGraphCommand {
     // Simple parsing logic - this could be enhanced with NLP or more sophisticated parsing
     const lowerCommand = commandString.toLowerCase();
+    console.log("Parsing command:", lowerCommand);
 
     if (this.matchesCommand("addNode", lowerCommand)) {
       return {
@@ -93,6 +97,7 @@ export class SceneGraphController {
         parameters: {
           type: this.extractNodeType(commandString),
           position: this.extractPosition(commandString),
+          label: this.extractLabel(commandString),
         },
       };
     }
@@ -168,6 +173,12 @@ export class SceneGraphController {
     return typeMatch ? typeMatch[1] : "default";
   }
 
+  private extractLabel(command: string): string {
+    // Simple extraction - could be improved with regex or NLP
+    const typeMatch = command.match(/label ["']?([a-zA-Z0-9]+)["']?/i);
+    return typeMatch ? typeMatch[1] : "default";
+  }
+
   private extractPosition(command: string): { x: number; y: number } {
     // Extract position information with simple pattern matching
     const posMatch = command.match(
@@ -199,6 +210,12 @@ export class SceneGraphController {
     console.log(
       `Adding node of type ${params.type} at position (${params.position.x}, ${params.position.y})`
     );
+    getCurrentSceneGraph().getGraph().createNode({
+      label: params.label,
+      type: params.type,
+      position: params.position,
+    });
+    getCurrentSceneGraph().notifyGraphChanged();
     return `Added new ${params.type} node to the graph at position (${params.position.x}, ${params.position.y})`;
   }
 

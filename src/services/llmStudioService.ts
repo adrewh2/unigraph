@@ -51,11 +51,14 @@ export async function callLLMStudioAPI(
     // Check if the last message contains graph modification commands
     const lastMessage = messages[messages.length - 1];
     if (
-      lastMessage.role === "user" &&
+      // lastMessage.role === "user" &&
       sceneGraphController.containsCommandKeywords(lastMessage.content)
     ) {
+      console.log("Detected command in last message:", lastMessage.content);
       return await sceneGraphController.executeCommand(lastMessage.content);
     }
+
+    console.log("last message was ", lastMessage);
 
     // Format messages for the API - ensure role and content are present
     const formattedMessages = messages.map(({ role, content }) => ({
