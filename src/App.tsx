@@ -1454,19 +1454,18 @@ const AppContent: React.FC<{
   ]);
 
   useEffect(() => {
-    const currentLayoutResult = getCurrentLayoutResult();
     if (
       forceGraphInstance &&
-      currentLayoutResult &&
+      currentResult &&
       forceGraph3dOptions.layout === "Layout"
     ) {
       ForceGraphManager.applyFixedNodePositions(
         forceGraphInstance,
-        currentLayoutResult.positions
+        currentResult.positions
       );
       zoomToFit(forceGraphInstance);
-    } else if (graphvizRef.current && currentLayoutResult) {
-      graphvizRef.current.innerHTML = currentLayoutResult.svg ?? "";
+    } else if (graphvizRef.current && currentResult) {
+      graphvizRef.current.innerHTML = currentResult.svg ?? "";
       enableZoomAndPanOnSvg(graphvizRef.current);
       graphvizFitToView(graphvizRef.current);
     }

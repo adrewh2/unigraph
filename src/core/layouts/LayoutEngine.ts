@@ -116,7 +116,7 @@ export class LayoutEngine {
     finishLayoutJob();
 
     // Clean up any pending computations
-    pendingComputations.forEach((computation, id) => {
+    pendingComputations.forEach((computation, _id) => {
       try {
         computation.reject(new Error("Computation state reset"));
       } catch (e) {

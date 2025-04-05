@@ -17,7 +17,7 @@ import useActiveLayoutStore, {
 } from "../../store/activeLayoutStore";
 
 export const LayoutComputationDialog: React.FC = () => {
-  const [forceUpdate, setForceUpdate] = useState(0);
+  const [_forceUpdate, setForceUpdate] = useState(0);
   const [isCancelling, setIsCancelling] = useState(false);
 
   // Use state directly from the store for more responsive UI
