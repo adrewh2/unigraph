@@ -65,7 +65,6 @@ import { enableZoomAndPanOnSvg } from "./core/graphviz/appHelpers";
 import { GraphvizLayoutType } from "./core/layouts/GraphvizLayoutEngine";
 import {
   Compute_Layout,
-  ILayoutEngineResult,
   LayoutEngineOption,
   LayoutEngineOptionLabels,
   PresetLayoutType,
@@ -94,12 +93,14 @@ import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
-import {
+import useActiveLayoutStore, {
   getActiveLayoutResult,
+  getCurrentLayoutResult,
   getLayoutByName,
   getSavedLayouts,
   Layout,
   loadLayoutsFromSceneGraph,
+  setCurrentLayoutResult,
 } from "./store/activeLayoutStore";
 import useActiveLegendConfigStore, {
   setEdgeKeyColor,
@@ -250,6 +251,8 @@ const AppContent: React.FC<{
 
   const { activeFilter, setActiveFilter } = useAppConfigStore();
 
+  const { currentResult } = useActiveLayoutStore();
+
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
   const reactFlowRef = useRef<HTMLDivElement | null>(null);
@@ -304,9 +307,6 @@ const AppContent: React.FC<{
     },
     [defaultActiveLayout, defaultActiveView]
   );
-
-  const [layoutResult, setLayoutResult] =
-    useState<ILayoutEngineResult | null>();
 
   const [selectedSimulation, setSelectedSimulation] =
     useState<string>("Lumina");
@@ -377,7 +377,6 @@ const AppContent: React.FC<{
     edgeLegendConfig,
     activeView,
     handleReactFlowFitView,
-    layoutResult,
     reactFlowInstance,
   ]);
 
@@ -463,12 +462,13 @@ const AppContent: React.FC<{
       sceneGraph: SceneGraph,
       layout: LayoutEngineOption | string | null
     ) => {
+      // Get layout result directly from store when needed
       if (Object.keys(getSavedLayouts()).includes(layout as string)) {
         console.log("Skipping layout computation for saved layout", layout);
         currentSceneGraph.setNodePositions(
           getLayoutByName(layout as string).positions
         );
-        setLayoutResult({
+        setCurrentLayoutResult({
           layoutType: layout!,
           positions: getLayoutByName(layout as string).positions,
         });
@@ -494,7 +494,7 @@ const AppContent: React.FC<{
         console.log("Applying positions stored in graph nodes");
         const positions = extractPositionsFromNodes(sceneGraph);
         currentSceneGraph.setNodePositions(positions);
-        setLayoutResult({ positions, layoutType: layout });
+        setCurrentLayoutResult({ positions, layoutType: layout });
         isComputing = false;
         return;
       }
@@ -525,7 +525,7 @@ const AppContent: React.FC<{
       //   output.svg = svg;
       // }
       sceneGraph.getDisplayConfig().svg = output.svg;
-      setLayoutResult(output);
+      setCurrentLayoutResult(output);
       isComputing = false;
     },
     []
@@ -635,7 +635,8 @@ const AppContent: React.FC<{
   ]);
 
   useEffect(() => {
-    if (layoutResult?.layoutType === activeLayout) {
+    const currentLayoutResult = getCurrentLayoutResult();
+    if (currentLayoutResult?.layoutType === activeLayout) {
       console.log(
         "Skipping layout computation because it has already been computed"
       );
@@ -656,7 +657,6 @@ const AppContent: React.FC<{
     activeLayout,
     safeComputeLayout,
     activeView,
-    layoutResult?.layoutType,
   ]);
 
   const [graphModelUpdateTime, setGraphModelUpdateTime] = useState<number>(0);
@@ -1079,7 +1079,10 @@ const AppContent: React.FC<{
         layout.positions
       );
       handleSetActiveLayout(layout.name);
-      setLayoutResult({ positions: layout.positions, layoutType: layout.name });
+      setCurrentLayoutResult({
+        positions: layout.positions,
+        layoutType: layout.name,
+      });
       if (forceGraphInstance && activeView === "ForceGraph3d") {
         updateNodePositions(forceGraphInstance, layout.positions);
       } else if (activeView === "ReactFlow") {
@@ -1178,7 +1181,7 @@ const AppContent: React.FC<{
     }
 
     const data = exportGraphDataForReactFlow(currentSceneGraph);
-    const nodePositions = layoutResult?.positions || {};
+    const nodePositions = currentResult?.positions || {};
 
     const nodesWithPositions = data.nodes.map((node) => ({
       ...node,
@@ -1203,8 +1206,8 @@ const AppContent: React.FC<{
             y,
             z: 0,
           };
-          if (layoutResult) {
-            layoutResult.positions[node.id] = {
+          if (currentResult) {
+            currentResult.positions[node.id] = {
               x,
               y,
               z: 0,
@@ -1287,8 +1290,8 @@ const AppContent: React.FC<{
                 y: node.position.y,
                 z: 0,
               });
-              if (layoutResult) {
-                layoutResult.positions[node.id] = {
+              if (currentResult) {
+                currentResult.positions[node.id] = {
                   x: node.position.x,
                   y: node.position.y,
                   z: 0,
@@ -1306,7 +1309,6 @@ const AppContent: React.FC<{
     activeFilter,
     activeLayout,
     currentSceneGraph,
-    layoutResult,
     nodeLegendConfig,
     edgeLegendConfig,
     nodeLegendUpdateTime,
@@ -1407,7 +1409,7 @@ const AppContent: React.FC<{
     }
 
     if (
-      layoutResult?.layoutType !== activeLayout &&
+      currentResult?.layoutType !== activeLayout &&
       (activeView === "Graphviz" || activeView === "ReactFlow")
     ) {
       if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
@@ -1440,23 +1442,24 @@ const AppContent: React.FC<{
     activeLayout,
     initializeForceGraph,
     safeComputeLayout,
-    layoutResult?.layoutType,
+    currentResult?.layoutType,
     setForceGraphInstance,
   ]);
 
   useEffect(() => {
+    const currentLayoutResult = getCurrentLayoutResult();
     if (
       forceGraphInstance &&
-      layoutResult &&
+      currentLayoutResult &&
       forceGraph3dOptions.layout === "Layout"
     ) {
       ForceGraphManager.applyFixedNodePositions(
         forceGraphInstance,
-        layoutResult?.positions
+        currentLayoutResult.positions
       );
       zoomToFit(forceGraphInstance);
-    } else if (graphvizRef.current && layoutResult) {
-      graphvizRef.current.innerHTML = layoutResult.svg ?? "";
+    } else if (graphvizRef.current && currentLayoutResult) {
+      graphvizRef.current.innerHTML = currentLayoutResult.svg ?? "";
       enableZoomAndPanOnSvg(graphvizRef.current);
       graphvizFitToView(graphvizRef.current);
     }
@@ -1465,7 +1468,7 @@ const AppContent: React.FC<{
     // window.history.pushState({}, "", url.toString());
   }, [
     forceGraphInstance,
-    layoutResult,
+    currentResult, // Use this to trigger the effect when the layout result changes
     forceGraph3dOptions.layout,
     graphvizFitToView,
   ]);

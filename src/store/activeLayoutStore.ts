@@ -27,12 +27,17 @@ export interface Layout {
 interface ActiveLayoutsState {
   savedLayouts: ObjectOf<Layout>;
   jobStatus: LayoutJobStatus;
+  currentResult: ILayoutEngineResult | null;
 
   // Layout operations
   saveLayout: (layout: Layout) => void;
   deleteLayout: (layoutName: string) => void;
   getSavedLayouts: () => ObjectOf<Layout>;
   clearLayouts: () => void;
+
+  // Layout result operations
+  setCurrentLayoutResult: (result: ILayoutEngineResult | null) => void;
+  getCurrentLayoutResult: () => ILayoutEngineResult | null;
 
   // Job status operations
   startLayoutJob: (layoutType: LayoutEngineOption, workerId: string) => void;
@@ -50,6 +55,7 @@ const useActiveLayoutStore = create<ActiveLayoutsState>((set, get) => ({
     workerId: null,
     progress: 0,
   },
+  currentResult: null,
 
   // Layout operations
   saveLayout: (layout) => {
@@ -72,6 +78,15 @@ const useActiveLayoutStore = create<ActiveLayoutsState>((set, get) => ({
 
   clearLayouts: () => {
     set({ savedLayouts: {} });
+  },
+
+  // Layout result operations
+  setCurrentLayoutResult: (result) => {
+    set({ currentResult: result });
+  },
+
+  getCurrentLayoutResult: () => {
+    return get().currentResult;
   },
 
   // Job status operations
@@ -128,6 +143,15 @@ export const deleteLayout = (layoutName: string) => {
 
 export const getSavedLayouts = () => {
   return useActiveLayoutStore.getState().getSavedLayouts();
+};
+
+// Layout result actions
+export const setCurrentLayoutResult = (result: ILayoutEngineResult | null) => {
+  useActiveLayoutStore.getState().setCurrentLayoutResult(result);
+};
+
+export const getCurrentLayoutResult = (): ILayoutEngineResult | null => {
+  return useActiveLayoutStore.getState().getCurrentLayoutResult();
 };
 
 // Job status actions
@@ -228,7 +252,18 @@ export const saveLayoutResult = (layout: ILayoutEngineResult) => {
 };
 
 export const getActiveLayoutResult = (): Layout | undefined => {
-  return getSavedLayouts()[getActiveLayout()];
+  // // First check the current result which has priority
+  // const currentResult = getCurrentLayoutResult();
+  // if (currentResult) {
+  //   return {
+  //     name: String(currentResult.layoutType),
+  //     positions: currentResult.positions,
+  //   };
+  // }
+
+  // Fall back to saved layout
+  const activeLayoutName = getActiveLayout();
+  return getSavedLayouts()[activeLayoutName];
 };
 
 export default useActiveLayoutStore;
