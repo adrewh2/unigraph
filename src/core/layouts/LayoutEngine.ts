@@ -1,3 +1,10 @@
+import {
+  finishLayoutJob,
+  selectIsLayoutJobRunning,
+  selectLayoutJobStatus,
+  startLayoutJob,
+  updateLayoutJobProgress,
+} from "../../store/activeLayoutStore";
 import { SceneGraph } from "../model/SceneGraph";
 import { computeCustomLayout, CustomLayoutType } from "./CustomLayoutEngine";
 import {
@@ -59,6 +66,22 @@ function getLayoutWorker(): Worker {
       const response = e.data;
       const pendingComputation = pendingComputations.get(response.id);
 
+      // Handle different message types
+      if (response.type === "progress") {
+        // Update progress in store
+        updateLayoutJobProgress(response.progress);
+        return;
+      }
+
+      if (response.type === "cancelled") {
+        // Clean up this computation
+        if (pendingComputation) {
+          pendingComputations.delete(response.id);
+          pendingComputation.reject(new Error("Layout computation cancelled"));
+        }
+        return;
+      }
+
       if (pendingComputation) {
         if (response.error) {
           pendingComputation.reject(new Error(response.error));
@@ -114,6 +137,34 @@ export class LayoutEngine {
       console.log(
         `${layoutType} Layout computation took ${endTime - startTime} ms`
       );
+
+      // Ensure job is marked as finished
+      finishLayoutJob();
+    }
+  }
+
+  /**
+   * Cancel a running layout computation
+   */
+  public static cancelCurrentLayout(): void {
+    const jobStatus = selectLayoutJobStatus();
+    if (jobStatus.isRunning && jobStatus.workerId && layoutWorker) {
+      console.log("Cancelling layout computation:", jobStatus.workerId);
+
+      // Send cancellation message to worker
+      layoutWorker.postMessage({
+        id: jobStatus.workerId,
+        action: "cancelComputation",
+      });
+
+      // Reject any pending promise
+      const pendingComputation = pendingComputations.get(jobStatus.workerId);
+      if (pendingComputation) {
+        pendingComputation.reject(
+          new Error("Layout computation cancelled by user")
+        );
+        pendingComputations.delete(jobStatus.workerId);
+      }
     }
   }
 
@@ -126,23 +177,42 @@ export class LayoutEngine {
   ): Promise<ILayoutEngineResult> {
     return new Promise((resolve, reject) => {
       try {
+        // Check if another job is running
+        if (selectIsLayoutJobRunning()) {
+          // Cancel the current job before starting a new one
+          LayoutEngine.cancelCurrentLayout();
+        }
+
         // Generate a unique ID for this computation
-        const id = `layout-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+        const workerId = `layout-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+        // Register job in store
+        startLayoutJob(layoutType, workerId);
 
         // Store the callbacks
-        pendingComputations.set(id, { resolve, reject });
+        pendingComputations.set(workerId, {
+          resolve: (result) => {
+            finishLayoutJob();
+            resolve(result);
+          },
+          reject: (error) => {
+            finishLayoutJob();
+            reject(error);
+          },
+        });
 
         // Serialize the scene graph for the worker
         const serializedGraph = sceneGraph.toSerialized();
 
         // Send the message to the worker
         getLayoutWorker().postMessage({
-          id,
+          id: workerId,
           action: "computeLayout",
           layoutType,
           serializedGraph,
         });
       } catch (error) {
+        finishLayoutJob();
         reject(error);
       }
     });

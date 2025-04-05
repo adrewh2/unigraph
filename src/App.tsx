@@ -2022,6 +2022,8 @@ interface AppProps {
   defaultActiveLayout?: string;
 }
 
+import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
+
 const App: React.FC<AppProps> = ({
   defaultGraph,
   svgUrl,
@@ -2036,6 +2038,7 @@ const App: React.FC<AppProps> = ({
         defaultActiveView={defaultActiveView}
         defaultActiveLayout={defaultActiveLayout}
       />
+      <LayoutComputationDialog />
     </MousePositionProvider>
   );
 };
