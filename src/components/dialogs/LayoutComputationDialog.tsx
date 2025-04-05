@@ -19,6 +19,7 @@ import useActiveLayoutStore, {
 export const LayoutComputationDialog: React.FC = () => {
   const [_forceUpdate, setForceUpdate] = useState(0);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   // Use state directly from the store for more responsive UI
   const { jobStatus } = useActiveLayoutStore();
@@ -50,11 +51,32 @@ export const LayoutComputationDialog: React.FC = () => {
     }
   };
 
+  // Handle delayed showing of the dialog
+  useEffect(() => {
+    let showTimeout: NodeJS.Timeout;
+
+    if (isJobRunning) {
+      // Only show dialog after 2 seconds of continuous computation
+      showTimeout = setTimeout(() => {
+        setShowDialog(true);
+      }, 2000);
+    } else {
+      // Hide immediately when job is no longer running
+      setShowDialog(false);
+
+      // Reset cancelling state when job is no longer running
+      setIsCancelling(false);
+    }
+
+    return () => {
+      // Clean up timeout on unmount or when dependencies change
+      clearTimeout(showTimeout);
+    };
+  }, [isJobRunning]);
+
   // Start a timer to update the elapsed time
   useEffect(() => {
     if (!isJobRunning) {
-      // Reset cancelling state when job is no longer running
-      setIsCancelling(false);
       return;
     }
 
@@ -75,9 +97,10 @@ export const LayoutComputationDialog: React.FC = () => {
     );
   }, [isJobRunning, jobStatus]);
 
+  // Only render the dialog if it's meant to be shown after the delay
   return (
     <Dialog
-      open={isJobRunning || isCancelling}
+      open={showDialog || (isJobRunning && isCancelling)}
       onClose={() => {}}
       maxWidth="sm"
       fullWidth
