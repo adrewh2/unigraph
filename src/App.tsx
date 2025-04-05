@@ -505,7 +505,14 @@ const AppContent: React.FC<{
         (layout ?? DEFAULT_APP_CONFIG().activeLayout) as LayoutEngineOption
       );
       if (!output) {
-        throw new Error(`Failed to compute layout for ${layout}`);
+        isComputing = false;
+        addNotification({
+          message: "Layout computation cancelled",
+          type: "error",
+          duration: 3000,
+        });
+        return;
+        // throw new Error(`Failed to compute layout for ${layout}`);
       }
       sceneGraph.getDisplayConfig().nodePositions = output.positions;
       // Turn off svg generation for now

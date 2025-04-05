@@ -124,9 +124,13 @@ const useActiveLayoutStore = create<ActiveLayoutsState>((set, get) => ({
 
   cancelLayoutJob: () => {
     set((state) => ({
+      ...state,
       jobStatus: {
-        ...state.jobStatus,
         isRunning: false,
+        startTime: null,
+        layoutType: null,
+        workerId: null,
+        progress: 0,
       },
     }));
   },
@@ -203,8 +207,11 @@ export const cancelLayoutJob = () => {
   useActiveLayoutStore.setState((state) => ({
     ...state,
     jobStatus: {
-      ...state.jobStatus,
       isRunning: false,
+      startTime: null,
+      layoutType: null,
+      workerId: null,
+      progress: 0,
     },
   }));
 };

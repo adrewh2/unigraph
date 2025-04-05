@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,8 +18,9 @@ import useActiveLayoutStore, {
 
 export const LayoutComputationDialog: React.FC = () => {
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [isCancelling, setIsCancelling] = useState(false);
 
-  // Use state snapshot directly from the store for more responsive UI
+  // Use state directly from the store for more responsive UI
   const { jobStatus } = useActiveLayoutStore();
   const isJobRunning = jobStatus.isRunning;
 
@@ -29,14 +31,32 @@ export const LayoutComputationDialog: React.FC = () => {
     return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const handleCancel = () => {
-    LayoutEngine.cancelCurrentLayout();
-    cancelLayoutJob();
+  const handleCancel = async () => {
+    setIsCancelling(true);
+    try {
+      console.log("Cancelling layout computation");
+
+      // Cancel the layout computation in the worker
+      LayoutEngine.cancelCurrentLayout();
+
+      // Allow UI to update to cancelling state
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Ensure the job is marked as cancelled in the store
+      cancelLayoutJob();
+    } catch (error) {
+      console.error("Error cancelling layout:", error);
+      cancelLayoutJob();
+    }
   };
 
   // Start a timer to update the elapsed time
   useEffect(() => {
-    if (!isJobRunning) return;
+    if (!isJobRunning) {
+      // Reset cancelling state when job is no longer running
+      setIsCancelling(false);
+      return;
+    }
 
     const timer = setInterval(() => {
       // Force a re-render to update the displayed time
@@ -46,7 +66,7 @@ export const LayoutComputationDialog: React.FC = () => {
     return () => clearInterval(timer);
   }, [isJobRunning]);
 
-  // Log the dialog state for debugging
+  // Debug logging
   useEffect(() => {
     console.log(
       "Layout job status:",
@@ -57,34 +77,51 @@ export const LayoutComputationDialog: React.FC = () => {
 
   return (
     <Dialog
-      open={isJobRunning}
+      open={isJobRunning || isCancelling}
       onClose={() => {}}
       maxWidth="sm"
       fullWidth
-      sx={{ zIndex: 1500 }} // Ensure high z-index so it appears above other content
+      sx={{ zIndex: 1500 }}
     >
-      <DialogTitle>Computing Layout</DialogTitle>
+      <DialogTitle>
+        {isCancelling ? "Cancelling Layout..." : "Computing Layout"}
+      </DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 2 }}>
           <Typography variant="body1">
-            Computing {jobStatus.layoutType} layout...
+            {isCancelling
+              ? `Cancelling ${jobStatus.layoutType} layout computation...`
+              : `Computing ${jobStatus.layoutType} layout...`}
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Time elapsed: {formattedTime()}
           </Typography>
         </Box>
-        <LinearProgress
-          variant={jobStatus.progress ? "determinate" : "indeterminate"}
-          value={jobStatus.progress || 0}
-          sx={{ my: 2 }}
-        />
+        {isCancelling ? (
+          <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+            <CircularProgress size={40} />
+          </Box>
+        ) : (
+          <LinearProgress
+            variant={jobStatus.progress ? "determinate" : "indeterminate"}
+            value={jobStatus.progress || 0}
+            sx={{ my: 2 }}
+          />
+        )}
         <Typography variant="caption" color="textSecondary">
-          Layout computations for large graphs may take several seconds.
+          {isCancelling
+            ? "Cancelling layout computation..."
+            : "Layout computations for large graphs may take several seconds."}
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleCancel} color="primary" variant="contained">
-          Cancel
+        <Button
+          onClick={handleCancel}
+          color="primary"
+          variant="contained"
+          disabled={isCancelling}
+        >
+          {isCancelling ? "Cancelling..." : "Cancel"}
         </Button>
       </DialogActions>
     </Dialog>

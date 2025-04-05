@@ -85,36 +85,60 @@ async function handleComputeLayout(
     // Handle different layout types
     let result: ILayoutEngineResult;
 
-    if (
-      Object.values(GraphologyLayoutType).includes(
-        layoutType as GraphologyLayoutType
-      )
-    ) {
-      const positions = await new GraphologyLayoutEngine().computeLayout(
-        sceneGraph.getGraph(),
-        layoutType as GraphologyLayoutType
-      );
-      result = { positions, layoutType: layoutType as GraphologyLayoutType };
-    } else if (
-      Object.values(GraphvizLayoutType).includes(
-        layoutType as GraphvizLayoutType
-      )
-    ) {
-      const output = await GraphvizLayoutEngine.computeLayout(
-        sceneGraph,
-        layoutType as GraphvizLayoutType
-      );
-      result = { ...output, layoutType: layoutType as GraphvizLayoutType };
-    } else if (
-      Object.values(CustomLayoutType).includes(layoutType as CustomLayoutType)
-    ) {
-      const positions = computeCustomLayout(
-        sceneGraph,
-        layoutType as CustomLayoutType
-      );
-      result = { positions, layoutType: layoutType as CustomLayoutType };
-    } else {
-      throw new Error("Invalid layout type: " + layoutType);
+    // Check for cancellation frequently during computation
+    const checkCancellation = () => {
+      if (activeComputations.get(id)?.cancelled) {
+        throw new Error("Computation cancelled");
+      }
+    };
+
+    // Periodically check for cancellation
+    const cancellationCheckInterval = setInterval(() => {
+      try {
+        checkCancellation();
+      } catch (e) {
+        clearInterval(cancellationCheckInterval);
+        throw e;
+      }
+    }, 100);
+
+    try {
+      if (
+        Object.values(GraphologyLayoutType).includes(
+          layoutType as GraphologyLayoutType
+        )
+      ) {
+        const positions = await new GraphologyLayoutEngine().computeLayout(
+          sceneGraph.getGraph(),
+          layoutType as GraphologyLayoutType
+        );
+        checkCancellation();
+        result = { positions, layoutType: layoutType as GraphologyLayoutType };
+      } else if (
+        Object.values(GraphvizLayoutType).includes(
+          layoutType as GraphvizLayoutType
+        )
+      ) {
+        const output = await GraphvizLayoutEngine.computeLayout(
+          sceneGraph,
+          layoutType as GraphvizLayoutType
+        );
+        checkCancellation();
+        result = { ...output, layoutType: layoutType as GraphvizLayoutType };
+      } else if (
+        Object.values(CustomLayoutType).includes(layoutType as CustomLayoutType)
+      ) {
+        const positions = computeCustomLayout(
+          sceneGraph,
+          layoutType as CustomLayoutType
+        );
+        checkCancellation();
+        result = { positions, layoutType: layoutType as CustomLayoutType };
+      } else {
+        throw new Error("Invalid layout type: " + layoutType);
+      }
+    } finally {
+      clearInterval(cancellationCheckInterval);
     }
 
     // Check for cancellation again before returning result
@@ -129,7 +153,12 @@ async function handleComputeLayout(
   } catch (error) {
     clearInterval(progressInterval);
     activeComputations.delete(id);
-    console.error("Error in layout worker:", error);
+
+    // Format cancellation errors consistently
+    if (error instanceof Error && error.message === "Computation cancelled") {
+      error.name = "CancellationError";
+    }
+
     throw error;
   }
 }
@@ -153,13 +182,19 @@ self.onmessage = async (e: MessageEvent<LayoutWorkerMessage>) => {
         });
       } catch (error) {
         // Check if this was a cancellation
-        if (activeComputations.get(message.id)?.cancelled) {
+        if (
+          error instanceof Error &&
+          (error.name === "CancellationError" ||
+            error.message.includes("cancelled"))
+        ) {
+          console.log(`Worker: Layout computation ${message.id} was cancelled`);
           self.postMessage({
             id: message.id,
             type: "cancelled",
           });
         } else {
           // Real error
+          console.error(`Worker: Error in layout computation:`, error);
           self.postMessage({
             id: message.id,
             error: error instanceof Error ? error.message : String(error),
@@ -168,11 +203,12 @@ self.onmessage = async (e: MessageEvent<LayoutWorkerMessage>) => {
         }
       }
     } else if (message.action === "cancelComputation") {
-      // Mark computation as cancelled
+      // Mark computation as cancelled immediately
       if (activeComputations.has(message.id)) {
+        console.log(`Worker: Marking computation ${message.id} as cancelled`);
         activeComputations.get(message.id)!.cancelled = true;
-        console.log(`Marked computation ${message.id} as cancelled`);
 
+        // Respond immediately to confirm cancellation
         self.postMessage({
           id: message.id,
           type: "cancelled",
@@ -181,6 +217,7 @@ self.onmessage = async (e: MessageEvent<LayoutWorkerMessage>) => {
     }
   } catch (error) {
     // Handle any unexpected errors
+    console.error("Worker: Unexpected error:", error);
     self.postMessage({
       id: message.id,
       error: error instanceof Error ? error.message : String(error),
