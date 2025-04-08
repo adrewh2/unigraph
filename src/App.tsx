@@ -42,6 +42,7 @@ import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
+import TypeSystemPanel from "./components/reactflow/TypeSystemPanel";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -1167,6 +1168,28 @@ const AppContent: React.FC<{
     };
   }, []);
 
+  // Then add a new view case in your app:
+  const maybeRenderTypeSystem = useMemo(() => {
+    if (activeView !== "TypeSystem") {
+      return null;
+    }
+
+    return (
+      <div
+        id="type-system"
+        style={{
+          position: "absolute",
+          top: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 10,
+        }}
+      >
+        <TypeSystemPanel />
+      </div>
+    );
+  }, [activeView]);
+
   const maybeRenderReactFlow = useMemo(() => {
     if (!(activeView === "ReactFlow" || activeView === "Editor")) {
       return null;
@@ -1853,6 +1876,7 @@ const AppContent: React.FC<{
             {maybeRenderGraphviz}
             {maybeRenderForceGraph3D}
             {maybeRenderReactFlow}
+            {maybeRenderTypeSystem}
             {maybeRenderYasgui}
             {maybeRenderNodeDocumentEditor()}
             {activeView === "Gallery" && (
