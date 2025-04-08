@@ -87,6 +87,7 @@ const LayoutManagerV2: React.FC<LayoutManagerV2Props> = ({
     id: string;
     buttonRect: DOMRect | null;
   } | null>(null);
+  const { currentResult } = useActiveLayoutStore();
 
   // Add state for active tab
   const [activeTab, setActiveTab] = useState<
@@ -118,23 +119,23 @@ const LayoutManagerV2: React.FC<LayoutManagerV2Props> = ({
   // Handle layout selection
   const handleSelectLayout = (layout: Layout) => {
     onLayoutSelected(layout);
-    setActiveLayout(layout);
-    addNotification({
-      message: `Layout "${layout.name}" applied`,
-      type: "success",
-      duration: 3000,
-    });
+    // setActiveLayout(layout);
+    // addNotification({
+    //   message: `Layout "${layout.name}" applied`,
+    //   type: "success",
+    //   duration: 3000,
+    // });
   };
 
   // Handle predefined layout selection
   const handleSelectPredefinedLayout = (layoutName: string) => {
     setSelectedPredefinedLayout(layoutName);
     applyPredefinedLayout(layoutName);
-    addNotification({
-      message: `Layout "${layoutName}" applied`,
-      type: "success",
-      duration: 3000,
-    });
+    // addNotification({
+    //   message: `Layout "${layoutName}" applied`,
+    //   type: "success",
+    //   duration: 3000,
+    // });
   };
 
   const handleStartEdit = (e: React.MouseEvent, layout: Layout) => {

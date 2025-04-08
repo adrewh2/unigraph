@@ -1312,19 +1312,20 @@ const AppContent: React.FC<{
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    activeView,
-    activeFilter,
-    activeLayout,
+    // activeView,
     currentSceneGraph,
+    currentResult,
+    safeComputeLayout,
+    // activeLayout,
     nodeLegendConfig,
     edgeLegendConfig,
-    nodeLegendUpdateTime,
-    edgeLegendUpdateTime,
-    safeComputeLayout,
+    legendMode,
+    reactFlowInstance,
+    setReactFlowInstance,
     handleReactFlowFitView,
     handleNodeRightClick,
     handleBackgroundRightClick,
-    graphModelUpdateTime, // @todo remove this. currently need to include this to force re-render when graph is changed outside reactflow
+    graphModelUpdateTime,
   ]);
 
   const maybeRenderGraphviz = useMemo(() => {
