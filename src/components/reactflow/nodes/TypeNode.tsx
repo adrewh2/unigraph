@@ -20,7 +20,7 @@ import {
   StyledTypeHandle,
 } from "./shared/StyledComponents";
 
-export interface TypeNodeData {
+export interface TypeNodeData extends Record<string, unknown> {
   label: string;
   description?: string;
   properties?: Record<string, string>; // Property name -> type

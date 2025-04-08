@@ -29,31 +29,16 @@ import {
 } from "@xyflow/react";
 import React, { useCallback, useRef, useState } from "react";
 import "reactflow/dist/style.css";
-import { nodeTypes } from "./nodes/TypeSystemNodes";
 
-// Define types for our node data
-type TypeNodeData = {
-  label: string;
-  description?: string;
-  properties?: Record<string, string>;
-};
+// Import from the new modular structure
+import {
+  DataNodeData,
+  FunctionNodeData,
+  nodeTypes,
+  TypeNodeData,
+} from "./nodes";
 
-type DataNodeData = {
-  label: string;
-  description?: string;
-  typeName?: string;
-  preview?: Record<string, any> | string;
-};
-
-type FunctionNodeData = {
-  label: string;
-  description?: string;
-  returnType?: string;
-  parameters?: Array<{ name: string; type: string }>;
-  tags?: string[];
-};
-
-// Sample initial data with proper typing
+// Sample initial data for nodes with tabular data format
 const initialNodes: Array<
   Node<TypeNodeData> | Node<DataNodeData> | Node<FunctionNodeData>
 > = [
@@ -75,9 +60,46 @@ const initialNodes: Array<
     type: "dataNode",
     position: { x: 400, y: 100 },
     data: {
-      label: "User Data",
+      label: "Users Table",
       typeName: "Person",
-      preview: { name: "John Doe", age: 32, active: true },
+      columns: [
+        { name: "id", type: "number", width: 60 },
+        { name: "name", type: "string", width: 120 },
+        { name: "age", type: "number", width: 60 },
+        { name: "active", type: "boolean", width: 80 },
+        { name: "joined", type: "date", width: 100 },
+      ],
+      rows: [
+        {
+          id: 1,
+          name: "John Doe",
+          age: 32,
+          active: true,
+          joined: new Date("2021-03-15"),
+        },
+        {
+          id: 2,
+          name: "Jane Smith",
+          age: 28,
+          active: true,
+          joined: new Date("2022-01-10"),
+        },
+        {
+          id: 3,
+          name: "Bob Johnson",
+          age: 45,
+          active: false,
+          joined: new Date("2020-11-05"),
+        },
+        {
+          id: 4,
+          name: "Alice Brown",
+          age: 22,
+          active: true,
+          joined: new Date("2023-02-20"),
+        },
+      ],
+      description: "User profiles data",
     },
   },
   {
@@ -90,6 +112,29 @@ const initialNodes: Array<
       parameters: [{ name: "person", type: "Person" }],
       description: "Checks if a person is an adult",
       tags: ["validation", "utility"],
+    },
+  },
+  {
+    id: "data-2",
+    type: "dataNode",
+    position: { x: 650, y: 300 },
+    data: {
+      label: "Products Table",
+      typeName: "Product",
+      columns: [
+        { name: "id", type: "number", width: 60 },
+        { name: "name", type: "string", width: 150 },
+        { name: "price", type: "number", width: 80 },
+        { name: "inStock", type: "boolean", width: 80 },
+      ],
+      rows: [
+        { id: 101, name: "Laptop", price: 1299.99, inStock: true },
+        { id: 102, name: "Smartphone", price: 699.99, inStock: true },
+        { id: 103, name: "Headphones", price: 149.99, inStock: false },
+        { id: 104, name: "Tablet", price: 499.99, inStock: true },
+        { id: 105, name: "Smartwatch", price: 249.99, inStock: true },
+      ],
+      description: "Product catalog",
     },
   },
 ];
@@ -183,7 +228,7 @@ export const TypeSystemPanel: React.FC = () => {
 
   const addTypeNode = () => {
     const newNode: Node<TypeNodeData> = {
-      id: `type-${nodes.length + 1}`,
+      id: `type-${Date.now()}`,
       type: "typeNode",
       position: { x: 100, y: 200 },
       data: {
@@ -196,13 +241,21 @@ export const TypeSystemPanel: React.FC = () => {
 
   const addDataNode = () => {
     const newNode: Node<DataNodeData> = {
-      id: `data-${nodes.length + 1}`,
+      id: `data-${Date.now()}`,
       type: "dataNode",
       position: { x: 400, y: 200 },
       data: {
-        label: "New Data",
+        label: "New Data Table",
         typeName: "",
-        preview: {},
+        columns: [
+          { name: "id", type: "number", width: 60 },
+          { name: "name", type: "string", width: 120 },
+          { name: "value", type: "string", width: 120 },
+        ],
+        rows: [
+          { id: 1, name: "Item 1", value: "Value 1" },
+          { id: 2, name: "Item 2", value: "Value 2" },
+        ],
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -210,7 +263,7 @@ export const TypeSystemPanel: React.FC = () => {
 
   const addFunctionNode = () => {
     const newNode: Node<FunctionNodeData> = {
-      id: `func-${nodes.length + 1}`,
+      id: `func-${Date.now()}`,
       type: "functionNode",
       position: { x: 250, y: 400 },
       data: {
@@ -259,7 +312,7 @@ export const TypeSystemPanel: React.FC = () => {
             Type System Designer
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Create and connect types, data, and functions
+            Create and connect types, data tables, and functions
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
@@ -279,7 +332,7 @@ export const TypeSystemPanel: React.FC = () => {
             onClick={addDataNode}
             color="success"
           >
-            Data
+            Data Table
           </Button>
           <Button
             variant="outlined"

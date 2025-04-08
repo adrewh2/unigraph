@@ -19,7 +19,7 @@ export interface FunctionParameter {
   type: string;
 }
 
-export interface FunctionNodeData {
+export interface FunctionNodeData extends Record<string, unknown> {
   label: string;
   description?: string;
   returnType?: string;

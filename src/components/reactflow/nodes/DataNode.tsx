@@ -37,12 +37,13 @@ export interface TableRow {
   [key: string]: any;
 }
 
-export interface DataNodeData {
+export interface DataNodeData extends Record<string, unknown> {
   label: string;
   description?: string;
   typeName?: string;
   columns: TableColumn[];
   rows: TableRow[];
+  // Keep preview for backward compatibility
   preview?: Record<string, any> | string;
 }
 
@@ -77,6 +78,35 @@ const formatCellValue = (value: any, type: string): string => {
 export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
   const nodeData = data as unknown as DataNodeData;
 
+  // Convert legacy preview data to tabular format if needed
+  let tableData = nodeData;
+  if (!nodeData.columns && !nodeData.rows && nodeData.preview) {
+    // Convert preview to a table format
+    const preview = nodeData.preview;
+    if (typeof preview === "object" && preview !== null) {
+      const columns: TableColumn[] = [];
+      const row: TableRow = {};
+
+      Object.entries(preview).forEach(([key, value]) => {
+        // Determine type
+        let type: TableColumn["type"] = "string";
+        if (typeof value === "number") type = "number";
+        else if (typeof value === "boolean") type = "boolean";
+        else if (value instanceof Date) type = "date";
+        else if (typeof value === "object") type = "object";
+
+        columns.push({ name: key, type, width: 100 });
+        row[key] = value;
+      });
+
+      tableData = {
+        ...nodeData,
+        columns,
+        rows: [row],
+      };
+    }
+  }
+
   return (
     <NodeContainer
       sx={{
@@ -107,30 +137,30 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
         <Box display="flex" alignItems="center">
           <StorageIcon color="success" sx={{ mr: 1 }} />
           <Typography variant="subtitle2" fontWeight="bold">
-            {nodeData.label}
+            {tableData.label}
           </Typography>
         </Box>
         <Chip
-          label={nodeData.typeName || "untyped"}
+          label={tableData.typeName || "untyped"}
           size="small"
-          color={nodeData.typeName ? "primary" : "default"}
+          color={tableData.typeName ? "primary" : "default"}
           variant="outlined"
         />
       </NodeHeader>
 
       <NodeContent>
         <Typography variant="caption" color="text.secondary">
-          {nodeData.description ||
-            `Data table with ${nodeData.rows?.length || 0} rows`}
+          {tableData.description ||
+            `Data table with ${tableData.rows?.length || 0} rows`}
         </Typography>
 
-        {nodeData.columns && nodeData.rows ? (
+        {tableData.columns && tableData.rows ? (
           <Paper variant="outlined">
             <StyledTableContainer>
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
-                    {nodeData.columns.map((column, idx) => (
+                    {tableData.columns.map((column, idx) => (
                       <TableCell
                         key={idx}
                         sx={{
@@ -155,9 +185,9 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {nodeData.rows.map((row, rowIdx) => (
+                  {tableData.rows.map((row, rowIdx) => (
                     <TableRow key={rowIdx} hover>
-                      {nodeData.columns.map((column, colIdx) => (
+                      {tableData.columns.map((column, colIdx) => (
                         <TableCell key={`${rowIdx}-${colIdx}`}>
                           {formatCellValue(row[column.name], column.type)}
                         </TableCell>
