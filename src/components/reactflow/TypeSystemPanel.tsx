@@ -1,18 +1,10 @@
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RedoIcon from "@mui/icons-material/Redo";
 import SaveIcon from "@mui/icons-material/Save";
 import UndoIcon from "@mui/icons-material/Undo";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
-import {
-  Box,
-  Button,
-  IconButton,
-  Paper,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, IconButton, Paper, Typography, useTheme } from "@mui/material";
 import {
   addEdge,
   Background,
@@ -30,213 +22,39 @@ import {
 import React, { useCallback, useRef, useState } from "react";
 import "reactflow/dist/style.css";
 
-// Import from the new modular structure
-import {
-  DataNodeData,
-  FunctionNodeData,
-  nodeTypes,
-  TypeNodeData,
-} from "./nodes";
+import { nodeTypes } from "./nodes";
 
-// Sample initial data for nodes with tabular data format
-const initialNodes: Array<
-  Node<TypeNodeData> | Node<DataNodeData> | Node<FunctionNodeData>
-> = [
-  {
-    id: "type-1",
-    type: "typeNode",
-    position: { x: 100, y: 100 },
-    data: {
-      label: "Person",
-      properties: {
-        name: "string",
-        age: "number",
-        active: "boolean",
-      },
-    },
-  },
-  {
-    id: "data-1",
-    type: "dataNode",
-    position: { x: 400, y: 100 },
-    data: {
-      label: "Users Table",
-      typeName: "Person",
-      columns: [
-        { name: "id", type: "number", width: 60 },
-        { name: "name", type: "string", width: 120 },
-        { name: "age", type: "number", width: 60 },
-        { name: "active", type: "boolean", width: 80 },
-        { name: "joined", type: "date", width: 100 },
-      ],
-      rows: [
-        {
-          id: 1,
-          name: "John Doe",
-          age: 32,
-          active: true,
-          joined: new Date("2021-03-15"),
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          age: 28,
-          active: true,
-          joined: new Date("2022-01-10"),
-        },
-        {
-          id: 3,
-          name: "Bob Johnson",
-          age: 45,
-          active: false,
-          joined: new Date("2020-11-05"),
-        },
-        {
-          id: 4,
-          name: "Alice Brown",
-          age: 22,
-          active: true,
-          joined: new Date("2023-02-20"),
-        },
-      ],
-      description: "User profiles data",
-    },
-  },
-  {
-    id: "func-1",
-    type: "functionNode",
-    position: { x: 250, y: 300 },
-    data: {
-      label: "isAdult",
-      description: "Checks if a person is an adult",
-      inputs: [
-        {
-          name: "person",
-          type: "Person",
-          connected: true,
-          connectedInstance: {
-            id: "data-1",
-            name: "Users Table",
-            type: "Person",
-          },
-        },
-        { name: "minAge", type: "number" },
-      ],
-      outputs: [{ name: "result", type: "boolean" }],
-      tags: ["validation", "utility"],
-    },
-  },
-  {
-    id: "func-2",
-    type: "functionNode",
-    position: { x: 250, y: 500 },
-    data: {
-      label: "transformPerson",
-      description: "Transforms a person object",
-      inputs: [
-        { name: "person", type: "Person" },
-        { name: "options", type: "Object" },
-      ],
-      outputs: [
-        {
-          name: "simplified",
-          type: "Object",
-          connected: true,
-          connectedInstance: {
-            id: "data-2",
-            name: "Products Table",
-            type: "Product",
-          },
-        },
-        { name: "stats", type: "Stats" },
-      ],
-      tags: ["transform", "utility"],
-    },
-  },
-  {
-    id: "data-2",
-    type: "dataNode",
-    position: { x: 650, y: 300 },
-    data: {
-      label: "Products Table",
-      typeName: "Product",
-      columns: [
-        { name: "id", type: "number", width: 60 },
-        { name: "name", type: "string", width: 150 },
-        { name: "price", type: "number", width: 80 },
-        { name: "inStock", type: "boolean", width: 80 },
-      ],
-      rows: [
-        { id: 101, name: "Laptop", price: 1299.99, inStock: true },
-        { id: 102, name: "Smartphone", price: 699.99, inStock: true },
-        { id: 103, name: "Headphones", price: 149.99, inStock: false },
-        { id: 104, name: "Tablet", price: 499.99, inStock: true },
-        { id: 105, name: "Smartwatch", price: 249.99, inStock: true },
-      ],
-      description: "Product catalog",
-    },
-  },
-];
-
-const initialEdges: Edge[] = [
-  {
-    id: "e1-2",
-    source: "type-1",
-    target: "data-1",
-    sourceHandle: "type-out",
-    targetHandle: "type-input",
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-    style: { stroke: "#1976d2" },
-    animated: false,
-  },
-  {
-    id: "e2-3",
-    source: "data-1",
-    target: "func-1",
-    sourceHandle: "data-out",
-    targetHandle: "data-in",
-    markerEnd: {
-      type: MarkerType.ArrowClosed,
-    },
-    style: { stroke: "#4caf50" },
-    animated: true,
-  },
-];
-
-export const TypeSystemPanel: React.FC = () => {
+export const TypeSystemPanel: React.FC<{
+  initialData?: { nodes: Node[]; edges: Edge[] };
+}> = ({ initialData }) => {
   const theme = useTheme();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    initialData?.nodes ?? []
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    initialData?.edges ?? []
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   const onConnect = useCallback(
     (params: Connection) => {
-      // We can add custom logic here for validating connections between types
       setEdges((eds) => {
-        // Determine the appropriate styling based on the connection
         let edgeStyle = {};
         let animated = false;
 
-        // Type connections (blue)
         if (
           params.sourceHandle?.includes("type") ||
           params.targetHandle?.includes("type")
         ) {
           edgeStyle = { stroke: theme.palette.primary.main };
-        }
-        // Data connections (green)
-        else if (
+        } else if (
           params.sourceHandle?.includes("data") ||
           params.targetHandle?.includes("data")
         ) {
           edgeStyle = { stroke: theme.palette.success.main };
           animated = true;
-        }
-        // Function connections (orange)
-        else if (
+        } else if (
           params.sourceHandle?.includes("function") ||
           params.targetHandle?.includes("function")
         ) {
@@ -263,60 +81,6 @@ export const TypeSystemPanel: React.FC = () => {
 
   const onPaneClick = () => {
     setSelectedNodeId(null);
-  };
-
-  const addTypeNode = () => {
-    const newNode: Node<TypeNodeData> = {
-      id: `type-${Date.now()}`,
-      type: "typeNode",
-      position: { x: 100, y: 200 },
-      data: {
-        label: "New Type",
-        properties: {},
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
-
-  const addDataNode = () => {
-    const newNode: Node<DataNodeData> = {
-      id: `data-${Date.now()}`,
-      type: "dataNode",
-      position: { x: 400, y: 200 },
-      data: {
-        label: "New Data Table",
-        typeName: "",
-        columns: [
-          { name: "id", type: "number", width: 60 },
-          { name: "name", type: "string", width: 120 },
-          { name: "value", type: "string", width: 120 },
-        ],
-        rows: [
-          { id: 1, name: "Item 1", value: "Value 1" },
-          { id: 2, name: "Item 2", value: "Value 2" },
-        ],
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
-
-  const addFunctionNode = () => {
-    const newNode: Node<FunctionNodeData> = {
-      id: `func-${Date.now()}`,
-      type: "functionNode",
-      position: { x: 250, y: 400 },
-      data: {
-        label: "New Function",
-        description: "Function description",
-        inputs: [
-          { name: "input1", type: "any" },
-          { name: "input2", type: "any" },
-        ],
-        outputs: [{ name: "output", type: "any" }],
-        tags: [],
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
   };
 
   const deleteSelectedNode = () => {
@@ -359,33 +123,6 @@ export const TypeSystemPanel: React.FC = () => {
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={addTypeNode}
-            color="primary"
-          >
-            Type
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={addDataNode}
-            color="success"
-          >
-            Data Table
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={addFunctionNode}
-            color="warning"
-          >
-            Function
-          </Button>
           <IconButton
             size="small"
             onClick={deleteSelectedNode}
