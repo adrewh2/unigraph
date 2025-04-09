@@ -1,3 +1,4 @@
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import CodeIcon from "@mui/icons-material/Code";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import LinkIcon from "@mui/icons-material/Link";
@@ -20,8 +21,8 @@ import PortConnectionDialog from "./dialogs/PortConnectionDialog";
 import {
   CompactNodeContainer,
   CompactNodeContent,
-  CompactNodeFooter,
   CompactNodeHeader,
+  FloatingActionButton,
   PortConnectedBadge,
   PortLabel,
   StyledDataHandle,
@@ -178,6 +179,36 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
     window.dispatchEvent(event);
 
     handleCloseDialog();
+  };
+
+  const handleOpenInputDataDialog = () => {
+    // Find first non-connected input
+    const firstAvailableInput = displayInputs?.find(
+      (input) => !input.connected
+    );
+    if (firstAvailableInput) {
+      setConnectionDialog({
+        open: true,
+        isInput: true,
+        portName: firstAvailableInput.name,
+        portType: firstAvailableInput.type,
+      });
+    }
+  };
+
+  const handleOpenOutputDataDialog = () => {
+    // Find first non-connected output
+    const firstAvailableOutput = displayOutputs?.find(
+      (output) => !output.connected
+    );
+    if (firstAvailableOutput) {
+      setConnectionDialog({
+        open: true,
+        isInput: false,
+        portName: firstAvailableOutput.name,
+        portType: firstAvailableOutput.type,
+      });
+    }
   };
 
   return (
@@ -428,34 +459,26 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
         </Box>
       </CompactNodeContent>
 
-      {nodeData.tags && nodeData.tags.length > 0 && (
-        <CompactNodeFooter>
-          <Box
-            sx={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 0.5,
-              justifyContent: "flex-end",
-            }}
-          >
-            {nodeData.tags.map((tag, idx) => (
-              <Chip
-                key={idx}
-                label={tag}
-                size="small"
-                variant="outlined"
-                sx={{
-                  height: 16,
-                  "& .MuiChip-label": {
-                    px: 0.75,
-                    fontSize: "0.6rem",
-                  },
-                }}
-              />
-            ))}
-          </Box>
-        </CompactNodeFooter>
-      )}
+      {/* Floating Action Buttons for connecting data */}
+      <FloatingActionButton
+        position="left"
+        color="primary"
+        onClick={handleOpenInputDataDialog}
+        title="Connect Input Data"
+        disabled={!displayInputs?.some((input) => !input.connected)}
+      >
+        <AddCircleIcon />
+      </FloatingActionButton>
+
+      <FloatingActionButton
+        position="right"
+        color="success"
+        onClick={handleOpenOutputDataDialog}
+        title="Connect Output Data"
+        disabled={!displayOutputs?.some((output) => !output.connected)}
+      >
+        <AddCircleIcon />
+      </FloatingActionButton>
 
       {/* Function type handle */}
       <StyledFunctionHandle

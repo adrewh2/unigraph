@@ -1,3 +1,4 @@
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FunctionsTwoToneIcon from "@mui/icons-material/FunctionsTwoTone";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -25,6 +26,7 @@ import {
   CompactNodeContainer,
   CompactNodeContent,
   CompactNodeHeader,
+  FloatingActionButton,
   PortLabel,
   StyledDataHandle,
   StyledTypeHandle,
@@ -275,6 +277,18 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
           id="data-out"
         />
       </Box>
+
+      {/* Floating Action Button for connecting to functions */}
+      <FloatingActionButton
+        position="right"
+        color="success"
+        onClick={handleDataPortClick}
+        title="Add Function"
+      >
+        <AddCircleIcon />
+      </FloatingActionButton>
+
+      <StyledDataHandle type="source" position={Position.Right} id="data-out" />
       <StyledDataHandle type="target" position={Position.Left} id="data-in" />
 
       <StyledTypeHandle

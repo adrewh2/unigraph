@@ -1,5 +1,7 @@
-import { Box, Paper, styled } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Box, IconButton, Paper, Tooltip, styled } from "@mui/material";
 import { Handle } from "@xyflow/react";
+import React from "react";
 
 // Original styled components for nodes (keeping for backward compatibility)
 export const NodeContainer = styled(Paper)(({ theme }) => ({
@@ -155,3 +157,62 @@ export const PortConnectedBadge = styled(Box, {
   fontSize: "0.6rem",
   zIndex: 2,
 }));
+
+// Floating action button that appears outside the node
+export const FloatingActionButton = styled(
+  ({
+    position,
+    color,
+    onClick,
+    title,
+    disabled,
+    children,
+    ...rest
+  }: {
+    position: "left" | "right";
+    color: "primary" | "secondary" | "success" | "error" | "info" | "warning";
+    onClick: (event: React.MouseEvent) => void;
+    title?: string;
+    disabled?: boolean;
+    children?: React.ReactNode;
+  }) => (
+    <Box
+      sx={{
+        position: "absolute",
+        [position]: "-18px",
+        top: "50%",
+        transform: "translateY(-50%)",
+        zIndex: 10,
+      }}
+      {...rest}
+    >
+      <Tooltip
+        title={title || "Connect"}
+        placement={position === "left" ? "left" : "right"}
+      >
+        <span>
+          <IconButton
+            color={color}
+            onClick={onClick}
+            size="small"
+            disabled={disabled}
+            sx={{
+              backgroundColor: "white",
+              border: `2px solid ${disabled ? "rgba(0,0,0,0.1)" : `var(--mui-palette-${color}-main)`}`,
+              boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+              transition: "all 0.2s",
+              "&:hover": {
+                backgroundColor: disabled
+                  ? "white"
+                  : `var(--mui-palette-${color}-50)`,
+                transform: disabled ? "none" : "scale(1.1)",
+              },
+            }}
+          >
+            {children || <AddIcon />}
+          </IconButton>
+        </span>
+      </Tooltip>
+    </Box>
+  )
+)({});
