@@ -9,7 +9,7 @@ import {
   CompactNodeContent,
   CompactNodeFooter,
   CompactNodeHeader,
-  CompactParamSection,
+  PortLabel,
   StyledDataHandle,
   StyledFunctionHandle,
 } from "./shared/StyledComponents";
@@ -17,25 +17,44 @@ import {
 export interface FunctionParameter {
   name: string;
   type: string;
+  description?: string;
+}
+
+export interface FunctionOutput {
+  name: string;
+  type: string;
+  description?: string;
 }
 
 export interface FunctionNodeData extends Record<string, unknown> {
   label: string;
   description?: string;
-  returnType?: string;
-  parameters?: FunctionParameter[];
+  inputs?: FunctionParameter[];
+  outputs?: FunctionOutput[];
   tags?: string[];
 }
 
 export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
   const nodeData = data as unknown as FunctionNodeData;
 
+  // Calculate dynamic spacing for handles
+  const inputCount = nodeData.inputs?.length || 0;
+  const outputCount = nodeData.outputs?.length || 0;
+
+  // Default to at least one input and output if none provided
+  const displayInputs =
+    inputCount > 0 ? nodeData.inputs : [{ name: "input", type: "any" }];
+
+  const displayOutputs =
+    outputCount > 0 ? nodeData.outputs : [{ name: "output", type: "any" }];
+
   return (
     <CompactNodeContainer
       sx={{
         bgcolor: selected ? "rgba(255, 236, 179, 0.3)" : "background.paper",
         border: selected ? "2px solid #ff9800" : "1px solid #ccc",
-        maxWidth: 220,
+        width: "auto",
+        minWidth: 220,
       }}
     >
       <NodeToolbar position={Position.Top} isVisible={selected}>
@@ -58,16 +77,6 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
             {nodeData.label}
           </Typography>
         </Box>
-        <Chip
-          label={nodeData.returnType || "void"}
-          size="small"
-          color="primary"
-          variant="outlined"
-          sx={{
-            height: 20,
-            "& .MuiChip-label": { px: 1, fontSize: "0.65rem" },
-          }}
-        />
       </CompactNodeHeader>
 
       <CompactNodeContent>
@@ -76,41 +85,91 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
             variant="caption"
             color="text.secondary"
             fontSize="0.7rem"
+            sx={{ mb: 1, display: "block" }}
           >
             {nodeData.description}
           </Typography>
         )}
 
-        {nodeData.parameters && nodeData.parameters.length > 0 && (
-          <CompactParamSection>
-            <Typography
-              variant="caption"
-              fontWeight="bold"
-              display="block"
-              mb={0.5}
-              fontSize="0.7rem"
-            >
-              Parameters:
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-              {nodeData.parameters.map((param, idx) => (
-                <Chip
-                  key={idx}
-                  label={`${param.name}: ${param.type}`}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    height: 18,
-                    "& .MuiChip-label": {
-                      px: 0.75,
-                      fontSize: "0.65rem",
-                    },
-                  }}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mt: 1,
+            mb: 1,
+          }}
+        >
+          {/* Input ports on the left */}
+          <Box
+            sx={{
+              mr: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+            }}
+          >
+            {displayInputs?.map((input, idx) => (
+              <Box
+                key={`input-${idx}`}
+                sx={{
+                  position: "relative",
+                  mb: 1.5,
+                  display: "flex",
+                  alignItems: "center",
+                  minHeight: "16px",
+                }}
+              >
+                <StyledDataHandle
+                  type="target"
+                  position={Position.Left}
+                  id={`input-${input.name}`}
+                  style={{ left: -4 }}
                 />
-              ))}
-            </Box>
-          </CompactParamSection>
-        )}
+                <PortLabel variant="input">
+                  <Typography variant="caption" fontSize="0.65rem">
+                    {input.name}
+                    <span style={{ opacity: 0.7 }}>: {input.type}</span>
+                  </Typography>
+                </PortLabel>
+              </Box>
+            ))}
+          </Box>
+
+          {/* Output ports on the right */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+            }}
+          >
+            {displayOutputs?.map((output, idx) => (
+              <Box
+                key={`output-${idx}`}
+                sx={{
+                  position: "relative",
+                  mb: 1.5,
+                  display: "flex",
+                  alignItems: "center",
+                  minHeight: "16px",
+                }}
+              >
+                <PortLabel variant="output">
+                  <Typography variant="caption" fontSize="0.65rem">
+                    {output.name}
+                    <span style={{ opacity: 0.7 }}>: {output.type}</span>
+                  </Typography>
+                </PortLabel>
+                <StyledDataHandle
+                  type="source"
+                  position={Position.Right}
+                  id={`output-${output.name}`}
+                  style={{ right: -4 }}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Box>
       </CompactNodeContent>
 
       {nodeData.tags && nodeData.tags.length > 0 && (
@@ -142,13 +201,7 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
         </CompactNodeFooter>
       )}
 
-      {/* Input handle for data */}
-      <StyledDataHandle type="target" position={Position.Left} id="data-in" />
-
-      {/* Output handle for data */}
-      <StyledDataHandle type="source" position={Position.Right} id="data-out" />
-
-      {/* Input handle for function type */}
+      {/* Function type handle */}
       <StyledFunctionHandle
         type="target"
         position={Position.Top}

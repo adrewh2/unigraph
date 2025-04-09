@@ -108,10 +108,31 @@ const initialNodes: Array<
     position: { x: 250, y: 300 },
     data: {
       label: "isAdult",
-      returnType: "boolean",
-      parameters: [{ name: "person", type: "Person" }],
       description: "Checks if a person is an adult",
+      inputs: [
+        { name: "person", type: "Person" },
+        { name: "minAge", type: "number" },
+      ],
+      outputs: [{ name: "result", type: "boolean" }],
       tags: ["validation", "utility"],
+    },
+  },
+  {
+    id: "func-2",
+    type: "functionNode",
+    position: { x: 250, y: 500 },
+    data: {
+      label: "transformPerson",
+      description: "Transforms a person object",
+      inputs: [
+        { name: "person", type: "Person" },
+        { name: "options", type: "Object" },
+      ],
+      outputs: [
+        { name: "simplified", type: "Object" },
+        { name: "stats", type: "Stats" },
+      ],
+      tags: ["transform", "utility"],
     },
   },
   {
@@ -268,8 +289,12 @@ export const TypeSystemPanel: React.FC = () => {
       position: { x: 250, y: 400 },
       data: {
         label: "New Function",
-        returnType: "any",
-        parameters: [],
+        description: "Function description",
+        inputs: [
+          { name: "input1", type: "any" },
+          { name: "input2", type: "any" },
+        ],
+        outputs: [{ name: "output", type: "any" }],
         tags: [],
       },
     };

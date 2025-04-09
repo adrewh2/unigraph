@@ -1,5 +1,4 @@
-import { Box, Paper } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { Box, Paper, styled } from "@mui/material";
 import { Handle } from "@xyflow/react";
 
 // Original styled components for nodes (keeping for backward compatibility)
@@ -97,4 +96,28 @@ export const ParamSection = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(1),
   paddingTop: theme.spacing(1),
   borderTop: `1px dashed ${theme.palette.divider}`,
+}));
+
+// New styled components for function node ports
+export const PortLabel = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "variant",
+  // eslint-disable-next-line unused-imports/no-unused-vars
+})<{ variant: "input" | "output" }>(({ theme, variant }) => ({
+  fontSize: "0.65rem",
+  padding: "2px 4px",
+  borderRadius: "3px",
+  backgroundColor:
+    variant === "input"
+      ? "rgba(144, 202, 249, 0.16)"
+      : "rgba(129, 199, 132, 0.16)",
+  border: `1px solid ${
+    variant === "input"
+      ? "rgba(144, 202, 249, 0.4)"
+      : "rgba(129, 199, 132, 0.4)"
+  }`,
+  margin: variant === "input" ? "0 0 0 4px" : "0 4px 0 0",
+  maxWidth: "100px",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 }));
