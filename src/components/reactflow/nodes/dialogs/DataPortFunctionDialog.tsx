@@ -108,7 +108,7 @@ const DataPortFunctionDialog: React.FC<DataPortFunctionDialogProps> = ({
   >([]);
 
   // Access ReactFlow instance to add nodes and edges
-  const { getNodes, getNode, setNodes, setEdges, getEdges } = useReactFlow();
+  const reactFlowInstance = useReactFlow();
 
   // Simulate loading functions from a registry
   useEffect(() => {
@@ -158,7 +158,7 @@ const DataPortFunctionDialog: React.FC<DataPortFunctionDialogProps> = ({
     if (!funcToImport) return;
 
     // Get source node position for calculating new node position
-    const sourceNode = getNode(dataNodeId);
+    const sourceNode = reactFlowInstance.getNode(dataNodeId);
     if (!sourceNode) return;
 
     // Create a new function node
@@ -194,7 +194,6 @@ const DataPortFunctionDialog: React.FC<DataPortFunctionDialogProps> = ({
       type: "functionNode",
       position: newNodePosition,
       data: {
-        id: newNodeId,
         label: funcToImport.name,
         description: funcToImport.description,
         inputs: newInputs,
@@ -214,9 +213,9 @@ const DataPortFunctionDialog: React.FC<DataPortFunctionDialogProps> = ({
       style: { stroke: "#4caf50" },
     };
 
-    // Update the graph
-    setNodes((nodes) => [...nodes, newNode]);
-    setEdges((edges) => [...edges, newEdge]);
+    // Update the graph using ReactFlow's methods
+    reactFlowInstance.addNodes(newNode);
+    reactFlowInstance.addEdges(newEdge);
 
     onClose();
   };

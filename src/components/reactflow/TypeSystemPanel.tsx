@@ -416,6 +416,7 @@ export const TypeSystemPanel: React.FC = () => {
             animated: true,
             style: { stroke: "#4caf50" },
           }}
+          proOptions={{ hideAttribution: true }}
         >
           <Controls />
           <MiniMap />

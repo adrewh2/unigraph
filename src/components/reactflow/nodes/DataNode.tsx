@@ -77,7 +77,7 @@ const formatCellValue = (value: any, type: string): string => {
   return String(value);
 };
 
-export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
+export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
   const nodeData = data as unknown as DataNodeData;
   const [functionDialog, setFunctionDialog] = useState<{
     open: boolean;
@@ -290,7 +290,7 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
           open={functionDialog.open}
           onClose={() => setFunctionDialog(null)}
           dataType={functionDialog.dataType}
-          dataNodeId={nodeData.id as string}
+          dataNodeId={id}
           dataNodeName={nodeData.label}
         />
       )}
