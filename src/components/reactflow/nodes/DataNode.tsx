@@ -133,9 +133,17 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
         </Tooltip>
       </NodeToolbar>
 
-      <CompactNodeHeader>
+      <CompactNodeHeader
+        sx={{
+          bgcolor: "grey.700",
+          color: "common.white",
+          p: 0.5,
+          borderRadius: "4px 4px 0 0",
+          mb: 1,
+        }}
+      >
         <Box display="flex" alignItems="center">
-          <StorageIcon color="success" sx={{ mr: 0.5, fontSize: "1rem" }} />
+          <StorageIcon sx={{ mr: 0.5, fontSize: "1rem", color: "inherit" }} />
           <Typography variant="subtitle2" fontWeight="bold" fontSize="0.85rem">
             {tableData.label}
           </Typography>
@@ -148,6 +156,8 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
           sx={{
             height: 20,
             "& .MuiChip-label": { px: 1, fontSize: "0.65rem" },
+            borderColor: "rgba(255,255,255,0.5)",
+            color: "common.white",
           }}
         />
       </CompactNodeHeader>

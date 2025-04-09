@@ -63,9 +63,17 @@ export const TypeNode: React.FC<NodeProps> = ({ data, selected }) => {
         </Tooltip>
       </NodeToolbar>
 
-      <CompactNodeHeader>
+      <CompactNodeHeader
+        sx={{
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+          p: 0.5,
+          borderRadius: "4px 4px 0 0",
+          mb: 1,
+        }}
+      >
         <Box display="flex" alignItems="center">
-          <SchemaIcon color="primary" sx={{ mr: 0.5, fontSize: "1rem" }} />
+          <SchemaIcon sx={{ mr: 0.5, fontSize: "1rem", color: "inherit" }} />
           <Typography variant="subtitle2" fontWeight="bold" fontSize="0.85rem">
             {nodeData.label}
           </Typography>
@@ -73,7 +81,7 @@ export const TypeNode: React.FC<NodeProps> = ({ data, selected }) => {
         <IconButton
           size="small"
           onClick={handleMenuClick}
-          sx={{ padding: 0.25 }}
+          sx={{ padding: 0.25, color: "inherit" }}
         >
           <MoreVertIcon fontSize="small" />
         </IconButton>

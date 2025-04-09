@@ -70,9 +70,17 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
         </Tooltip>
       </NodeToolbar>
 
-      <CompactNodeHeader>
+      <CompactNodeHeader
+        sx={{
+          bgcolor: "warning.main",
+          color: "warning.contrastText",
+          p: 0.5,
+          borderRadius: "4px 4px 0 0",
+          mb: 1,
+        }}
+      >
         <Box display="flex" alignItems="center">
-          <FunctionsIcon color="warning" sx={{ mr: 0.5, fontSize: "1rem" }} />
+          <FunctionsIcon sx={{ mr: 0.5, fontSize: "1rem", color: "inherit" }} />
           <Typography variant="subtitle2" fontWeight="bold" fontSize="0.85rem">
             {nodeData.label}
           </Typography>
