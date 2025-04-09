@@ -1,6 +1,7 @@
 import CodeIcon from "@mui/icons-material/Code";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import LinkIcon from "@mui/icons-material/Link";
+import StorageIcon from "@mui/icons-material/Storage";
 import {
   Box,
   Chip,
@@ -21,16 +22,24 @@ import {
   CompactNodeContent,
   CompactNodeFooter,
   CompactNodeHeader,
+  PortConnectedBadge,
   PortLabel,
   StyledDataHandle,
   StyledFunctionHandle,
 } from "./shared/StyledComponents";
+
+export interface ConnectedDataInstance {
+  id: string;
+  name: string;
+  type: string;
+}
 
 export interface FunctionParameter {
   name: string;
   type: string;
   description?: string;
   connected?: boolean;
+  connectedInstance?: ConnectedDataInstance;
 }
 
 export interface FunctionOutput {
@@ -38,6 +47,7 @@ export interface FunctionOutput {
   type: string;
   description?: string;
   connected?: boolean;
+  connectedInstance?: ConnectedDataInstance;
 }
 
 export interface FunctionNodeData extends Record<string, unknown> {
@@ -109,6 +119,65 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   const handleCloseDialog = () => {
     setConnectionDialog(null);
+  };
+
+  const handleConnect = (
+    instanceId: string,
+    instanceName: string,
+    instanceType: string
+  ) => {
+    console.log(
+      `Connected ${connectionDialog?.portName} to instance ${instanceId}`
+    );
+
+    // Update the node data to mark this port as connected
+    if (connectionDialog?.isInput) {
+      // Find the input and mark it as connected
+      const updatedInputs = displayInputs?.map((input) =>
+        input.name === connectionDialog.portName
+          ? {
+              ...input,
+              connected: true,
+              connectedInstance: {
+                id: instanceId,
+                name: instanceName,
+                type: instanceType,
+              },
+            }
+          : input
+      );
+
+      // For demo purposes - in a real app you'd update the node data in your state management
+      if (nodeData.inputs) {
+        nodeData.inputs = updatedInputs as FunctionParameter[];
+      }
+    } else {
+      // Find the output and mark it as connected
+      const updatedOutputs = displayOutputs?.map((output) =>
+        output.name === connectionDialog?.portName
+          ? {
+              ...output,
+              connected: true,
+              connectedInstance: {
+                id: instanceId,
+                name: instanceName,
+                type: instanceType,
+              },
+            }
+          : output
+      );
+
+      // For demo purposes - in a real app you'd update the node data in your state management
+      if (nodeData.outputs) {
+        nodeData.outputs = updatedOutputs as FunctionOutput[];
+      }
+    }
+
+    // Force a re-render (in a real app you'd use proper state management)
+    const event = new CustomEvent("force-rerender");
+    window.dispatchEvent(event);
+
+    handleCloseDialog();
   };
 
   return (
@@ -198,6 +267,7 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                 />
                 <PortLabel
                   variant="input"
+                  connected={!!input.connected}
                   onClick={(e) =>
                     handlePortClick(e, true, input.name, input.type)
                   }
@@ -208,10 +278,21 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                       backgroundColor: "rgba(144, 202, 249, 0.3)",
                       boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     },
-                    borderWidth: input.connected ? 2 : 1,
-                    borderColor: input.connected ? "primary.main" : undefined,
                   }}
                 >
+                  {input.connected && input.connectedInstance ? (
+                    <PortConnectedBadge
+                      key={`connected-badge-${idx}`}
+                      color="primary"
+                    >
+                      <StorageIcon
+                        sx={{
+                          fontSize: "0.7rem",
+                          mr: 0.3,
+                        }}
+                      />
+                    </PortConnectedBadge>
+                  ) : null}
                   <Typography
                     variant="caption"
                     fontSize="0.65rem"
@@ -219,7 +300,7 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                   >
                     {input.name}
                     <span style={{ opacity: 0.7 }}>: {input.type}</span>
-                    {input.connected && (
+                    {input.connected && !input.connectedInstance && (
                       <LinkIcon
                         sx={{
                           ml: 0.5,
@@ -230,6 +311,24 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                     )}
                   </Typography>
                 </PortLabel>
+                {input.connected && input.connectedInstance && (
+                  <Tooltip
+                    title={`Connected to: ${input.connectedInstance.name}`}
+                    placement="top"
+                  >
+                    <Chip
+                      label={input.connectedInstance.name}
+                      size="small"
+                      color="primary"
+                      sx={{
+                        height: 16,
+                        ml: 0.5,
+                        fontSize: "0.6rem",
+                        "& .MuiChip-label": { px: 0.5, py: 0 },
+                      }}
+                    />
+                  </Tooltip>
+                )}
               </Box>
             ))}
           </Box>
@@ -253,8 +352,27 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                   minHeight: "16px",
                 }}
               >
+                {output.connected && output.connectedInstance && (
+                  <Tooltip
+                    title={`Connected to: ${output.connectedInstance.name}`}
+                    placement="top"
+                  >
+                    <Chip
+                      label={output.connectedInstance.name}
+                      size="small"
+                      color="success"
+                      sx={{
+                        height: 16,
+                        mr: 0.5,
+                        fontSize: "0.6rem",
+                        "& .MuiChip-label": { px: 0.5, py: 0 },
+                      }}
+                    />
+                  </Tooltip>
+                )}
                 <PortLabel
                   variant="output"
+                  connected={!!output.connected}
                   onClick={(e) =>
                     handlePortClick(e, false, output.name, output.type)
                   }
@@ -265,8 +383,6 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                       backgroundColor: "rgba(129, 199, 132, 0.3)",
                       boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
                     },
-                    borderWidth: output.connected ? 2 : 1,
-                    borderColor: output.connected ? "success.main" : undefined,
                   }}
                 >
                   <Typography
@@ -276,7 +392,7 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                   >
                     {output.name}
                     <span style={{ opacity: 0.7 }}>: {output.type}</span>
-                    {output.connected && (
+                    {output.connected && !output.connectedInstance && (
                       <LinkIcon
                         sx={{
                           ml: 0.5,
@@ -286,6 +402,19 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                       />
                     )}
                   </Typography>
+                  {output.connected && output.connectedInstance ? (
+                    <PortConnectedBadge
+                      key={`connected-badge-out-${idx}`}
+                      color="success"
+                    >
+                      <StorageIcon
+                        sx={{
+                          fontSize: "0.7rem",
+                          ml: 0.3,
+                        }}
+                      />
+                    </PortConnectedBadge>
+                  ) : null}
                 </PortLabel>
                 <StyledDataHandle
                   type="source"
@@ -371,13 +500,7 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
           isInput={connectionDialog.isInput}
           portName={connectionDialog.portName}
           portType={connectionDialog.portType}
-          onConnect={(instanceId) => {
-            console.log(
-              `Connected ${connectionDialog.portName} to instance ${instanceId}`
-            );
-            // Here we would update the function's inputs/outputs to mark them as connected
-            handleCloseDialog();
-          }}
+          onConnect={handleConnect}
         />
       )}
     </CompactNodeContainer>

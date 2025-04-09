@@ -83,7 +83,11 @@ interface PortConnectionDialogProps {
   isInput: boolean;
   portName: string;
   portType: string;
-  onConnect: (instanceId: string) => void;
+  onConnect: (
+    instanceId: string,
+    instanceName: string,
+    instanceType: string
+  ) => void;
 }
 
 const PortConnectionDialog: React.FC<PortConnectionDialogProps> = ({
@@ -132,7 +136,12 @@ const PortConnectionDialog: React.FC<PortConnectionDialogProps> = ({
 
   const handleConnect = () => {
     if (selectedInstance) {
-      onConnect(selectedInstance);
+      const instance = filteredInstances.find(
+        (inst) => inst.id === selectedInstance
+      );
+      if (instance) {
+        onConnect(instance.id, instance.name, instance.type);
+      }
     }
   };
 

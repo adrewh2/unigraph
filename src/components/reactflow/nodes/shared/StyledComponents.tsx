@@ -100,24 +100,58 @@ export const ParamSection = styled(Box)(({ theme }) => ({
 
 // New styled components for function node ports
 export const PortLabel = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "variant",
-  // eslint-disable-next-line unused-imports/no-unused-vars
-})<{ variant: "input" | "output" }>(({ theme, variant }) => ({
-  fontSize: "0.65rem",
-  padding: "2px 4px",
-  borderRadius: "3px",
+  shouldForwardProp: (prop) => prop !== "variant" && prop !== "connected",
+})<{ variant: "input" | "output"; connected?: boolean }>(
+  ({ theme, variant, connected }) => ({
+    fontSize: "0.65rem",
+    padding: "2px 4px",
+    borderRadius: "3px",
+    position: "relative",
+    backgroundColor: connected
+      ? variant === "input"
+        ? "rgba(144, 202, 249, 0.16)"
+        : "rgba(129, 199, 132, 0.16)"
+      : "rgba(0, 0, 0, 0.05)", // Grey background when not connected
+    border: `${connected ? "2px" : "1px"} solid ${
+      connected
+        ? variant === "input"
+          ? theme.palette.primary.main
+          : theme.palette.success.main
+        : "rgba(0, 0, 0, 0.15)" // Grey border when not connected
+    }`,
+    margin: variant === "input" ? "0 0 0 4px" : "0 4px 0 0",
+    maxWidth: "100px",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    color: connected
+      ? theme.palette.text.primary
+      : theme.palette.text.secondary, // Lighter text when not connected
+    // Slight glow effect when connected
+    boxShadow: connected
+      ? `0 0 3px ${variant === "input" ? theme.palette.primary.main : theme.palette.success.main}`
+      : "none",
+  })
+);
+
+// Badge for connected ports
+export const PortConnectedBadge = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "color",
+})<{ color: "primary" | "success" }>(({ theme, color }) => ({
+  position: "absolute",
+  top: -5,
+  [color === "primary" ? "left" : "right"]: -5,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   backgroundColor:
-    variant === "input"
-      ? "rgba(144, 202, 249, 0.16)"
-      : "rgba(129, 199, 132, 0.16)",
-  border: `1px solid ${
-    variant === "input"
-      ? "rgba(144, 202, 249, 0.4)"
-      : "rgba(129, 199, 132, 0.4)"
-  }`,
-  margin: variant === "input" ? "0 0 0 4px" : "0 4px 0 0",
-  maxWidth: "100px",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
+    color === "primary"
+      ? theme.palette.primary.main
+      : theme.palette.success.main,
+  color: "#fff",
+  borderRadius: "50%",
+  width: 14,
+  height: 14,
+  fontSize: "0.6rem",
+  zIndex: 2,
 }));
