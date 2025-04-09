@@ -5,11 +5,11 @@ import { NodeProps, NodeToolbar, Position } from "@xyflow/react";
 import React from "react";
 
 import {
-  NodeContainer,
-  NodeContent,
-  NodeFooter,
-  NodeHeader,
-  ParamSection,
+  CompactNodeContainer,
+  CompactNodeContent,
+  CompactNodeFooter,
+  CompactNodeHeader,
+  CompactParamSection,
   StyledDataHandle,
   StyledFunctionHandle,
 } from "./shared/StyledComponents";
@@ -31,10 +31,11 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
   const nodeData = data as unknown as FunctionNodeData;
 
   return (
-    <NodeContainer
+    <CompactNodeContainer
       sx={{
         bgcolor: selected ? "rgba(255, 236, 179, 0.3)" : "background.paper",
         border: selected ? "2px solid #ff9800" : "1px solid #ccc",
+        maxWidth: 220,
       }}
     >
       <NodeToolbar position={Position.Top} isVisible={selected}>
@@ -50,10 +51,10 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
         </Tooltip>
       </NodeToolbar>
 
-      <NodeHeader>
+      <CompactNodeHeader>
         <Box display="flex" alignItems="center">
-          <FunctionsIcon color="warning" sx={{ mr: 1 }} />
-          <Typography variant="subtitle2" fontWeight="bold">
+          <FunctionsIcon color="warning" sx={{ mr: 0.5, fontSize: "1rem" }} />
+          <Typography variant="subtitle2" fontWeight="bold" fontSize="0.85rem">
             {nodeData.label}
           </Typography>
         </Box>
@@ -62,49 +63,84 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
           size="small"
           color="primary"
           variant="outlined"
+          sx={{
+            height: 20,
+            "& .MuiChip-label": { px: 1, fontSize: "0.65rem" },
+          }}
         />
-      </NodeHeader>
+      </CompactNodeHeader>
 
-      <NodeContent>
-        <Typography variant="caption" color="text.secondary">
-          {nodeData.description || "Function"}
-        </Typography>
+      <CompactNodeContent>
+        {nodeData.description && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            fontSize="0.7rem"
+          >
+            {nodeData.description}
+          </Typography>
+        )}
 
         {nodeData.parameters && nodeData.parameters.length > 0 && (
-          <ParamSection>
+          <CompactParamSection>
             <Typography
               variant="caption"
               fontWeight="bold"
               display="block"
               mb={0.5}
+              fontSize="0.7rem"
             >
               Parameters:
             </Typography>
-            {nodeData.parameters.map((param, idx) => (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+              {nodeData.parameters.map((param, idx) => (
+                <Chip
+                  key={idx}
+                  label={`${param.name}: ${param.type}`}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    height: 18,
+                    "& .MuiChip-label": {
+                      px: 0.75,
+                      fontSize: "0.65rem",
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </CompactParamSection>
+        )}
+      </CompactNodeContent>
+
+      {nodeData.tags && nodeData.tags.length > 0 && (
+        <CompactNodeFooter>
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 0.5,
+              justifyContent: "flex-end",
+            }}
+          >
+            {nodeData.tags.map((tag, idx) => (
               <Chip
                 key={idx}
-                label={`${param.name}: ${param.type}`}
+                label={tag}
                 size="small"
                 variant="outlined"
-                sx={{ mr: 0.5, mb: 0.5, fontSize: "0.7rem" }}
+                sx={{
+                  height: 16,
+                  "& .MuiChip-label": {
+                    px: 0.75,
+                    fontSize: "0.6rem",
+                  },
+                }}
               />
             ))}
-          </ParamSection>
-        )}
-      </NodeContent>
-
-      <NodeFooter>
-        {nodeData.tags &&
-          nodeData.tags.map((tag, idx) => (
-            <Chip
-              key={idx}
-              label={tag}
-              size="small"
-              variant="outlined"
-              sx={{ ml: 0.5, fontSize: "0.7rem" }}
-            />
-          ))}
-      </NodeFooter>
+          </Box>
+        </CompactNodeFooter>
+      )}
 
       {/* Input handle for data */}
       <StyledDataHandle type="target" position={Position.Left} id="data-in" />
@@ -119,7 +155,7 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
         id="function-type-in"
         style={{ left: "50%", transform: "translateX(-50%) rotate(45deg)" }}
       />
-    </NodeContainer>
+    </CompactNodeContainer>
   );
 };
 

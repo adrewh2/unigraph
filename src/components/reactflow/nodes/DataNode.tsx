@@ -20,9 +20,9 @@ import { NodeProps, NodeToolbar, Position } from "@xyflow/react";
 import React from "react";
 
 import {
-  NodeContainer,
-  NodeContent,
-  NodeHeader,
+  CompactNodeContainer,
+  CompactNodeContent,
+  CompactNodeHeader,
   StyledDataHandle,
   StyledTypeHandle,
 } from "./shared/StyledComponents";
@@ -47,13 +47,12 @@ export interface DataNodeData extends Record<string, unknown> {
   preview?: Record<string, any> | string;
 }
 
-const StyledTableContainer = styled(TableContainer)({
-  maxHeight: 200,
-  maxWidth: 400,
+const CompactTableContainer = styled(TableContainer)({
+  maxHeight: 160,
+  maxWidth: 300,
   overflowX: "auto",
   overflowY: "auto",
   fontSize: "0.75rem",
-  marginTop: 8,
   "& .MuiTableCell-root": {
     padding: "2px 4px",
     fontSize: "0.7rem",
@@ -108,11 +107,12 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
   }
 
   return (
-    <NodeContainer
+    <CompactNodeContainer
       sx={{
         bgcolor: selected ? "rgba(200, 230, 201, 0.3)" : "background.paper",
         border: selected ? "2px solid #4caf50" : "1px solid #ccc",
-        minWidth: "250px",
+        minWidth: "220px",
+        maxWidth: "300px",
       }}
     >
       <NodeToolbar position={Position.Top} isVisible={selected}>
@@ -133,10 +133,10 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
         </Tooltip>
       </NodeToolbar>
 
-      <NodeHeader>
+      <CompactNodeHeader>
         <Box display="flex" alignItems="center">
-          <StorageIcon color="success" sx={{ mr: 1 }} />
-          <Typography variant="subtitle2" fontWeight="bold">
+          <StorageIcon color="success" sx={{ mr: 0.5, fontSize: "1rem" }} />
+          <Typography variant="subtitle2" fontWeight="bold" fontSize="0.85rem">
             {tableData.label}
           </Typography>
         </Box>
@@ -145,18 +145,17 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
           size="small"
           color={tableData.typeName ? "primary" : "default"}
           variant="outlined"
+          sx={{
+            height: 20,
+            "& .MuiChip-label": { px: 1, fontSize: "0.65rem" },
+          }}
         />
-      </NodeHeader>
+      </CompactNodeHeader>
 
-      <NodeContent>
-        <Typography variant="caption" color="text.secondary">
-          {tableData.description ||
-            `Data table with ${tableData.rows?.length || 0} rows`}
-        </Typography>
-
+      <CompactNodeContent>
         {tableData.columns && tableData.rows ? (
-          <Paper variant="outlined">
-            <StyledTableContainer>
+          <Paper variant="outlined" sx={{ mb: 0 }}>
+            <CompactTableContainer>
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
@@ -164,18 +163,23 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
                       <TableCell
                         key={idx}
                         sx={{
-                          minWidth: column.width || 80,
+                          minWidth: column.width || 70,
                           whiteSpace: "nowrap",
+                          py: 0.5,
                         }}
                       >
                         <Box display="flex" alignItems="center">
-                          <Typography variant="caption" fontWeight="bold">
+                          <Typography
+                            variant="caption"
+                            fontWeight="bold"
+                            fontSize="0.65rem"
+                          >
                             {column.name}
                           </Typography>
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ ml: 0.5, fontSize: "0.6rem" }}
+                            sx={{ ml: 0.5, fontSize: "0.55rem" }}
                           >
                             ({column.type})
                           </Typography>
@@ -188,7 +192,7 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
                   {tableData.rows.map((row, rowIdx) => (
                     <TableRow key={rowIdx} hover>
                       {tableData.columns.map((column, colIdx) => (
-                        <TableCell key={`${rowIdx}-${colIdx}`}>
+                        <TableCell key={`${rowIdx}-${colIdx}`} sx={{ py: 0.5 }}>
                           {formatCellValue(row[column.name], column.type)}
                         </TableCell>
                       ))}
@@ -196,14 +200,14 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
                   ))}
                 </TableBody>
               </Table>
-            </StyledTableContainer>
+            </CompactTableContainer>
           </Paper>
         ) : (
           <Typography variant="caption" color="text.secondary">
             No data available
           </Typography>
         )}
-      </NodeContent>
+      </CompactNodeContent>
 
       <StyledDataHandle type="source" position={Position.Right} id="data-out" />
       <StyledDataHandle type="target" position={Position.Left} id="data-in" />
@@ -214,7 +218,7 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
         id="type-input"
         style={{ left: "50%", transform: "translateX(-50%)" }}
       />
-    </NodeContainer>
+    </CompactNodeContainer>
   );
 };
 
