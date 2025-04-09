@@ -110,7 +110,16 @@ const initialNodes: Array<
       label: "isAdult",
       description: "Checks if a person is an adult",
       inputs: [
-        { name: "person", type: "Person" },
+        {
+          name: "person",
+          type: "Person",
+          connected: true,
+          connectedInstance: {
+            id: "data-1",
+            name: "Users Table",
+            type: "Person",
+          },
+        },
         { name: "minAge", type: "number" },
       ],
       outputs: [{ name: "result", type: "boolean" }],
@@ -129,7 +138,16 @@ const initialNodes: Array<
         { name: "options", type: "Object" },
       ],
       outputs: [
-        { name: "simplified", type: "Object" },
+        {
+          name: "simplified",
+          type: "Object",
+          connected: true,
+          connectedInstance: {
+            id: "data-2",
+            name: "Products Table",
+            type: "Product",
+          },
+        },
         { name: "stats", type: "Stats" },
       ],
       tags: ["transform", "utility"],
@@ -394,6 +412,10 @@ export const TypeSystemPanel: React.FC = () => {
           nodeTypes={nodeTypes as unknown as NodeTypes}
           fitView
           attributionPosition="bottom-right"
+          defaultEdgeOptions={{
+            animated: true,
+            style: { stroke: "#4caf50" },
+          }}
         >
           <Controls />
           <MiniMap />

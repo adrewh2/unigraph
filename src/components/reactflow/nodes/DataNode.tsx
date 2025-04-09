@@ -1,4 +1,5 @@
 import FilterListIcon from "@mui/icons-material/FilterList";
+import FunctionsTwoToneIcon from "@mui/icons-material/FunctionsTwoTone";
 import SettingsIcon from "@mui/icons-material/Settings";
 import StorageIcon from "@mui/icons-material/Storage";
 import {
@@ -17,12 +18,14 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { NodeProps, NodeToolbar, Position } from "@xyflow/react";
-import React from "react";
+import React, { useState } from "react";
 
+import DataPortFunctionDialog from "./dialogs/DataPortFunctionDialog";
 import {
   CompactNodeContainer,
   CompactNodeContent,
   CompactNodeHeader,
+  PortLabel,
   StyledDataHandle,
   StyledTypeHandle,
 } from "./shared/StyledComponents";
@@ -76,6 +79,10 @@ const formatCellValue = (value: any, type: string): string => {
 
 export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
   const nodeData = data as unknown as DataNodeData;
+  const [functionDialog, setFunctionDialog] = useState<{
+    open: boolean;
+    dataType: string;
+  } | null>(null);
 
   // Convert legacy preview data to tabular format if needed
   let tableData = nodeData;
@@ -105,6 +112,15 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
       };
     }
   }
+
+  const handleDataPortClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    // Use the data node's type to find compatible functions
+    setFunctionDialog({
+      open: true,
+      dataType: tableData.typeName || "any",
+    });
+  };
 
   return (
     <CompactNodeContainer
@@ -219,7 +235,46 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
         )}
       </CompactNodeContent>
 
-      <StyledDataHandle type="source" position={Position.Right} id="data-out" />
+      {/* Output port with click interaction */}
+      <Box
+        sx={{
+          position: "absolute",
+          right: -4,
+          top: "50%",
+          transform: "translateY(-50%)",
+          display: "flex",
+          alignItems: "center",
+          cursor: "pointer",
+        }}
+      >
+        <PortLabel
+          variant="output"
+          onClick={handleDataPortClick}
+          sx={{
+            cursor: "pointer",
+            mr: 1,
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: "rgba(129, 199, 132, 0.3)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            },
+          }}
+        >
+          <Typography
+            variant="caption"
+            fontSize="0.65rem"
+            sx={{ display: "flex", alignItems: "center" }}
+          >
+            <FunctionsTwoToneIcon sx={{ fontSize: "0.8rem", mr: 0.5 }} />
+            Find Function
+          </Typography>
+        </PortLabel>
+        <StyledDataHandle
+          type="source"
+          position={Position.Right}
+          id="data-out"
+        />
+      </Box>
       <StyledDataHandle type="target" position={Position.Left} id="data-in" />
 
       <StyledTypeHandle
@@ -228,6 +283,17 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected }) => {
         id="type-input"
         style={{ left: "50%", transform: "translateX(-50%)" }}
       />
+
+      {/* Function selection dialog */}
+      {functionDialog && (
+        <DataPortFunctionDialog
+          open={functionDialog.open}
+          onClose={() => setFunctionDialog(null)}
+          dataType={functionDialog.dataType}
+          dataNodeId={nodeData.id as string}
+          dataNodeName={nodeData.label}
+        />
+      )}
     </CompactNodeContainer>
   );
 };
