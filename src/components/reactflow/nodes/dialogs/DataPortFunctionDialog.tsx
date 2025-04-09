@@ -91,6 +91,7 @@ interface DataPortFunctionDialogProps {
   dataType: string;
   dataNodeId: string;
   dataNodeName: string;
+  sourceHandleId?: string; // Add handle ID parameter to support multiple output ports
 }
 
 const DataPortFunctionDialog: React.FC<DataPortFunctionDialogProps> = ({
@@ -99,6 +100,7 @@ const DataPortFunctionDialog: React.FC<DataPortFunctionDialogProps> = ({
   dataType,
   dataNodeId,
   dataNodeName,
+  sourceHandleId = "data-out", // Default to standard handle ID
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -202,12 +204,12 @@ const DataPortFunctionDialog: React.FC<DataPortFunctionDialogProps> = ({
       },
     };
 
-    // Create an edge connecting the data node to the function node
+    // Create an edge connecting the data node to the function node using the specific handle ID
     const newEdge = {
       id: `edge-${dataNodeId}-${newNodeId}`,
       source: dataNodeId,
       target: newNodeId,
-      sourceHandle: "data-out",
+      sourceHandle: sourceHandleId, // Use the specific source handle ID
       targetHandle: `input-${compatibleInput?.name}`,
       animated: true,
       style: { stroke: "#4caf50" },

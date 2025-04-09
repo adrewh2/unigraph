@@ -216,3 +216,74 @@ export const FloatingActionButton = styled(
     </Box>
   )
 )({});
+
+// Port action button - smaller version of FloatingActionButton for individual ports
+export const PortActionButton = styled(
+  ({
+    position,
+    color,
+    onClick,
+    title,
+    disabled,
+    children,
+    ...rest
+  }: {
+    position: "left" | "right";
+    color: "primary" | "secondary" | "success" | "error" | "info" | "warning";
+    onClick: (event: React.MouseEvent) => void;
+    title?: string;
+    disabled?: boolean;
+    children?: React.ReactNode;
+  }) => (
+    <Box
+      sx={{
+        position: "relative",
+        [position]: position === "left" ? "-10px" : "auto",
+        [position === "left" ? "right" : "left"]:
+          position === "right" ? "-10px" : "auto",
+        zIndex: 5,
+      }}
+      {...rest}
+    >
+      <Tooltip
+        title={title || "Connect"}
+        placement={position === "left" ? "left" : "right"}
+      >
+        <span>
+          <IconButton
+            color={color}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick(e);
+            }}
+            size="small"
+            disabled={disabled}
+            sx={{
+              padding: "2px",
+              backgroundColor: "white",
+              border: `1px solid ${disabled ? "rgba(0,0,0,0.1)" : `var(--mui-palette-${color}-main)`}`,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+              fontSize: "0.75rem",
+              transition: "all 0.2s",
+              width: "16px",
+              height: "16px",
+              minWidth: "16px",
+              minHeight: "16px",
+              "& .MuiSvgIcon-root": {
+                fontSize: "0.75rem",
+              },
+              "&:hover": {
+                backgroundColor: disabled
+                  ? "white"
+                  : `var(--mui-palette-${color}-50)`,
+                transform: disabled ? "none" : "scale(1.2)",
+              },
+            }}
+          >
+            {children || <AddIcon sx={{ fontSize: "0.75rem" }} />}
+          </IconButton>
+        </span>
+      </Tooltip>
+    </Box>
+  )
+)({});

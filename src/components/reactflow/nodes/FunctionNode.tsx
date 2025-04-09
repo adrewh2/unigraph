@@ -1,4 +1,3 @@
-import AddCircleIcon from "@mui/icons-material/AddCircle";
 import CodeIcon from "@mui/icons-material/Code";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import LinkIcon from "@mui/icons-material/Link";
@@ -181,34 +180,18 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
     handleCloseDialog();
   };
 
-  const handleOpenInputDataDialog = () => {
-    // Find first non-connected input
-    const firstAvailableInput = displayInputs?.find(
-      (input) => !input.connected
-    );
-    if (firstAvailableInput) {
-      setConnectionDialog({
-        open: true,
-        isInput: true,
-        portName: firstAvailableInput.name,
-        portType: firstAvailableInput.type,
-      });
-    }
-  };
-
-  const handleOpenOutputDataDialog = () => {
-    // Find first non-connected output
-    const firstAvailableOutput = displayOutputs?.find(
-      (output) => !output.connected
-    );
-    if (firstAvailableOutput) {
-      setConnectionDialog({
-        open: true,
-        isInput: false,
-        portName: firstAvailableOutput.name,
-        portType: firstAvailableOutput.type,
-      });
-    }
+  // Add handler for opening port dialog directly
+  const handleOpenPortDialog = (
+    isInput: boolean,
+    portName: string,
+    portType: string
+  ) => {
+    setConnectionDialog({
+      open: true,
+      isInput,
+      portName,
+      portType,
+    });
   };
 
   return (
@@ -296,6 +279,19 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                   id={`input-${input.name}`}
                   style={{ left: -4 }}
                 />
+
+                {/* Add per-port connect button for inputs */}
+                {!input.connected && (
+                  <FloatingActionButton
+                    position="left"
+                    color="primary"
+                    onClick={() =>
+                      handleOpenPortDialog(true, input.name, input.type)
+                    }
+                    title={`Connect ${input.name}`}
+                  />
+                )}
+
                 <PortLabel
                   variant="input"
                   connected={!!input.connected}
@@ -447,6 +443,19 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
                     </PortConnectedBadge>
                   ) : null}
                 </PortLabel>
+
+                {/* Add per-port connect button for outputs */}
+                {!output.connected && (
+                  <FloatingActionButton
+                    position="right"
+                    color="success"
+                    onClick={() =>
+                      handleOpenPortDialog(false, output.name, output.type)
+                    }
+                    title={`Connect ${output.name}`}
+                  />
+                )}
+
                 <StyledDataHandle
                   type="source"
                   position={Position.Right}
@@ -458,27 +467,6 @@ export const FunctionNode: React.FC<NodeProps> = ({ data, selected }) => {
           </Box>
         </Box>
       </CompactNodeContent>
-
-      {/* Floating Action Buttons for connecting data */}
-      <FloatingActionButton
-        position="left"
-        color="primary"
-        onClick={handleOpenInputDataDialog}
-        title="Connect Input Data"
-        disabled={!displayInputs?.some((input) => !input.connected)}
-      >
-        <AddCircleIcon />
-      </FloatingActionButton>
-
-      <FloatingActionButton
-        position="right"
-        color="success"
-        onClick={handleOpenOutputDataDialog}
-        title="Connect Output Data"
-        disabled={!displayOutputs?.some((output) => !output.connected)}
-      >
-        <AddCircleIcon />
-      </FloatingActionButton>
 
       {/* Function type handle */}
       <StyledFunctionHandle

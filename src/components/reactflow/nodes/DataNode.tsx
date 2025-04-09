@@ -1,6 +1,5 @@
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import FunctionsTwoToneIcon from "@mui/icons-material/FunctionsTwoTone";
 import SettingsIcon from "@mui/icons-material/Settings";
 import StorageIcon from "@mui/icons-material/Storage";
 import {
@@ -81,10 +80,12 @@ const formatCellValue = (value: any, type: string): string => {
 
 export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
   const nodeData = data as unknown as DataNodeData;
-  const [functionDialog, setFunctionDialog] = useState<{
-    open: boolean;
-    dataType: string;
-  } | null>(null);
+  const [functionDialogs, setFunctionDialogs] = useState<{
+    [portId: string]: {
+      open: boolean;
+      dataType: string;
+    };
+  }>({});
 
   // Convert legacy preview data to tabular format if needed
   let tableData = nodeData;
@@ -115,12 +116,25 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
     }
   }
 
-  const handleDataPortClick = (event: React.MouseEvent) => {
+  const handleDataPortClick = (portId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     // Use the data node's type to find compatible functions
-    setFunctionDialog({
-      open: true,
-      dataType: tableData.typeName || "any",
+    setFunctionDialogs({
+      ...functionDialogs,
+      [portId]: {
+        open: true,
+        dataType: tableData.typeName || "any",
+      },
+    });
+  };
+
+  const handleCloseDialog = (portId: string) => {
+    setFunctionDialogs({
+      ...functionDialogs,
+      [portId]: {
+        ...functionDialogs[portId],
+        open: false,
+      },
     });
   };
 
@@ -237,21 +251,20 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
         )}
       </CompactNodeContent>
 
-      {/* Output port with click interaction */}
+      {/* Add multiple connection points with individual + buttons */}
       <Box
         sx={{
           position: "absolute",
           right: -4,
-          top: "50%",
+          top: "25%",
           transform: "translateY(-50%)",
           display: "flex",
           alignItems: "center",
-          cursor: "pointer",
         }}
       >
         <PortLabel
           variant="output"
-          onClick={handleDataPortClick}
+          onClick={(e) => handleDataPortClick("top-port", e)}
           sx={{
             cursor: "pointer",
             mr: 1,
@@ -262,15 +275,60 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
             },
           }}
         >
-          <Typography
-            variant="caption"
-            fontSize="0.65rem"
-            sx={{ display: "flex", alignItems: "center" }}
-          >
-            <FunctionsTwoToneIcon sx={{ fontSize: "0.8rem", mr: 0.5 }} />
-            Find Function
+          <Typography variant="caption" fontSize="0.65rem">
+            Primary
           </Typography>
         </PortLabel>
+        <FloatingActionButton
+          position="right"
+          color="success"
+          onClick={(e) => handleDataPortClick("top-port", e)}
+          title="Connect Function"
+        >
+          <AddCircleIcon />
+        </FloatingActionButton>
+        <StyledDataHandle
+          type="source"
+          position={Position.Right}
+          id="top-data-out"
+        />
+      </Box>
+
+      <Box
+        sx={{
+          position: "absolute",
+          right: -4,
+          top: "50%",
+          transform: "translateY(-50%)",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <PortLabel
+          variant="output"
+          onClick={(e) => handleDataPortClick("middle-port", e)}
+          sx={{
+            cursor: "pointer",
+            mr: 1,
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: "rgba(129, 199, 132, 0.3)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            },
+          }}
+        >
+          <Typography variant="caption" fontSize="0.65rem">
+            Filter
+          </Typography>
+        </PortLabel>
+        <FloatingActionButton
+          position="right"
+          color="success"
+          onClick={(e) => handleDataPortClick("middle-port", e)}
+          title="Connect Filter"
+        >
+          <AddCircleIcon />
+        </FloatingActionButton>
         <StyledDataHandle
           type="source"
           position={Position.Right}
@@ -278,19 +336,49 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
         />
       </Box>
 
-      {/* Floating Action Button for connecting to functions */}
-      <FloatingActionButton
-        position="right"
-        color="success"
-        onClick={handleDataPortClick}
-        title="Add Function"
+      <Box
+        sx={{
+          position: "absolute",
+          right: -4,
+          top: "75%",
+          transform: "translateY(-50%)",
+          display: "flex",
+          alignItems: "center",
+        }}
       >
-        <AddCircleIcon />
-      </FloatingActionButton>
+        <PortLabel
+          variant="output"
+          onClick={(e) => handleDataPortClick("bottom-port", e)}
+          sx={{
+            cursor: "pointer",
+            mr: 1,
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: "rgba(129, 199, 132, 0.3)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            },
+          }}
+        >
+          <Typography variant="caption" fontSize="0.65rem">
+            Transform
+          </Typography>
+        </PortLabel>
+        <FloatingActionButton
+          position="right"
+          color="success"
+          onClick={(e) => handleDataPortClick("bottom-port", e)}
+          title="Connect Transform"
+        >
+          <AddCircleIcon />
+        </FloatingActionButton>
+        <StyledDataHandle
+          type="source"
+          position={Position.Right}
+          id="bottom-data-out"
+        />
+      </Box>
 
-      <StyledDataHandle type="source" position={Position.Right} id="data-out" />
       <StyledDataHandle type="target" position={Position.Left} id="data-in" />
-
       <StyledTypeHandle
         type="target"
         position={Position.Top}
@@ -298,15 +386,26 @@ export const DataNode: React.FC<NodeProps> = ({ data, selected, id }) => {
         style={{ left: "50%", transform: "translateX(-50%)" }}
       />
 
-      {/* Function selection dialog */}
-      {functionDialog && (
-        <DataPortFunctionDialog
-          open={functionDialog.open}
-          onClose={() => setFunctionDialog(null)}
-          dataType={functionDialog.dataType}
-          dataNodeId={id}
-          dataNodeName={nodeData.label}
-        />
+      {/* Function selection dialogs - now we create separate dialogs for each port */}
+      {Object.entries(functionDialogs).map(
+        ([portId, dialogState]) =>
+          dialogState.open && (
+            <DataPortFunctionDialog
+              key={`dialog-${portId}`}
+              open={dialogState.open}
+              onClose={() => handleCloseDialog(portId)}
+              dataType={dialogState.dataType}
+              dataNodeId={id}
+              dataNodeName={nodeData.label}
+              sourceHandleId={
+                portId === "top-port"
+                  ? "top-data-out"
+                  : portId === "middle-port"
+                    ? "data-out"
+                    : "bottom-data-out"
+              }
+            />
+          )
       )}
     </CompactNodeContainer>
   );
