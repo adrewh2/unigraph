@@ -205,10 +205,21 @@ const initialEdges: Edge[] = [
   },
 ];
 
-export const TypeSystemPanel: React.FC = () => {
+export const TypeSystemPanel: React.FC<{
+  initialData?:
+    | {
+        nodes: Node[];
+        edges: Edge[];
+      }
+    | undefined;
+}> = ({ initialData }) => {
   const theme = useTheme();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    initialData?.nodes ?? initialNodes
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    initialData?.edges ?? initialEdges
+  );
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
@@ -417,6 +428,8 @@ export const TypeSystemPanel: React.FC = () => {
             style: { stroke: "#4caf50" },
           }}
           proOptions={{ hideAttribution: true }}
+          width={800}
+          height={800}
         >
           <Controls />
           <MiniMap />

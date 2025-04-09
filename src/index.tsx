@@ -1,14 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import ClinicalTrialDemo from "./components/ClinicalTrialDemo";
 import { LayoutEngineOption } from "./core/layouts/LayoutEngine";
 import { persistentStore } from "./core/storage/PersistentStoreManager";
 import "./index.css";
-import {
-  setActiveLayout,
-  setActiveSceneGraph,
-  setActiveView,
-} from "./store/appConfigStore";
+import { setActiveLayout, setActiveView } from "./store/appConfigStore";
 import {
   setLeftSidebarConfig,
   setRightSidebarConfig,
@@ -55,6 +52,18 @@ const initializeApp = async () => {
   const activeView = urlParams.get("view") ?? undefined;
   const activeLayout = urlParams.get("layout") ?? undefined;
 
+  // Special handling for type system view
+  if (activeView === "TypeSystem") {
+    // Here you could load the TypeSystemDemo component directly
+    setActiveView("TypeSystem");
+  }
+
+  // Special handling for clinical trial demo
+  if (activeView === "ClinicalTrialDemo") {
+    root.render(<ClinicalTrialDemo />);
+    return;
+  }
+
   const showToolbar = getToggleOptionValue(urlParams, "showToolbar");
   setShowToolbar(showToolbar);
 
@@ -88,12 +97,6 @@ const initializeApp = async () => {
   }
 
   if (graphId) {
-    setActiveSceneGraph(graphId);
-  }
-  if (activeView) {
-    setActiveView(activeView);
-  }
-  if (activeLayout) {
     setActiveLayout(activeLayout as LayoutEngineOption);
   }
 
