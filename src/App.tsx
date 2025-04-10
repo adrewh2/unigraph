@@ -251,7 +251,7 @@ const AppContent: React.FC<{
 
   const { activeFilter, setActiveFilter } = useAppConfigStore();
 
-  const { currentResult } = useActiveLayoutStore();
+  const { currentLayoutResult } = useActiveLayoutStore();
 
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -1188,7 +1188,8 @@ const AppContent: React.FC<{
     }
 
     const data = exportGraphDataForReactFlow(currentSceneGraph);
-    const nodePositions = currentResult?.positions || {};
+    const activeLayoutResult = getActiveLayoutResult();
+    const nodePositions = activeLayoutResult?.positions || {};
 
     const nodesWithPositions = data.nodes.map((node) => ({
       ...node,
@@ -1213,8 +1214,8 @@ const AppContent: React.FC<{
             y,
             z: 0,
           };
-          if (currentResult) {
-            currentResult.positions[node.id] = {
+          if (activeLayoutResult) {
+            activeLayoutResult.positions[node.id] = {
               x,
               y,
               z: 0,
@@ -1297,8 +1298,8 @@ const AppContent: React.FC<{
                 y: node.position.y,
                 z: 0,
               });
-              if (currentResult) {
-                currentResult.positions[node.id] = {
+              if (activeLayoutResult) {
+                activeLayoutResult.positions[node.id] = {
                   x: node.position.x,
                   y: node.position.y,
                   z: 0,
@@ -1314,7 +1315,7 @@ const AppContent: React.FC<{
   }, [
     // activeView,
     currentSceneGraph,
-    currentResult,
+    currentLayoutResult,
     safeComputeLayout,
     // activeLayout,
     nodeLegendConfig,
@@ -1417,7 +1418,7 @@ const AppContent: React.FC<{
     }
 
     if (
-      currentResult?.layoutType !== activeLayout &&
+      currentLayoutResult?.layoutType !== activeLayout &&
       (activeView === "Graphviz" || activeView === "ReactFlow")
     ) {
       if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
@@ -1450,23 +1451,23 @@ const AppContent: React.FC<{
     activeLayout,
     initializeForceGraph,
     safeComputeLayout,
-    currentResult?.layoutType,
+    currentLayoutResult?.layoutType,
     setForceGraphInstance,
   ]);
 
   useEffect(() => {
     if (
       forceGraphInstance &&
-      currentResult &&
+      currentLayoutResult &&
       forceGraph3dOptions.layout === "Layout"
     ) {
       ForceGraphManager.applyFixedNodePositions(
         forceGraphInstance,
-        currentResult.positions
+        currentLayoutResult.positions
       );
       zoomToFit(forceGraphInstance);
-    } else if (graphvizRef.current && currentResult) {
-      graphvizRef.current.innerHTML = currentResult.svg ?? "";
+    } else if (graphvizRef.current && currentLayoutResult) {
+      graphvizRef.current.innerHTML = currentLayoutResult.svg ?? "";
       enableZoomAndPanOnSvg(graphvizRef.current);
       graphvizFitToView(graphvizRef.current);
     }
@@ -1475,7 +1476,7 @@ const AppContent: React.FC<{
     // window.history.pushState({}, "", url.toString());
   }, [
     forceGraphInstance,
-    currentResult, // Use this to trigger the effect when the layout result changes
+    currentLayoutResult, // Use this to trigger the effect when the layout result changes
     forceGraph3dOptions.layout,
     graphvizFitToView,
   ]);

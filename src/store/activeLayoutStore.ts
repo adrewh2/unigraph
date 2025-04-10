@@ -27,7 +27,7 @@ export interface Layout {
 interface ActiveLayoutsState {
   savedLayouts: ObjectOf<Layout>;
   jobStatus: LayoutJobStatus;
-  currentResult: ILayoutEngineResult | null;
+  currentLayoutResult: ILayoutEngineResult | null;
 
   // Layout operations
   saveLayout: (layout: Layout) => void;
@@ -55,7 +55,7 @@ const useActiveLayoutStore = create<ActiveLayoutsState>((set, get) => ({
     workerId: null,
     progress: 0,
   },
-  currentResult: null,
+  currentLayoutResult: null,
 
   // Layout operations
   saveLayout: (layout) => {
@@ -82,11 +82,11 @@ const useActiveLayoutStore = create<ActiveLayoutsState>((set, get) => ({
 
   // Layout result operations
   setCurrentLayoutResult: (result) => {
-    set({ currentResult: result });
+    set({ currentLayoutResult: result });
   },
 
   getCurrentLayoutResult: () => {
-    return get().currentResult;
+    return get().currentLayoutResult;
   },
 
   // Job status operations
@@ -259,18 +259,18 @@ export const saveLayoutResult = (layout: ILayoutEngineResult) => {
 };
 
 export const getActiveLayoutResult = (): Layout | undefined => {
-  // // First check the current result which has priority
-  // const currentResult = getCurrentLayoutResult();
-  // if (currentResult) {
-  //   return {
-  //     name: String(currentResult.layoutType),
-  //     positions: currentResult.positions,
-  //   };
-  // }
+  // First check the current result which has priority
+  const mostRecentLayoutResult = getCurrentLayoutResult();
+  if (mostRecentLayoutResult) {
+    return {
+      name: mostRecentLayoutResult.layoutType,
+      positions: mostRecentLayoutResult.positions,
+    };
+  }
 
   // Fall back to saved layout
   const activeLayoutName = getActiveLayout();
-  return getSavedLayouts()[activeLayoutName];
+  return getSavedLayouts()[activeLayoutName] ?? undefined;
 };
 
 export default useActiveLayoutStore;
