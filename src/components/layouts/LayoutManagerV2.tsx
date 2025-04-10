@@ -23,6 +23,7 @@ import useAppConfigStore, {
   getCurrentSceneGraph,
 } from "../../store/appConfigStore";
 import { addNotification } from "../../store/notificationStore";
+import { applyLayoutAndTriggerAppUpdate } from "../../store/sceneGraphHooks";
 import styles from "./LayoutManager.module.css";
 
 interface LayoutManagerV2Props {
@@ -70,7 +71,6 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
 };
 
 const LayoutManagerV2: React.FC<LayoutManagerV2Props> = ({
-  onLayoutSelected,
   applyPredefinedLayout,
   onSaveCurrentLayout,
   onShowLayoutManager,
@@ -108,18 +108,6 @@ const LayoutManagerV2: React.FC<LayoutManagerV2Props> = ({
   const layoutsList = Object.values(savedLayouts).sort(
     (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)
   );
-
-  // Handle layout selection
-  const handleSelectLayout = (layout: Layout) => {
-    console.log("selected layout is ", layout);
-    onLayoutSelected(layout);
-    // setActiveLayout(layout);
-    // addNotification({
-    //   message: `Layout "${layout.name}" applied`,
-    //   type: "success",
-    //   duration: 3000,
-    // });
-  };
 
   // Handle predefined layout selection
   const handleSelectPredefinedLayout = (layoutName: string) => {
@@ -215,7 +203,6 @@ const LayoutManagerV2: React.FC<LayoutManagerV2Props> = ({
       };
 
       saveLayout(layout);
-      onLayoutSelected(layout);
       addNotification({
         message: `Layout "${name}" saved`,
         type: "success",
@@ -351,7 +338,7 @@ const LayoutManagerV2: React.FC<LayoutManagerV2Props> = ({
                 <div
                   key={layout.name}
                   className={`project-item ${currentLayoutResult?.layoutType === layout.name ? "selected" : ""}`}
-                  onClick={() => handleSelectLayout(layout)}
+                  onClick={() => applyLayoutAndTriggerAppUpdate(layout)}
                 >
                   <div className="project-icon">
                     <Grid size={18} />

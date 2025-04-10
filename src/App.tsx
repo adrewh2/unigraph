@@ -17,7 +17,6 @@ import EntityDataDisplayCard from "./components/common/EntityDataDisplayCard";
 import EntityJsonEditorDialog from "./components/common/EntityJsonEditorDialog";
 import EntityTabDialog from "./components/common/EntityTabDialog";
 import { GraphEntityType } from "./components/common/GraphSearch";
-import LayoutManager from "./components/common/LayoutManager";
 import Legend from "./components/common/Legend";
 import LegendModeRadio from "./components/common/LegendModeRadio";
 import FilterManager from "./components/filters/FilterManager";
@@ -62,7 +61,6 @@ import {
 import { syncMissingNodesAndEdgesInForceGraph } from "./core/force-graph/forceGraphHelpers";
 import { ForceGraphManager } from "./core/force-graph/ForceGraphManager";
 import { enableZoomAndPanOnSvg } from "./core/graphviz/appHelpers";
-import { GraphvizLayoutType } from "./core/layouts/GraphvizLayoutEngine";
 import {
   Compute_Layout,
   LayoutEngineOption,
@@ -95,10 +93,8 @@ import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
 import useActiveLayoutStore, {
   getActiveLayoutResult,
-  getCurrentLayoutResult,
   getLayoutByName,
   getSavedLayouts,
-  Layout,
   loadLayoutsFromSceneGraph,
   setCurrentLayoutResult,
 } from "./store/activeLayoutStore";
@@ -218,7 +214,7 @@ const AppContent: React.FC<{
     showSaveSceneGraphDialog,
     setShowSaveSceneGraphDialog,
     showEntityTables,
-    showLayoutManager,
+    // showLayoutManager,
     showSceneGraphDetailView,
   } = useDialogStore();
 
@@ -226,7 +222,6 @@ const AppContent: React.FC<{
     forceGraph3dOptions,
     activeView,
     setActiveView,
-    activeLayout,
     getShowEntityDataCard,
     activeSceneGraph,
     legendMode,
@@ -311,9 +306,6 @@ const AppContent: React.FC<{
   const [selectedSimulation, setSelectedSimulation] =
     useState<string>("Lumina");
 
-  // const [currentSceneGraph, setCurrentSceneGraph] =
-  //   useState<SceneGraph>(initialSceneGraph);
-
   useEffect(() => {
     setCurrentSceneGraph(initialSceneGraph);
   }, [setCurrentSceneGraph]);
@@ -361,7 +353,7 @@ const AppContent: React.FC<{
     }
 
     if (defaultActiveLayout) {
-      handleSetActiveLayout(defaultActiveLayout as LayoutEngineOption);
+      setActiveLayout(defaultActiveLayout as LayoutEngineOption);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout]);
@@ -379,13 +371,6 @@ const AppContent: React.FC<{
     handleReactFlowFitView,
     reactFlowInstance,
   ]);
-
-  // const selectedGraphNode = useMemo(() => {
-  //   if (getSelectedNodeId()) {
-  //     return currentSceneGraph.getGraph().getNode(getSelectedNodeId()!);
-  //   }
-  //   return null;
-  // }, [currentSceneGraph]);
 
   const handleMouseHoverLegendItem = useCallback(
     (type: GraphEntityType) =>
@@ -641,31 +626,6 @@ const AppContent: React.FC<{
     handleBackgroundRightClick,
   ]);
 
-  useEffect(() => {
-    const currentLayoutResult = getCurrentLayoutResult();
-    if (currentLayoutResult?.layoutType === activeLayout) {
-      console.log(
-        "Skipping layout computation because it has already been computed"
-      );
-      return;
-    }
-    if (
-      activeView === "Graphviz" ||
-      activeView === "ReactFlow" ||
-      (activeView === "ForceGraph3d" &&
-        forceGraph3dOptions.layout === "Layout") ||
-      forceGraph3dOptions.layout in new Set(Object.values(GraphvizLayoutType))
-    ) {
-      safeComputeLayout(currentSceneGraph, activeLayout);
-    }
-  }, [
-    currentSceneGraph,
-    forceGraph3dOptions.layout,
-    activeLayout,
-    safeComputeLayout,
-    activeView,
-  ]);
-
   const [graphModelUpdateTime, setGraphModelUpdateTime] = useState<number>(0);
 
   const handleDisplayConfigChanged = useCallback(
@@ -827,10 +787,10 @@ const AppContent: React.FC<{
     [handleLoadSceneGraph]
   );
 
-  useEffect(() => {
-    // Hide scrollbar
-    document.body.style.overflow = "hidden";
-  }, []);
+  // useEffect(() => {
+  //   // Hide scrollbar
+  //   document.body.style.overflow = "hidden";
+  // }, []);
 
   const getSimulation = useCallback(
     (key: string): JSX.Element | undefined => {
@@ -840,13 +800,6 @@ const AppContent: React.FC<{
       return undefined;
     },
     [simulations]
-  );
-
-  const handleSetActiveLayout = useCallback(
-    (layout: LayoutEngineOption | string) => {
-      setActiveLayout(layout);
-    },
-    []
   );
 
   const graphvizFitToView = useCallback((element: HTMLDivElement) => {
@@ -1055,49 +1008,41 @@ const AppContent: React.FC<{
     [currentSceneGraph]
   );
 
-  const applyNewLayout = useCallback(
-    (layoutType: LayoutEngineOption) => {
-      handleSetActiveLayout(layoutType);
-    },
-    [handleSetActiveLayout]
-  );
-
   const [pathAnalysisConfig, setPathAnalysisConfig] = useState<
     IPathArgs | undefined
   >(undefined);
   const [editingNodeId, setEditingNodeId] = useState<NodeId | null>(null);
 
-  const handleLoadLayout = useCallback(
-    (layout: Layout) => {
-      // Add safety check to ensure positions exist
-      if (!layout || !layout.positions) {
-        console.warn("Cannot load layout: missing position data");
-        addNotification({
-          message: "Failed to apply layout: missing position data",
-          type: "error",
-          duration: 3000,
-        });
-        return;
-      }
+  // const handleLoadLayout = useCallback(
+  //   (layout: Layout) => {
+  //     // Add safety check to ensure positions exist
+  //     if (!layout || !layout.positions) {
+  //       console.warn("Cannot load layout: missing position data");
+  //       addNotification({
+  //         message: "Failed to apply layout: missing position data",
+  //         type: "error",
+  //         duration: 3000,
+  //       });
+  //       return;
+  //     }
 
-      currentSceneGraph.getDisplayConfig().nodePositions = layout.positions;
-      DisplayManager.applyNodePositions(
-        currentSceneGraph.getGraph(),
-        layout.positions
-      );
-      handleSetActiveLayout(layout.name);
-      setCurrentLayoutResult({
-        positions: layout.positions,
-        layoutType: layout.name,
-      });
-      if (forceGraphInstance && activeView === "ForceGraph3d") {
-        updateNodePositions(forceGraphInstance, layout.positions);
-      } else if (activeView === "ReactFlow") {
-        setGraphModelUpdateTime(Date.now()); //hack
-      }
-    },
-    [currentSceneGraph, handleSetActiveLayout, forceGraphInstance, activeView]
-  );
+  //     currentSceneGraph.setNodePositions(layout.positions);
+  //     DisplayManager.applyNodePositions(
+  //       currentSceneGraph.getGraph(),
+  //       layout.positions
+  //     );
+  //     setCurrentLayoutResult({
+  //       positions: layout.positions,
+  //       layoutType: layout.name,
+  //     });
+  //     if (forceGraphInstance && activeView === "ForceGraph3d") {
+  //       updateNodePositions(forceGraphInstance, layout.positions);
+  //     } else if (activeView === "ReactFlow") {
+  //       setGraphModelUpdateTime(Date.now()); //hack
+  //     }
+  //   },
+  //   [currentSceneGraph, forceGraphInstance, activeView]
+  // );
 
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
@@ -1105,13 +1050,11 @@ const AppContent: React.FC<{
       handleFitToView,
       GraphMenuActions,
       SimulationMenuActions,
-      applyNewLayout,
       setShowNodeTable: setShowEntityTables,
       setShowEdgeTable: setShowEntityTables,
       showLayoutManager: (mode: "save" | "load") =>
         setShowLayoutManager({ mode, show: true }),
       showFilterWindow: () => setShowFilter(true),
-      handleLoadLayout: handleLoadLayout,
       showSceneGraphDetailView: (readOnly: boolean) => {
         setShowSceneGraphDetailView({ show: true, readOnly });
       },
@@ -1125,12 +1068,10 @@ const AppContent: React.FC<{
   }, [
     GraphMenuActions,
     SimulationMenuActions,
-    applyNewLayout,
     currentSceneGraph,
     forceGraphInstance,
     handleFitToView,
     handleImportConfig,
-    handleLoadLayout,
     setShowEntityTables,
     setShowLayoutManager,
     setShowSceneGraphDetailView,
@@ -1183,7 +1124,7 @@ const AppContent: React.FC<{
     }
 
     if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
-      safeComputeLayout(currentSceneGraph, activeLayout);
+      console.log("Cannot render nodes without positions");
       return;
     }
 
@@ -1313,11 +1254,9 @@ const AppContent: React.FC<{
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    // activeView,
+    activeView,
     currentSceneGraph,
     currentLayoutResult,
-    safeComputeLayout,
-    // activeLayout,
     nodeLegendConfig,
     edgeLegendConfig,
     legendMode,
@@ -1416,18 +1355,7 @@ const AppContent: React.FC<{
     if (activeView === "Editor") {
       return;
     }
-
-    if (
-      currentLayoutResult?.layoutType !== activeLayout &&
-      (activeView === "Graphviz" || activeView === "ReactFlow")
-    ) {
-      if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
-        safeComputeLayout(currentSceneGraph, activeLayout);
-      }
-    } else if (
-      getPreviousView() !== "Editor" &&
-      activeView === "ForceGraph3d"
-    ) {
+    if (getPreviousView() !== "Editor" && activeView === "ForceGraph3d") {
       console.log("previous view was ", getPreviousView());
       console.log("active view history Reinitializing");
       initializeForceGraph();
@@ -1445,13 +1373,9 @@ const AppContent: React.FC<{
       }
     };
   }, [
-    currentSceneGraph,
     activeView,
-    forceGraph3dOptions.layout,
-    activeLayout,
+    currentLayoutResult,
     initializeForceGraph,
-    safeComputeLayout,
-    currentLayoutResult?.layoutType,
     setForceGraphInstance,
   ]);
 
@@ -1459,6 +1383,7 @@ const AppContent: React.FC<{
     if (
       forceGraphInstance &&
       currentLayoutResult &&
+      Object.keys(currentLayoutResult.positions).length > 0 &&
       forceGraph3dOptions.layout === "Layout"
     ) {
       ForceGraphManager.applyFixedNodePositions(
@@ -1466,6 +1391,11 @@ const AppContent: React.FC<{
         currentLayoutResult.positions
       );
       zoomToFit(forceGraphInstance);
+      console.log(
+        "triggered",
+        currentLayoutResult.layoutType,
+        currentLayoutResult
+      );
     } else if (graphvizRef.current && currentLayoutResult) {
       graphvizRef.current.innerHTML = currentLayoutResult.svg ?? "";
       enableZoomAndPanOnSvg(graphvizRef.current);
@@ -1841,7 +1771,6 @@ const AppContent: React.FC<{
           onSearchResult={handleSearchResult}
           onHighlight={handleHighlight}
           onApplyForceGraphConfig={handleApplyForceGraphConfig}
-          applyNewLayout={applyNewLayout}
           renderLayoutModeRadio={renderLayoutModeRadio}
           showFilterWindow={() => setShowFilter(true)}
           showFilterManager={() => setShowFilterManager(true)}
@@ -1853,7 +1782,6 @@ const AppContent: React.FC<{
           showLayoutManager={(mode: "save" | "load") =>
             setShowLayoutManager({ mode, show: true })
           }
-          handleLoadLayout={handleLoadLayout}
           handleFitToView={handleFitToView}
           handleShowEntityTables={() => setShowEntityTables(true)}
           handleLoadSceneGraph={handleLoadSceneGraph}
@@ -1975,7 +1903,7 @@ const AppContent: React.FC<{
             />
           </div>
         )}
-        {showLayoutManager.show && (
+        {/* {showLayoutManager.show && (
           <LayoutManager
             sceneGraph={currentSceneGraph}
             onClose={() => setShowLayoutManager({ mode: "save", show: false })}
@@ -1983,7 +1911,7 @@ const AppContent: React.FC<{
             isDarkMode={isDarkMode}
             mode={showLayoutManager.mode}
           />
-        )}
+        )} */}
         {showFilter && (
           <FilterWindow
             sceneGraph={currentSceneGraph}

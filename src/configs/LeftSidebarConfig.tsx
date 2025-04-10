@@ -16,15 +16,20 @@ import ReactFlowConfigEditor from "../components/react-flow/ReactFlowConfigEdito
 import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "../core/layouts/GraphologyLayoutEngine";
 import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutEngine";
-import { PresetLayoutType } from "../core/layouts/LayoutEngine";
+import {
+  LayoutEngineOption,
+  PresetLayoutType,
+} from "../core/layouts/LayoutEngine";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { extractPositionsFromNodes } from "../data/graphs/blobMesh";
 import styles from "../Sidebar.module.css";
 import { Filter as FFilter } from "../store/activeFilterStore";
+import { getCurrentSceneGraph } from "../store/appConfigStore";
 import {
   applyReactFlowConfig,
   getReactFlowConfig,
 } from "../store/reactFlowConfigStore";
+import { computeLayoutAndTriggerAppUpdate } from "../store/sceneGraphHooks";
 import { getSectionWidth } from "../store/workspaceConfigStore";
 
 const allLayoutLabels = [
@@ -67,7 +72,6 @@ export const createDefaultLeftMenus = ({
   handleLoadSceneGraph,
   handleSetActiveFilter,
   currentPositions, // Make sure to pass this from the parent,
-  applyNewLayout,
 }: any) => {
   // Ensure case consistency by converting to lowercase for comparison
   const normalizedActiveView = activeView ? activeView.toLowerCase() : "";
@@ -120,7 +124,12 @@ export const createDefaultLeftMenus = ({
           }}
           sceneGraph={sceneGraph}
           currentPositions={currentPositions || {}}
-          applyPredefinedLayout={applyNewLayout}
+          applyPredefinedLayout={(layoutName: string) =>
+            computeLayoutAndTriggerAppUpdate(
+              getCurrentSceneGraph(),
+              layoutName as LayoutEngineOption
+            )
+          }
         />
       ),
     },

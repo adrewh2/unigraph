@@ -6,7 +6,7 @@ import {
 } from "../core/layouts/LayoutEngine";
 import { NodePositionData } from "../core/layouts/layoutHelpers";
 import { SceneGraph } from "../core/model/SceneGraph";
-import { getActiveLayout } from "./appConfigStore";
+import { getActiveLayout, setActiveLayout } from "./appConfigStore";
 
 export interface LayoutJobStatus {
   isRunning: boolean;
@@ -83,6 +83,7 @@ const useActiveLayoutStore = create<ActiveLayoutsState>((set, get) => ({
   // Layout result operations
   setCurrentLayoutResult: (result) => {
     set({ currentLayoutResult: result });
+    setActiveLayout(result?.layoutType ?? "error");
   },
 
   getCurrentLayoutResult: () => {
