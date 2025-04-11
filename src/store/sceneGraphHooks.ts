@@ -5,9 +5,18 @@ import {
   LayoutEngineOptionLabels,
   PresetLayoutType,
 } from "../core/layouts/LayoutEngine";
+import { DisplayManager } from "../core/model/DisplayManager";
+import { EntityIds } from "../core/model/entity/entityIds";
+import { NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
+import { Filter } from "./activeFilterStore";
 import { Layout, setCurrentLayoutResult } from "./activeLayoutStore";
-import { getCurrentSceneGraph } from "./appConfigStore";
+import { SetNodeAndEdgeLegendsForOnlyVisibleEntities } from "./activeLegendConfigStore";
+import {
+  getCurrentSceneGraph,
+  getLegendMode,
+  setActiveFilter,
+} from "./appConfigStore";
 
 export async function applyLayoutAndTriggerAppUpdate(layout: Layout) {
   const sceneGraph = getCurrentSceneGraph();
@@ -65,3 +74,51 @@ export async function computeLayoutAndTriggerUpdateForCurrentSceneGraph(
 //     zoomToFit(getForceGraphInstance()!, 1);
 //   }
 // };
+
+export const applyActiveFilterToAppInstance = (filter: Filter) => {
+  const currentSceneGraph = getCurrentSceneGraph();
+  DisplayManager.applyVisibilityFromFilterRulesToGraph(
+    currentSceneGraph.getGraph(),
+    filter.filterRules
+  );
+  SetNodeAndEdgeLegendsForOnlyVisibleEntities(
+    currentSceneGraph,
+    getLegendMode(),
+    filter.filterRules
+  );
+  setActiveFilter(filter);
+};
+
+export const filterSceneGraphToOnlyVisibleNodes = (
+  nodeIds: EntityIds<NodeId>
+) => {
+  applyActiveFilterToAppInstance({
+    name: "node id selection",
+    filterRules: [
+      {
+        id: "node id selection",
+        operator: "include",
+        ruleMode: "entities",
+        conditions: {
+          nodes: nodeIds.toArray(),
+        },
+      },
+    ],
+  });
+};
+
+export const hideVisibleNodes = (nodeIds: EntityIds<NodeId>) => {
+  applyActiveFilterToAppInstance({
+    name: "hide selected nodes",
+    filterRules: [
+      {
+        id: "hide selected nodes",
+        operator: "exclude",
+        ruleMode: "entities",
+        conditions: {
+          nodes: nodeIds.toArray(),
+        },
+      },
+    ],
+  });
+};

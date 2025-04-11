@@ -407,41 +407,6 @@ const AppContent: React.FC<{
     []
   );
 
-  const handleSetActiveFilter = useCallback(
-    (filter: Filter) => {
-      DisplayManager.applyVisibilityFromFilterRulesToGraph(
-        currentSceneGraph.getGraph(),
-        filter.filterRules
-      );
-      SetNodeAndEdgeLegendsForOnlyVisibleEntities(
-        currentSceneGraph,
-        legendMode,
-        filter.filterRules
-      );
-      setActiveFilter(filter);
-    },
-    [currentSceneGraph, legendMode, setActiveFilter]
-  );
-
-  const handleSetVisibleNodes = useCallback(
-    (nodeIds: string[]) => {
-      handleSetActiveFilter({
-        name: "node id selection",
-        filterRules: [
-          {
-            id: "node id selection",
-            operator: "include",
-            ruleMode: "entities",
-            conditions: {
-              nodes: nodeIds,
-            },
-          },
-        ],
-      });
-    },
-    [handleSetActiveFilter]
-  );
-
   let isComputing = false;
   const safeComputeLayout = useCallback(
     async (
@@ -1627,7 +1592,7 @@ const AppContent: React.FC<{
         label: "Hide Selected Nodes",
         action: () => {
           // Create and apply a filter that excludes the selected nodes
-          handleSetActiveFilter({
+          applyActiveFilterToAppInstance({
             name: "hide selected nodes",
             filterRules: [
               {
@@ -1647,7 +1612,7 @@ const AppContent: React.FC<{
         label: "Show Only Selected Nodes",
         action: () => {
           // Create and apply a filter that only includes the selected nodes
-          handleSetActiveFilter({
+          applyActiveFilterToAppInstance({
             name: "show only selected nodes",
             filterRules: [
               {
@@ -1739,7 +1704,7 @@ const AppContent: React.FC<{
         ],
       },
     ],
-    [currentSceneGraph, handleSetActiveFilter, nodeLegendConfig]
+    [currentSceneGraph, nodeLegendConfig]
   );
 
   // Update the existing getContextMenuItems function to handle multi-node selection
@@ -1923,7 +1888,6 @@ const AppContent: React.FC<{
           handleFitToView={handleFitToView}
           handleShowEntityTables={() => setShowEntityTables(true)}
           handleLoadSceneGraph={handleLoadSceneGraph}
-          handleSetActiveFilter={handleSetActiveFilter}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>
@@ -2055,7 +2019,9 @@ const AppContent: React.FC<{
             sceneGraph={currentSceneGraph}
             onClose={() => setShowFilter(false)}
             onApplyFilter={(selectedIds) => {
-              handleSetVisibleNodes(selectedIds);
+              filterSceneGraphToOnlyVisibleNodes(
+                new EntityIds<NodeId>(selectedIds as NodeId[])
+              );
               setShowFilter(false);
             }}
             isDarkMode={isDarkMode}
@@ -2100,6 +2066,10 @@ interface AppProps {
 }
 
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
+import {
+  applyActiveFilterToAppInstance,
+  filterSceneGraphToOnlyVisibleNodes,
+} from "./store/sceneGraphHooks";
 
 const App: React.FC<AppProps> = ({
   defaultGraph,

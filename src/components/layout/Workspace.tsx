@@ -14,10 +14,10 @@ import { DisplayManager } from "../../core/model/DisplayManager";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { flyToNode } from "../../core/webgl/webglHelpers";
 import Sidebar from "../../Sidebar";
-import { Filter } from "../../store/activeFilterStore";
 import { ResetNodeAndEdgeLegends } from "../../store/activeLegendConfigStore";
 import useAppConfigStore from "../../store/appConfigStore";
 import { getSelectedNodeId } from "../../store/graphInteractionStore";
+import { applyActiveFilterToAppInstance } from "../../store/sceneGraphHooks";
 import useWorkspaceConfigStore, {
   defaultSectionWidth,
   getSectionWidth,
@@ -60,7 +60,6 @@ interface WorkspaceProps {
   handleFitToView: (activeView: string) => void;
   handleShowEntityTables: () => void;
   handleLoadSceneGraph: (sceneGraph: SceneGraph) => void;
-  handleSetActiveFilter: (filter: Filter) => void;
 }
 
 const Workspace: React.FC<WorkspaceProps> = ({
@@ -87,7 +86,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleFitToView,
   handleShowEntityTables,
   handleLoadSceneGraph,
-  handleSetActiveFilter,
 }) => {
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
@@ -172,7 +170,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           activeView: activeView, // Make sure this is correctly passed
           activeFilter: activeFilter,
           handleLoadSceneGraph: handleLoadSceneGraph,
-          handleSetActiveFilter: handleSetActiveFilter,
+          handleSetActiveFilter: applyActiveFilterToAppInstance,
         })}
         isDarkMode={isDarkMode}
         footer={leftFooterContent}
@@ -198,7 +196,6 @@ const Workspace: React.FC<WorkspaceProps> = ({
     showSaveSceneGraphDialog,
     activeFilter,
     handleLoadSceneGraph,
-    handleSetActiveFilter,
     showLayoutManager,
   ]);
 
