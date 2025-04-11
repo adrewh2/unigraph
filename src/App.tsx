@@ -423,7 +423,7 @@ const AppContent: React.FC<{
     []
   );
 
-  const handleSetActiveFilterPreset = useCallback(
+  const handleSetActiveFilter = useCallback(
     (filter: Filter) => {
       DisplayManager.applyVisibilityFromFilterRulesToGraph(
         currentSceneGraph.getGraph(),
@@ -441,7 +441,7 @@ const AppContent: React.FC<{
 
   const handleSetVisibleNodes = useCallback(
     (nodeIds: string[]) => {
-      handleSetActiveFilterPreset({
+      handleSetActiveFilter({
         name: "node id selection",
         filterRules: [
           {
@@ -455,7 +455,7 @@ const AppContent: React.FC<{
         ],
       });
     },
-    [handleSetActiveFilterPreset]
+    [handleSetActiveFilter]
   );
 
   let isComputing = false;
@@ -1686,7 +1686,7 @@ const AppContent: React.FC<{
         label: "Hide Selected Nodes",
         action: () => {
           // Create and apply a filter that excludes the selected nodes
-          handleSetActiveFilterPreset({
+          handleSetActiveFilter({
             name: "hide selected nodes",
             filterRules: [
               {
@@ -1706,7 +1706,7 @@ const AppContent: React.FC<{
         label: "Show Only Selected Nodes",
         action: () => {
           // Create and apply a filter that only includes the selected nodes
-          handleSetActiveFilterPreset({
+          handleSetActiveFilter({
             name: "show only selected nodes",
             filterRules: [
               {
@@ -1798,7 +1798,7 @@ const AppContent: React.FC<{
         ],
       },
     ],
-    [currentSceneGraph, handleSetActiveFilterPreset, nodeLegendConfig]
+    [currentSceneGraph, handleSetActiveFilter, nodeLegendConfig]
   );
 
   // Update the existing getContextMenuItems function to handle multi-node selection
@@ -1984,7 +1984,7 @@ const AppContent: React.FC<{
           handleFitToView={handleFitToView}
           handleShowEntityTables={() => setShowEntityTables(true)}
           handleLoadSceneGraph={handleLoadSceneGraph}
-          handleSetActiveFilter={handleSetActiveFilterPreset}
+          handleSetActiveFilter={handleSetActiveFilter}
         >
           {/* Main content */}
           <div style={{ height: "100%", position: "relative" }}>
