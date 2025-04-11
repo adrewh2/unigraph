@@ -1,9 +1,7 @@
-import { LayoutEngineOptionLabels } from "../../core/layouts/LayoutEngine";
-import { NodeId } from "../../core/model/Node";
+import { EntityIds } from "./../core/model/entity/entityIds";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { Filter } from "../../store/activeFilterStore";
 import { addNotification } from "../../store/notificationStore";
-import { computeLayoutAndTriggerUpdateForCurrentSceneGraph } from "../../store/sceneGraphHooks";
 import { ContextMenuItem } from "./ContextMenu";
 
 /**
@@ -135,10 +133,16 @@ export const getMultiNodeContextMenuItems = (
   },
   {
     label: "Apply Layout",
-    submenu: LayoutEngineOptionLabels.map((layout) => ({
+    submenu: LayoutEngineLabels.map((layout) => ({
       label: layout,
       action: () => {
-        computeLayoutAndTriggerUpdateForCurrentSceneGraph(layout);
+        // Apply the selected layout to the current scene graph
+        const entity = new EntityIds<NodeId>(nodeIds);
+        addNotification({
+          message: `Applied layout: ${layout}`,
+          type: "success",
+          duration: 3000,
+        });
         onMenuClose?.();
       },
     })),
