@@ -50,6 +50,10 @@ interface ReactFlowPanelProps {
   edges: Edge[];
   onLoad?: (instance: ReactFlowInstance) => void;
   onNodeContextMenu?: (event: React.MouseEvent, node: Node) => void;
+  onNodesContextMenu?: (
+    event: React.MouseEvent,
+    nodes: EntityIds<NodeId>
+  ) => void; // New prop for multi-node context menu
   onBackgroundContextMenu?: (
     event: React.MouseEvent<Element, MouseEvent>
   ) => void;
@@ -94,6 +98,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   edges: initialEdges,
   onLoad,
   onNodeContextMenu,
+  onNodesContextMenu, // Add the new prop
   onBackgroundContextMenu,
   onNodeDragStop,
 }) => {
@@ -173,6 +178,27 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
       );
     }
   }, []);
+
+  // Handle right click on a node that's part of a selection
+  const handleNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      // Check if we have multiple nodes selected
+      const selectedNodeIds = getSelectedNodeIds();
+      console.log("selected is ", selectedNodeIds);
+      if (selectedNodeIds.size > 1 && selectedNodeIds.has(node.id as NodeId)) {
+        // If the right-clicked node is part of a multi-selection, trigger the multi-node context menu
+        if (onNodesContextMenu) {
+          onNodesContextMenu(event, selectedNodeIds);
+        }
+      } else {
+        // Otherwise, trigger the regular single-node context menu
+        if (onNodeContextMenu) {
+          onNodeContextMenu(event, node);
+        }
+      }
+    },
+    [onNodeContextMenu, onNodesContextMenu]
+  );
 
   // Handle selection change in ReactFlow
   const handleSelectionChange = useCallback(
@@ -358,7 +384,9 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           onEdgesChange={handleEdgesChange}
           onNodeDragStop={onNodeDragStop}
           onInit={handleInit} // Use the properly typed handler
-          onNodeContextMenu={onNodeContextMenu}
+          onNodeContextMenu={(event, node) =>
+            handleNodeContextMenu(event, node)
+          }
           onPaneContextMenu={(event) =>
             onBackgroundContextMenu?.(
               event as React.MouseEvent<Element, MouseEvent>

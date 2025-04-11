@@ -74,6 +74,7 @@ import { NodePositionData } from "./core/layouts/layoutHelpers";
 import { DisplayManager } from "./core/model/DisplayManager";
 import { EdgeId } from "./core/model/Edge";
 import { Entity } from "./core/model/entity/abstractEntity";
+import { EntityIds } from "./core/model/entity/entityIds";
 import { getGraphStatistics, GraphStastics } from "./core/model/GraphBuilder";
 import { NodeDataArgs, NodeId } from "./core/model/Node";
 import { SceneGraph } from "./core/model/SceneGraph";
@@ -534,7 +535,8 @@ const AppContent: React.FC<{
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
-    nodeId: NodeId | undefined;
+    nodeId?: NodeId; // Make nodeId optional
+    multipleNodeIds?: NodeId[]; // Add support for multiple node IDs
   } | null>(null);
 
   const [isNodeEditorOpen, setIsNodeEditorOpen] = useState(false);
@@ -547,6 +549,21 @@ const AppContent: React.FC<{
           x: event.clientX,
           y: event.clientY,
           nodeId: nodeId as NodeId,
+        });
+      }
+    },
+    []
+  );
+
+  // Add a new handler for multiple nodes right-click
+  const handleMultipleNodesRightClick = useCallback(
+    (event: MouseEvent | React.MouseEvent, nodeIds: EntityIds<NodeId>) => {
+      event.preventDefault();
+      if (nodeIds.size > 1) {
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          multipleNodeIds: nodeIds.toArray(),
         });
       }
     },
@@ -1266,6 +1283,9 @@ const AppContent: React.FC<{
           onNodeContextMenu={(event, node) =>
             handleNodeRightClick(event, node.id)
           }
+          onNodesContextMenu={(event, nodes) =>
+            handleMultipleNodesRightClick(event, nodes)
+          }
           onBackgroundContextMenu={(event) => handleBackgroundRightClick(event)}
           onNodeDragStop={(event, node, nodes) => {
             const nodesToUpdate = [...nodes, node];
@@ -1315,6 +1335,7 @@ const AppContent: React.FC<{
     handleReactFlowFitView,
     handleNodeRightClick,
     handleBackgroundRightClick,
+    handleMultipleNodesRightClick,
     graphModelUpdateTime, // @todo remove this. currently need to include this to force re-render when graph is changed outside reactflow
   ]);
 
@@ -1670,15 +1691,150 @@ const AppContent: React.FC<{
     [currentSceneGraph, forceGraphInstance, setShowPathAnalysis]
   );
 
+  // Add multi-node operations to create a subgraph, hide multiple nodes, etc.
+  const getMultiNodeContextMenuItems = useCallback(
+    (nodeIds: NodeId[]): ContextMenuItem[] => [
+      {
+        label: `Selected ${nodeIds.length} Nodes`,
+        action: () => {}, // This is just a label
+        // disabled: true,
+      },
+      {
+        label: "Hide Selected Nodes",
+        action: () => {
+          // Create and apply a filter that excludes the selected nodes
+          handleSetActiveFilterPreset({
+            name: "hide selected nodes",
+            filterRules: [
+              {
+                id: "hide selected nodes",
+                operator: "exclude",
+                ruleMode: "entities",
+                conditions: {
+                  nodes: nodeIds,
+                },
+              },
+            ],
+          });
+          setContextMenu(null);
+        },
+      },
+      {
+        label: "Show Only Selected Nodes",
+        action: () => {
+          // Create and apply a filter that only includes the selected nodes
+          handleSetActiveFilterPreset({
+            name: "show only selected nodes",
+            filterRules: [
+              {
+                id: "show only selected nodes",
+                operator: "include",
+                ruleMode: "entities",
+                conditions: {
+                  nodes: nodeIds,
+                },
+              },
+            ],
+          });
+          setContextMenu(null);
+        },
+      },
+      {
+        label: "Copy IDs to Clipboard",
+        action: () => {
+          navigator.clipboard.writeText(nodeIds.join(", "));
+          addNotification({
+            message: `Copied ${nodeIds.length} node IDs to clipboard`,
+            type: "success",
+            duration: 3000,
+          });
+          setContextMenu(null);
+        },
+      },
+      {
+        label: "Connect Selected Nodes",
+        action: () => {
+          // Create edges between all selected nodes
+          if (nodeIds.length >= 2) {
+            const graph = currentSceneGraph.getGraph();
+
+            // Connect nodes in sequence (1->2->3->...)
+            for (let i = 0; i < nodeIds.length - 1; i++) {
+              graph.createEdge(nodeIds[i], nodeIds[i + 1]);
+            }
+
+            currentSceneGraph.notifyGraphChanged();
+            addNotification({
+              message: `Connected ${nodeIds.length} nodes sequentially`,
+              type: "success",
+              duration: 3000,
+            });
+          }
+          setContextMenu(null);
+        },
+      },
+      {
+        label: "Create Subgraph from Selection",
+        action: () => {
+          // Create a new graph containing only the selected nodes and their connections
+          // This would typically open a dialog to name and save the subgraph
+          addNotification({
+            message: "Creating subgraph from selection - Feature coming soon",
+            type: "info",
+            duration: 3000,
+          });
+          setContextMenu(null);
+        },
+      },
+      {
+        label: "Apply Color to Selection",
+        submenu: [
+          {
+            label: "Red",
+            action: () => {
+              // Apply red color to all selected nodes
+              const _newConfig = { ...nodeLegendConfig };
+              // Color logic would go here
+              setContextMenu(null);
+            },
+          },
+          {
+            label: "Green",
+            action: () => {
+              // Apply green color to all selected nodes
+              setContextMenu(null);
+            },
+          },
+          {
+            label: "Blue",
+            action: () => {
+              // Apply blue color to all selected nodes
+              setContextMenu(null);
+            },
+          },
+        ],
+      },
+    ],
+    [currentSceneGraph, handleSetActiveFilterPreset, nodeLegendConfig]
+  );
+
+  // Update the existing getContextMenuItems function to handle multi-node selection
   const getContextMenuItems = useCallback(
-    (nodeId: NodeId | undefined): ContextMenuItem[] => {
-      if (nodeId) {
+    (nodeId?: NodeId, multipleNodeIds?: NodeId[]): ContextMenuItem[] => {
+      console.log(nodeId, multipleNodeIds);
+      if (multipleNodeIds && multipleNodeIds.length > 1) {
+        return getMultiNodeContextMenuItems(multipleNodeIds);
+      } else if (nodeId) {
         return getNodeContextMenuItems(nodeId);
       } else {
         return getBackgroundRightClickContextMenuItems();
       }
     },
-    [getNodeContextMenuItems, getBackgroundRightClickContextMenuItems]
+    [
+      getNodeContextMenuItems,
+      getBackgroundRightClickContextMenuItems,
+      getMultiNodeContextMenuItems,
+    ]
   );
 
   const pathAnalysisWizard = useMemo(() => {
@@ -1891,7 +2047,10 @@ const AppContent: React.FC<{
           <ContextMenu
             x={contextMenu.x}
             y={contextMenu.y}
-            items={getContextMenuItems(contextMenu.nodeId)}
+            items={getContextMenuItems(
+              contextMenu.nodeId,
+              contextMenu.multipleNodeIds
+            )}
             onClose={() => setContextMenu(null)}
             isDarkMode={isDarkMode}
           />
