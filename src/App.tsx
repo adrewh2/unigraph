@@ -38,7 +38,10 @@ import ChatGptImporter from "./components/tools/ChatGptImporter";
 import YasguiPanel from "./components/YasguiPanel";
 
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
+import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
+import { getNodeContextMenuItems } from "./components/common/singleNodeContextMenuItems";
+import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import { AppContextProvider } from "./context/AppContext";
@@ -52,7 +55,6 @@ import {
   RenderingManager__DisplayMode,
 } from "./controllers/RenderingManager";
 import {
-  attachRepulsiveForce,
   bindEventsToGraphInstance,
   createForceGraph,
   updateNodePositions,
@@ -88,7 +90,6 @@ import {
   getSceneGraph,
 } from "./data/DemoSceneGraphs";
 import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
-import { bfsQuery, processYasguiResults } from "./helpers/yasguiHelpers";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
@@ -138,6 +139,10 @@ import useGraphInteractionStore, {
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
 import { addNotification } from "./store/notificationStore";
+import {
+  applyActiveFilterToAppInstance,
+  filterSceneGraphToOnlyVisibleNodes,
+} from "./store/sceneGraphHooks";
 import useWorkspaceConfigStore, {
   getLeftSidebarConfig,
   getRightSidebarConfig,
@@ -1496,87 +1501,25 @@ const AppContent: React.FC<{
     [handleCreateNode]
   );
 
-  const getNodeContextMenuItems = useCallback(
-    (nodeId: NodeId): ContextMenuItem[] => [
-      {
-        label: "Focus Node",
-        action: () => {
-          if (forceGraphInstance) {
-            const node = forceGraphInstance
-              .graphData()
-              .nodes.find((n) => n.id === nodeId);
-            if (node) {
-              flyToNode(forceGraphInstance, node);
-            }
-          }
-        },
-      },
-      {
-        label: "Expand around Node",
-        action: () => {
-          if (forceGraphInstance) {
-            attachRepulsiveForce(forceGraphInstance, nodeId);
-          }
-        },
-      },
-      {
-        label: "Select Node",
-        action: () => setSelectedNodeId(nodeId),
-      },
-      {
-        label: "Hide Node",
-        action: () => {
-          // Implement hide node functionality
-          console.log("Hide node:", nodeId);
-        },
-      },
-      {
-        label: "Find path",
-        submenu: [
-          {
-            label: "to...",
-            action: () => {
-              setPathAnalysisConfig({
-                startNode: nodeId,
-                endNode: undefined,
-              });
-              setShowPathAnalysis(true);
-            },
-          },
-          {
-            label: "from...",
-            action: () => {
-              setPathAnalysisConfig({
-                startNode: undefined,
-                endNode: nodeId,
-              });
-              setShowPathAnalysis(true);
-            },
-          },
-        ],
-      },
-      {
-        label: "Edit",
-        action: () => {
-          setEditingNodeId(nodeId);
-          setIsNodeEditorOpen(true);
-        },
-      },
-      {
-        label: "Edit JSON",
-        action: () => {
-          setJsonEditEntity(currentSceneGraph.getGraph().getNode(nodeId));
-        },
-      },
-      {
-        label: "Query dbpedia",
-        action: () => {
-          bfsQuery(nodeId.replace(" ", "_"), 200, 150, 500).then((results) =>
-            processYasguiResults(results, currentSceneGraph)
-          );
-        },
-      },
-    ],
+  // Wrapper for the imported node context menu items function with App-specific context
+  const getNodeContextMenuItemsWithAppContext = useCallback(
+    (nodeId: NodeId): ContextMenuItem[] => {
+      return getNodeContextMenuItems(
+        nodeId,
+        currentSceneGraph,
+        forceGraphInstance,
+        setEditingNodeId,
+        setIsNodeEditorOpen,
+        setJsonEditEntity,
+        setSelectedNodeId,
+        (config) =>
+          setPathAnalysisConfig({
+            startNode: config.startNode!,
+            endNode: config.endNode,
+          }),
+        setShowPathAnalysis
+      );
+    },
     [currentSceneGraph, forceGraphInstance, setShowPathAnalysis]
   );
 
@@ -1599,14 +1542,14 @@ const AppContent: React.FC<{
       if (!nodeIds || nodeIds.length === 0) {
         return getBackgroundRightClickContextMenuItems();
       } else if (nodeIds.length === 1) {
-        return getNodeContextMenuItems(nodeIds[0]);
+        return getNodeContextMenuItemsWithAppContext(nodeIds[0]);
       } else {
         return getMultiNodeContextMenuItemsWithAppContext(nodeIds);
       }
     },
     [
-      getNodeContextMenuItems,
       getBackgroundRightClickContextMenuItems,
+      getNodeContextMenuItemsWithAppContext,
       getMultiNodeContextMenuItemsWithAppContext,
     ]
   );
@@ -1950,13 +1893,6 @@ interface AppProps {
   defaultActiveView?: string;
   defaultActiveLayout?: string;
 }
-
-import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
-import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
-import {
-  applyActiveFilterToAppInstance,
-  filterSceneGraphToOnlyVisibleNodes,
-} from "./store/sceneGraphHooks";
 
 const App: React.FC<AppProps> = ({
   defaultGraph,
