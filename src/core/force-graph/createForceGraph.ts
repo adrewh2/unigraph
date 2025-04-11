@@ -40,6 +40,7 @@ import {
 import { ILayoutEngineResult } from "../layouts/LayoutEngine";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EdgeId } from "../model/Edge";
+import { EntityIds } from "../model/entity/entityIds";
 import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
 import { exportGraphDataForReactFlow } from "../react-flow/exportGraphDataForReactFlow";
@@ -229,7 +230,7 @@ export const createForceGraph = (
 export const bindEventsToGraphInstance = (
   graph: ForceGraph3DInstance,
   sceneGraph: SceneGraph,
-  onNodeRightClick?: (event: MouseEvent, nodeId: string | null) => void,
+  onNodesRightClick?: (event: MouseEvent, nodeIds: EntityIds<NodeId>) => void,
   onBackgroundRightClick?: (event: MouseEvent) => void
 ) => {
   graph.onNodeClick((node) => {
@@ -293,9 +294,12 @@ export const bindEventsToGraphInstance = (
 
   // Update right-click handling
   graph.onNodeRightClick((node, event) => {
-    if (event && onNodeRightClick) {
+    if (node == null) {
+      return;
+    }
+    if (event && onNodesRightClick) {
       event.preventDefault();
-      onNodeRightClick(event, (node?.id as string) ?? null); // Match the new signature
+      onNodesRightClick(event, new EntityIds([node!.id as NodeId])); // Match the new signature
     }
   });
 

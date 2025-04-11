@@ -532,40 +532,28 @@ const AppContent: React.FC<{
     []
   );
 
+  // Update the context menu state to use a unified approach with nodeIds array
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
-    nodeId?: NodeId; // Make nodeId optional
-    multipleNodeIds?: NodeId[]; // Add support for multiple node IDs
+    nodeIds?: NodeId[];
   } | null>(null);
 
   const [isNodeEditorOpen, setIsNodeEditorOpen] = useState(false);
 
-  const handleNodeRightClick = useCallback(
-    (event: MouseEvent | React.MouseEvent, nodeId: string | null) => {
-      event.preventDefault();
-      if (nodeId) {
-        setContextMenu({
-          x: event.clientX,
-          y: event.clientY,
-          nodeId: nodeId as NodeId,
-        });
-      }
-    },
-    []
-  );
-
-  // Add a new handler for multiple nodes right-click
-  const handleMultipleNodesRightClick = useCallback(
+  // Unified handler for right-clicks on nodes (single or multiple)
+  const handleNodesRightClick = useCallback(
     (event: MouseEvent | React.MouseEvent, nodeIds: EntityIds<NodeId>) => {
       event.preventDefault();
-      if (nodeIds.size > 1) {
-        setContextMenu({
-          x: event.clientX,
-          y: event.clientY,
-          multipleNodeIds: nodeIds.toArray(),
-        });
-      }
+      event.stopPropagation();
+
+      if (nodeIds.size === 0) return;
+
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        nodeIds: nodeIds.toArray(),
+      });
     },
     []
   );
@@ -576,7 +564,6 @@ const AppContent: React.FC<{
       setContextMenu({
         x: event.clientX,
         y: event.clientY,
-        nodeId: undefined,
       });
     },
     []
@@ -632,7 +619,7 @@ const AppContent: React.FC<{
     bindEventsToGraphInstance(
       newInstance,
       currentSceneGraph,
-      handleNodeRightClick,
+      handleNodesRightClick,
       handleBackgroundRightClick
     );
 
@@ -647,7 +634,7 @@ const AppContent: React.FC<{
     currentSceneGraph,
     forceGraph3dOptions.layout,
     setForceGraphInstance,
-    handleNodeRightClick,
+    handleNodesRightClick,
     handleBackgroundRightClick,
   ]);
 
@@ -1280,11 +1267,8 @@ const AppContent: React.FC<{
               setTimeout(() => handleReactFlowFitView(), 100);
             }
           }}
-          onNodeContextMenu={(event, node) =>
-            handleNodeRightClick(event, node.id)
-          }
-          onNodesContextMenu={(event, nodes) =>
-            handleMultipleNodesRightClick(event, nodes)
+          onNodesContextMenu={(event, nodeIds) =>
+            handleNodesRightClick(event, nodeIds)
           }
           onBackgroundContextMenu={(event) => handleBackgroundRightClick(event)}
           onNodeDragStop={(event, node, nodes) => {
@@ -1333,9 +1317,8 @@ const AppContent: React.FC<{
     edgeLegendUpdateTime,
     safeComputeLayout,
     handleReactFlowFitView,
-    handleNodeRightClick,
+    handleNodesRightClick,
     handleBackgroundRightClick,
-    handleMultipleNodesRightClick,
     graphModelUpdateTime, // @todo remove this. currently need to include this to force re-render when graph is changed outside reactflow
   ]);
 
@@ -1820,14 +1803,13 @@ const AppContent: React.FC<{
 
   // Update the existing getContextMenuItems function to handle multi-node selection
   const getContextMenuItems = useCallback(
-    (nodeId?: NodeId, multipleNodeIds?: NodeId[]): ContextMenuItem[] => {
-      console.log(nodeId, multipleNodeIds);
-      if (multipleNodeIds && multipleNodeIds.length > 1) {
-        return getMultiNodeContextMenuItems(multipleNodeIds);
-      } else if (nodeId) {
-        return getNodeContextMenuItems(nodeId);
-      } else {
+    (nodeIds?: NodeId[]): ContextMenuItem[] => {
+      if (!nodeIds || nodeIds.length === 0) {
         return getBackgroundRightClickContextMenuItems();
+      } else if (nodeIds.length === 1) {
+        return getNodeContextMenuItems(nodeIds[0]);
+      } else {
+        return getMultiNodeContextMenuItems(nodeIds);
       }
     },
     [
@@ -2047,10 +2029,7 @@ const AppContent: React.FC<{
           <ContextMenu
             x={contextMenu.x}
             y={contextMenu.y}
-            items={getContextMenuItems(
-              contextMenu.nodeId,
-              contextMenu.multipleNodeIds
-            )}
+            items={getContextMenuItems(contextMenu.nodeIds)}
             onClose={() => setContextMenu(null)}
             isDarkMode={isDarkMode}
           />

@@ -49,11 +49,10 @@ interface ReactFlowPanelProps {
   nodes: Node[];
   edges: Edge[];
   onLoad?: (instance: ReactFlowInstance) => void;
-  onNodeContextMenu?: (event: React.MouseEvent, node: Node) => void;
   onNodesContextMenu?: (
     event: React.MouseEvent,
-    nodes: EntityIds<NodeId>
-  ) => void; // New prop for multi-node context menu
+    nodeIds: EntityIds<NodeId>
+  ) => void; // Unified context menu handler
   onBackgroundContextMenu?: (
     event: React.MouseEvent<Element, MouseEvent>
   ) => void;
@@ -109,8 +108,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   nodes: initialNodes,
   edges: initialEdges,
   onLoad,
-  onNodeContextMenu,
-  onNodesContextMenu, // Add the new prop
+  onNodesContextMenu, // Just need the unified prop
   onBackgroundContextMenu,
   onNodeDragStop,
 }) => {
@@ -191,25 +189,29 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     }
   }, []);
 
-  // Handle right click on a node that's part of a selection
+  // Unified handler for node context menu events (single or multi)
   const handleNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {
-      // Check if we have multiple nodes selected
+      // Prevent default browser context menu
+      event.preventDefault();
+      event.stopPropagation();
+
       const selectedNodeIds = getSelectedNodeIds();
-      console.log("selected is ", selectedNodeIds);
+
+      // If we have multiple nodes selected and the right-clicked node is part of that selection
       if (selectedNodeIds.size > 1 && selectedNodeIds.has(node.id as NodeId)) {
-        // If the right-clicked node is part of a multi-selection, trigger the multi-node context menu
+        // Pass all selected nodes to the handler
         if (onNodesContextMenu) {
           onNodesContextMenu(event, selectedNodeIds);
         }
       } else {
-        // Otherwise, trigger the regular single-node context menu
-        if (onNodeContextMenu) {
-          onNodeContextMenu(event, node);
+        // For a single node, create an EntityIds with just this node
+        if (onNodesContextMenu) {
+          onNodesContextMenu(event, new EntityIds([node.id as NodeId]));
         }
       }
     },
-    [onNodeContextMenu, onNodesContextMenu]
+    [onNodesContextMenu]
   );
 
   // Handle selection change in ReactFlow
