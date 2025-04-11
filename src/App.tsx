@@ -1581,130 +1581,16 @@ const AppContent: React.FC<{
   );
 
   // Add multi-node operations to create a subgraph, hide multiple nodes, etc.
-  const getMultiNodeContextMenuItems = useCallback(
-    (nodeIds: NodeId[]): ContextMenuItem[] => [
-      {
-        label: `Selected ${nodeIds.length} Nodes`,
-        action: () => {}, // This is just a label
-        // disabled: true,
-      },
-      {
-        label: "Hide Selected Nodes",
-        action: () => {
-          // Create and apply a filter that excludes the selected nodes
-          applyActiveFilterToAppInstance({
-            name: "hide selected nodes",
-            filterRules: [
-              {
-                id: "hide selected nodes",
-                operator: "exclude",
-                ruleMode: "entities",
-                conditions: {
-                  nodes: nodeIds,
-                },
-              },
-            ],
-          });
-          setContextMenu(null);
-        },
-      },
-      {
-        label: "Show Only Selected Nodes",
-        action: () => {
-          // Create and apply a filter that only includes the selected nodes
-          applyActiveFilterToAppInstance({
-            name: "show only selected nodes",
-            filterRules: [
-              {
-                id: "show only selected nodes",
-                operator: "include",
-                ruleMode: "entities",
-                conditions: {
-                  nodes: nodeIds,
-                },
-              },
-            ],
-          });
-          setContextMenu(null);
-        },
-      },
-      {
-        label: "Copy IDs to Clipboard",
-        action: () => {
-          navigator.clipboard.writeText(nodeIds.join(", "));
-          addNotification({
-            message: `Copied ${nodeIds.length} node IDs to clipboard`,
-            type: "success",
-            duration: 3000,
-          });
-          setContextMenu(null);
-        },
-      },
-      {
-        label: "Connect Selected Nodes",
-        action: () => {
-          // Create edges between all selected nodes
-          if (nodeIds.length >= 2) {
-            const graph = currentSceneGraph.getGraph();
-
-            // Connect nodes in sequence (1->2->3->...)
-            for (let i = 0; i < nodeIds.length - 1; i++) {
-              graph.createEdge(nodeIds[i], nodeIds[i + 1]);
-            }
-
-            currentSceneGraph.notifyGraphChanged();
-            addNotification({
-              message: `Connected ${nodeIds.length} nodes sequentially`,
-              type: "success",
-              duration: 3000,
-            });
-          }
-          setContextMenu(null);
-        },
-      },
-      {
-        label: "Create Subgraph from Selection",
-        action: () => {
-          // Create a new graph containing only the selected nodes and their connections
-          // This would typically open a dialog to name and save the subgraph
-          addNotification({
-            message: "Creating subgraph from selection - Feature coming soon",
-            type: "info",
-            duration: 3000,
-          });
-          setContextMenu(null);
-        },
-      },
-      {
-        label: "Apply Color to Selection",
-        submenu: [
-          {
-            label: "Red",
-            action: () => {
-              // Apply red color to all selected nodes
-              const _newConfig = { ...nodeLegendConfig };
-              // Color logic would go here
-              setContextMenu(null);
-            },
-          },
-          {
-            label: "Green",
-            action: () => {
-              // Apply green color to all selected nodes
-              setContextMenu(null);
-            },
-          },
-          {
-            label: "Blue",
-            action: () => {
-              // Apply blue color to all selected nodes
-              setContextMenu(null);
-            },
-          },
-        ],
-      },
-    ],
-    [currentSceneGraph, nodeLegendConfig]
+  const getMultiNodeContextMenuItemsWithAppContext = useCallback(
+    (nodeIds: NodeId[]): ContextMenuItem[] => {
+      return getMultiNodeContextMenuItems(
+        nodeIds,
+        currentSceneGraph,
+        applyActiveFilterToAppInstance,
+        () => setContextMenu(null)
+      );
+    },
+    [currentSceneGraph]
   );
 
   // Update the existing getContextMenuItems function to handle multi-node selection
@@ -1715,13 +1601,13 @@ const AppContent: React.FC<{
       } else if (nodeIds.length === 1) {
         return getNodeContextMenuItems(nodeIds[0]);
       } else {
-        return getMultiNodeContextMenuItems(nodeIds);
+        return getMultiNodeContextMenuItemsWithAppContext(nodeIds);
       }
     },
     [
       getNodeContextMenuItems,
       getBackgroundRightClickContextMenuItems,
-      getMultiNodeContextMenuItems,
+      getMultiNodeContextMenuItemsWithAppContext,
     ]
   );
 
@@ -2065,6 +1951,7 @@ interface AppProps {
   defaultActiveLayout?: string;
 }
 
+import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import {
   applyActiveFilterToAppInstance,
