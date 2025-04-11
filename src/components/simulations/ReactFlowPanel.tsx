@@ -91,6 +91,18 @@ nodeStyles.textContent = `
     outline: 2px solid ${MOUSE_HOVERED_NODE_COLOR} !important;
     outline-offset: 2px;
   }
+  
+  /* Make the selection rectangle not capture mouse events */
+  .react-flow__nodesselection-rect {
+    pointer-events: none !important;
+    z-index: 0 !important;
+  }
+  
+  /* Ensure nodes remain clickable even when inside selection */
+  .react-flow__node {
+    pointer-events: all !important;
+    z-index: 10 !important;
+  }
 `;
 
 const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
