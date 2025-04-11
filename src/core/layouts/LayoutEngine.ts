@@ -57,50 +57,54 @@ let layoutWorker: Worker | null = null;
 // Initialize the layout worker
 function getLayoutWorker(): Worker {
   if (!layoutWorker) {
-    // Create the worker
-    layoutWorker = new Worker(new URL("./LayoutWorker.ts", import.meta.url), {
-      type: "module",
-    });
+    try {
+      // Use the worker-loader syntax that webpack understands
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const LayoutWorker = require("./LayoutWorker.ts");
+      layoutWorker = new LayoutWorker() as Worker;
 
-    // Set up message handler
-    layoutWorker.onmessage = (e: MessageEvent) => {
-      const response = e.data;
-      const pendingComputation = pendingComputations.get(response.id);
+      // Set up message handler
+      layoutWorker!.onmessage = (e: MessageEvent) => {
+        const response = e.data;
+        const pendingComputation = pendingComputations.get(response.id);
 
-      // Handle different message types
-      if (response.type === "progress") {
-        // Update progress in store
-        updateLayoutJobProgress(response.progress);
-        return;
-      }
+        // Handle different message types
+        if (response.type === "progress") {
+          // Update progress in store
+          updateLayoutJobProgress(response.progress);
+          return;
+        }
 
-      if (response.type === "cancelled") {
-        // Clean up this computation
+        if (response.type === "cancelled") {
+          // Clean up this computation
+          if (pendingComputation) {
+            pendingComputations.delete(response.id);
+            pendingComputation.reject(
+              new Error("Layout computation cancelled")
+            );
+          }
+          return;
+        }
+
         if (pendingComputation) {
+          if (response.error) {
+            pendingComputation.reject(new Error(response.error));
+          } else {
+            pendingComputation.resolve(response.result);
+          }
           pendingComputations.delete(response.id);
-          pendingComputation.reject(new Error("Layout computation cancelled"));
         }
-        return;
-      }
+      };
 
-      if (pendingComputation) {
-        if (response.error) {
-          pendingComputation.reject(new Error(response.error));
-        } else {
-          pendingComputation.resolve(response.result);
-        }
-        pendingComputations.delete(response.id);
-      }
-    };
-
-    // Handle worker errors
-    layoutWorker.onerror = (error) => {
-      console.error("Layout worker error:", error);
-      // On critical worker errors, we'll reset the worker
-      layoutWorker = null;
-    };
+      layoutWorker!.onerror = (error) => {
+        console.error("Layout worker error:", error);
+        layoutWorker = null;
+      };
+    } catch (error) {
+      console.error("Failed to initialize layout worker:", error);
+      throw new Error("Layout worker initialization failed");
+    }
   }
-
   return layoutWorker;
 }
 
