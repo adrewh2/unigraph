@@ -22,7 +22,9 @@ import {
 } from "../../core/force-graph/createForceGraph";
 import { NodeId } from "../../core/model/Node";
 import { EntityIds } from "../../core/model/entity/entityIds";
-import useAppConfigStore from "../../store/appConfigStore";
+import useAppConfigStore, {
+  getCurrentSceneGraph,
+} from "../../store/appConfigStore";
 import { useDocumentStore } from "../../store/documentStore";
 import useGraphInteractionStore, {
   getSelectedNodeId,
@@ -369,6 +371,19 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     [setActiveDocument, activeView, setActiveView]
   );
 
+  const handleConnect = useCallback(
+    (params: { source: string; target: string }) => {
+      const { source, target } = params;
+      const sceneGraph = getCurrentSceneGraph();
+      const _edge = sceneGraph
+        .getGraph()
+        .createEdgeIfMissing(source, target, { type: "default" });
+      sceneGraph.refreshDisplayConfig();
+      sceneGraph.notifyGraphChanged();
+    },
+    []
+  );
+
   return (
     <div
       style={{
@@ -412,6 +427,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           onNodeClick={handleNodeClick}
           onSelectionChange={handleSelectionChange}
           onNodeDoubleClick={handleNodeDoubleClick}
+          onConnect={handleConnect} // Add the connection handler
           fitView={true}
           minZoom={0.1}
           maxZoom={500}
