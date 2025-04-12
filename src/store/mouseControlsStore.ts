@@ -12,6 +12,9 @@ export interface SelectionBox {
 }
 
 interface MouseControlsState {
+  isDraggingNode: boolean;
+  setIsDraggingNode: (isDragging: boolean) => void;
+
   controlMode: MouseControlMode;
   selectionBox: SelectionBox;
   setControlMode: (mode: MouseControlMode) => void;
@@ -32,6 +35,10 @@ const initialSelectionBox: SelectionBox = {
 };
 
 export const useMouseControlsStore = create<MouseControlsState>((set) => ({
+  isDraggingNode: false,
+  setIsDraggingNode: (isDragging: boolean) =>
+    set({ isDraggingNode: isDragging }),
+
   controlMode: "orbital", // default mode
   selectionBox: initialSelectionBox,
   setControlMode: (mode: MouseControlMode) => set({ controlMode: mode }),
@@ -103,4 +110,11 @@ export const endSelectionBox = (): void => {
 
 export const clearSelectionBox = (): void => {
   useMouseControlsStore.getState().clearSelectionBox();
+};
+
+export const setIsDraggingNode = (isDragging: boolean): void => {
+  useMouseControlsStore.getState().setIsDraggingNode(isDragging);
+};
+export const getIsDraggingNode = (): boolean => {
+  return useMouseControlsStore.getState().isDraggingNode;
 };

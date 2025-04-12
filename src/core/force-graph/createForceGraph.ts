@@ -36,9 +36,11 @@ import {
 import {
   clearSelectionBox,
   endSelectionBox,
+  getIsDraggingNode,
   getMouseControlMode,
   getSelectionBox,
   SelectionBox,
+  setIsDraggingNode,
   startSelectionBox,
   updateSelectionBox,
 } from "../../store/mouseControlsStore";
@@ -70,7 +72,7 @@ export const createForceGraph = (
   const data = exportGraphDataForReactFlow(sceneGraph);
   // console.log("data is ", data);
 
-  const controlMode = getMouseControlMode();
+  // const controlMode = getMouseControlMode();
 
   const graph = new ForceGraph3D(dom, {
     extraRenderers: [new CSS2DRenderer()],
@@ -110,7 +112,7 @@ export const createForceGraph = (
     })
     .linkLabel("type")
     .backgroundColor("#1a1a1a")
-    .enableNodeDrag(controlMode === "orbital")
+    .enableNodeDrag(true)
     .onNodeClick((node) => {
       flyToNode(graph, node);
     })
@@ -134,6 +136,7 @@ export const createForceGraph = (
         y: node.y!,
         z: node.z!,
       };
+      setIsDraggingNode(false);
     });
 
   // .d3Force(
@@ -298,7 +301,9 @@ export const bindEventsToGraphInstance = (
     updateHighlight(graph);
   });
 
-  graph.onNodeDrag((_node) => {});
+  graph.onNodeDrag((_node) => {
+    setIsDraggingNode(true);
+  });
   graph.onEngineTick(() => {
     // zoomToFit(graph, 100, 1.2);
   });
@@ -365,6 +370,9 @@ export const bindEventsToGraphInstance = (
     let isDragging = false;
 
     container.addEventListener("mousedown", (event) => {
+      if (getIsDraggingNode()) {
+        return;
+      }
       const controlMode = getMouseControlMode();
       if (controlMode === "multiselection") {
         // Only start selection box on left click on the background (not on nodes)
@@ -381,7 +389,11 @@ export const bindEventsToGraphInstance = (
 
     container.addEventListener("mousemove", (event) => {
       const controlMode = getMouseControlMode();
-      if (controlMode === "multiselection" && isDragging) {
+      if (
+        controlMode === "multiselection" &&
+        isDragging &&
+        !getIsDraggingNode()
+      ) {
         updateSelectionBox(event.clientX, event.clientY);
         event.preventDefault();
       }
@@ -412,6 +424,28 @@ export const bindEventsToGraphInstance = (
     });
   }
 };
+
+// function getNodesNear(graph: ForceGraph3DInstance, position: {x: number, y: number}, threshold: number) {
+//   const nodes = graph.graphData().nodes;
+//   const selectedNodes: NodeId[] = [];
+
+//   nodes.forEach((node: any) => {
+//     const screenCoords = graph.graph2ScreenCoords(
+//       node.fx ?? node.x ?? 0,
+//       node.fy ?? node.y ?? 0,
+//       node.fz ?? node.z ?? 0
+//     );
+
+//     const dx = screenCoords.x - position.x;
+//     const dy = screenCoords.y - position.y;
+
+//     if (Math.sqrt(dx * dx + dy * dy) < threshold) {
+//       selectedNodes.push(node.id as NodeId);
+//     }
+//   });
+
+//   return selectedNodes;
+// }
 
 // Helper function to select nodes within the selection box
 function selectNodesInSelectionBox(

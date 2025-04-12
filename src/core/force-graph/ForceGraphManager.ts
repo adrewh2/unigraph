@@ -113,7 +113,7 @@ export class ForceGraphManager {
   ) => {
     if (forceGraphInstance) {
       // Enable/disable node dragging based on mode
-      forceGraphInstance.enableNodeDrag(mode === "orbital");
+      // forceGraphInstance.enableNodeDrag(mode === "orbital");
 
       const controls = forceGraphInstance.controls() as OrbitControls;
       if (controls) {
