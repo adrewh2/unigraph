@@ -5,7 +5,10 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   padding: 0.5rem 0;
   z-index: 10000;
-  width: 10rem;
+  min-width: 10rem; /* Minimum width */
+  max-width: 20rem; /* Optional: Set a maximum width */
+  width: auto; /* Allow the width to adjust dynamically */
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 .contextMenu.dark {
@@ -30,7 +33,6 @@
   color: black;
 }
 
-/* Fix the selector specificity by targeting the parent dark class */
 .contextMenu.dark .contextMenuItem:hover {
   background: #555;
   color: white;
@@ -46,9 +48,5 @@
 }
 
 .contextMenuItem:hover .submenuIndicator {
-  color: inherit;
-}
-
-.contextMenuItem.dark:hover .submenuIndicator {
   color: inherit;
 }
