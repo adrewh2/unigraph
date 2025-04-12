@@ -308,9 +308,16 @@ export const bindEventsToGraphInstance = (
     if (node == null) {
       return;
     }
+    let rightClickList = new EntityIds<NodeId>();
+    const selectedNodeIds = getSelectedNodeIds();
+    if (selectedNodeIds.has(node.id as NodeId)) {
+      rightClickList = selectedNodeIds;
+    } else {
+      rightClickList = new EntityIds([node.id as NodeId]);
+    }
     if (event && onNodesRightClick) {
       event.preventDefault();
-      onNodesRightClick(event, new EntityIds([node!.id as NodeId])); // Match the new signature
+      onNodesRightClick(event, rightClickList); // Match the new signature
     }
   });
 
