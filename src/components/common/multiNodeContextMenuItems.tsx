@@ -6,6 +6,11 @@ import { Filter } from "../../store/activeFilterStore";
 import { addNotification } from "../../store/notificationStore";
 import { computeLayoutAndTriggerUpdateForCurrentSceneGraph } from "../../store/sceneGraphHooks";
 import { ContextMenuItem } from "./ContextMenu";
+import {
+  getHideMenuItem,
+  getSaveAsNewFilterMenuItem,
+  getShowSubmenuItems,
+} from "./sharedContextMenuItems";
 
 /**
  * Generate context menu items for multiple selected nodes
@@ -18,48 +23,22 @@ export const getMultiNodeContextMenuItems = (
 ): ContextMenuItem[] => [
   {
     label: `Selected ${nodeIds.length} Nodes`,
+    information: true,
     action: () => {}, // This is just a label
   },
-  {
-    label: "Hide Selected Nodes",
-    action: () => {
-      // Create and apply a filter that excludes the selected nodes
-      applyFilter({
-        name: "hide selected nodes",
-        filterRules: [
-          {
-            id: "hide selected nodes",
-            operator: "exclude",
-            ruleMode: "entities",
-            conditions: {
-              nodes: nodeIds,
-            },
-          },
-        ],
-      });
-      onMenuClose?.();
-    },
-  },
-  {
-    label: "Show Only Selected Nodes",
-    action: () => {
-      // Create and apply a filter that only includes the selected nodes
-      applyFilter({
-        name: "show only selected nodes",
-        filterRules: [
-          {
-            id: "show only selected nodes",
-            operator: "include",
-            ruleMode: "entities",
-            conditions: {
-              nodes: nodeIds,
-            },
-          },
-        ],
-      });
-      onMenuClose?.();
-    },
-  },
+
+  // Use shared show submenu
+  getShowSubmenuItems(nodeIds, applyFilter, onMenuClose),
+
+  // Use shared hide menu item
+  getHideMenuItem(nodeIds, applyFilter, onMenuClose),
+
+  getSaveAsNewFilterMenuItem(
+    new EntityIds(nodeIds),
+    "Save as New Filter",
+    onMenuClose
+  ),
+
   {
     label: "Copy IDs to Clipboard",
     action: () => {
@@ -136,6 +115,8 @@ export const getMultiNodeContextMenuItems = (
   },
   {
     label: "Apply Layout",
+    displayMode: "grid",
+    gridColumns: 4,
     submenu: LayoutEngineOptionLabels.map((layout) => ({
       label: layout,
       action: () => {

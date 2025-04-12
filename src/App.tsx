@@ -40,6 +40,8 @@ import YasguiPanel from "./components/YasguiPanel";
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
+import SelectionBox from "./components/common/SelectionBox";
+import { getSaveAsNewFilterMenuItem } from "./components/common/sharedContextMenuItems";
 import { getNodeContextMenuItems } from "./components/common/singleNodeContextMenuItems";
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
@@ -111,6 +113,7 @@ import useActiveLegendConfigStore, {
 } from "./store/activeLegendConfigStore";
 import useAppConfigStore, {
   getActiveView,
+  getCurrentSceneGraph,
   getForceGraphInstance,
   getLegendMode,
   getPreviousView,
@@ -125,7 +128,7 @@ import {
   useDocumentStore,
 } from "./store/documentStore";
 import { IForceGraphRenderConfig } from "./store/forceGraphConfigStore";
-import useGraphInteractionStore, {
+import {
   clearSelections,
   getHoveredNodeIds,
   getSelectedNodeId,
@@ -138,6 +141,7 @@ import useGraphInteractionStore, {
   setHoveredNodeIds,
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
+import { useMouseControlsStore } from "./store/mouseControlsStore";
 import { addNotification } from "./store/notificationStore";
 import {
   applyActiveFilterToAppInstance,
@@ -193,6 +197,7 @@ const getSimulations = (
 };
 
 const initialSceneGraph = new SceneGraph();
+let initialSceneGraphLoaded: boolean = false;
 
 export type RenderingView =
   | "Graphviz"
@@ -248,7 +253,7 @@ const AppContent: React.FC<{
     edgeLegendUpdateTime,
   } = useActiveLegendConfigStore();
 
-  const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
+  // const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
 
   const { activeFilter, setActiveFilter } = useAppConfigStore();
 
@@ -641,10 +646,11 @@ const AppContent: React.FC<{
         clearGraphFromUrl();
       }
       clearSelections();
-      safeComputeLayout(
-        graph,
-        graph.getData().defaultAppConfig?.activeLayout ?? null
-      ).then(() => {
+      const layoutToLoad =
+        !initialSceneGraphLoaded && defaultActiveLayout
+          ? defaultActiveLayout
+          : (graph.getData().defaultAppConfig?.activeLayout ?? null);
+      safeComputeLayout(graph, layoutToLoad).then(() => {
         setCurrentSceneGraph(graph);
         if (graph.getData().defaultAppConfig) {
           setAppConfig(graph.getData().defaultAppConfig!);
@@ -691,6 +697,7 @@ const AppContent: React.FC<{
 
         const tock = Date.now();
         console.log("TOTAL TIME", tock - tick);
+        initialSceneGraphLoaded = true;
         addNotification({
           message: `Loaded SceneGraph: ${graph.getMetadata().name}`,
           type: "success",
@@ -701,6 +708,7 @@ const AppContent: React.FC<{
     [
       clearGraphFromUrl,
       clearUrlOfQueryParams,
+      defaultActiveLayout,
       forceGraphInstance,
       handleDisplayConfigChanged,
       safeComputeLayout,
@@ -1321,8 +1329,8 @@ const AppContent: React.FC<{
     activeFilter,
     currentSceneGraph,
     forceGraphInstance,
-    selectedNodeIds,
-    selectedEdgeIds,
+    // selectedNodeIds, //not sure why I had these here to begin with. can prob remove now
+    // selectedEdgeIds,
   ]);
 
   useEffect(() => {
@@ -1497,6 +1505,10 @@ const AppContent: React.FC<{
         label: "Create Node",
         action: handleCreateNode,
       },
+      getSaveAsNewFilterMenuItem(
+        getCurrentSceneGraph().getVisibleNodes(),
+        "Save Visible as New Filter"
+      ),
     ],
     [handleCreateNode]
   );
@@ -1517,7 +1529,8 @@ const AppContent: React.FC<{
             startNode: config.startNode!,
             endNode: config.endNode,
           }),
-        setShowPathAnalysis
+        setShowPathAnalysis,
+        applyActiveFilterToAppInstance
       );
     },
     [currentSceneGraph, forceGraphInstance, setShowPathAnalysis]
@@ -1685,6 +1698,8 @@ const AppContent: React.FC<{
     );
   };
 
+  const controlMode = useMouseControlsStore((state) => state.controlMode);
+
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
       <div
@@ -1710,7 +1725,7 @@ const AppContent: React.FC<{
           renderNodeLegend={renderNodeLegend}
           renderEdgeLegend={renderEdgeLegend}
           showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
-          showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)} // Pass the correct handler
+          showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)}
           showLayoutManager={(mode: "save" | "load") =>
             setShowLayoutManager({ mode, show: true })
           }
@@ -1881,6 +1896,9 @@ const AppContent: React.FC<{
               isDarkMode={isDarkMode}
             />
           </div>
+        )}
+        {activeView === "ForceGraph3d" && controlMode === "multiselection" && (
+          <SelectionBox />
         )}
       </div>
     </AppContextProvider>

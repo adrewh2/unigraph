@@ -34,6 +34,15 @@ import {
   setSelectedNodeIds,
 } from "../../store/graphInteractionStore";
 import {
+  clearSelectionBox,
+  endSelectionBox,
+  getMouseControlMode,
+  getSelectionBox,
+  SelectionBox,
+  startSelectionBox,
+  updateSelectionBox,
+} from "../../store/mouseControlsStore";
+import {
   getActiveSection,
   setRightActiveSection,
 } from "../../store/workspaceConfigStore";
@@ -60,6 +69,8 @@ export const createForceGraph = (
   // console.log("creating here", options, layout, positions);
   const data = exportGraphDataForReactFlow(sceneGraph);
   // console.log("data is ", data);
+
+  const controlMode = getMouseControlMode();
 
   const graph = new ForceGraph3D(dom, {
     extraRenderers: [new CSS2DRenderer()],
@@ -99,6 +110,7 @@ export const createForceGraph = (
     })
     .linkLabel("type")
     .backgroundColor("#1a1a1a")
+    .enableNodeDrag(controlMode === "orbital")
     .onNodeClick((node) => {
       flyToNode(graph, node);
     })
@@ -122,8 +134,7 @@ export const createForceGraph = (
         y: node.y!,
         z: node.z!,
       };
-    })
-    .enableNodeDrag(true);
+    });
 
   // .d3Force(
   //   "link",
@@ -309,7 +320,176 @@ export const bindEventsToGraphInstance = (
       onBackgroundRightClick(event);
     }
   });
+
+  // Add multi-selection support for 'multiselection' mode
+  const selectedNodeSet = new Set<string>();
+
+  graph.onNodeClick((node, event) => {
+    const controlMode = getMouseControlMode();
+
+    if (controlMode === "multiselection" && (event.ctrlKey || event.metaKey)) {
+      // Multi-select mode with Ctrl/Cmd key
+      if (node) {
+        const nodeId = node.id as NodeId;
+        if (selectedNodeSet.has(nodeId)) {
+          selectedNodeSet.delete(nodeId);
+        } else {
+          selectedNodeSet.add(nodeId);
+        }
+        setSelectedNodeIds([...selectedNodeSet] as NodeId[]);
+      }
+    } else {
+      // Regular click behavior (clear selection and select only this node)
+      selectedNodeSet.clear();
+      setSelectedNodeId(node?.id as NodeId);
+      if (node) {
+        selectedNodeSet.add(node.id as string);
+      }
+      // flyToNode(graph, node);
+    }
+
+    // Force refresh to update node colors immediately
+    updateHighlight(graph);
+  });
+
+  // Add drag selection handling
+  const container = graph.renderer()?.domElement.parentElement;
+  if (container) {
+    let isDragging = false;
+
+    container.addEventListener("mousedown", (event) => {
+      const controlMode = getMouseControlMode();
+      if (controlMode === "multiselection") {
+        // Only start selection box on left click on the background (not on nodes)
+        if (
+          event.button === 0 &&
+          !(event.target as HTMLElement)?.closest(".node-label")
+        ) {
+          isDragging = true;
+          startSelectionBox(event.clientX, event.clientY, event.shiftKey);
+          event.preventDefault();
+        }
+      }
+    });
+
+    container.addEventListener("mousemove", (event) => {
+      const controlMode = getMouseControlMode();
+      if (controlMode === "multiselection" && isDragging) {
+        updateSelectionBox(event.clientX, event.clientY);
+        event.preventDefault();
+      }
+    });
+
+    container.addEventListener("mouseup", (event) => {
+      const controlMode = getMouseControlMode();
+      if (controlMode === "multiselection" && isDragging) {
+        isDragging = false;
+        endSelectionBox();
+
+        // Select nodes that are within the selection box
+        const adjustedSelectionBox = { ...getSelectionBox() };
+        adjustedSelectionBox.startY = adjustedSelectionBox.startY - 45; //@warn: this is a hack for the uniapptoolbar. forcegraph screencoords are relative to the forcegraph container. seleectionBox coords are relative to the full app container
+        adjustedSelectionBox.endY = adjustedSelectionBox.endY - 45;
+        selectNodesInSelectionBox(graph, sceneGraph, adjustedSelectionBox);
+
+        event.preventDefault();
+      }
+    });
+
+    // Cancel selection if mouse leaves the container
+    container.addEventListener("mouseleave", () => {
+      if (isDragging) {
+        isDragging = false;
+        clearSelectionBox();
+      }
+    });
+  }
 };
+
+// Helper function to select nodes within the selection box
+function selectNodesInSelectionBox(
+  graph: ForceGraph3DInstance,
+  sceneGraph: SceneGraph,
+  selectionBox: SelectionBox
+) {
+  // Get the rectangle coordinates (ensure start is top-left, end is bottom-right)
+  const minX = Math.min(selectionBox.startX, selectionBox.endX);
+  const maxX = Math.max(selectionBox.startX, selectionBox.endX);
+  const minY = Math.min(selectionBox.startY, selectionBox.endY);
+  const maxY = Math.max(selectionBox.startY, selectionBox.endY);
+
+  // Check if box is too small (click instead of drag)
+  if (Math.abs(maxX - minX) < 5 && Math.abs(maxY - minY) < 5) {
+    console.log("too small", selectionBox);
+    clearSelectionBox();
+
+    return;
+  }
+
+  // Collect nodes that are within the selection box
+  const selectedNodes: NodeId[] = [];
+
+  // Get all currently selected nodes for potential additive selection
+  const currentSelectedNodes = new Set(getSelectedNodeIds());
+  const isAdditive = selectionBox.isAdditive || false;
+
+  // console.log("selection box is ", selectionBox);
+
+  graph.graphData().nodes.forEach((node: any) => {
+    // Skip nodes that aren't visible
+    if (
+      !sceneGraph
+        .getGraph()
+        .getNode(node.id as NodeId)
+        .isVisible()
+    ) {
+      return;
+    }
+
+    // Use the built-in utility to convert 3D coordinates to screen coordinates
+    // This is more accurate than our manual projection calculation
+    const screenCoords = graph.graph2ScreenCoords(
+      node.fx ?? node.x ?? 0,
+      node.fy ?? node.y ?? 0,
+      node.fz ?? node.z ?? 0
+    );
+    // console.log("screen coords are ", screenCoords);
+
+    // Check if the node's screen position is within the selection box
+    if (
+      screenCoords.x >= minX &&
+      screenCoords.x <= maxX &&
+      screenCoords.y >= minY &&
+      screenCoords.y <= maxY
+    ) {
+      selectedNodes.push(node.id as NodeId);
+    }
+  });
+
+  // console.log(
+  //   `Found ${selectedNodes.length} nodes in selection box`,
+  //   getCurrentSceneGraph().getGraph().getNodes().getAll(selectedNodes),
+  //   ForceGraphManager.getNodes(
+  //     new EntityIds(selectedNodes),
+  //     getForceGraph3dInstance()!
+  //   )
+  // );
+
+  if (selectedNodes.length > 0) {
+    // If shift key is being held, add to existing selection instead of replacing
+    const finalSelection = isAdditive
+      ? [...new Set([...currentSelectedNodes, ...selectedNodes])]
+      : selectedNodes;
+
+    setSelectedNodeIds(finalSelection);
+
+    // Force graph to update visuals
+    updateHighlight(graph);
+  }
+
+  // Clear the selection box
+  clearSelectionBox();
+}
 
 export interface IForceGraph3dCameraData {
   pos: Vector3;

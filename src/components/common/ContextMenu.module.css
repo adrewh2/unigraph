@@ -50,3 +50,59 @@
 .contextMenuItem:hover .submenuIndicator {
   color: inherit;
 }
+
+/* Grid layout styles */
+.gridMenu {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Default 3 columns */
+  gap: 2px;
+  padding: 2px;
+  max-width: 400px;
+  min-width: 200px;
+}
+
+.gridMenuItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2px;
+  border-radius: 4px;
+  white-space: normal;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.gridMenuItem:hover {
+  background: #f0f0f0;
+  color: black;
+}
+
+.contextMenu.dark .gridMenuItem:hover {
+  background: #555;
+  color: white;
+}
+
+/* Information item styles */
+.informationItem {
+  color: #777 !important;
+  font-style: italic;
+  cursor: default !important;
+  pointer-events: none; /* Disable hover effects */
+  user-select: text; /* Allow text selection */
+}
+
+.dark .informationItem {
+  color: #aaa !important;
+}
+
+.informationItem:hover {
+  background: transparent !important;
+  color: #777 !important;
+}
+
+.dark .informationItem:hover {
+  background: transparent !important;
+  color: #aaa !important;
+}

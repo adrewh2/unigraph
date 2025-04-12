@@ -90,9 +90,12 @@ export class EntitiesContainer<
   }
 
   public getAll(
-    ids: EntityIds<T>,
+    ids: EntityIds<T> | T[],
     strict: boolean = true
   ): EntitiesContainer<T, V> {
+    if (ids instanceof Array) {
+      ids = new EntityIds(ids);
+    }
     const container = new EntitiesContainer<T, V>();
     ids.toArray().forEach((id) => {
       if (this.has(id)) {

@@ -276,14 +276,27 @@ export class Graph {
     return this.nodes.filterByType(type);
   }
 
-  getEdgesTo(nodeId: string): Edge[] {
-    return this.edges.filter((edge) => edge.getTarget() === nodeId).toArray();
+  getEdgesTo(nodeIds: NodeId | EntityIds<NodeId>): Edge[] {
+    if (typeof nodeIds === "string") {
+      nodeIds = new EntityIds([nodeIds]);
+    }
+    return this.edges.filter((edge) => nodeIds.has(edge.getTarget())).toArray();
   }
 
-  getEdgesFrom(nodeId: string): Edge[] {
+  getEdgesFrom(nodeIds: NodeId | EntityIds<NodeId>): Edge[] {
+    if (typeof nodeIds === "string") {
+      nodeIds = new EntityIds([nodeIds]);
+    }
+    console.log(
+      this.edges
+        .filter((edge) => {
+          return nodeIds.has(edge.getSource());
+        })
+        .toArray()
+    );
     return this.edges
       .filter((edge) => {
-        return edge.getSource() === nodeId;
+        return nodeIds.has(edge.getSource());
       })
       .toArray();
   }
@@ -317,6 +330,11 @@ export class Graph {
       const isSource = nodeIds.has(edge.getSource());
       const isTarget = nodeIds.has(edge.getTarget());
       if (mode === "both") {
+        if (mode === "both" && nodeIds.size === 1) {
+          console.warn(
+            "getEdgesConnectedToNodes: nodeIds.size is 1 and mode is both, this will not return any edges"
+          );
+        }
         return isSource && isTarget;
       } else if (mode === "from") {
         return isSource;

@@ -4,7 +4,9 @@ import { NodeId } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { flyToNode } from "../../core/webgl/webglHelpers";
 import { bfsQuery, processYasguiResults } from "../../helpers/yasguiHelpers";
+import { Filter } from "../../store/activeFilterStore"; // Add this import
 import { ContextMenuItem } from "./ContextMenu";
+import { getHideMenuItem, getShowSubmenuItems } from "./sharedContextMenuItems"; // Import shared menu items
 
 /**
  * Generate context menu items for a single selected node
@@ -21,7 +23,9 @@ export const getNodeContextMenuItems = (
     startNode?: NodeId;
     endNode?: NodeId;
   }) => void,
-  setShowPathAnalysis: (show: boolean) => void
+  setShowPathAnalysis: (show: boolean) => void,
+  applyFilter: (filter: Filter) => void, // Add this parameter
+  onMenuClose?: () => void // Add this parameter
 ): ContextMenuItem[] => [
   {
     label: "Focus Node",
@@ -48,13 +52,13 @@ export const getNodeContextMenuItems = (
     label: "Select Node",
     action: () => setSelectedNodeId(nodeId),
   },
-  {
-    label: "Hide Node",
-    action: () => {
-      // Implement hide node functionality
-      console.log("Hide node:", nodeId);
-    },
-  },
+
+  // Use shared show submenu
+  getShowSubmenuItems(nodeId, applyFilter, onMenuClose),
+
+  // Use shared hide menu item
+  getHideMenuItem(nodeId, applyFilter, onMenuClose),
+
   {
     label: "Find path",
     submenu: [

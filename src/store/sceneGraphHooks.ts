@@ -1,3 +1,4 @@
+import { ForceGraphManager } from "../core/force-graph/ForceGraphManager";
 import { Compute_Layout } from "../core/layouts/LayoutEngine";
 import {
   ILayoutEngineResult,
@@ -21,12 +22,20 @@ import {
   Layout,
   setCurrentLayoutResult,
 } from "./activeLayoutStore";
-import { SetNodeAndEdgeLegendsForOnlyVisibleEntities } from "./activeLegendConfigStore";
+import {
+  ResetNodeAndEdgeLegends,
+  SetNodeAndEdgeLegendsForOnlyVisibleEntities,
+} from "./activeLegendConfigStore";
 import {
   getCurrentSceneGraph,
+  getForceGraphInstance,
   getLegendMode,
   setActiveFilter,
 } from "./appConfigStore";
+import {
+  getMouseControlMode,
+  toggleMouseControlMode,
+} from "./mouseControlsStore";
 
 export async function applyLayoutAndTriggerAppUpdate(layout: Layout) {
   const sceneGraph = getCurrentSceneGraph();
@@ -164,4 +173,22 @@ export const hideVisibleNodes = (nodeIds: EntityIds<NodeId>) => {
       },
     ],
   });
+};
+
+export const toggleForceGraphMouseControls = () => {
+  toggleMouseControlMode();
+  const forceGraphInstance = getForceGraphInstance();
+  if (forceGraphInstance) {
+    ForceGraphManager.updateMouseControlMode(
+      forceGraphInstance,
+      getMouseControlMode()
+    );
+  }
+};
+
+export const clearFiltersOnAppInstance = () => {
+  const currentSceneGraph = getCurrentSceneGraph();
+  DisplayManager.setAllVisible(currentSceneGraph.getGraph());
+  ResetNodeAndEdgeLegends(currentSceneGraph);
+  setActiveFilter(null);
 };

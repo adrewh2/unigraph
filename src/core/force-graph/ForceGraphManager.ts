@@ -1,5 +1,6 @@
 import { ForceGraph3DInstance } from "3d-force-graph";
 import { Sprite, SpriteMaterial, SRGBColorSpace, TextureLoader } from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { CSS2DObject } from "three/examples/jsm/renderers/CSS2DRenderer";
 import { ForceGraph3dLayoutMode } from "../../AppConfig";
 import { RenderingManager } from "../../controllers/RenderingManager";
@@ -15,7 +16,9 @@ import {
   getSelectedNodeId,
   getSelectedNodeIds,
 } from "../../store/graphInteractionStore";
+import { getMouseControlMode } from "../../store/mouseControlsStore";
 import { NodePositionData } from "../layouts/layoutHelpers";
+import { EntityIds } from "../model/entity/entityIds";
 import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
 import { ImageBoxData } from "../types/ImageBoxData";
@@ -27,6 +30,19 @@ import {
 import { updateVisibleEntitiesInForceGraphInstance } from "./forceGraphHelpers";
 
 export class ForceGraphManager {
+  public static getNodes = (
+    nodeIds: EntityIds<NodeId>,
+    forceGraphInstance: ForceGraph3DInstance
+  ) => {
+    const nodes: any = [];
+    forceGraphInstance.graphData().nodes.forEach((node: any) => {
+      if (nodeIds.has(node.id)) {
+        nodes.push(node);
+      }
+    });
+    return nodes;
+  };
+
   // This function should NOT trigger a simulation restart. Avoid this
   public static refreshForceGraphInstance = (
     forceGraphInstance: ForceGraph3DInstance,
@@ -37,6 +53,10 @@ export class ForceGraphManager {
 
     // Update visible nodes and edges (with smart position handling)
     updateVisibleEntitiesInForceGraphInstance(forceGraphInstance, sceneGraph);
+
+    // Apply current mouse control mode
+    const controlMode = getMouseControlMode();
+    ForceGraphManager.updateMouseControlMode(forceGraphInstance, controlMode);
 
     forceGraphInstance.nodeColor((node) => {
       if (getHoveredNodeIds().has(node.id as NodeId)) {
@@ -83,6 +103,31 @@ export class ForceGraphManager {
         forceGraphInstance,
         sceneGraph.getDisplayConfig().nodePositions!
       );
+    }
+  };
+
+  // Add a method to update mouse control mode
+  public static updateMouseControlMode = (
+    forceGraphInstance: ForceGraph3DInstance,
+    mode: "orbital" | "multiselection"
+  ) => {
+    if (forceGraphInstance) {
+      // Enable/disable node dragging based on mode
+      forceGraphInstance.enableNodeDrag(mode === "orbital");
+
+      const controls = forceGraphInstance.controls() as OrbitControls;
+      if (controls) {
+        if (mode === "multiselection") {
+          console.log("disabled");
+          controls.enableRotate = false;
+          controls.rotateSpeed = 0;
+        } else {
+          controls.enableRotate = true;
+          controls.rotateSpeed = 1;
+        }
+
+        controls.update();
+      }
     }
   };
 
