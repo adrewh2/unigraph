@@ -26,7 +26,6 @@ import ImageGalleryV3 from "./components/imageView/ImageGalleryV3";
 import Workspace from "./components/layout/Workspace";
 import ImageGallery from "./components/lumina/galleryTestbed/ImageGallery";
 import ImageBoxCreator from "./components/lumina/ImageBoxCreator";
-import Lumina from "./components/lumina/Lumina";
 import { IMenuConfigCallbacks, MenuConfig } from "./components/MenuConfig";
 import NodeEditorWizard from "./components/NodeEditorWizard";
 import SceneGraphDetailView from "./components/SceneGraphDetailView";
@@ -172,7 +171,7 @@ const getSimulations = (
 ): ObjectOf<React.JSX.Element> => {
   return {
     Lexical: <LexicalEditorV2 />,
-    "ImageBox Creator": <ImageBoxCreator sceneGraph={sceneGraph} />,
+    ImageBoxCreator: <ImageBoxCreator sceneGraph={sceneGraph} />,
     ImageGalleryV2: <ImageGalleryV2 />,
     // ParticleStickFigure: <ParticleStickFigure />,
     // SampleParticleEffect: <SampleParticleEffect />,
@@ -187,7 +186,7 @@ const getSimulations = (
     ImageGallery: <ImageGallery />,
     // ImageGallery3: <ImageGallery3 />, // for navigating about procreate drawings
     // ImageGallery4: <ImageGallery4 />, // basic shape navigation test
-    Lumina: <Lumina sceneGraph={sceneGraph} />,
+    // Lumina: <Lumina sceneGraph={sceneGraph} />,
     // Unified: <UnifiedForceGraphs />,
     // JsonEditor: <JsonEditor />,
     // JsonForms: <ConfigPanel />,
@@ -317,7 +316,7 @@ const AppContent: React.FC<{
   );
 
   const [selectedSimulation, setSelectedSimulation] =
-    useState<string>("Lumina");
+    useState<string>("AccretionDisk");
 
   useEffect(() => {
     setCurrentSceneGraph(initialSceneGraph);
