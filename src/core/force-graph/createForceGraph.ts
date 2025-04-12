@@ -116,6 +116,10 @@ export const createForceGraph = (
     .onNodeClick((node) => {
       flyToNode(graph, node);
     })
+    .onNodeDrag((node) => {
+      setIsDraggingNode(true);
+      console.log("drag start", node);
+    })
     .onNodeDragEnd((node) => {
       console.log("drag end", node);
       node.fx = node.x;
@@ -273,26 +277,7 @@ export const bindEventsToGraphInstance = (
   });
 
   graph.onNodeHover((node) => {
-    // no state change
-    // if (!node && !sceneGraph.getAppState().hoveredNodes.has(node.id as string)) {
-    //   return;
-    // }
-    setHoveredNodeId(null);
-    if (node) {
-      setHoveredNodeId(node.id as NodeId);
-    }
     setHoveredNodeId(node?.id as NodeId);
-
-    // highlightNodes.clear();
-    // highlightLinks.clear();
-    // if (node) {
-    //   highlightNodes.add(node);
-    //   node.neighbors.forEach((neighbor) => highlightNodes.add(neighbor));
-    //   node.links.forEach((link) => highlightLinks.add(link));
-    // }
-
-    // hoverNode = node || null;
-
     updateHighlight(graph);
   });
 
@@ -303,6 +288,7 @@ export const bindEventsToGraphInstance = (
 
   graph.onNodeDrag((_node) => {
     setIsDraggingNode(true);
+    console.log("drag start", _node);
   });
   graph.onEngineTick(() => {
     // zoomToFit(graph, 100, 1.2);
@@ -373,12 +359,14 @@ export const bindEventsToGraphInstance = (
       if (getIsDraggingNode()) {
         return;
       }
+      console.log("mouse down!");
       const controlMode = getMouseControlMode();
       if (controlMode === "multiselection") {
         // Only start selection box on left click on the background (not on nodes)
         if (
           event.button === 0 &&
-          !(event.target as HTMLElement)?.closest(".node-label")
+          !(event.target as HTMLElement)?.closest(".node-label") &&
+          getHoveredNodeIds().size === 0
         ) {
           isDragging = true;
           startSelectionBox(event.clientX, event.clientY, event.shiftKey);
