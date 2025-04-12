@@ -202,6 +202,28 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     }
   }, []);
 
+  // Custom node click handler that sets the selected node
+  const handleEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.stopPropagation();
+    selectionChangeRef.current = true;
+
+    // Set this node as the selected node in the global store
+    setSelectedEdgeId(edge.id as EdgeId);
+
+    // Open the node details panel
+    // setRightActiveSection("node-details");
+
+    // Update the ReactFlow nodes directly to show selection immediately
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setEdges((currentEdges) =>
+        currentEdges.map((n) => ({
+          ...n,
+          selected: n.id === edge.id,
+        }))
+      );
+    }
+  }, []);
+
   // Unified handler for node context menu events (single or multi)
   const handleNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {
@@ -272,14 +294,14 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   // Handle edge hover
   const handleEdgeMouseEnter = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
-      console.log("Edge mouse enter:", edge.id);
+      // console.log("Edge mouse enter:", edge.id);
       setHoveredEdgeId(edge.id as EdgeId);
     },
     []
   );
 
   const handleEdgeMouseLeave = useCallback(() => {
-    console.log("Edge mouse leave");
+    // console.log("Edge mouse leave");
     setHoveredEdgeId(null);
   }, []);
 
@@ -509,6 +531,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           onNodeMouseEnter={handleNodeMouseEnter}
           onNodeMouseLeave={handleNodeMouseLeave}
           onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
           onSelectionChange={handleSelectionChange}
           onNodeDoubleClick={handleNodeDoubleClick}
           onConnect={handleConnect} // Add the connection handler
