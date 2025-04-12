@@ -68,13 +68,14 @@
 
 .layouts-list {
   margin-top: 8px; /* Reduce spacing */
+  padding: 0; /* Remove horizontal padding */
 }
 
 .layout-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px; /* Reduce item padding */
+  padding: 8px 4px; /* Reduce horizontal padding */
   border-bottom: 1px solid #eee;
 }
 

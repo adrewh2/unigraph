@@ -104,6 +104,7 @@
   flex-direction: column;
   overflow: hidden; /* Prevent scrollbar at this level */
   min-height: 0; /* Fix nested flexbox scrolling issues */
+  padding: 0; /* Remove padding */
 }
 
 .project-error {
@@ -131,7 +132,7 @@
   border-radius: 4px;
   background-color: rgba(255, 255, 255, 0.03);
   position: relative; /* For context menus */
-  padding: 4px; /* Add padding for better spacing */
+  padding: 0; /* Remove horizontal padding */
 }
 
 .projects-loading,
@@ -176,7 +177,7 @@
 .project-item {
   display: flex;
   align-items: center;
-  padding: 8px; /* Reduce item padding */
+  padding: 4px 4px; /* Reduce horizontal padding */
   border-bottom: 1px solid #31415e;
   cursor: pointer;
   transition: background-color 0.2s;
