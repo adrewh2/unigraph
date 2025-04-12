@@ -61,10 +61,9 @@ let layoutWorker: Worker | null = null;
 function getLayoutWorker(): Worker {
   if (!layoutWorker) {
     try {
-      // Use the worker-loader syntax that webpack understands
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const LayoutWorker = require("./LayoutWorker.ts");
-      layoutWorker = new LayoutWorker() as Worker;
+      layoutWorker = new Worker(new URL("./LayoutWorker.ts", import.meta.url), {
+        type: "module",
+      });
 
       // Set up message handler
       layoutWorker!.onmessage = (e: MessageEvent) => {

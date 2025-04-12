@@ -10,6 +10,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
+    module: true, // Ensure the output is in ES module format
   },
   devtool: "source-map",
   module: {
@@ -65,6 +66,16 @@ module.exports = {
       },
       // Handle Web Workers
       {
+        test: /\.worker\.(js|ts)$/, // Support both .worker.js and .worker.ts
+        use: {
+          loader: "worker-loader",
+          options: {
+            inline: "no-fallback",
+          },
+        },
+      },
+      // Handle Web Workers
+      {
         test: /\.worker\.ts$/,
         use: {
           loader: "worker-loader",
@@ -81,6 +92,9 @@ module.exports = {
     fallback: {
       path: require.resolve("path-browserify"),
     },
+  },
+  experiments: {
+    outputModule: true, // Enable support for outputting ES modules
   },
   plugins: [
     new HtmlWebpackPlugin({
