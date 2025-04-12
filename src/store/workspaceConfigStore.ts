@@ -15,7 +15,7 @@ export interface SectionWidthConfig {
 
 // Default widths for specific sections
 const defaultSectionWidths: SectionWidthConfig = {
-  projects: 400, // Wider default for Projects section
+  projects: 300, // Wider default for Projects section
   layouts: 250,
   filters: 250,
   analysis: 250,
