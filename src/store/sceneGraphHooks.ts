@@ -5,6 +5,10 @@ import {
   LayoutEngineOptionLabels,
   PresetLayoutType,
 } from "../core/layouts/layoutEngineTypes";
+import {
+  centerPositionsAroundPoint,
+  getCenterPointOfNodes,
+} from "../core/layouts/layoutHelpers";
 import { DisplayManager } from "../core/model/DisplayManager";
 import { EntityIds } from "../core/model/entity/entityIds";
 import { NodeId } from "../core/model/Node";
@@ -67,6 +71,15 @@ export async function computeLayoutAndTriggerAppUpdate(
     // sceneGraph.setNodePositions(output.positions); //@todo: see if i can remove this
     if (nodeSelection && nodeSelection.size > 0) {
       const currentNodePositions = getCurrentLayoutResult()?.positions || {};
+
+      const currentNodeSelectionCenterPoint = getCenterPointOfNodes(
+        sceneGraph.getNodes().getAll(nodeSelection)
+      );
+      output.positions = centerPositionsAroundPoint(
+        output.positions,
+        currentNodeSelectionCenterPoint
+      );
+
       for (const [key, position] of Object.entries(output.positions)) {
         currentNodePositions[key] = position;
       }
