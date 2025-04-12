@@ -162,13 +162,13 @@ export const createForceGraph = (
           .getNode(id as NodeId)
           .setPosition({
             x: pos.x,
-            y: pos.y,
+            y: -pos.y,
             z: pos.z,
           });
 
         sceneGraph.getDisplayConfig().nodePositions![id as NodeId] = {
           x: pos.x,
-          y: pos.y,
+          y: -pos.y,
           z: pos.z,
         };
       });
