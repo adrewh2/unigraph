@@ -166,10 +166,6 @@ export class ForceGraphManager {
         node.fz = node.z;
       }
     });
-    forceGraph3dInstance.graphData({
-      nodes,
-      links: forceGraph3dInstance.graphData().links,
-    });
 
     forceGraph3dInstance.refresh();
   };

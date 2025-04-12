@@ -139,8 +139,8 @@ export const createForceGraph = (
         ForceGraphManager.updateNodePositions(graph, forceGraphPositionData);
       }
     })
-    .onNodeDragEnd((node, translate: any) => {
-      console.log("translate end is ", translate);
+    .onNodeDragEnd((node, _translate: any) => {
+      // console.log("translate end is ", translate);
       const selectedNodeIds = getSelectedNodeIds();
       let positions: NodePositionData = {};
       if (selectedNodeIds.has(node.id as NodeId) && selectedNodeIds.size > 1) {
@@ -150,9 +150,9 @@ export const createForceGraph = (
         );
       } else {
         positions[node.id as NodeId] = {
-          x: node.fx! ?? node.x,
-          y: node.fy! ?? node.y,
-          z: node.fz! ?? node.z,
+          x: node.fx! ?? node.x ?? 0,
+          y: node.fy! ?? node.y ?? 0,
+          z: node.fz! ?? node.z ?? 0,
         };
       }
 
