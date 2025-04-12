@@ -202,6 +202,10 @@ export class EntitiesContainer<
     );
   }
 
+  public shallowCopy(): EntitiesContainer<T, V> {
+    return new EntitiesContainer<T, V>(this.entities);
+  }
+
   public getDatas(): any[] {
     return this.entities.map((entity) => entity.getData());
   }

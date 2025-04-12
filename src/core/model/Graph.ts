@@ -14,19 +14,35 @@ export type EdgeIds = EntityIds<EdgeId>;
 export type NodesContainer = EntitiesContainer<NodeId, Node>;
 export type EdgesContainer = EntitiesContainer<EdgeId, Edge>;
 
+type GraphArgs = {
+  strict?: boolean;
+  nodes?: NodesContainer;
+  edges?: EdgesContainer;
+};
+
 export class Graph {
   private nodes: NodesContainer;
   private edges: EdgesContainer;
   private strict: boolean = false; // if true, do not implicitly create nodes when adding edges
 
-  constructor(strict: boolean = false) {
-    this.nodes = new EntitiesContainer();
-    this.edges = new EntitiesContainer();
-    this.strict = strict;
+  constructor(args?: GraphArgs) {
+    this.nodes = args?.nodes ?? new EntitiesContainer();
+    this.edges = args?.edges ?? new EntitiesContainer();
+    this.strict = args?.strict !== undefined ? args.strict : false;
   }
 
   setStrictMode(strict: boolean): void {
     this.strict = strict;
+  }
+
+  public getFilteredGraph(nodeIds: NodeIds): Graph {
+    const nodes = this.nodes.filter((node) => nodeIds.has(node.getId()));
+    const edges = this.getAllEdgesConnectingBetween(nodeIds);
+    return new Graph({
+      nodes,
+      edges,
+      strict: this.strict,
+    });
   }
 
   static createNode(args: NodeDataArgs): Node {

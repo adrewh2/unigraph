@@ -10,7 +10,11 @@ import { EntityIds } from "../core/model/entity/entityIds";
 import { NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { Filter } from "./activeFilterStore";
-import { Layout, setCurrentLayoutResult } from "./activeLayoutStore";
+import {
+  getCurrentLayoutResult,
+  Layout,
+  setCurrentLayoutResult,
+} from "./activeLayoutStore";
 import { SetNodeAndEdgeLegendsForOnlyVisibleEntities } from "./activeLegendConfigStore";
 import {
   getCurrentSceneGraph,
@@ -35,7 +39,8 @@ export async function applyLayoutAndTriggerAppUpdate(layout: Layout) {
 
 export async function computeLayoutAndTriggerAppUpdate(
   sceneGraph: SceneGraph,
-  layout: LayoutEngineOption
+  layout: LayoutEngineOption,
+  nodeSelection?: EntityIds<NodeId>
 ): Promise<ILayoutEngineResult | null> {
   if (
     layout != null &&
@@ -53,18 +58,35 @@ export async function computeLayoutAndTriggerAppUpdate(
     );
     return null;
   }
-  const output = await Compute_Layout(sceneGraph, layout as LayoutEngineOption);
+  const output = await Compute_Layout(
+    sceneGraph,
+    layout as LayoutEngineOption,
+    nodeSelection
+  );
   if (output && Object.keys(output.positions).length > 0) {
-    sceneGraph.setNodePositions(output.positions);
+    // sceneGraph.setNodePositions(output.positions); //@todo: see if i can remove this
+    if (nodeSelection && nodeSelection.size > 0) {
+      const currentNodePositions = getCurrentLayoutResult()?.positions || {};
+      for (const [key, position] of Object.entries(output.positions)) {
+        currentNodePositions[key] = position;
+      }
+      output.positions = currentNodePositions;
+    }
+
     setCurrentLayoutResult(output);
   }
   return output;
 }
 
 export async function computeLayoutAndTriggerUpdateForCurrentSceneGraph(
-  layout: LayoutEngineOption
+  layout: LayoutEngineOption,
+  nodeSelection?: EntityIds<NodeId>
 ): Promise<ILayoutEngineResult | null> {
-  return computeLayoutAndTriggerAppUpdate(getCurrentSceneGraph(), layout);
+  return computeLayoutAndTriggerAppUpdate(
+    getCurrentSceneGraph(),
+    layout,
+    nodeSelection
+  );
 }
 
 // export const activeViewFitView = () => {
