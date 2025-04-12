@@ -37,7 +37,7 @@ import {
   getActiveSection,
   setRightActiveSection,
 } from "../../store/workspaceConfigStore";
-import { ILayoutEngineResult } from "../layouts/LayoutEngine";
+import { ILayoutEngineResult } from "../layouts/layoutEngineTypes";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EdgeId } from "../model/Edge";
 import { EntityIds } from "../model/entity/entityIds";

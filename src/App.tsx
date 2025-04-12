@@ -63,12 +63,12 @@ import {
 import { syncMissingNodesAndEdgesInForceGraph } from "./core/force-graph/forceGraphHelpers";
 import { ForceGraphManager } from "./core/force-graph/ForceGraphManager";
 import { enableZoomAndPanOnSvg } from "./core/graphviz/appHelpers";
+import { Compute_Layout } from "./core/layouts/LayoutEngine";
 import {
-  Compute_Layout,
   LayoutEngineOption,
   LayoutEngineOptionLabels,
   PresetLayoutType,
-} from "./core/layouts/LayoutEngine";
+} from "./core/layouts/layoutEngineTypes";
 import { NodePositionData } from "./core/layouts/layoutHelpers";
 import { DisplayManager } from "./core/model/DisplayManager";
 import { EdgeId } from "./core/model/Edge";

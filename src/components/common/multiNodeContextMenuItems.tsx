@@ -1,4 +1,4 @@
-import { LayoutEngineOptionLabels } from "../../core/layouts/LayoutEngine";
+import { LayoutEngineOptionLabels } from "../../core/layouts/layoutEngineTypes";
 import { EntityIds } from "../../core/model/entity/entityIds";
 import { NodeId } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";

@@ -10,7 +10,6 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
-    module: true, // Ensure the output is in ES module format
   },
   devtool: "source-map",
   module: {
@@ -92,9 +91,6 @@ module.exports = {
     fallback: {
       path: require.resolve("path-browserify"),
     },
-  },
-  experiments: {
-    outputModule: true, // Enable support for outputting ES modules
   },
   plugins: [
     new HtmlWebpackPlugin({

@@ -1,10 +1,10 @@
+import { Compute_Layout } from "../core/layouts/LayoutEngine";
 import {
-  Compute_Layout,
   ILayoutEngineResult,
   LayoutEngineOption,
   LayoutEngineOptionLabels,
   PresetLayoutType,
-} from "../core/layouts/LayoutEngine";
+} from "../core/layouts/layoutEngineTypes";
 import { DisplayManager } from "../core/model/DisplayManager";
 import { EntityIds } from "../core/model/entity/entityIds";
 import { NodeId } from "../core/model/Node";

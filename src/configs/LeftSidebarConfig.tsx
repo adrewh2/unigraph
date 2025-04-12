@@ -19,7 +19,7 @@ import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutEngine";
 import {
   LayoutEngineOption,
   PresetLayoutType,
-} from "../core/layouts/LayoutEngine";
+} from "../core/layouts/layoutEngineTypes";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { extractPositionsFromNodes } from "../data/graphs/blobMesh";
 import styles from "../Sidebar.module.css";
