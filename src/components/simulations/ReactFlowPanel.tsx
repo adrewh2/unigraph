@@ -27,9 +27,13 @@ import useAppConfigStore, {
 } from "../../store/appConfigStore";
 import { useDocumentStore } from "../../store/documentStore";
 import useGraphInteractionStore, {
+  getHoveredEdgeIds,
+  getSelectedEdgeIds,
   getSelectedNodeId,
   getSelectedNodeIds,
+  setHoveredEdgeId,
   setHoveredNodeId,
+  setSelectedEdgeId,
   setSelectedNodeId,
   setSelectedNodeIds,
 } from "../../store/graphInteractionStore";
@@ -54,6 +58,10 @@ interface ReactFlowPanelProps {
   onNodesContextMenu?: (
     event: React.MouseEvent,
     nodeIds: EntityIds<NodeId>
+  ) => void; // Unified context menu handler
+  onEdgesContextMenu?: (
+    event: React.MouseEvent,
+    edgeIds: EntityIds<EdgeId>
   ) => void; // Unified context menu handler
   onBackgroundContextMenu?: (
     event: React.MouseEvent<Element, MouseEvent>
@@ -111,6 +119,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   edges: initialEdges,
   onLoad,
   onNodesContextMenu, // Just need the unified prop
+  onEdgesContextMenu, // Just need the unified prop
   onBackgroundContextMenu,
   onNodeDragStop,
 }) => {
@@ -258,6 +267,44 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     setHoveredNodeId(null);
   }, []);
 
+  // Handle edge hover
+  const handleEdgeMouseEnter = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      setHoveredEdgeId(edge.id as EdgeId);
+    },
+    []
+  );
+
+  const handleEdgeMouseLeave = useCallback(() => {
+    setHoveredEdgeId(null);
+  }, []);
+
+  // Unified handler for edge context menu events
+  const handleEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      // Prevent default browser context menu
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Set the right-clicked edge as selected
+      setSelectedEdgeId(edge.id as EdgeId);
+
+      // If we have multiple nodes selected and the right-clicked node is part of that selection
+      if (selectedEdgeIds.size > 1 && selectedEdgeIds.has(edge.id as EdgeId)) {
+        // Pass all selected nodes to the handler
+        if (onEdgesContextMenu) {
+          onEdgesContextMenu(event, selectedEdgeIds);
+        }
+      } else {
+        // For a single node, create an EntityIds with just this node
+        if (onEdgesContextMenu) {
+          onEdgesContextMenu(event, new EntityIds([edge.id as EdgeId]));
+        }
+      }
+    },
+    [onEdgesContextMenu, selectedEdgeIds]
+  );
+
   // Handle background click to clear selection - update this to properly clear all selections
   const handlePaneClick = useCallback(() => {
     // Clear selection in global store for both single and multi-select
@@ -384,6 +431,30 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     []
   );
 
+  useEffect(() => {
+    // Update the ReactFlow edges directly to show hover and selection state
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setEdges((currentEdges) =>
+        currentEdges.map((e) => ({
+          ...e,
+          style: {
+            ...e.style,
+            stroke: getHoveredEdgeIds().has(e.id as EdgeId)
+              ? MOUSE_HOVERED_NODE_COLOR
+              : getSelectedEdgeIds().has(e.id as EdgeId)
+                ? SELECTED_NODE_COLOR
+                : e.style?.stroke || "black", // Default stroke color
+            strokeWidth:
+              getHoveredEdgeIds().has(e.id as EdgeId) ||
+              getSelectedEdgeIds().has(e.id as EdgeId)
+                ? 3
+                : 1, // Thicker stroke for hover/selection
+          },
+        }))
+      );
+    }
+  }, []);
+
   return (
     <div
       style={{
@@ -428,6 +499,9 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
           onSelectionChange={handleSelectionChange}
           onNodeDoubleClick={handleNodeDoubleClick}
           onConnect={handleConnect} // Add the connection handler
+          onEdgeMouseEnter={handleEdgeMouseEnter} // Add edge hover handler
+          onEdgeMouseLeave={handleEdgeMouseLeave} // Add edge hover leave handler
+          onEdgeContextMenu={handleEdgeContextMenu} // Add edge context menu handler
           fitView={true}
           minZoom={0.1}
           maxZoom={500}

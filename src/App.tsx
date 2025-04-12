@@ -42,6 +42,7 @@ import { getMultiNodeContextMenuItems } from "./components/common/multiNodeConte
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
 import SelectionBox from "./components/common/SelectionBox";
 import { getSaveAsNewFilterMenuItem } from "./components/common/sharedContextMenuItems";
+import { getEdgeContextMenuItems } from "./components/common/singleEdgeContextMenuItems";
 import { getNodeContextMenuItems } from "./components/common/singleNodeContextMenuItems";
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
@@ -139,6 +140,7 @@ import {
   setHoveredEdgeIds,
   setHoveredNodeId,
   setHoveredNodeIds,
+  setSelectedEdgeId,
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
 import { useMouseControlsStore } from "./store/mouseControlsStore";
@@ -504,6 +506,7 @@ const AppContent: React.FC<{
     x: number;
     y: number;
     nodeIds?: NodeId[];
+    edgeIds?: EdgeId[];
   } | null>(null);
 
   const [isNodeEditorOpen, setIsNodeEditorOpen] = useState(false);
@@ -520,6 +523,22 @@ const AppContent: React.FC<{
         x: event.clientX,
         y: event.clientY,
         nodeIds: nodeIds.toArray(),
+      });
+    },
+    []
+  );
+
+  const handleEdgesRightClick = useCallback(
+    (event: MouseEvent | React.MouseEvent, edgeIds: EntityIds<EdgeId>) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (edgeIds.size === 0) return;
+
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        edgeIds: edgeIds.toArray(),
       });
     },
     []
@@ -587,6 +606,7 @@ const AppContent: React.FC<{
       newInstance,
       currentSceneGraph,
       handleNodesRightClick,
+      handleEdgesRightClick,
       handleBackgroundRightClick
     );
 
@@ -602,6 +622,7 @@ const AppContent: React.FC<{
     forceGraph3dOptions.layout,
     setForceGraphInstance,
     handleNodesRightClick,
+    handleEdgesRightClick,
     handleBackgroundRightClick,
   ]);
 
@@ -1200,6 +1221,9 @@ const AppContent: React.FC<{
           onNodesContextMenu={(event, nodeIds) =>
             handleNodesRightClick(event, nodeIds)
           }
+          onEdgesContextMenu={(event, edgeIds) =>
+            handleEdgesRightClick(event, edgeIds)
+          }
           onBackgroundContextMenu={(event) => handleBackgroundRightClick(event)}
           onNodeDragStop={(event, node, nodes) => {
             const nodesToUpdate = [...nodes, node];
@@ -1553,19 +1577,30 @@ const AppContent: React.FC<{
 
   // Update the existing getContextMenuItems function to handle multi-node selection
   const getContextMenuItems = useCallback(
-    (nodeIds?: NodeId[]): ContextMenuItem[] => {
-      if (!nodeIds || nodeIds.length === 0) {
+    (nodeIds?: NodeId[], edgeIds?: EdgeId[]): ContextMenuItem[] => {
+      const nodesSelected = nodeIds && nodeIds.length > 0;
+      const edgesSelected = edgeIds && edgeIds.length > 0;
+      if (!nodesSelected && !edgesSelected) {
         return getBackgroundRightClickContextMenuItems();
-      } else if (nodeIds.length === 1) {
+      } else if (nodesSelected && nodeIds.length === 1) {
         return getNodeContextMenuItemsWithAppContext(nodeIds[0]);
-      } else {
+      } else if (nodesSelected && nodeIds.length > 1) {
         return getMultiNodeContextMenuItemsWithAppContext(nodeIds);
+      } else if (edgesSelected && edgeIds.length > 0) {
+        return getEdgeContextMenuItems(
+          edgeIds[0],
+          currentSceneGraph,
+          setSelectedEdgeId,
+          () => {}
+        );
       }
+      return [];
     },
     [
       getBackgroundRightClickContextMenuItems,
       getNodeContextMenuItemsWithAppContext,
       getMultiNodeContextMenuItemsWithAppContext,
+      currentSceneGraph,
     ]
   );
 
@@ -1778,7 +1813,10 @@ const AppContent: React.FC<{
           <ContextMenu
             x={contextMenu.x}
             y={contextMenu.y}
-            items={getContextMenuItems(contextMenu.nodeIds)}
+            items={getContextMenuItems(
+              contextMenu.nodeIds,
+              contextMenu.edgeIds
+            )}
             onClose={() => setContextMenu(null)}
             isDarkMode={isDarkMode}
           />
