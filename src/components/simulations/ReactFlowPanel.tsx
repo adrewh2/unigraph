@@ -24,11 +24,10 @@ import { NodeId } from "../../core/model/Node";
 import { EntityIds } from "../../core/model/entity/entityIds";
 import useAppConfigStore, {
   getCurrentSceneGraph,
+  getLegendMode,
 } from "../../store/appConfigStore";
 import { useDocumentStore } from "../../store/documentStore";
 import useGraphInteractionStore, {
-  getHoveredEdgeIds,
-  getSelectedEdgeIds,
   getSelectedNodeId,
   getSelectedNodeIds,
   setHoveredEdgeId,
@@ -47,7 +46,9 @@ import useWorkspaceConfigStore, {
 import CustomNode from "../CustomNode";
 
 import "@xyflow/react/dist/style.css";
+import { RenderingManager } from "../../controllers/RenderingManager";
 import { EdgeId } from "../../core/model/Edge";
+import { getEdgeLegendConfig } from "../../store/activeLegendConfigStore";
 import ResizerNode from "../resizerNode";
 
 // Remove the custom Node interface that was causing the type conflict
@@ -127,7 +128,8 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const selectionChangeRef = useRef(false);
 
-  const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
+  const { selectedNodeIds, selectedEdgeIds, hoveredEdgeIds } =
+    useGraphInteractionStore();
   const { getActiveSection } = useWorkspaceConfigStore();
   const { setActiveDocument } = useDocumentStore();
   const { setActiveView, activeView } = useAppConfigStore();
@@ -270,12 +272,14 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
   // Handle edge hover
   const handleEdgeMouseEnter = useCallback(
     (event: React.MouseEvent, edge: Edge) => {
+      console.log("Edge mouse enter:", edge.id);
       setHoveredEdgeId(edge.id as EdgeId);
     },
     []
   );
 
   const handleEdgeMouseLeave = useCallback(() => {
+    console.log("Edge mouse leave");
     setHoveredEdgeId(null);
   }, []);
 
@@ -431,29 +435,38 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     []
   );
 
+  // Add this effect to update edge styling when hover state changes
   useEffect(() => {
     // Update the ReactFlow edges directly to show hover and selection state
     if (reactFlowInstance.current) {
       reactFlowInstance.current.setEdges((currentEdges) =>
-        currentEdges.map((e) => ({
-          ...e,
-          style: {
-            ...e.style,
-            stroke: getHoveredEdgeIds().has(e.id as EdgeId)
-              ? MOUSE_HOVERED_NODE_COLOR
-              : getSelectedEdgeIds().has(e.id as EdgeId)
-                ? SELECTED_NODE_COLOR
-                : e.style?.stroke || "black", // Default stroke color
-            strokeWidth:
-              getHoveredEdgeIds().has(e.id as EdgeId) ||
-              getSelectedEdgeIds().has(e.id as EdgeId)
-                ? 3
-                : 1, // Thicker stroke for hover/selection
-          },
-        }))
+        currentEdges.map((e) => {
+          const isHovered = hoveredEdgeIds.has(e.id as EdgeId);
+          const isSelected = selectedEdgeIds.has(e.id as EdgeId);
+
+          return {
+            ...e,
+            style: {
+              ...e.style,
+              stroke: isHovered
+                ? MOUSE_HOVERED_NODE_COLOR
+                : isSelected
+                  ? SELECTED_NODE_COLOR
+                  : RenderingManager.getColor(
+                      getCurrentSceneGraph()
+                        .getGraph()
+                        .getEdge(e.id as EdgeId),
+                      getEdgeLegendConfig(),
+                      getLegendMode()
+                    ),
+              strokeWidth:
+                isHovered || isSelected ? 3 : reactFlowConfig.edgeStrokeWidth, // Thicker stroke for hover/selection
+            },
+          };
+        })
       );
     }
-  }, []);
+  }, [hoveredEdgeIds, selectedEdgeIds, reactFlowConfig.edgeStrokeWidth]);
 
   return (
     <div
