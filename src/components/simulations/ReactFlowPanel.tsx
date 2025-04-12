@@ -187,6 +187,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
 
     // Set this node as the selected node in the global store
     setSelectedNodeId(node.id as NodeId);
+    setSelectedEdgeId(null);
 
     // Open the node details panel
     // setRightActiveSection("node-details");
@@ -202,23 +203,30 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     }
   }, []);
 
-  // Custom node click handler that sets the selected node
+  // Custom edge click handler that sets the selected edge and deselects nodes
   const handleEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
     event.stopPropagation();
     selectionChangeRef.current = true;
 
-    // Set this node as the selected node in the global store
+    // Set this edge as the selected edge in the global store
     setSelectedEdgeId(edge.id as EdgeId);
 
-    // Open the node details panel
-    // setRightActiveSection("node-details");
+    // Clear node selection in the global store
+    setSelectedNodeId(null);
 
-    // Update the ReactFlow nodes directly to show selection immediately
+    // Update the ReactFlow nodes and edges directly to reflect selection state
     if (reactFlowInstance.current) {
-      reactFlowInstance.current.setEdges((currentEdges) =>
-        currentEdges.map((n) => ({
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
           ...n,
-          selected: n.id === edge.id,
+          selected: false, // Deselect all nodes
+        }))
+      );
+
+      reactFlowInstance.current.setEdges((currentEdges) =>
+        currentEdges.map((e) => ({
+          ...e,
+          selected: e.id === edge.id, // Select only the clicked edge
         }))
       );
     }
@@ -336,6 +344,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     // Clear selection in global store for both single and multi-select
     setSelectedNodeId(null);
     setSelectedNodeIds(new EntityIds([]));
+    setSelectedEdgeId(null);
 
     // Update the ReactFlow nodes directly to clear selection state
     if (reactFlowInstance.current) {
