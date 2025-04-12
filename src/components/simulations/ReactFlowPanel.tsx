@@ -465,9 +465,26 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
         currentEdges.map((e) => {
           const isHovered = hoveredEdgeIds.has(e.id as EdgeId);
           const isSelected = selectedEdgeIds.has(e.id as EdgeId);
+          const edge = getCurrentSceneGraph()
+            .getGraph()
+            .getEdge(e.id as EdgeId);
 
           return {
             ...e,
+            label: reactFlowConfig.showEdgeLabels
+              ? edge.getType() || edge.getId() || "edge"
+              : undefined,
+            labelStyle: reactFlowConfig.showEdgeLabels
+              ? {
+                  fontSize: reactFlowConfig.edgeFontSize,
+                  fill: RenderingManager.getColor(
+                    edge,
+                    getEdgeLegendConfig(),
+                    getLegendMode()
+                  ), //"black",
+                  fontWeight: isHovered || isSelected ? "bold" : "normal",
+                }
+              : undefined,
             style: {
               ...e.style,
               stroke: isHovered
@@ -475,20 +492,56 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
                 : isSelected
                   ? SELECTED_NODE_COLOR
                   : RenderingManager.getColor(
-                      getCurrentSceneGraph()
-                        .getGraph()
-                        .getEdge(e.id as EdgeId),
+                      edge,
                       getEdgeLegendConfig(),
                       getLegendMode()
                     ),
               strokeWidth:
-                isHovered || isSelected ? 3 : reactFlowConfig.edgeStrokeWidth, // Thicker stroke for hover/selection
+                isHovered || isSelected ? 3 : reactFlowConfig.edgeStrokeWidth,
             },
           };
         })
       );
     }
-  }, [hoveredEdgeIds, selectedEdgeIds, reactFlowConfig.edgeStrokeWidth]);
+  }, [
+    hoveredEdgeIds,
+    selectedEdgeIds,
+    reactFlowConfig.edgeStrokeWidth,
+    reactFlowConfig.edgeFontSize,
+    reactFlowConfig.showEdgeLabels, // React to changes in showEdgeLabels
+  ]);
+
+  // Update edges when initialEdges or showEdgeLabels change
+  useEffect(() => {
+    const processedEdges = initialEdges.map((edge) => {
+      const originalEdge = getCurrentSceneGraph()
+        .getGraph()
+        .getEdge(edge.id as EdgeId);
+      return {
+        ...edge,
+        label: reactFlowConfig.showEdgeLabels
+          ? originalEdge.getType() || originalEdge.getId() || "edge"
+          : undefined,
+        labelStyle: reactFlowConfig.showEdgeLabels
+          ? {
+              fontSize: reactFlowConfig.edgeFontSize,
+              fill: RenderingManager.getColor(
+                originalEdge,
+                getEdgeLegendConfig(),
+                getLegendMode()
+              ), //"black",
+            }
+          : undefined,
+      };
+    });
+
+    setEdges(processedEdges);
+  }, [
+    initialEdges,
+    setEdges,
+    reactFlowConfig.showEdgeLabels,
+    reactFlowConfig.edgeFontSize,
+  ]);
 
   return (
     <div
