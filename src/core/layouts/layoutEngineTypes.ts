@@ -15,9 +15,9 @@ export type LayoutEngineOption =
   | PresetLayoutType;
 
 export const LayoutEngineOptionLabels = [
-  ...Object.values(GraphvizLayoutType),
-  ...Object.values(GraphologyLayoutType),
   ...Object.values(CustomLayoutType),
+  ...Object.values(GraphologyLayoutType),
+  ...Object.values(GraphvizLayoutType),
   ...Object.values(PresetLayoutType),
 ];
 

@@ -7,12 +7,14 @@ import {
 } from "../core/layouts/layoutEngineTypes";
 import {
   centerPositionsAroundPoint,
-  getCenterPointOfNodes,
+  filterNodePositionsToSelection,
 } from "../core/layouts/layoutHelpers";
 import { DisplayManager } from "../core/model/DisplayManager";
 import { EntityIds } from "../core/model/entity/entityIds";
 import { NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
+import { extractPositionsFromNodes } from "../data/graphs/blobMesh";
+import { getCenterPointOfNodePositionData } from "./../core/layouts/layoutHelpers";
 import { Filter } from "./activeFilterStore";
 import {
   getCurrentLayoutResult,
@@ -70,11 +72,17 @@ export async function computeLayoutAndTriggerAppUpdate(
   if (output && Object.keys(output.positions).length > 0) {
     // sceneGraph.setNodePositions(output.positions); //@todo: see if i can remove this
     if (nodeSelection && nodeSelection.size > 0) {
-      const currentNodePositions = getCurrentLayoutResult()?.positions || {};
+      const currentNodePositions =
+        getCurrentLayoutResult()?.positions ||
+        extractPositionsFromNodes(sceneGraph);
 
-      const currentNodeSelectionCenterPoint = getCenterPointOfNodes(
-        sceneGraph.getNodes().getAll(nodeSelection)
+      const filteredPositions = filterNodePositionsToSelection(
+        currentNodePositions,
+        nodeSelection.toArray()
       );
+
+      const currentNodeSelectionCenterPoint =
+        getCenterPointOfNodePositionData(filteredPositions);
       output.positions = centerPositionsAroundPoint(
         output.positions,
         currentNodeSelectionCenterPoint

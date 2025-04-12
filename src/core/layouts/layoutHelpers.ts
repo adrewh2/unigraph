@@ -187,6 +187,37 @@ export const getCenterPointOfNodes = (
   return { x: centerX, y: centerY, z: centerZ };
 };
 
+export const getCenterPointOfNodePositionData = (
+  positions: NodePositionData
+): { x: number; y: number; z?: number } => {
+  let sumX = 0,
+    sumY = 0,
+    sumZ = 0;
+  const nodes = Object.values(positions);
+  nodes.forEach((pos) => {
+    sumX += pos.x;
+    sumY += pos.y;
+    sumZ += pos.z ?? 0;
+  });
+  const centerX = sumX / nodes.length;
+  const centerY = sumY / nodes.length;
+  const centerZ = sumZ / nodes.length;
+  return { x: centerX, y: centerY, z: centerZ };
+};
+
+export const filterNodePositionsToSelection = (
+  positions: NodePositionData,
+  selectedNodeIds: NodeId[]
+): NodePositionData => {
+  const filtered: NodePositionData = {};
+  Object.entries(positions).forEach(([id, pos]) => {
+    if (selectedNodeIds.includes(id as NodeId)) {
+      filtered[id] = pos;
+    }
+  });
+  return filtered;
+};
+
 export function centerPositions(positions: NodePositionData): NodePositionData {
   // Calculate center of graph
   let sumX = 0,
