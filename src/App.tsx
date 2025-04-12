@@ -1318,7 +1318,8 @@ const AppContent: React.FC<{
       ForceGraphManager.refreshForceGraphInstance(
         forceGraphInstance,
         currentSceneGraph,
-        forceGraph3dOptions.layout
+        forceGraph3dOptions.layout,
+        currentLayoutResult?.positions
       );
     }
   }, [
@@ -1329,6 +1330,7 @@ const AppContent: React.FC<{
     activeFilter,
     currentSceneGraph,
     forceGraphInstance,
+    currentLayoutResult,
     // selectedNodeIds, //not sure why I had these here to begin with. can prob remove now
     // selectedEdgeIds,
   ]);

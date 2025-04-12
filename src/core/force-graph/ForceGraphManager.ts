@@ -47,12 +47,18 @@ export class ForceGraphManager {
   public static refreshForceGraphInstance = (
     forceGraphInstance: ForceGraph3DInstance,
     sceneGraph: SceneGraph,
-    layout: ForceGraph3dLayoutMode = "Physics"
+    layout: ForceGraph3dLayoutMode = "Physics",
+    layoutPositions?: NodePositionData
   ) => {
     console.log("Refreshing existing force graph instance...");
 
     // Update visible nodes and edges (with smart position handling)
-    updateVisibleEntitiesInForceGraphInstance(forceGraphInstance, sceneGraph);
+    updateVisibleEntitiesInForceGraphInstance(
+      forceGraphInstance,
+      sceneGraph,
+      layout,
+      layoutPositions
+    );
 
     // Apply current mouse control mode
     const controlMode = getMouseControlMode();
@@ -143,6 +149,29 @@ export class ForceGraphManager {
         node.fz = positions[node.id].z ?? 0;
       }
     });
+  };
+
+  public static updateNodePositions = (
+    forceGraph3dInstance: ForceGraph3DInstance,
+    positions: NodePositionData
+  ) => {
+    const nodes = forceGraph3dInstance.graphData().nodes;
+    nodes.forEach((node: any) => {
+      if (positions[node.id]) {
+        node.x = positions[node.id].x;
+        node.y = positions[node.id].y;
+        node.z = positions[node.id].z ?? 0;
+        node.fx = node.x;
+        node.fy = node.y;
+        node.fz = node.z;
+      }
+    });
+    forceGraph3dInstance.graphData({
+      nodes,
+      links: forceGraph3dInstance.graphData().links,
+    });
+
+    forceGraph3dInstance.refresh();
   };
 
   public static applyForceGraphRenderConfig(

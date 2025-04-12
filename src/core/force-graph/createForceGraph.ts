@@ -56,6 +56,7 @@ import { NodeId } from "../model/Node";
 import { SceneGraph } from "../model/SceneGraph";
 import { exportGraphDataForReactFlow } from "../react-flow/exportGraphDataForReactFlow";
 import { flyToNode } from "../webgl/webglHelpers";
+import { getNodePositionDataFromForceGraphInstance } from "./forceGraphHelpers";
 import { ForceGraphManager } from "./ForceGraphManager";
 
 export const MOUSE_HOVERED_NODE_COLOR = "rgb(243, 255, 16)";
@@ -117,32 +118,107 @@ export const createForceGraph = (
       flyToNode(graph, node);
       console.log("node clicked");
     })
-    .onNodeDrag((_node) => {
+    .onNodeDrag((node, translate: any) => {
       setIsDraggingNode(true);
-      // console.log("drag start", node);
+      // console.log("translate is ", translate);
+
+      const selectedNodeIds = getSelectedNodeIds();
+      if (selectedNodeIds.has(node.id as NodeId) && selectedNodeIds.size > 1) {
+        const forceGraphPositionData =
+          getNodePositionDataFromForceGraphInstance(graph, selectedNodeIds);
+        for (const id of selectedNodeIds) {
+          if (node.id === id) {
+            continue;
+          }
+          forceGraphPositionData[id] = {
+            x: forceGraphPositionData[id].x + translate.x,
+            y: forceGraphPositionData[id].y + translate.y,
+            z: forceGraphPositionData[id].z + translate.z,
+          };
+        }
+        ForceGraphManager.updateNodePositions(graph, forceGraphPositionData);
+      }
     })
-    .onNodeDragEnd((node) => {
-      // console.log("drag end", node);
-      node.fx = node.x;
-      node.fy = node.y;
-      node.fz = node.z;
+    .onNodeDragEnd((node, translate: any) => {
+      console.log("translate end is ", translate);
+      const selectedNodeIds = getSelectedNodeIds();
+      let positions: NodePositionData = {};
+      if (selectedNodeIds.has(node.id as NodeId) && selectedNodeIds.size > 1) {
+        positions = getNodePositionDataFromForceGraphInstance(
+          graph,
+          selectedNodeIds
+        );
+      } else {
+        positions[node.id as NodeId] = {
+          x: node.fx! ?? node.x,
+          y: node.fy! ?? node.y,
+          z: node.fz! ?? node.z,
+        };
+      }
 
-      sceneGraph
-        .getGraph()
-        .getNode(node.id as NodeId)
-        .setPosition({
-          x: node.x!,
-          y: node.y!,
-          z: node.z!,
-        });
+      Object.entries(positions).forEach(([id, pos]) => {
+        sceneGraph
+          .getGraph()
+          .getNode(id as NodeId)
+          .setPosition({
+            x: pos.x,
+            y: pos.y,
+            z: pos.z,
+          });
 
-      sceneGraph.getDisplayConfig().nodePositions![node.id as NodeId] = {
-        x: node.x!,
-        y: node.y!,
-        z: node.z!,
-      };
+        sceneGraph.getDisplayConfig().nodePositions![id as NodeId] = {
+          x: pos.x,
+          y: pos.y,
+          z: pos.z,
+        };
+      });
       setIsDraggingNode(false);
     });
+
+  // if (selectedNodeIds.has(node.id as NodeId)) {
+  //   // Update positions for all selected nodes
+  //   selectedNodeIds.forEach((id) => {
+  //     const draggedNode = graph
+  //       .graphData()
+  //       .nodes.find((n: any) => n.id === id);
+  //     if (draggedNode) {
+  //       sceneGraph
+  //         .getGraph()
+  //         .getNode(draggedNode.id as NodeId)
+  //         .setPosition({
+  //           x: draggedNode.fx!,
+  //           y: draggedNode.fy!,
+  //           z: draggedNode.fz!,
+  //         });
+
+  //       sceneGraph.getDisplayConfig().nodePositions![
+  //         draggedNode.id as NodeId
+  //       ] = {
+  //         x: draggedNode.fx!,
+  //         y: draggedNode.fy!,
+  //         z: draggedNode.fz!,
+  //       };
+  //     }
+  //   });
+  // } else {
+  //   // Update position for the current node
+  //   sceneGraph
+  //     .getGraph()
+  //     .getNode(node.id as NodeId)
+  //     .setPosition({
+  //       x: node.fx!,
+  //       y: node.fy!,
+  //       z: node.fz!,
+  //     });
+
+  //   sceneGraph.getDisplayConfig().nodePositions![node.id as NodeId] = {
+  //     x: node.fx!,
+  //     y: node.fy!,
+  //     z: node.fz!,
+  //   };
+  // }
+  // setIsDraggingNode(false);
+  // };
 
   // .d3Force(
   //   "link",
@@ -278,9 +354,9 @@ export const bindEventsToGraphInstance = (
   });
 
   graph.onNodeHover((node) => {
-    if (!node) {
-      console.log("not called");
-    }
+    // if (!node) {
+    //   console.log("not called");
+    // }
     if (!getIsDraggingNode() && !node && getHoveredNodeIds().size > 0) {
       setHoveredNodeId(null);
       updateHighlight(graph);
@@ -296,10 +372,10 @@ export const bindEventsToGraphInstance = (
     updateHighlight(graph);
   });
 
-  graph.onNodeDrag((_node) => {
-    setIsDraggingNode(true);
-    // console.log("drag start", _node);
-  });
+  // graph.onNodeDrag((_node) => {
+  //   setIsDraggingNode(true);
+  //   // console.log("drag start", _node);
+  // });
   graph.onEngineTick(() => {
     // zoomToFit(graph, 100, 1.2);
   });

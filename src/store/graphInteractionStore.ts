@@ -62,10 +62,13 @@ const useGraphInteractionStore = create<GraphInteractionState>((set, get) => ({
   getHoveredNodeIds: () => get().hoveredNodeIds,
   getHoveredEdgeIds: () => get().hoveredEdgeIds,
 
-  setSelectedNodeId: (nodeId) =>
+  setSelectedNodeId: (nodeId) => {
+    console.log("setting selected node to ", nodeId);
     set({
       selectedNodeIds: nodeId ? new EntityIds([nodeId]) : new EntityIds(),
-    }),
+    });
+  },
+
   getSelectedNodeId: () => {
     const selectedNodes = Array.from(get().selectedNodeIds);
     return selectedNodes.length === 1 ? selectedNodes[0] : null;
@@ -78,8 +81,11 @@ const useGraphInteractionStore = create<GraphInteractionState>((set, get) => ({
     set({
       selectedEdgeIds: edgeId ? new EntityIds([edgeId]) : new EntityIds(),
     }),
-  setSelectedNodeIds: (nodeIds) =>
-    set({ selectedNodeIds: new EntityIds(nodeIds) }),
+  setSelectedNodeIds: (nodeIds) => {
+    console.log("setting selected nodes to ", nodeIds);
+    set({ selectedNodeIds: new EntityIds(nodeIds) });
+  },
+
   setSelectedEdgeIds: (edgeIds) =>
     set({ selectedEdgeIds: new EntityIds(edgeIds) }),
   clearSelections: () =>
