@@ -118,7 +118,6 @@ export class ForceGraphManager {
       const controls = forceGraphInstance.controls() as OrbitControls;
       if (controls) {
         if (mode === "multiselection") {
-          console.log("disabled");
           controls.enableRotate = false;
           controls.rotateSpeed = 0;
         } else {

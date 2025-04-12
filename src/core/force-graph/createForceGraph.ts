@@ -115,13 +115,14 @@ export const createForceGraph = (
     .enableNodeDrag(true)
     .onNodeClick((node) => {
       flyToNode(graph, node);
+      console.log("node clicked");
     })
-    .onNodeDrag((node) => {
+    .onNodeDrag((_node) => {
       setIsDraggingNode(true);
-      console.log("drag start", node);
+      // console.log("drag start", node);
     })
     .onNodeDragEnd((node) => {
-      console.log("drag end", node);
+      // console.log("drag end", node);
       node.fx = node.x;
       node.fy = node.y;
       node.fz = node.z;
@@ -253,7 +254,7 @@ export const bindEventsToGraphInstance = (
 ) => {
   graph.onNodeClick((node) => {
     setSelectedNodeId(node?.id as NodeId);
-    // setRightActiveSection("node-details");
+    console.log("node clicked");
 
     // Force refresh to update node colors immediately
     updateHighlight(graph);
@@ -277,8 +278,17 @@ export const bindEventsToGraphInstance = (
   });
 
   graph.onNodeHover((node) => {
-    setHoveredNodeId(node?.id as NodeId);
-    updateHighlight(graph);
+    if (!node) {
+      console.log("not called");
+    }
+    if (!getIsDraggingNode() && !node && getHoveredNodeIds().size > 0) {
+      setHoveredNodeId(null);
+      updateHighlight(graph);
+      return;
+    } else if (node && !getHoveredNodeIds().has(node.id as NodeId)) {
+      setHoveredNodeId(node.id as NodeId);
+      updateHighlight(graph);
+    }
   });
 
   graph.onLinkHover((link) => {
@@ -288,7 +298,7 @@ export const bindEventsToGraphInstance = (
 
   graph.onNodeDrag((_node) => {
     setIsDraggingNode(true);
-    console.log("drag start", _node);
+    // console.log("drag start", _node);
   });
   graph.onEngineTick(() => {
     // zoomToFit(graph, 100, 1.2);
@@ -359,7 +369,7 @@ export const bindEventsToGraphInstance = (
       if (getIsDraggingNode()) {
         return;
       }
-      console.log("mouse down!");
+      // console.log("mouse down!");
       const controlMode = getMouseControlMode();
       if (controlMode === "multiselection") {
         // Only start selection box on left click on the background (not on nodes)
@@ -370,7 +380,7 @@ export const bindEventsToGraphInstance = (
         ) {
           isDragging = true;
           startSelectionBox(event.clientX, event.clientY, event.shiftKey);
-          event.preventDefault();
+          // event.preventDefault();
         }
       }
     });
@@ -449,7 +459,7 @@ function selectNodesInSelectionBox(
 
   // Check if box is too small (click instead of drag)
   if (Math.abs(maxX - minX) < 5 && Math.abs(maxY - minY) < 5) {
-    console.log("too small", selectionBox);
+    // console.log("too small", selectionBox);
     clearSelectionBox();
 
     return;
