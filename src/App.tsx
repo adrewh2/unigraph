@@ -12,7 +12,6 @@ import { AppConfig, DEFAULT_APP_CONFIG } from "./AppConfig";
 import PathAnalysisWizard, {
   IPathArgs,
 } from "./components/analysis/PathAnalysisWizard";
-import ContextMenu, { ContextMenuItem } from "./components/common/ContextMenu";
 import EntityDataDisplayCard from "./components/common/EntityDataDisplayCard";
 import EntityJsonEditorDialog from "./components/common/EntityJsonEditorDialog";
 import EntityTabDialog from "./components/common/EntityTabDialog";
@@ -36,6 +35,7 @@ import SolarSystem from "./components/simulations/solarSystemSimulation";
 import ChatGptImporter from "./components/tools/ChatGptImporter";
 import YasguiPanel from "./components/YasguiPanel";
 
+import { ContextMenuItem } from "./components/common/ContextMenu";
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
@@ -1967,6 +1967,134 @@ const App: React.FC<AppProps> = ({
       />
       <LayoutComputationDialog />
     </MousePositionProvider>
+  );
+};
+
+const ContextMenu: React.FC<{
+  x: number;
+  y: number;
+  items: ContextMenuItem[];
+  onClose: () => void;
+  isDarkMode?: boolean;
+}> = ({ x, y, items, onClose, isDarkMode }) => {
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [adjustedPosition, setAdjustedPosition] = useState({ x, y });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Only close if the click is outside any context menu (including submenus)
+      if (
+        !event.target ||
+        !(event.target as Element).closest(".context-menu-container")
+      ) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (!menuRef.current) return;
+
+      const menuRect = menuRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      let newX = x;
+      let newY = y;
+
+      // Check if menu overflows to the right
+      if (x + menuRect.width > viewportWidth) {
+        newX = Math.max(0, viewportWidth - menuRect.width);
+      }
+
+      // Check if menu overflows to the bottom
+      if (y + menuRect.height > viewportHeight) {
+        newY = Math.max(0, y - menuRect.height);
+      }
+
+      setAdjustedPosition({ x: newX, y: newY });
+    };
+
+    // Run position check after the menu is rendered
+    updatePosition();
+
+    // Also update on window resize
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [x, y]);
+
+  const renderMenuItem = (item: ContextMenuItem, index: number) => {
+    return (
+      <div
+        key={index}
+        onClick={(e) => {
+          if (!item.submenu && item.action) {
+            item.action();
+            onClose();
+          }
+          e.stopPropagation();
+        }}
+        className="context-menu-item"
+        style={{
+          padding: "8px 16px",
+          cursor: "pointer",
+          borderBottom: index < items.length - 1 ? "1px solid #eee" : "none",
+          background: isDarkMode ? "#2c2c2c" : "white",
+          color: isDarkMode ? "#fff" : "#000",
+          position: "relative",
+        }}
+      >
+        {item.label}
+        {item.submenu && (
+          <div
+            className="context-menu-container submenu"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: "100%",
+              zIndex: 1001,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ContextMenu
+              x={0}
+              y={0}
+              items={item.submenu}
+              onClose={onClose}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      ref={menuRef}
+      className="context-menu-container"
+      style={{
+        position: "fixed",
+        top: adjustedPosition.y,
+        left: adjustedPosition.x,
+        background: isDarkMode ? "#2c2c2c" : "white",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+        zIndex: 1000,
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {items.map((item, index) => renderMenuItem(item, index))}
+    </div>
   );
 };
 
