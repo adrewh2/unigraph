@@ -1119,6 +1119,10 @@ const AppContent: React.FC<{
       position: nodePositions[node.id] || { x: 200, y: 200 },
       type: "resizerNode", // Use the custom node type
       data: {
+        description: currentSceneGraph
+          .getGraph()
+          .getNode(node.id as NodeId)
+          .getDescription(),
         label: currentSceneGraph
           .getGraph()
           .getNode(node.id as NodeId)

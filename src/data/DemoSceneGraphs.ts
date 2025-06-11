@@ -46,7 +46,7 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
   Writings: {
     label: "Writings",
     graphs: {
-      unigraphOverview: demo_scenegraph_unigraph_overview,
+      UnigraphOverview: demo_scenegraph_unigraph_overview,
     },
   },
   "Demo Graphs": {

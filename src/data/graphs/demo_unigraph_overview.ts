@@ -10,8 +10,8 @@ const createGraph = (): Graph => {
   const n1 = g.createNode({
     id: "unigraph_overview",
     type: "unigraph_overview",
+    label: "Unigraph Overview",
     userData: {
-      name: "Unigraph Overview",
       description: "An overview of Unigraph's capabilities and features.",
     },
   });
@@ -20,61 +20,61 @@ const createGraph = (): Graph => {
   const n_definition = g.createNode({
     id: "unigraph_overview_definition",
     type: "unigraph_overview_definition",
+    label: "What is Unigraph?",
     userData: {
-      name: "What is Unigraph?",
       description:
         "Unigraph is a next-generation platform for thinking, communicating, and organizing knowledge.",
     },
   });
   g.createEdgeIfMissing(n1.getId(), n_definition.getId(), {
-    type: "unigraph_overview_edge",
     label: "definition",
+    type: "unigraph_overview_edge",
   });
 
   // Supports node
   const n_supports = g.createNode({
     id: "unigraph_overview_supports",
     type: "unigraph_overview_supports",
+    label: "Supports",
     userData: {
-      name: "Supports",
       description: "Core capabilities supported by Unigraph.",
     },
   });
   g.createEdgeIfMissing(n1.getId(), n_supports.getId(), {
-    type: "unigraph_overview_edge",
     label: "supports",
+    type: "unigraph_overview_edge",
   });
 
   // Supported features
   const n_text_media = g.createNode({
     id: "unigraph_overview_supports_text_media",
     type: "unigraph_overview_feature",
+    label: "Text and media communication",
     userData: {
-      name: "Text and media communication",
       description: "Communicate using text and media.",
     },
   });
   const n_semantic = g.createNode({
     id: "unigraph_overview_supports_semantic",
     type: "unigraph_overview_feature",
+    label: "Semantic knowledge modeling",
     userData: {
-      name: "Semantic knowledge modeling",
       description: "Model knowledge semantically.",
     },
   });
   const n_code_data = g.createNode({
     id: "unigraph_overview_supports_code_data",
     type: "unigraph_overview_feature",
+    label: "Code, data science, and analytics workflows",
     userData: {
-      name: "Code, data science, and analytics workflows",
       description: "Integrate code, data science, and analytics.",
     },
   });
   const n_collab = g.createNode({
     id: "unigraph_overview_supports_collab",
     type: "unigraph_overview_feature",
+    label: "Collaboration and organizational logic",
     userData: {
-      name: "Collaboration and organizational logic",
       description: "Support collaboration and organizational logic.",
     },
   });
@@ -97,22 +97,22 @@ const createGraph = (): Graph => {
   const n_vision = g.createNode({
     id: "unigraph_overview_vision",
     type: "unigraph_overview_vision",
+    label: "Vision",
     userData: {
-      name: "Vision",
       description: "The future impact of Unigraph.",
     },
   });
   g.createEdgeIfMissing(n1.getId(), n_vision.getId(), {
-    type: "unigraph_overview_edge",
     label: "vision",
+    type: "unigraph_overview_edge",
   });
 
   // Web 3.0 statement
   const n_web3 = g.createNode({
     id: "unigraph_overview_vision_web3",
     type: "unigraph_overview_vision_statement",
+    label: "Web 3.0",
     userData: {
-      name: "Web 3.0",
       description: "If successful, Unigraph would become the face of Web 3.0.",
     },
   });
@@ -124,8 +124,8 @@ const createGraph = (): Graph => {
   const n2 = g.createNode({
     id: "unigraph_overview_features",
     type: "unigraph_overview_features",
+    label: "Features",
     userData: {
-      name: "Features",
       description: "Key features of Unigraph.",
     },
   });
