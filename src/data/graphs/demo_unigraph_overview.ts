@@ -120,6 +120,97 @@ const createGraph = (): Graph => {
     type: "unigraph_overview_edge",
   });
 
+  // --- Human-Centric Codification Subgraph ---
+
+  // Root node for this subgraph
+  const n_codification_root = g.createNode({
+    id: "unigraph_codification_root",
+    type: "unigraph_codification_root",
+    label: "Human-Centric Codification",
+    userData: {
+      description:
+        "Unigraph aims to enable codification of systems and knowledge in a way that is human-centric.",
+    },
+  });
+
+  // Link to Vision node
+  g.createEdgeIfMissing(
+    "unigraph_overview_vision",
+    n_codification_root.getId(),
+    {
+      type: "unigraph_overview_edge",
+      label: "enables",
+    }
+  );
+
+  // Human interpretable and interactive node
+  const n_codification_human = g.createNode({
+    id: "unigraph_codification_human",
+    type: "unigraph_codification_human",
+    label: "Human interpretable and interactive",
+    userData: {
+      description:
+        "Codification should be understandable and interactive for humans.",
+    },
+  });
+  g.createEdgeIfMissing(
+    n_codification_root.getId(),
+    n_codification_human.getId(),
+    {
+      type: "unigraph_overview_edge",
+    }
+  );
+
+  // Writing application node
+  const n_writing_app = g.createNode({
+    id: "unigraph_writing_app",
+    type: "unigraph_writing_app",
+    label: "High-powered Writing Application",
+    userData: {
+      description: "Unigraph offers a high-powered writing application.",
+    },
+  });
+  g.createEdgeIfMissing(n_codification_root.getId(), n_writing_app.getId(), {
+    type: "unigraph_overview_edge",
+  });
+
+  // Writing app features
+  const writing_features = [
+    { id: "tagging", label: "Tagging" },
+    { id: "linking", label: "Linking" },
+    { id: "typing", label: "Typing" },
+    { id: "data_access_controls", label: "Data access controls" },
+    { id: "dynamic_structures", label: "Dynamic structures" },
+    { id: "spatial_navigation", label: "Spatial navigation and interaction" },
+    { id: "codification", label: "Codification" },
+  ];
+  writing_features.forEach((feature) => {
+    const n = g.createNode({
+      id: `unigraph_writing_app_${feature.id}`,
+      type: "unigraph_writing_app_feature",
+      label: feature.label,
+      userData: {},
+    });
+    g.createEdgeIfMissing(n_writing_app.getId(), n.getId(), {
+      type: "unigraph_overview_edge",
+    });
+  });
+
+  // Entity concept node
+  const n_entity_core = g.createNode({
+    id: "unigraph_entity_core",
+    type: "unigraph_entity_core",
+    label: "Entity",
+    userData: {
+      description:
+        "At its core, every object in Unigraph is an Entity. An entity is a single unit of data. It can be a sentence, an image, an annotation on an image, a document, a comment on the document, a link between entities, etc.",
+    },
+  });
+  g.createEdgeIfMissing(n_codification_root.getId(), n_entity_core.getId(), {
+    type: "unigraph_overview_edge",
+    label: "core concept",
+  });
+
   // Features node (legacy, for compatibility)
   const n2 = g.createNode({
     id: "unigraph_overview_features",
