@@ -1,4 +1,5 @@
 import { SceneGraph } from "../core/model/SceneGraph";
+import { demo_scenegraph_unigraph_overview } from "./graphs/demo_unigraph_overview";
 // import { urlSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { demo_sceneGraph_academicsKG } from "./graphs/academicsKGraph";
 import { blobMeshGraph } from "./graphs/blobMesh";
@@ -40,6 +41,12 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
     label: "Base",
     graphs: {
       Empty: () => new SceneGraph({ metadata: { name: "New SceneGraph" } }),
+    },
+  },
+  Writings: {
+    label: "Writings",
+    graphs: {
+      unigraphOverview: demo_scenegraph_unigraph_overview,
     },
   },
   "Demo Graphs": {
