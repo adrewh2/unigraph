@@ -161,6 +161,104 @@ const createGraph = (): Graph => {
     }
   );
 
+  // --- Zettelkasten system node ---
+  const n_zettelkasten = g.createNode({
+    id: "zettelkasten_system",
+    type: "zettelkasten_system",
+    label: "Zettelkasten System",
+    userData: {
+      description:
+        'Zettelkasten systems are a note-taking methodology where each note is stored as a discrete "slip", typically representing a single thought. These slips are densely interlinked to reflect how ideas relate, evolve, and give rise to new understanding.',
+      url: "https://en.wikipedia.org/wiki/Zettelkasten",
+    },
+  });
+  g.createEdgeIfMissing(n_codification_root.getId(), n_zettelkasten.getId(), {
+    type: "unigraph_overview_edge",
+    label: "embraces",
+  });
+
+  // Unigraph embraces this philosophy node
+  const n_unigraph_embraces = g.createNode({
+    id: "unigraph_embraces_zettelkasten",
+    type: "unigraph_embraces_zettelkasten",
+    label: "Unigraph Embraces This Philosophy",
+    userData: {
+      description: "Unigraph embraces this philosophy at a deeper level.",
+    },
+  });
+  g.createEdgeIfMissing(n_zettelkasten.getId(), n_unigraph_embraces.getId(), {
+    type: "unigraph_overview_edge",
+  });
+
+  // Bullet points for what an entity can be, all link to Entity
+  const entity_examples = [
+    {
+      id: "entity_note",
+      label: "A note",
+      description: "An entity can be a note.",
+    },
+    {
+      id: "entity_subgraph",
+      label: "A subgraph of ideas",
+      description: "An entity can be a subgraph of ideas.",
+    },
+    {
+      id: "entity_tagged_image",
+      label: "A tagged image annotation",
+      description: "An entity can be a tagged image annotation.",
+    },
+    {
+      id: "entity_live_query",
+      label: "A live database query",
+      description: "An entity can be a live database query.",
+    },
+    {
+      id: "entity_code_snippet",
+      label: "A code snippet with strongly typed inputs/outputs",
+      description:
+        "An entity can be a code snippet with strongly typed inputs/outputs.",
+    },
+    {
+      id: "entity_comment",
+      label: "A comment on another entity",
+      description: "An entity can be a comment on another entity.",
+    },
+  ];
+  entity_examples.forEach((ex) => {
+    const n = g.createNode({
+      id: ex.id,
+      type: "unigraph_entity_example",
+      label: ex.label,
+      userData: {
+        description: ex.description,
+      },
+    });
+    g.createEdgeIfMissing(n_unigraph_embraces.getId(), n.getId(), {
+      type: "unigraph_overview_edge",
+    });
+    // Link each example to the Entity node
+    g.createEdgeIfMissing(n.getId(), "unigraph_entity_core", {
+      type: "unigraph_overview_edge",
+      label: "is a kind of",
+    });
+  });
+
+  // Generalization node
+  const n_generalization = g.createNode({
+    id: "unigraph_zettelkasten_generalization",
+    type: "unigraph_zettelkasten_generalization",
+    label: "Generalization",
+    userData: {
+      description:
+        "What Zettelkasten systems offer as note-linking, Unigraph generalizes into a full ontology of linked, typed, and interactive knowledge.",
+    },
+  });
+  g.createEdgeIfMissing(n_unigraph_embraces.getId(), n_generalization.getId(), {
+    type: "unigraph_overview_edge",
+  });
+
+  // --- Writing Application Subgraph ---
+
   // Writing application node
   const n_writing_app = g.createNode({
     id: "unigraph_writing_app",
