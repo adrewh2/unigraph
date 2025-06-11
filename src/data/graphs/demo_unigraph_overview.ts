@@ -322,6 +322,150 @@ const createGraph = (): Graph => {
     type: "unigraph_overview_edge",
   });
 
+  // --- Organization & Presentation Philosophy ---
+
+  const n_org_philosophy = g.createNode({
+    id: "unigraph_org_philosophy",
+    type: "unigraph_org_philosophy",
+    label: "Organization & Presentation",
+    userData: {
+      description:
+        "It's often easy to jot down the core ideas to a document, and the time consuming aspect is moreso organizing and presenting to various audiences, or keeping the information accuracy.",
+    },
+  });
+  // Link to Human-Centric Codification
+  g.createEdgeIfMissing(n_codification_root.getId(), n_org_philosophy.getId(), {
+    type: "unigraph_overview_edge",
+    label: "addresses",
+  });
+
+  // Organization features
+  const org_features = [
+    {
+      id: "org_refine_depth",
+      label: "Infinite Depth & Dimension",
+      description:
+        "Ideas can be refined to infinite levels of depth and dimension.",
+    },
+    {
+      id: "org_navigation",
+      label: "Navigation & Inspection",
+      description:
+        "Clear navigation and inspection of high dimensional information.",
+    },
+    {
+      id: "org_dynamic_materialization",
+      label: "Dynamic Materialization",
+      description:
+        "Dynamic materializations of information for different audiences.",
+    },
+    {
+      id: "org_codification",
+      label: "Codification for Linking & Accuracy",
+      description: "Codification for linking and accuracy maintenance.",
+    },
+    {
+      id: "org_strong_typing",
+      label: "Strong Typing",
+      description: "Strong typing for distributed discovery and collaboration.",
+    },
+  ];
+  org_features.forEach((feature) => {
+    const n = g.createNode({
+      id: feature.id,
+      type: "unigraph_org_feature",
+      label: feature.label,
+      userData: { description: feature.description },
+    });
+    g.createEdgeIfMissing(n_org_philosophy.getId(), n.getId(), {
+      type: "unigraph_overview_edge",
+    });
+  });
+
+  // --- Interactive Application Applets ---
+
+  const n_applets = g.createNode({
+    id: "unigraph_applets",
+    type: "unigraph_applets",
+    label: "Interactive Application Applets",
+    userData: {
+      description:
+        "Unigraph is an interactive application with applets for various knowledge tasks.",
+    },
+  });
+  // Link to Human-Centric Codification
+  g.createEdgeIfMissing(n_codification_root.getId(), n_applets.getId(), {
+    type: "unigraph_overview_edge",
+    label: "provides",
+  });
+
+  const applets = [
+    {
+      id: "applet_writing",
+      label: "Writing documents and text",
+      description: "Applets for writing documents and text.",
+    },
+    {
+      id: "applet_annotation",
+      label: "Annotating images, video, and audio",
+      description: "Applets for annotating images, video, and audio.",
+    },
+    {
+      id: "applet_graphs",
+      label:
+        "Constructing model graphs, ontologies, knowledge graphs, and visual diagrams",
+      description:
+        "Applets for constructing model graphs, ontologies, knowledge graphs, and visual diagrams.",
+    },
+  ];
+  applets.forEach((applet) => {
+    const n = g.createNode({
+      id: applet.id,
+      type: "unigraph_applet",
+      label: applet.label,
+      userData: { description: applet.description },
+    });
+    g.createEdgeIfMissing(n_applets.getId(), n.getId(), {
+      type: "unigraph_overview_edge",
+    });
+  });
+
+  // --- First-class Graph-based Application Library ---
+
+  const n_graph_library = g.createNode({
+    id: "unigraph_graph_library",
+    type: "unigraph_graph_library",
+    label: "Graph-based Application Library",
+    userData: {
+      description:
+        "Unigraph also aims to offer a first-class graph-based application library.",
+    },
+  });
+  // Link to Human-Centric Codification
+  g.createEdgeIfMissing(n_codification_root.getId(), n_graph_library.getId(), {
+    type: "unigraph_overview_edge",
+    label: "aims for",
+  });
+
+  // Superset of other tools
+  const n_superset = g.createNode({
+    id: "unigraph_superset",
+    type: "unigraph_superset",
+    label: "Superset of Graphviz, ReactFlow, Obsidian",
+    userData: {
+      description:
+        "It aims to be a superset of Graphviz, ReactFlow, and Obsidian.",
+      links: [
+        { label: "Graphviz", url: "https://graphviz.org/" },
+        { label: "ReactFlow", url: "https://reactflow.dev/" },
+        { label: "Obsidian", url: "https://obsidian.md/" },
+      ],
+    },
+  });
+  g.createEdgeIfMissing(n_graph_library.getId(), n_superset.getId(), {
+    type: "unigraph_overview_edge",
+  });
+
   return g;
 };
 
