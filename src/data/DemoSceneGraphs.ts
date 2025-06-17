@@ -9,6 +9,7 @@ import { demo_scenegraph_components_terms_links } from "./graphs/demo_components
 import { demo_scenegraph_notes_axiomatic_systems_and_primitives } from "./graphs/demo_notes_axiomatic_systems_and_primitives";
 import { demo_scenegraph_notes_complexity_and_primitives } from "./graphs/demo_notes_complexity_and_primitives";
 import { demo_scenegraph_terms_axiomatic_links } from "./graphs/demo_terms_axiomatic_links";
+import { demo_scenegraph_terms_unigraph_overview_links } from "./graphs/demo_terms_unigraph_overview_links";
 import { demo_scenegraph_unigraph_components } from "./graphs/demo_unigraph_components";
 import { createE8Petrie2DGraph } from "./graphs/e8Petrie2d";
 import { demo_SceneGraph_ArtCollection } from "./graphs/Gallery_Demos/demo_SceneGraph_ArtCollection";
@@ -51,6 +52,7 @@ const writings_graphs = {
   AllWritings: demo_scenegraph_all_writings,
   TermsLinks: demo_scenegraph_components_terms_links,
   AxiomLinks: demo_scenegraph_terms_axiomatic_links,
+  UnigraphOverviewLinks: demo_scenegraph_terms_unigraph_overview_links,
 };
 
 const total_writing_graph = () => {
