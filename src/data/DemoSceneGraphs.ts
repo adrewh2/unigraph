@@ -1,8 +1,15 @@
 import { SceneGraph } from "../core/model/SceneGraph";
 import { demo_scenegraph_unigraph_overview } from "./graphs/demo_unigraph_overview";
 // import { urlSceneGraph } from "../../hooks/useSvgSceneGraph";
+import { mergeIntoSceneGraph } from "../core/model/mergeSceneGraphs";
 import { demo_sceneGraph_academicsKG } from "./graphs/academicsKGraph";
 import { blobMeshGraph } from "./graphs/blobMesh";
+import { demo_scenegraph_all_writings } from "./graphs/demo_all_writings_graph";
+import { demo_scenegraph_components_terms_links } from "./graphs/demo_components_terms_links";
+import { demo_scenegraph_notes_axiomatic_systems_and_primitives } from "./graphs/demo_notes_axiomatic_systems_and_primitives";
+import { demo_scenegraph_notes_complexity_and_primitives } from "./graphs/demo_notes_complexity_and_primitives";
+import { demo_scenegraph_terms_axiomatic_links } from "./graphs/demo_terms_axiomatic_links";
+import { demo_scenegraph_unigraph_components } from "./graphs/demo_unigraph_components";
 import { createE8Petrie2DGraph } from "./graphs/e8Petrie2d";
 import { demo_SceneGraph_ArtCollection } from "./graphs/Gallery_Demos/demo_SceneGraph_ArtCollection";
 import {
@@ -36,6 +43,31 @@ export interface SceneGraphCategory {
   };
 }
 
+const writings_graphs = {
+  UnigraphOverview: demo_scenegraph_unigraph_overview,
+  AxiomaticSystems: demo_scenegraph_notes_axiomatic_systems_and_primitives,
+  ComplexityAndPrimitives: demo_scenegraph_notes_complexity_and_primitives,
+  UnigraphComponents: demo_scenegraph_unigraph_components,
+  AllWritings: demo_scenegraph_all_writings,
+  TermsLinks: demo_scenegraph_components_terms_links,
+  AxiomLinks: demo_scenegraph_terms_axiomatic_links,
+};
+
+const total_writing_graph = () => {
+  const tmp = new SceneGraph();
+  for (const sg of Object.values(writings_graphs)) {
+    mergeIntoSceneGraph(tmp, sg());
+  }
+  return new SceneGraph({
+    graph: tmp.getGraph(),
+    metadata: {
+      name: "All Writings",
+      description:
+        "A merged graph of all Unigraph writings and conceptual demos.",
+    },
+  });
+};
+
 export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
   Base: {
     label: "Base",
@@ -46,7 +78,8 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
   Writings: {
     label: "Writings",
     graphs: {
-      UnigraphOverview: demo_scenegraph_unigraph_overview,
+      ...total_writing_graph,
+      all_writings: total_writing_graph,
     },
   },
   "Demo Graphs": {
