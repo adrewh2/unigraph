@@ -2,7 +2,7 @@ import re
 import csv
 from datetime import datetime
 
-def find_birthdays_in_file(filename, min_year=1900, max_year=2024, csv_output="birthdays_found.csv"):
+def find_birthdays_in_file(filename, min_year=1900, max_year=2024):
     # Compile regex for MMDDYYYY (allow leading zeros)
     birthday_re = re.compile(r'(\d{8})')
     results = {}
@@ -39,6 +39,9 @@ def find_birthdays_in_file(filename, min_year=1900, max_year=2024, csv_output="b
             results[key]["count"] += 1
             results[key]["indices"].append(i)
 
+    return results
+
+def write_birthday_csv(results, csv_output, prefix=""):
     # Prepare sortable list of (date_obj, bday_str, info)
     sortable = []
     for bday, info in results.items():
@@ -55,12 +58,12 @@ def find_birthdays_in_file(filename, min_year=1900, max_year=2024, csv_output="b
     with open(csv_output, "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([
-            "Birthday (MMDDYYYY)",
-            "Birthday (MM/DD/YYYY)",
-            "Birthday (Month Day, Year)",
-            "FirstIdx",
-            "Count",
-            "Odds (by position)"
+            f"{prefix}Birthday (MMDDYYYY)",
+            f"{prefix}Birthday (MM/DD/YYYY)",
+            f"{prefix}Birthday (Month Day, Year)",
+            f"{prefix}FirstIdx",
+            f"{prefix}Count",
+            f"{prefix}Odds (by position)"
         ])
         for date_obj, bday, info in sortable:
             mmddyyyy = bday
@@ -84,17 +87,85 @@ def find_birthdays_in_file(filename, min_year=1900, max_year=2024, csv_output="b
             ])
     print(f"Results written to {csv_output}")
 
+def write_intersection_csv(results1, results2, csv_output, prefix1="", prefix2=""):
+    # Only birthdays present in both files
+    intersection = set(results1.keys()) & set(results2.keys())
+    sortable = []
+    for bday in intersection:
+        try:
+            date_obj = datetime.strptime(bday, "%m%d%Y")
+            sortable.append((date_obj, bday))
+        except ValueError:
+            continue
+    sortable.sort()
+    with open(csv_output, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([
+            f"{prefix1}Birthday (MMDDYYYY)",
+            f"{prefix1}Birthday (MM/DD/YYYY)",
+            f"{prefix1}Birthday (Month Day, Year)",
+            f"{prefix1}FirstIdx",
+            f"{prefix1}Count",
+            f"{prefix1}Odds (by position)",
+            f"{prefix2}FirstIdx",
+            f"{prefix2}Count",
+            f"{prefix2}Odds (by position)"
+        ])
+        for date_obj, bday in sortable:
+            info1 = results1[bday]
+            info2 = results2[bday]
+            first_idx1 = info1['indices'][0]
+            N1 = first_idx1 + 8
+            tries1 = N1 - 8 + 1 if N1 >= 8 else 0
+            odds1 = 1 - (1 - 1/1e8) ** tries1 if tries1 > 0 else 0.0
+            first_idx2 = info2['indices'][0]
+            N2 = first_idx2 + 8
+            tries2 = N2 - 8 + 1 if N2 >= 8 else 0
+            odds2 = 1 - (1 - 1/1e8) ** tries2 if tries2 > 0 else 0.0
+            mmddyyyy = bday
+            mmddyyyy_slash = date_obj.strftime("%m/%d/%Y")
+            month_day_year = date_obj.strftime("%B %d, %Y")
+            writer.writerow([
+                mmddyyyy,
+                mmddyyyy_slash,
+                month_day_year,
+                first_idx1,
+                info1['count'],
+                f"{odds1:.12f}",
+                first_idx2,
+                info2['count'],
+                f"{odds2:.12f}"
+            ])
+    print(f"Intersection results written to {csv_output}")
+
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python find_birthdays_in_numbers.py <filename> [csv_output]")
+        print("Usage: python find_birthdays_in_numbers.py <filename1> [<filename2>]")
     else:
-        input_path = sys.argv[1]
-        input_base = input_path.split("/")[-1].rsplit(".", 1)[0]
-        if len(sys.argv) > 2:
-            csv_out = sys.argv[2]
+        input_path1 = sys.argv[1]
+        input_base1 = input_path1.split("/")[-1].rsplit(".", 1)[0]
+        results1 = find_birthdays_in_file(input_path1)
+        if len(sys.argv) == 2:
+            csv_out1 = f"{input_base1}_birthdays_found_from_digits.csv"
+            write_birthday_csv(results1, csv_out1)
         else:
-            base = f"{input_base}_birthdays_found_from_digits"
-            ext = ".csv"
-            csv_out = f"{base}{ext}"
-        find_birthdays_in_file(input_path, csv_output=csv_out)
+            input_path2 = sys.argv[2]
+            input_base2 = input_path2.split("/")[-1].rsplit(".", 1)[0]
+            results2 = find_birthdays_in_file(input_path2)
+            csv_out1 = f"{input_base1}_birthdays_found_from_digits.csv"
+            csv_out2 = f"{input_base2}_birthdays_found_from_digits.csv"
+            write_birthday_csv(results1, csv_out1, prefix=f"{input_base1}_")
+            write_birthday_csv(results2, csv_out2, prefix=f"{input_base2}_")
+            # Only birthdays present in both files
+            intersection = set(results1.keys()) & set(results2.keys())
+            if intersection:
+                csv_out_inter = f"{input_base1}_AND_{input_base2}_birthdays_intersection.csv"
+                write_intersection_csv(
+                    {k: results1[k] for k in intersection},
+                    {k: results2[k] for k in intersection},
+                    csv_out_inter,
+                    prefix1=f"{input_base1}_", prefix2=f"{input_base2}_"
+                )
+            else:
+                print("No birthdays found in both files.")
