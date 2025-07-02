@@ -385,6 +385,38 @@ def write_birthday_csv_with_padding(results, csv_output, prefix="", min_year=190
                 f"{pattern}: {count}" for pattern, count in top_patterns[:5]
             ])
             
+            # Count patterns by prefix length
+            exact_patterns = info.get("exact_patterns", {})
+            no_prefix_count = 0
+            prefix_0_count = 0
+            prefix_00_count = 0
+            prefix_000_count = 0
+            prefix_0000_count = 0
+            
+            for pattern, count in exact_patterns.items():
+                # Fix: Check if pattern is the original birthday with no padding
+                if pattern == bday:
+                    no_prefix_count += count
+                    continue
+                
+                # For padded patterns
+                if len(pattern) > 8:
+                    # Find where the birthday starts in the pattern
+                    start_idx = pattern.find(bday)
+                    if start_idx >= 0:
+                        # Count leading zeros
+                        prefix_len = start_idx
+                        
+                        # Categorize by prefix length
+                        if prefix_len == 1:
+                            prefix_0_count += count
+                        elif prefix_len == 2:
+                            prefix_00_count += count
+                        elif prefix_len == 3:
+                            prefix_000_count += count
+                        elif prefix_len >= 4:
+                            prefix_0000_count += count
+            
             writer.writerow([
                 mmddyyyy,
                 mmddyyyy_slash,
@@ -394,24 +426,16 @@ def write_birthday_csv_with_padding(results, csv_output, prefix="", min_year=190
                 f"{odds:.12f}",
                 info.get("has_padding", False),
                 top_patterns_str,
-                patterns.get("no_padding", 0),
-                patterns.get("left_1", 0),
-                patterns.get("right_1", 0),
-                patterns.get("both_1", 0),
-                patterns.get("left_2", 0),
-                patterns.get("right_2", 0),
-                patterns.get("both_2", 0),
-                patterns.get("left_3", 0),
-                patterns.get("right_3", 0),
-                patterns.get("both_3", 0),
-                patterns.get("left_4", 0),
-                patterns.get("right_4", 0),
-                patterns.get("both_4", 0),
+                no_prefix_count,
+                prefix_0_count,
+                prefix_00_count,
+                prefix_000_count,
+                prefix_0000_count,
                 f"{odds_in_calendar:.12f}"
             ])
     print(f"Results with padding analysis written to {csv_output}")
 
-def write_detailed_padding_report(results, output_file, min_year=1900, max_year=2024):
+def write_detailed_padding_report(results, output_file, min_year=1900, max_year=2025):
     """
     Write a detailed report showing exactly how many occurrences of each
     birthday had specific padding patterns (e.g., 0042419940, 0004241994000)
@@ -538,30 +562,28 @@ def write_detailed_padding_csv(results, csv_output, prefix="", min_year=1900, ma
             prefix_0000_count = 0
             
             for pattern, count in exact_patterns.items():
-                prefix_len = 0
-                if pattern.startswith('0'):
-                    # Count zeros at the beginning
-                    for char in pattern:
-                        if char == '0':
-                            prefix_len += 1
-                        else:
-                            break
-                            
-                    # If the entire pattern is zeros, adjust
-                    if prefix_len == len(pattern):
-                        prefix_len = 0
-                
-                # Categorize by prefix length
-                if prefix_len == 0:
+                # Fix: Check if pattern is the original birthday with no padding
+                if pattern == bday:
                     no_prefix_count += count
-                elif prefix_len == 1:
-                    prefix_0_count += count
-                elif prefix_len == 2:
-                    prefix_00_count += count
-                elif prefix_len == 3:
-                    prefix_000_count += count
-                elif prefix_len >= 4:
-                    prefix_0000_count += count
+                    continue
+                
+                # For padded patterns
+                if len(pattern) > 8:
+                    # Find where the birthday starts in the pattern
+                    start_idx = pattern.find(bday)
+                    if start_idx >= 0:
+                        # Count leading zeros
+                        prefix_len = start_idx
+                        
+                        # Categorize by prefix length
+                        if prefix_len == 1:
+                            prefix_0_count += count
+                        elif prefix_len == 2:
+                            prefix_00_count += count
+                        elif prefix_len == 3:
+                            prefix_000_count += count
+                        elif prefix_len >= 4:
+                            prefix_0000_count += count
             
             # Write the row
             row = [
@@ -584,19 +606,33 @@ def write_detailed_padding_csv(results, csv_output, prefix="", min_year=1900, ma
     print(f"Detailed padding pattern CSV written to {csv_output}")
 
 def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1="", prefix2="", 
-                                       min_year=1900, max_year=2024):
-    """Write intersection results with simple padding information in CSV format."""
+                                      min_year=1900, max_year=2024):
+    """
+    Write intersection results with simple padding information in CSV format.
+    Include only birthdays where at least one file has the birthday with padding.
+    """
     # Prepare sortable list
     sortable = []
     for bday, info1 in results1.items():
         if bday in results2:
             info2 = results2[bday]
-            try:
-                date_obj = datetime.strptime(bday, "%m%d%Y")
-                sortable.append((date_obj, bday, info1, info2))
-            except ValueError:
-                continue
+            
+            # Check if at least one has padding
+            has_padding1 = any(pattern != bday for pattern in info1["exact_patterns"].keys())
+            has_padding2 = any(pattern != bday for pattern in info2["exact_patterns"].keys())
+            
+            if has_padding1 or has_padding2:
+                try:
+                    date_obj = datetime.strptime(bday, "%m%d%Y")
+                    sortable.append((date_obj, bday, info1, info2))
+                except ValueError:
+                    continue
     
+    if not sortable:
+        print(f"No birthdays with padding found in both files.")
+        return
+        
+    print(f"Found {len(sortable)} birthdays with padding in both files.")
     sortable.sort()
     
     # Calculate total possible birthdays
@@ -628,9 +664,12 @@ def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1=
             f"{prefix1}TotalCount",
             f"{prefix1}FirstIdx",
             f"{prefix1}Odds",
+            f"{prefix1}HasPadding",
             f"{prefix2}TotalCount",
             f"{prefix2}FirstIdx",
             f"{prefix2}Odds",
+            f"{prefix2}HasPadding",
+            "BothHavePadding",
             "Odds (calendar)",
             # First file padding columns
             f"{prefix1}NoPrefix",
@@ -674,26 +713,28 @@ def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1=
             prefix1_0000 = 0
             
             for pattern, count in exact_patterns1.items():
-                prefix_len = 0
-                if pattern.startswith('0'):
-                    for char in pattern:
-                        if char == '0':
-                            prefix_len += 1
-                        else:
-                            break
-                    if prefix_len == len(pattern):
-                        prefix_len = 0
-                        
-                if prefix_len == 0:
+                # Fix: Check if pattern is the original birthday with no padding
+                if pattern == bday:
                     no_prefix1 += count
-                elif prefix_len == 1:
-                    prefix1_0 += count
-                elif prefix_len == 2:
-                    prefix1_00 += count
-                elif prefix_len == 3:
-                    prefix1_000 += count
-                elif prefix_len >= 4:
-                    prefix1_0000 += count
+                    continue
+                
+                # For padded patterns
+                if len(pattern) > 8:
+                    # Find where the birthday starts in the pattern
+                    start_idx = pattern.find(bday)
+                    if start_idx >= 0:
+                        # Count leading zeros
+                        prefix_len = start_idx
+                        
+                        # Categorize by prefix length
+                        if prefix_len == 1:
+                            prefix1_0 += count
+                        elif prefix_len == 2:
+                            prefix1_00 += count
+                        elif prefix_len == 3:
+                            prefix1_000 += count
+                        elif prefix_len >= 4:
+                            prefix1_0000 += count
             
             # Count patterns by prefix length for file 2
             exact_patterns2 = info2.get("exact_patterns", {})
@@ -704,26 +745,33 @@ def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1=
             prefix2_0000 = 0
             
             for pattern, count in exact_patterns2.items():
-                prefix_len = 0
-                if pattern.startswith('0'):
-                    for char in pattern:
-                        if char == '0':
-                            prefix_len += 1
-                        else:
-                            break
-                    if prefix_len == len(pattern):
-                        prefix_len = 0
-                        
-                if prefix_len == 0:
+                # Fix: Check if pattern is the original birthday with no padding
+                if pattern == bday:
                     no_prefix2 += count
-                elif prefix_len == 1:
-                    prefix2_0 += count
-                elif prefix_len == 2:
-                    prefix2_00 += count
-                elif prefix_len == 3:
-                    prefix2_000 += count
-                elif prefix_len >= 4:
-                    prefix2_0000 += count
+                    continue
+                
+                # For padded patterns
+                if len(pattern) > 8:
+                    # Find where the birthday starts in the pattern
+                    start_idx = pattern.find(bday)
+                    if start_idx >= 0:
+                        # Count leading zeros
+                        prefix_len = start_idx
+                        
+                        # Categorize by prefix length
+                        if prefix_len == 1:
+                            prefix2_0 += count
+                        elif prefix_len == 2:
+                            prefix2_00 += count
+                        elif prefix_len == 3:
+                            prefix2_000 += count
+                        elif prefix_len >= 4:
+                            prefix2_0000 += count
+            
+            # Calculate if both have padding
+            has_padding1 = prefix1_0 + prefix1_00 + prefix1_000 + prefix1_0000 > 0
+            has_padding2 = prefix2_0 + prefix2_00 + prefix2_000 + prefix2_0000 > 0
+            both_have_padding = has_padding1 and has_padding2
             
             # Build the row
             row = [
@@ -733,9 +781,12 @@ def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1=
                 count1,
                 first_idx1,
                 f"{odds1:.12f}",
+                has_padding1,
                 count2,
                 first_idx2,
                 f"{odds2:.12f}",
+                has_padding2,
+                both_have_padding,
                 f"{odds_in_calendar:.12f}",
                 no_prefix1,
                 prefix1_0,
@@ -753,7 +804,7 @@ def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1=
     
     print(f"Intersection with padding patterns written to {csv_output}")
 
-# Update main function to use the new CSV format
+# Update main function to support proper intersection handling
 if __name__ == "__main__":
     import sys
     import argparse
@@ -836,6 +887,7 @@ if __name__ == "__main__":
         write_detailed_padding_report(results2, detailed_report2, min_year=min_year, max_year=max_year)
         
         # Write intersection report with consistent padding patterns
+        # Only include entries where at least one version has padding
         intersection = set(results1.keys()) & set(results2.keys())
         if intersection:
             intersection_csv = f"{input_base1}_AND_{input_base2}_padding_patterns.csv"
@@ -846,8 +898,16 @@ if __name__ == "__main__":
                 prefix1=f"{input_base1}_", 
                 prefix2=f"{input_base2}_",
                 min_year=min_year, 
-                max_year=max_year,
-                max_padding=max_padding
+                max_year=max_year
+            )
+            
+            # Also write the standard intersection CSV for all birthdays, regardless of padding
+            all_intersection_csv = f"{input_base1}_AND_{input_base2}_all_birthdays.csv"
+            write_birthday_csv_with_padding(
+                {k: results1[k] for k in intersection},
+                all_intersection_csv,
+                prefix=f"{input_base1}_AND_{input_base2}_",
+                min_year=min_year, max_year=max_year
             )
         else:
             print("No birthdays found in both files.")
