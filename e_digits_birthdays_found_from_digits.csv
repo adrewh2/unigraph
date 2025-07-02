@@ -1,4 +1,4 @@
-e_digits_Birthday (MMDDYYYY),e_digits_Birthday (MM/DD/YYYY),"e_digits_Birthday (Month Day, Year)",e_digits_FirstIdx,e_digits_Count,e_digits_Odds (by position),e_digits_Padded,e_digits_Odds (on this list out of all days from 1900 to 2024)
+Birthday (MMDDYYYY),Birthday (MM/DD/YYYY),"Birthday (Month Day, Year)",FirstIdx,Count,Odds (by position),Padded,Odds (on this list out of all days from 1900 to 2024)
 01081900,01/08/1900,"January 08, 1900",4923956,1,0.048046957482,False,0.000021902926
 01151900,01/15/1900,"January 15, 1900",3074912,1,0.030281184376,False,0.000021902926
 01181900,01/18/1900,"January 18, 1900",1346904,1,0.013378748360,False,0.000021902926

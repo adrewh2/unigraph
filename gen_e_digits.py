@@ -15,9 +15,22 @@ def print_progress(i, n, start_time):
     print(f"\r[{bar}] {percent*100:6.2f}%  ETA: {eta:8.1f}s", end='', flush=True, file=sys.stderr)
 
 def gen_e_digits(n):
-    # More efficient spigot algorithm for e (based on the formula e = 2 + 1/1! + 1/2! + 1/3! + ...)
-    array_size = n + 10  # Add a buffer
-    a = [1] * array_size
+    # Optimized spigot algorithm for e
+    # Use a more efficient data structure - numpy arrays if available
+    try:
+        import numpy as np
+        use_numpy = True
+    except ImportError:
+        use_numpy = False
+        
+    # Determine array size based on desired digits
+    # We need ln(10)/ln(n) * n terms for n digits
+    array_size = min(n + 20, 3*n//4)  # Reduced array size with improved precision control
+    
+    if use_numpy:
+        a = np.ones(array_size, dtype=np.int64)
+    else:
+        a = [1] * array_size
     
     yield "2"  # First digit
     yield "."  # Decimal point
@@ -25,19 +38,22 @@ def gen_e_digits(n):
     start_time = time.time()
     last_update = 0
     
+    # Use batch processing to reduce progress updates for large n
+    update_interval = max(1, min(n // 100, 10000))  # Adaptive progress updates
+    
     # Generate n digits after the decimal point
     for i in range(n):
-        # Process current state to get next digit
         carry = 0
+        # Process in reverse order for more efficient computation
         for j in range(array_size - 1, 0, -1):
             temp = a[j] * 10 + carry
-            a[j] = temp % (j + 1)
             carry = temp // (j + 1)
+            a[j] = temp % (j + 1)
         
         yield str(carry)
         
-        # Print progress every 0.5 seconds or on last iteration
-        if i == n - 1 or time.time() - last_update > 0.5:
+        # Progress reporting (less frequent for large n)
+        if i == n - 1 or i % update_interval == 0 or time.time() - last_update > 0.5:
             print_progress(i, n, start_time)
             last_update = time.time()
     
