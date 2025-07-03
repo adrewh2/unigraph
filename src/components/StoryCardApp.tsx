@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./HearthstoneDraftDemo.css";
+import "./StoryCardApp.css";
 
 interface StoryNode {
   id: string;
@@ -270,7 +270,7 @@ const STORY_TREE: StoryNode = {
   ],
 };
 
-const HearthstoneDraftDemo: React.FC = () => {
+const StoryCardApp: React.FC = () => {
   const [currentNode, setCurrentNode] = useState<StoryNode>(STORY_TREE);
   const [path, setPath] = useState<StoryNode[]>([STORY_TREE]);
   const [transitioning, setTransitioning] = useState(false);
@@ -384,4 +384,4 @@ const HearthstoneDraftDemo: React.FC = () => {
   );
 };
 
-export default HearthstoneDraftDemo;
+export default StoryCardApp;

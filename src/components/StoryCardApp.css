@@ -9,7 +9,7 @@
   font-family: "Bookerly", "Georgia", serif;
   overflow: hidden;
   box-sizing: border-box;
-  padding: 1.5rem;
+  padding: 1.5rem 1.5rem 4rem;
 }
 
 .story-path {
@@ -46,7 +46,7 @@
 .parent-card-container {
   width: 90%;
   max-width: 1200px;
-  height: calc(100vh - 120px); /* Smaller height with margins */
+  height: calc(100vh - 140px);
   opacity: 1;
   transform: translateY(0);
   transition:
@@ -54,7 +54,7 @@
     transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  margin-bottom: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .parent-card-container.transitioning {
@@ -65,19 +65,20 @@
 .parent-card {
   background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
   border-radius: 16px;
-  padding: 2rem;
+  padding: 3.5rem 2rem 2rem;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   flex-grow: 1;
   overflow: hidden;
+  position: relative;
 }
 
 .parent-card-header {
   display: flex;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   position: relative;
   flex-shrink: 0;
 }
@@ -113,16 +114,16 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+  position: absolute;
+  top: 1rem;
 }
 
 .back-button {
-  position: absolute;
-  left: 0;
+  left: 1rem;
 }
 
 .restart-button {
-  position: absolute;
-  right: 0;
+  right: 1rem;
 }
 
 .back-button:hover,
@@ -140,17 +141,18 @@
   flex-grow: 1;
   align-content: flex-start;
   max-height: 100%;
+  margin-top: 1.5rem;
 }
 
 .child-card {
   flex: 1;
-  min-width: 250px;
-  max-width: 350px;
-  height: 250px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  min-width: 220px;
+  max-width: 300px;
+  height: 380px;
+  background: linear-gradient(135deg, #f0f5ff 0%, #e4ecf7 100%);
   border-radius: 12px;
   padding: 1.5rem;
-  border: 1px solid #dee2e6;
+  border: 1px solid #c8d5e6;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
@@ -240,6 +242,6 @@
   }
   
   .child-card {
-    height: 220px;
+    height: 320px;
   }
 }

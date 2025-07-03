@@ -18,10 +18,12 @@ import {
   demo_SceneGraph_e8petrieProjection_421t2b6,
 } from "./graphs/Gallery_Demos/demo_SceneGraph_e8petrieProjection";
 import { demo_SceneGraph_ImageGallery } from "./graphs/Gallery_Demos/demo_SceneGraph_ImageGallery";
+import { demo_SceneGraph_Numbers_Story } from "./graphs/Gallery_Demos/demo_scenegraph_numbers_story";
 import { demo_SceneGraph_SolvayConference } from "./graphs/Gallery_Demos/demo_SceneGraph_SolvayConference";
 import { demo_SceneGraph_StackedImageGallery } from "./graphs/Gallery_Demos/demo_SceneGraph_StackedImageGallery";
 import { demo_SceneGraph_StackedGalleryTransparent } from "./graphs/Gallery_Demos/demo_SceneGraph_StackedImageGalleryTransparent";
 import { demo_SceneGraph_Thinking } from "./graphs/Gallery_Demos/demo_SceneGraph_Thinking";
+import { demo_SceneGraph_StoryCards } from "./graphs/Gallery_Demos/demo_story_cards.tsx";
 import { graphManagementWorkflowDiagram } from "./graphs/graphManagementWorkflow";
 import { graphManagementWorkflowDiagram2 } from "./graphs/graphManagementWorkflow2";
 import { randomBigGraph } from "./graphs/randomBig";
@@ -71,6 +73,13 @@ const total_writing_graph = () => {
 };
 
 export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
+  Test: {
+    label: "Test",
+    graphs: {
+      "Demo Story Cards": () => demo_SceneGraph_StoryCards(),
+      numbers: () => demo_SceneGraph_Numbers_Story(),
+    },
+  },
   Base: {
     label: "Base",
     graphs: {
