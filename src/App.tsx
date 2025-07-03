@@ -195,7 +195,7 @@ const getSimulations = (
     // timelineTestbed: <TimelineTestbed annotations={solvay_annotations} />,
     // canvasSelection: <CanvasSelection />,
     // storyCard: <AnimatedStoryCardDemo3 />,
-    storyCard: <StoryCardApp />,
+    storyCard: <StoryCardApp sceneGraph={sceneGraph} />,
   };
 };
 

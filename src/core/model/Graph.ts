@@ -287,18 +287,26 @@ export class Graph {
     if (typeof nodeIds === "string") {
       nodeIds = new EntityIds([nodeIds]);
     }
-    console.log(
-      this.edges
-        .filter((edge) => {
-          return nodeIds.has(edge.getSource());
-        })
-        .toArray()
-    );
+    // console.log(
+    //   this.edges
+    //     .filter((edge) => {
+    //       return nodeIds.has(edge.getSource());
+    //     })
+    //     .toArray()
+    // );
     return this.edges
       .filter((edge) => {
         return nodeIds.has(edge.getSource());
       })
       .toArray();
+  }
+
+  getOutgoingEdges(nodeId: NodeId): Edge[] {
+    return this.getEdgesFrom(nodeId);
+  }
+
+  getIncomingEdges(nodeId: NodeId): Edge[] {
+    return this.getEdgesTo(nodeId);
   }
 
   getGraphMap(): Map<NodeId, NodeId[]> {
