@@ -392,29 +392,24 @@ def write_birthday_csv_with_padding(results, csv_output, prefix="", min_year=190
             prefix_00_count = 0
             prefix_000_count = 0
             prefix_0000_count = 0
-            
+
             for pattern, count in exact_patterns.items():
-                # Fix: Check if pattern is the original birthday with no padding
                 if pattern == bday:
                     no_prefix_count += count
                     continue
-                
-                # For padded patterns
                 if len(pattern) > 8:
-                    # Find where the birthday starts in the pattern
                     start_idx = pattern.find(bday)
                     if start_idx >= 0:
-                        # Count leading zeros
                         prefix_len = start_idx
-                        
-                        # Categorize by prefix length
-                        if prefix_len == 1:
+                        suffix_len = len(pattern) - start_idx - 8
+                        # Only count if prefix and suffix are exactly N zeros (not >=)
+                        if prefix_len == 1 and suffix_len == 1:
                             prefix_0_count += count
-                        elif prefix_len == 2:
+                        if prefix_len == 2 and suffix_len == 2:
                             prefix_00_count += count
-                        elif prefix_len == 3:
+                        if prefix_len == 3 and suffix_len == 3:
                             prefix_000_count += count
-                        elif prefix_len >= 4:
+                        if prefix_len == 4 and suffix_len == 4:
                             prefix_0000_count += count
             
             writer.writerow([
@@ -554,35 +549,30 @@ def write_detailed_padding_csv(results, csv_output, prefix="", min_year=1900, ma
             # Count patterns with different prefixes
             exact_patterns = info.get("exact_patterns", {})
             
-            # Count occurrences with different padding prefixes
+            # Count occurrences with different padding prefixes (must match exactly N zeros on both sides)
             no_prefix_count = 0
             prefix_0_count = 0
             prefix_00_count = 0
             prefix_000_count = 0
             prefix_0000_count = 0
-            
+
             for pattern, count in exact_patterns.items():
-                # Fix: Check if pattern is the original birthday with no padding
                 if pattern == bday:
                     no_prefix_count += count
                     continue
-                
-                # For padded patterns
                 if len(pattern) > 8:
-                    # Find where the birthday starts in the pattern
                     start_idx = pattern.find(bday)
                     if start_idx >= 0:
-                        # Count leading zeros
                         prefix_len = start_idx
-                        
-                        # Categorize by prefix length
-                        if prefix_len == 1:
+                        suffix_len = len(pattern) - start_idx - 8
+                        # Only count if prefix and suffix are exactly N zeros (not >=)
+                        if prefix_len == 1 and suffix_len == 1:
                             prefix_0_count += count
-                        elif prefix_len == 2:
+                        if prefix_len == 2 and suffix_len == 2:
                             prefix_00_count += count
-                        elif prefix_len == 3:
+                        if prefix_len == 3 and suffix_len == 3:
                             prefix_000_count += count
-                        elif prefix_len >= 4:
+                        if prefix_len == 4 and suffix_len == 4:
                             prefix_0000_count += count
             
             # Write the row
@@ -725,15 +715,15 @@ def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1=
                     if start_idx >= 0:
                         # Count leading zeros
                         prefix_len = start_idx
-                        
-                        # Categorize by prefix length
-                        if prefix_len == 1:
+                        suffix_len = len(pattern) - start_idx - 8
+                        # Only count if BOTH prefix and suffix have at least N zeros
+                        if prefix_len >= 1 and suffix_len >= 1:
                             prefix1_0 += count
-                        elif prefix_len == 2:
+                        if prefix_len >= 2 and suffix_len >= 2:
                             prefix1_00 += count
-                        elif prefix_len == 3:
+                        if prefix_len >= 3 and suffix_len >= 3:
                             prefix1_000 += count
-                        elif prefix_len >= 4:
+                        if prefix_len >= 4 and suffix_len >= 4:
                             prefix1_0000 += count
             
             # Count patterns by prefix length for file 2
@@ -757,15 +747,15 @@ def write_intersection_with_padding_csv(results1, results2, csv_output, prefix1=
                     if start_idx >= 0:
                         # Count leading zeros
                         prefix_len = start_idx
-                        
-                        # Categorize by prefix length
-                        if prefix_len == 1:
+                        suffix_len = len(pattern) - start_idx - 8
+                        # Only count if BOTH prefix and suffix have at least N zeros
+                        if prefix_len >= 1 and suffix_len >= 1:
                             prefix2_0 += count
-                        elif prefix_len == 2:
+                        if prefix_len >= 2 and suffix_len >= 2:
                             prefix2_00 += count
-                        elif prefix_len == 3:
+                        if prefix_len >= 3 and suffix_len >= 3:
                             prefix2_000 += count
-                        elif prefix_len >= 4:
+                        if prefix_len >= 4 and suffix_len >= 4:
                             prefix2_0000 += count
             
             # Calculate if both have padding

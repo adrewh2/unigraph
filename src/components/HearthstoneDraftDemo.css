@@ -1,0 +1,245 @@
+.story-navigator-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e6eef8 100%);
+  color: #333;
+  font-family: "Bookerly", "Georgia", serif;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 1.5rem;
+}
+
+.story-path {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0.5rem 0 1.5rem;
+  font-size: 0.9rem;
+  max-width: 80%;
+  justify-content: center;
+}
+
+.path-item {
+  display: flex;
+  align-items: center;
+  margin: 0.25rem;
+}
+
+.path-separator {
+  margin: 0 0.5rem;
+  color: #7c8ba1;
+}
+
+.path-node {
+  color: #3e6a97;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.path-node:hover {
+  color: #1c4f80;
+  text-decoration: underline;
+}
+
+.parent-card-container {
+  width: 90%;
+  max-width: 1200px;
+  height: calc(100vh - 120px); /* Smaller height with margins */
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+
+.parent-card-container.transitioning {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.parent-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.parent-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.parent-card-title {
+  flex-grow: 1;
+  font-size: 2rem;
+  text-align: center;
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.parent-card-description {
+  font-size: 1.2rem;
+  color: #34495e;
+  text-align: center;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+  flex-shrink: 0;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.back-button,
+.restart-button {
+  background: #e6eef8;
+  border: 1px solid #bdc3c7;
+  color: #34495e;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+}
+
+.restart-button {
+  position: absolute;
+  right: 0;
+}
+
+.back-button:hover,
+.restart-button:hover {
+  background: #d5e3f7;
+}
+
+.child-cards-container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+  flex-grow: 1;
+  align-content: flex-start;
+  max-height: 100%;
+}
+
+.child-card {
+  flex: 1;
+  min-width: 250px;
+  max-width: 350px;
+  height: 250px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #dee2e6;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+
+.child-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border-color: #adb5bd;
+}
+
+.child-card-title {
+  font-size: 1.4rem;
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.child-card-description {
+  color: #5d6d7e;
+  font-size: 1rem;
+  text-align: center;
+  line-height: 1.4;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.story-ending {
+  text-align: center;
+  margin-top: 2rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.story-ending p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #34495e;
+}
+
+.story-ending .restart-button {
+  position: static;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.1rem;
+}
+
+/* Scrollbar styling */
+.child-cards-container::-webkit-scrollbar,
+.child-card-description::-webkit-scrollbar {
+  width: 8px;
+}
+
+.child-cards-container::-webkit-scrollbar-track,
+.child-card-description::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.child-cards-container::-webkit-scrollbar-thumb,
+.child-card-description::-webkit-scrollbar-thumb {
+  background: #bdc3c7;
+  border-radius: 4px;
+}
+
+.child-cards-container::-webkit-scrollbar-thumb:hover,
+.child-card-description::-webkit-scrollbar-thumb:hover {
+  background: #95a5a6;
+}
+
+@media (max-height: 800px) {
+  .parent-card-container {
+    height: calc(100vh - 100px);
+  }
+  
+  .parent-card-description {
+    margin-bottom: 1.5rem;
+  }
+  
+  .child-card {
+    height: 220px;
+  }
+}

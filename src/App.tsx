@@ -44,6 +44,7 @@ import SelectionBox from "./components/common/SelectionBox";
 import { getSaveAsNewFilterMenuItem } from "./components/common/sharedContextMenuItems";
 import { getNodeContextMenuItems } from "./components/common/singleNodeContextMenuItems";
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
+import HearthstoneDraftDemo from "./components/HearthstoneDraftDemo";
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import { AppContextProvider } from "./context/AppContext";
@@ -193,6 +194,8 @@ const getSimulations = (
     // imageSegmenter: <ImageSegmenter />,
     // timelineTestbed: <TimelineTestbed annotations={solvay_annotations} />,
     // canvasSelection: <CanvasSelection />,
+    // storyCard: <AnimatedStoryCardDemo3 />,
+    storyCard: <HearthstoneDraftDemo />,
   };
 };
 
