@@ -91,9 +91,9 @@ export class Graph {
       );
     }
     const edge = new Edge({
+      ...args,
       source: fromNode,
       target: toNode,
-      ...args,
     });
     this.addEdge(edge);
     return edge;

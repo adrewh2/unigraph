@@ -6,13 +6,14 @@ export const createEdgesTo = (
   graph: Graph,
   origin: NodeId,
   targets: NodeId[],
-  args?: EdgeDataArgs
+  args?: Partial<EdgeDataArgs>
 ): Edge[] => {
   const edges: Edge[] = [];
   targets.forEach((target) => {
     if (origin !== target) {
       const edge = graph.createEdge(origin, target, args);
       edges.push(edge);
+      console.log("created edge", edge);
     }
   });
   return edges;

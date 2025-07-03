@@ -1,7 +1,7 @@
+import { DEFAULT_APP_CONFIG } from "../../../AppConfig";
 import { Graph } from "../../../core/model/Graph";
 import { createEdgesTo } from "../../../core/model/GraphUtils";
 import { SceneGraph } from "../../../core/model/SceneGraph";
-import { createSampleStoryCardEntities } from "../../../core/types/StoryCard";
 
 export const demo_SceneGraph_Numbers_Story = () => {
   const graph = new Graph();
@@ -166,7 +166,8 @@ export const demo_SceneGraph_Numbers_Story = () => {
       aitken,
       machin,
       borda,
-    ].map((node) => node.getId(), { type: "computed pi by hand" })
+    ].map((node) => node.getId()),
+    { type: "computed pi by hand", tags: ["storyNode"] }
   );
 
   graph.createEdge(mileOfPi.getId(), billionDigitsOfPi.getId(), {
@@ -177,24 +178,29 @@ export const demo_SceneGraph_Numbers_Story = () => {
     type: "related",
   });
 
-  for (const storyCard of createSampleStoryCardEntities()) {
-    graph.createNode({
-      id: storyCard.getId(),
-      type: "storyCard",
-      userData: {
-        title: storyCard.getTitle(),
-        description: storyCard.getDescription(),
-        tags: storyCard.getData().tags,
-        storyCard: storyCard,
-      },
-    });
-  }
+  // for (const storyCard of createSampleStoryCardEntities()) {
+  //   graph.createNode({
+  //     id: storyCard.getId(),
+  //     type: "storyCard",
+  //     userData: {
+  //       title: storyCard.getTitle(),
+  //       description: storyCard.getDescription(),
+  //       tags: storyCard.getData().tags,
+  //       storyCard: storyCard,
+  //     },
+  //   });
+  // }
 
   return new SceneGraph({
     graph,
     metadata: {
       name: "StoryCard Demo",
       description: "For demonstrating story cards in a scene graph.",
+    },
+    defaultAppConfig: {
+      ...DEFAULT_APP_CONFIG(),
+      activeLayout: "dot",
+      activeView: "storyCard",
     },
   });
 };

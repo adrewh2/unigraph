@@ -50,6 +50,8 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
       const outgoingEdges = sceneGraph.getGraph().getEdgesFrom(nodeId);
       const childEdges = outgoingEdges.filter(
         (edge) =>
+          edge.getTags().has("EntryPoint") ||
+          edge.getTags().has("storyNode") ||
           edge.getType() === "StoryChoice" ||
           edge.getType() === "related" ||
           edge.getType() === "explores" ||
