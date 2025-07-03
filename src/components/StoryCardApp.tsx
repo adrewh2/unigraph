@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
+import { loadMarkdownFile } from "../utils/markdownLoader";
 import "./StoryCardApp.css";
+import MarkdownViewer from "./common/MarkdownViewer";
 
 interface StoryNode {
   id: string;
   title: string;
   description: string;
+  markdownFile?: string;
+  markdownContent?: string;
   children?: StoryNode[];
 }
 
@@ -23,6 +27,9 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
   const [currentNode, setCurrentNode] = useState<StoryNode | null>(null);
   const [path, setPath] = useState<StoryNode[]>([]);
   const [transitioning, setTransitioning] = useState(false);
+  const [markdownContents, setMarkdownContents] = useState<
+    Record<string, string>
+  >({});
 
   // Convert SceneGraph to a hierarchical structure that can be navigated
   const buildStoryTree = useMemo(() => {
@@ -46,6 +53,14 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
       const description = node.getDescription();
       const userData = node.getAllUserData();
 
+      // Create story node
+      const storyNode: StoryNode = {
+        id: nodeId,
+        title: userData?.title || title,
+        description: userData?.description || description,
+        markdownFile: userData?.markdownFile,
+      };
+
       // Get child nodes through "StoryChoice" edges
       const outgoingEdges = sceneGraph.getGraph().getEdgesFrom(nodeId);
       const childEdges = outgoingEdges.filter(
@@ -66,13 +81,6 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
           children.push(childNode);
         }
       });
-
-      // Create story node
-      const storyNode: StoryNode = {
-        id: nodeId,
-        title: userData?.title || title,
-        description: userData?.description || description,
-      };
 
       if (children.length > 0) {
         storyNode.children = children;
@@ -132,6 +140,35 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
       setPath([buildStoryTree]);
     }
   }, [buildStoryTree]);
+
+  // Load markdown content when needed
+  useEffect(() => {
+    if (
+      currentNode?.markdownFile &&
+      !markdownContents[currentNode.markdownFile]
+    ) {
+      loadMarkdownFile(currentNode.markdownFile).then((content) => {
+        setMarkdownContents((prev) => ({
+          ...prev,
+          [currentNode.markdownFile!]: content,
+        }));
+      });
+    }
+
+    // Also preload markdown for child cards
+    if (currentNode?.children) {
+      currentNode.children.forEach((child) => {
+        if (child.markdownFile && !markdownContents[child.markdownFile]) {
+          loadMarkdownFile(child.markdownFile).then((content) => {
+            setMarkdownContents((prev) => ({
+              ...prev,
+              [child.markdownFile!]: content,
+            }));
+          });
+        }
+      });
+    }
+  }, [currentNode, markdownContents]);
 
   const handleSelectCard = (child: StoryNode) => {
     if (transitioning || !child) return;
@@ -224,7 +261,13 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
             )}
           </div>
 
-          <p className="parent-card-description">{currentNode.description}</p>
+          <div className="parent-card-content">
+            {currentNode.markdownFile ? (
+              <MarkdownViewer filename={currentNode.markdownFile} />
+            ) : (
+              <p className="parent-card-description">{currentNode.description}</p>
+            )}
+          </div>
 
           {currentNode.children && currentNode.children.length > 0 ? (
             <div className="child-cards-container">
@@ -235,13 +278,21 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
                   onClick={() => handleSelectCard(child)}
                 >
                   <h3 className="child-card-title">{child.title}</h3>
-                  <p className="child-card-description">{child.description}</p>
+                  {child.markdownFile ? (
+                    <MarkdownViewer
+                      filename={child.markdownFile}
+                      excerpt={true}
+                      excerptLength={150}
+                    />
+                  ) : (
+                    <p className="child-card-description">{child.description}</p>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
             <div className="story-ending">
-              <p>You&apos;ve reached the end of this branch.</p>
+              <p>{"You've reached the end of this branch."}</p>
               <button className="restart-button" onClick={handleRestart}>
                 Return to Start
               </button>

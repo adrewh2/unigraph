@@ -9,13 +9,14 @@ export interface StoryCard {
   id: string;
   title: string;
   description: string;
+  markdownFile?: string; // Path to markdown file relative to public/storyCardFiles
   metadata?: {
     tags?: string[];
     author?: string;
     createdAt?: string;
     difficulty?: number;
     imageUrl?: string;
-    position?: { x: number; y: number };
+    position?: { x: number; y: number; z: number };
   };
 }
 
@@ -40,6 +41,25 @@ export function createStoryCard(
     id,
     title,
     description,
+    metadata: {
+      createdAt: new Date().toISOString(),
+    },
+  };
+}
+
+/**
+ * Creates a new story card with markdown content
+ */
+export function createMarkdownStoryCard(
+  id: string,
+  title: string,
+  markdownFile: string
+): StoryCard {
+  return {
+    id,
+    title,
+    description: `Loading content from ${markdownFile}...`,
+    markdownFile,
     metadata: {
       createdAt: new Date().toISOString(),
     },

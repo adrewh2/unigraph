@@ -77,6 +77,42 @@ export const demo_Unigraph_Applications = () => {
     type: "concept",
   });
 
+  // Add a node that references a markdown file
+  const numerologyInformation = graph.createNode({
+    id: "Numerology Information",
+    type: "storyCard",
+    userData: {
+      title: "What is Numerology?",
+      markdownFile: "numerology.md", // This will be loaded from /public/posts/numerology.md
+      tags: ["numerology", "belief systems", "markdown"],
+    },
+  });
+
+  // Connect it to the story cards node
+  graph.createEdge(storyCards.getId(), numerologyInformation.getId(), {
+    type: "StoryChoice",
+    label: "Learn about Numerology",
+  });
+
+  const astrologyInformation = graph.createNode({
+    id: "Astrology Information",
+    type: "storyCard",
+    userData: {
+      title: "Legitimacy in Astrology",
+      markdownFile: "astrology.md", // This will be loaded from /public/posts/astrology.md
+      tags: ["astrology", "belief systems", "markdown"],
+    },
+  });
+
+  graph.createEdge(
+    numerologyInformation.getId(),
+    astrologyInformation.getId(),
+    {
+      type: "StoryChoice",
+      label: "expansion",
+    }
+  );
+
   return new SceneGraph({
     graph,
     metadata: {
