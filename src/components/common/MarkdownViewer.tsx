@@ -410,7 +410,7 @@ function MarkdownViewer({
       <div
         ref={contentRef}
         className={`markdown-content ${excerpt ? "markdown-excerpt" : ""}`}
-        style={excerpt ? { maxHeight: "300px", overflow: "hidden" } : {}}
+        style={excerpt ? { maxHeight: "400px", overflow: "hidden" } : {}}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={(e) => {
           const target = e.target as HTMLElement;
