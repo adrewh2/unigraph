@@ -37,6 +37,7 @@ export const demo_Unigraph_Applications = () => {
       description:
         "What would it take to create real magic? How would we technically achieve transfiguration?",
       tags: ["unigraph", "magic", "applications"],
+      markdownFile: "magicExplained/intro.md",
     },
   });
 
@@ -189,7 +190,17 @@ export const demo_Unigraph_Applications = () => {
     }
   );
 
-  console.log("what about this");
+  const conceptAlbumGallery = graph.createNode({
+    id: "Concept Album Gallery",
+    type: "storyCard",
+    userData: {
+      title: "Concept Album Gallery",
+      description:
+        "A gallery of concept albums, showcasing the intersection of music and storytelling through thematic and narrative coherence.",
+      tags: ["concept album", "gallery", "music"],
+      markdownFile: "conceptAlbum/gallery.md", // This will be loaded from /public/posts/conceptAlbumGallery.md
+    },
+  });
 
   const demo_stories = createEdgesTo(
     graph,
@@ -201,6 +212,7 @@ export const demo_Unigraph_Applications = () => {
       aboutTheAlethiometer,
       interspection,
       anIdea,
+      conceptAlbumGallery,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
   );
