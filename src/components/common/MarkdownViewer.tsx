@@ -2,6 +2,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import { marked } from "marked";
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./MarkdownViewer.css"; // Import CSS file
 
 // Define interfaces for our popup
@@ -422,11 +423,9 @@ function MarkdownViewer({
             const termText = target.getAttribute("data-term");
             if (termText && terms[termText]) {
               const rect = target.getBoundingClientRect();
-
-              // For position: fixed, use viewport coordinates (no scrollY)
-              const positionX = rect.left + rect.width / 2;
-              const positionY = rect.top; // top of the term in viewport
-
+              // Use window scroll offsets for absolute positioning in the window
+              const positionX = rect.left + rect.width / 2 + window.scrollX;
+              const positionY = rect.top + window.scrollY;
               setActiveDefinition({
                 term: termText,
                 definition: terms[termText],
@@ -441,31 +440,36 @@ function MarkdownViewer({
         }}
       />
 
-      {activeDefinition && (
-        <div
-          ref={popupRef}
-          className={`definition-popup ${activeDefinition.isDragging ? "dragging" : ""}`}
-          style={{
-            position: "fixed", // Use fixed to match CSS
-            top: `${activeDefinition.position.y}px`,
-            left: `${activeDefinition.position.x}px`,
-            zIndex: 1000,
-            cursor: activeDefinition.isDragging ? "grabbing" : "grab",
-            transform: "translate(-50%, -100%)", // Center horizontally and position above
-          }}
-        >
-          <h4 onMouseDown={handleMouseDown} className="definition-popup-header">
-            {activeDefinition.term}
-          </h4>
-          <p>{activeDefinition.definition}</p>
-          <button
-            className="definition-popup-close"
-            onClick={() => setActiveDefinition(null)}
+      {activeDefinition &&
+        createPortal(
+          <div
+            ref={popupRef}
+            className={`definition-popup ${activeDefinition.isDragging ? "dragging" : ""}`}
+            style={{
+              position: "absolute",
+              top: `${activeDefinition.position.y}px`,
+              left: `${activeDefinition.position.x}px`,
+              zIndex: 1000,
+              cursor: activeDefinition.isDragging ? "grabbing" : "grab",
+              transform: "translate(-50%, -100%)",
+            }}
           >
-            ×
-          </button>
-        </div>
-      )}
+            <h4
+              onMouseDown={handleMouseDown}
+              className="definition-popup-header"
+            >
+              {activeDefinition.term}
+            </h4>
+            <p>{activeDefinition.definition}</p>
+            <button
+              className="definition-popup-close"
+              onClick={() => setActiveDefinition(null)}
+            >
+              ×
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
