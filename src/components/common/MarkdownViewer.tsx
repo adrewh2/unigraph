@@ -9,6 +9,7 @@ interface DefinitionPopup {
   term: string;
   definition: string;
   position: { x: number; y: number };
+  isDragging?: boolean;
 }
 
 interface MarkdownViewerProps {
@@ -29,6 +30,11 @@ function MarkdownViewer({
   const [activeDefinition, setActiveDefinition] =
     useState<DefinitionPopup | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const eventHandlersSetupRef = useRef(false);
 
   useEffect(() => {
     setLoading(true);
@@ -243,80 +249,154 @@ function MarkdownViewer({
       });
   }, [filename, excerpt, excerptLength]);
 
+  // Handle dragging the definition popup
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!activeDefinition) return;
+
+    // Only initiate drag on the header, not on the close button
+    if ((e.target as HTMLElement).tagName === "BUTTON") return;
+
+    setDragStart({
+      x: e.clientX - activeDefinition.position.x,
+      y: e.clientY - activeDefinition.position.y,
+    });
+
+    setActiveDefinition({
+      ...activeDefinition,
+      isDragging: true,
+    });
+
+    // Prevent text selection during drag
+    e.preventDefault();
+  };
+
+  const handleMouseMove = React.useCallback(
+    (e: MouseEvent) => {
+      if (!dragStart || !activeDefinition?.isDragging) return;
+
+      setActiveDefinition((prev) =>
+        prev
+          ? {
+              ...prev,
+              position: {
+                x: e.clientX - (dragStart?.x ?? 0),
+                y: e.clientY - (dragStart?.y ?? 0),
+              },
+            }
+          : prev
+      );
+    },
+    [dragStart, activeDefinition?.isDragging]
+  );
+
+  const handleMouseUp = React.useCallback(() => {
+    if (!activeDefinition?.isDragging) return;
+
+    setActiveDefinition((prev) =>
+      prev
+        ? {
+            ...prev,
+            isDragging: false,
+          }
+        : prev
+    );
+
+    setDragStart(null);
+  }, [activeDefinition]);
+
+  // Add global mouse move and up event listeners for dragging
+  useEffect(() => {
+    if (activeDefinition?.isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [activeDefinition, dragStart, handleMouseMove, handleMouseUp]);
+
   // Add event handlers after content is rendered
   useEffect(() => {
-    if (contentRef.current && !loading) {
-      console.log("Setting up term click handlers");
+    if (!contentRef.current || loading) return;
 
-      // Use setTimeout to ensure DOM is fully rendered before attaching events
-      setTimeout(() => {
-        // Find all defined terms
-        const termElements = contentRef.current?.querySelectorAll(".defined-term");
-        console.log(`Found ${termElements?.length || 0} term elements`);
+    // Find all defined terms immediately without setTimeout
+    const termElements = contentRef.current.querySelectorAll(".defined-term");
+    console.log(`Found ${termElements.length || 0} term elements`);
 
-        if (!termElements || termElements.length === 0) return;
+    if (termElements.length === 0) return;
 
-        // Add click handlers to each term
-        const handleTermClick = (e: Event) => {
-          e.preventDefault();
-          e.stopPropagation();
+    // Add click handlers to each term
+    const handleTermClick = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-          const element = e.currentTarget as HTMLElement;
-          const termText = element.getAttribute("data-term");
-          console.log(`Term clicked: ${termText}`);
+      const element = e.currentTarget as HTMLElement;
+      const termText = element.getAttribute("data-term");
+      console.log(`Term clicked: ${termText}`);
 
-          if (!termText || !terms[termText]) return;
+      if (!termText || !terms[termText]) return;
 
-          // Position the popup near the clicked term
-          const rect = element.getBoundingClientRect();
+      // Force new position calculation on every click to ensure it works first time
+      const rect = element.getBoundingClientRect();
 
-          setActiveDefinition({
-            term: termText,
-            definition: terms[termText],
-            position: {
-              x: rect.left + window.scrollX,
-              y: rect.bottom + window.scrollY + 5,
-            },
-          });
-        };
+      console.log("Setting active definition with position:", {
+        x: rect.left + window.scrollX,
+        y: rect.bottom + window.scrollY + 5,
+      });
 
-        termElements.forEach((element) => {
-          // Remove any existing listeners first to prevent duplicates
-          element.removeEventListener("click", handleTermClick as EventListener);
-          element.addEventListener("click", handleTermClick as EventListener);
+      // Use a callback form of setState to ensure we're not depending on previous state
+      setActiveDefinition({
+        term: termText,
+        definition: terms[termText],
+        position: {
+          x: rect.left + window.scrollX,
+          y: rect.bottom + window.scrollY + 5,
+        },
+        isDragging: false,
+      });
+    };
 
-          // Add direct onclick attribute as a backup approach
-          (element as HTMLElement).onclick = (e) => {
-            handleTermClick(e);
-          };
-        });
-      }, 100); // Short delay to ensure DOM is ready
+    // Clean up previous listeners to prevent duplicates
+    termElements.forEach((element) => {
+      element.removeEventListener("click", handleTermClick as EventListener);
+    });
 
-      // Close popup when clicking outside
-      const handleClickOutside = (e: MouseEvent) => {
-        if (activeDefinition) {
-          const popupElement = document.querySelector(".definition-popup");
-          const clickedOnPopup =
-            popupElement && popupElement.contains(e.target as Node);
+    // Setup new listeners
+    termElements.forEach((element) => {
+      element.addEventListener("click", handleTermClick as EventListener);
+      // Add a direct onclick handler to ensure the event fires
+      (element as HTMLElement).onclick = (e: any) => {
+        handleTermClick(e);
+      };
+    });
 
-          if (!clickedOnPopup) {
-            setActiveDefinition(null);
-          }
+    // Mark that we've set up the event handlers
+    eventHandlersSetupRef.current = true;
+
+    // Close popup when clicking outside
+    const handleClickOutside = (e: MouseEvent) => {
+      if (activeDefinition && popupRef.current) {
+        if (
+          !popupRef.current.contains(e.target as Node) &&
+          !Array.from(termElements).some((el) => el.contains(e.target as Node))
+        ) {
+          setActiveDefinition(null);
         }
-      };
+      }
+    };
 
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        // Clean up all event listeners
-        const termElements = contentRef.current?.querySelectorAll(".defined-term");
-        termElements?.forEach((element) => {
-          // Clean up without referencing the specific handler
-          (element as HTMLElement).onclick = null;
-        });
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [html, loading, terms]); // Remove activeDefinition to prevent re-attaching handlers
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      // Clean up all event listeners
+      termElements.forEach((element) => {
+        element.removeEventListener("click", handleTermClick as EventListener);
+        (element as HTMLElement).onclick = null;
+      });
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [html, loading, terms, activeDefinition]); // Added activeDefinition to dependencies
 
   if (loading) {
     return <div className="markdown-loading">Loading...</div>;
@@ -333,12 +413,13 @@ function MarkdownViewer({
         className={`markdown-content ${excerpt ? "markdown-excerpt" : ""}`}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={(e) => {
-          // Delegate click handling for defined terms
+          // Direct click handler on the container as a fallback
           const target = e.target as HTMLElement;
           if (target.classList.contains("defined-term")) {
             const termText = target.getAttribute("data-term");
             if (termText && terms[termText]) {
               const rect = target.getBoundingClientRect();
+              console.log("Container click detected on term:", termText);
               setActiveDefinition({
                 term: termText,
                 definition: terms[termText],
@@ -346,6 +427,7 @@ function MarkdownViewer({
                   x: rect.left + window.scrollX,
                   y: rect.bottom + window.scrollY + 5,
                 },
+                isDragging: false,
               });
             }
           }
@@ -354,17 +436,26 @@ function MarkdownViewer({
 
       {activeDefinition && (
         <div
-          className="definition-popup"
+          ref={popupRef}
+          className={`definition-popup ${activeDefinition.isDragging ? "dragging" : ""}`}
           style={{
-            position: "absolute", // Ensure position is absolute
+            position: "absolute",
             top: `${activeDefinition.position.y}px`,
             left: `${activeDefinition.position.x}px`,
-            zIndex: 1000, // Ensure high z-index
+            zIndex: 1000,
+            cursor: activeDefinition.isDragging ? "grabbing" : "grab",
           }}
         >
-          <h4>{activeDefinition.term}</h4>
+          <h4 onMouseDown={handleMouseDown} className="definition-popup-header">
+            {activeDefinition.term}
+          </h4>
           <p>{activeDefinition.definition}</p>
-          <button onClick={() => setActiveDefinition(null)}>×</button>
+          <button
+            className="definition-popup-close"
+            onClick={() => setActiveDefinition(null)}
+          >
+            ×
+          </button>
         </div>
       )}
     </div>

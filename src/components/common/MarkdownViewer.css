@@ -5,6 +5,7 @@
   cursor: pointer;
   border-bottom: 1px dotted #0066cc;
   transition: background-color 0.2s;
+  position: relative; /* Ensure relative positioning for absolute popup */
 }
 
 .defined-term:hover {
@@ -13,21 +14,48 @@
 
 /* Definition popup styles */
 .definition-popup {
-  position: absolute;
-  z-index: 1000;
+  position: fixed; /* Try fixed positioning instead of absolute */
+  z-index: 9999; /* Ensure very high z-index */
   background: white;
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 10px 15px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   max-width: 300px;
+  min-width: 200px; /* Ensure a minimum width */
   animation: fadeIn 0.2s ease;
+  user-select: none; /* Prevent text selection during drag */
+}
+
+.definition-popup.dragging {
+  opacity: 0.9;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .definition-popup h4 {
   margin: 0 0 8px 0;
   color: #333;
   font-weight: 600;
+  cursor: grab;
+  padding: 4px 20px 4px 0; /* Space for close button */
+}
+
+.definition-popup h4:active {
+  cursor: grabbing;
+}
+
+.definition-popup-header {
+  margin: -10px -15px 10px -15px;
+  padding: 8px 15px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #eee;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  cursor: grab;
+}
+
+.definition-popup-header:active {
+  cursor: grabbing;
 }
 
 .definition-popup p {
@@ -36,19 +64,26 @@
   line-height: 1.4;
 }
 
-.definition-popup button {
+.definition-popup-close {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 8px;
+  right: 10px;
   background: none;
   border: none;
   cursor: pointer;
   font-size: 16px;
   color: #999;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
 }
 
-.definition-popup button:hover {
+.definition-popup-close:hover {
   color: #333;
+  background-color: #eaeaea;
 }
 
 @keyframes fadeIn {
