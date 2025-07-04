@@ -338,21 +338,24 @@ function MarkdownViewer({
 
       if (!termText || !terms[termText]) return;
 
-      // Force new position calculation on every click to ensure it works first time
+      // Get term position
       const rect = element.getBoundingClientRect();
 
-      console.log("Setting active definition with position:", {
-        x: rect.left + window.scrollX,
-        y: rect.bottom + window.scrollY + 5,
+      // Calculate popup position - placed above and centered on term
+      const positionX = rect.left + rect.width / 2; // Center horizontally
+      const positionY = rect.top; // Align with top of term
+
+      console.log("Setting popup position:", {
+        x: positionX,
+        y: positionY,
       });
 
-      // Use a callback form of setState to ensure we're not depending on previous state
       setActiveDefinition({
         term: termText,
         definition: terms[termText],
         position: {
-          x: rect.left + window.scrollX,
-          y: rect.bottom + window.scrollY + 5,
+          x: positionX,
+          y: positionY,
         },
         isDragging: false,
       });
@@ -396,7 +399,7 @@ function MarkdownViewer({
       });
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [html, loading, terms, activeDefinition]); // Added activeDefinition to dependencies
+  }, [html, loading, terms, activeDefinition]);
 
   if (loading) {
     return <div className="markdown-loading">Loading...</div>;
@@ -419,13 +422,17 @@ function MarkdownViewer({
             const termText = target.getAttribute("data-term");
             if (termText && terms[termText]) {
               const rect = target.getBoundingClientRect();
-              console.log("Container click detected on term:", termText);
+
+              // For position: fixed, use viewport coordinates (no scrollY)
+              const positionX = rect.left + rect.width / 2;
+              const positionY = rect.top; // top of the term in viewport
+
               setActiveDefinition({
                 term: termText,
                 definition: terms[termText],
                 position: {
-                  x: rect.left + window.scrollX,
-                  y: rect.bottom + window.scrollY + 5,
+                  x: positionX,
+                  y: positionY,
                 },
                 isDragging: false,
               });
@@ -439,11 +446,12 @@ function MarkdownViewer({
           ref={popupRef}
           className={`definition-popup ${activeDefinition.isDragging ? "dragging" : ""}`}
           style={{
-            position: "absolute",
+            position: "fixed", // Use fixed to match CSS
             top: `${activeDefinition.position.y}px`,
             left: `${activeDefinition.position.x}px`,
             zIndex: 1000,
             cursor: activeDefinition.isDragging ? "grabbing" : "grab",
+            transform: "translate(-50%, -100%)", // Center horizontally and position above
           }}
         >
           <h4 onMouseDown={handleMouseDown} className="definition-popup-header">

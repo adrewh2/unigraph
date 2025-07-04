@@ -1,3 +1,9 @@
+---
+title: My Document
+author: Your Name
+terms: combinations: a definition, unlike: test
+---
+
 **His Dark Materials** by Philip Pullman is a wonderful reflection on science, theology, and the human condition.
 
 The protagonist is a girl named Lyra who has an incredible talent: a natural gift for reading  

@@ -15,7 +15,7 @@
 /* Definition popup styles */
 .definition-popup {
   position: fixed; /* Try fixed positioning instead of absolute */
-  z-index: 9999; /* Ensure very high z-index */
+  z-index: 1000; /* Ensure very high z-index */
   background: white;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -23,8 +23,38 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   max-width: 300px;
   min-width: 200px; /* Ensure a minimum width */
+  margin-bottom: 10px; /* Add some spacing below */
+  transform: translate(
+    -50%,
+    -100%
+  ); /* Center horizontally and position above */
   animation: fadeIn 0.2s ease;
-  user-select: none; /* Prevent text selection during drag */
+}
+
+.definition-popup:after {
+  content: "";
+  position: absolute;
+  bottom: -8px; /* Position it just below the popup */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white; /* Arrow color matching popup background */
+}
+
+.definition-popup:before {
+  content: "";
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid #ccc; /* Arrow outline matching popup border */
 }
 
 .definition-popup.dragging {
