@@ -5,6 +5,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const ESLintPlugin = require("eslint-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const DocsDirectoryPlugin = require("./scripts/DocsDirectoryPlugin");
 
 module.exports = {
   entry: "./src/index.tsx",
@@ -117,6 +118,12 @@ module.exports = {
           to: "docs",
         },
       ],
+    }),
+    new DocsDirectoryPlugin({
+      docsPath: path.resolve(__dirname, "docs"),
+      outputPath: path.resolve(__dirname, "docs/docs-structure.json"),
+      throttleTime: 30000, // Only rebuild at most once per 30 seconds
+      watchForChanges: true,
     }),
   ],
   devServer: {

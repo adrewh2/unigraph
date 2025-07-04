@@ -1,7 +1,10 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { DEFAULT_APP_CONFIG } from "../../../AppConfig";
+import { createStoryCardsFromDocsDirectory } from "../../../components/cards/utils";
+import { EntitiesContainer } from "../../../core/model/entity/entitiesContainer";
 import { Graph } from "../../../core/model/Graph";
 import { createEdgesTo } from "../../../core/model/GraphUtils";
+import { Node, NodeId } from "../../../core/model/Node";
 import { SceneGraph } from "../../../core/model/SceneGraph";
 
 export const demo_Unigraph_Applications = () => {
@@ -460,6 +463,17 @@ export const demo_Unigraph_Applications = () => {
       unigraphCopilot,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
+
+  createStoryCardsFromDocsDirectory(graph).then(
+    (docsNodes: EntitiesContainer<NodeId, Node>) => {
+      createEdgesTo(
+        graph,
+        storyCards.getId(),
+        [docsNodes.first()!].map((node: Node) => node.getId()),
+        { type: "StoryChoice", tags: ["EntryPoint"] }
+      );
+    }
   );
 
   const demo_stories = createEdgesTo(

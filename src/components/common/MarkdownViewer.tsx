@@ -236,47 +236,67 @@ function MarkdownViewer({
 
     console.log(`Attempting to fetch markdown from: ${filePath}`);
 
+    // Track attempted alternate paths to avoid duplicates
+    const attemptedPaths = new Set<string>();
+    attemptedPaths.add(filePath);
+
     // Try loading the file or use overrideMarkdown if provided
     (overrideMarkdown
       ? Promise.resolve(overrideMarkdown)
       : fetch(filePath).then((res) => {
           if (!res.ok) {
-            // Try alternate paths in sequence
-            const alternatePaths = [];
-
-            // If not already trying docs/ path, add it as fallback
-            if (!normalizedFilename.startsWith("docs/")) {
-              alternatePaths.push(
-                `/docs/${normalizedFilename}${
-                  !normalizedFilename.endsWith(".md") ? ".md" : ""
-                }`
-              );
-            }
-
-            // Add storyCards as another fallback
-            alternatePaths.push(
-              `/storyCards/${normalizedFilename}${
-                !normalizedFilename.endsWith(".md") ? ".md" : ""
-              }`
+            // Try a limited set of alternates without excessive retries
+            let alternatePromise: Promise<string> = Promise.reject(
+              new Error(`Initial path ${filePath} failed`)
             );
 
-            // Try each path in sequence
-            return alternatePaths
-              .reduce<Promise<string>>(
-                (promise, path) =>
-                  promise.catch(() => {
-                    console.log(`Trying alternate path: ${path}`);
-                    return fetch(path).then((altRes) => {
-                      if (!altRes.ok)
-                        throw new Error(`Failed to load from ${path}`);
-                      return altRes.text();
-                    });
-                  }),
-                Promise.reject(new Error(`Initial path ${filePath} failed`))
-              )
-              .catch((_) => {
-                throw new Error(`Failed to load markdown from any path`);
+            // Only try these alternates if we haven't already
+            const alternates = [];
+
+            // Try docs/ prefix if not already trying
+            if (!normalizedFilename.startsWith("docs/")) {
+              const docsPath = `/docs/${normalizedFilename}${
+                !normalizedFilename.endsWith(".md") ? ".md" : ""
+              }`;
+              if (!attemptedPaths.has(docsPath)) {
+                attemptedPaths.add(docsPath);
+                alternates.push(docsPath);
+              }
+            }
+
+            // Try storyCards/ folder if not the initial path
+            const storyCardsPath = `/storyCards/${normalizedFilename}${
+              !normalizedFilename.endsWith(".md") ? ".md" : ""
+            }`;
+            if (!attemptedPaths.has(storyCardsPath)) {
+              attemptedPaths.add(storyCardsPath);
+              alternates.push(storyCardsPath);
+            }
+
+            // Build a promise chain that only tries each path once
+            for (const alternatePath of alternates) {
+              console.log(`Trying alternate path: ${alternatePath}`);
+              alternatePromise = alternatePromise.catch(() => {
+                return fetch(alternatePath).then((altRes) => {
+                  if (!altRes.ok) {
+                    throw new Error(`Failed to load from ${alternatePath}`);
+                  }
+                  return altRes.text();
+                });
               });
+            }
+
+            return alternatePromise.catch(() => {
+              // Final fallback - return a friendly error message as markdown
+              console.error(
+                `Failed to load markdown from any path for ${filename}`
+              );
+              return `# File Not Found\n\nThe requested file \`${filename}\` could not be loaded.\n\n**Paths attempted:**\n${Array.from(
+                attemptedPaths
+              )
+                .map((p) => `- \`${p}\``)
+                .join("\n")}`;
+            });
           }
           return res.text();
         })
@@ -312,9 +332,10 @@ function MarkdownViewer({
         }
       })
       .catch((err) => {
+        // Improve error display
         console.error("Error loading markdown:", err);
         setError(
-          `Error loading markdown: ${
+          `Unable to load content for "${filename}". ${
             err instanceof Error ? err.message : String(err)
           }`
         );
@@ -481,7 +502,13 @@ function MarkdownViewer({
   }
 
   if (error) {
-    return <div className="markdown-error">{error}</div>;
+    return (
+      <div className="markdown-error">
+        <h3>Error Loading Content</h3>
+        <p>{error}</p>
+        <p>Please check that the file exists and the path is correct.</p>
+      </div>
+    );
   }
 
   return (
