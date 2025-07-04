@@ -131,28 +131,78 @@
 }
 
 /* Style tables in markdown content better */
-.markdown-content table {
+.markdown-content table,
+.markdown-excerpt table {
   border-spacing: 0;
   border-collapse: collapse;
   width: 100%;
 }
 
-.markdown-content td {
+.markdown-content td,
+.markdown-excerpt td {
   padding: 0;
   padding-bottom: 20px;
   vertical-align: top;
 }
 
-.markdown-content td img {
+.markdown-content td img,
+.markdown-excerpt td img {
   display: block;
   margin: 0;
+  max-width: 100%;
+  height: auto;
 }
 
-.markdown-content td p {
+.markdown-content td p,
+.markdown-excerpt td p {
   margin-top: 0;
   margin-bottom: 0.8em;
 }
 
-.markdown-content td p:first-child {
+.markdown-content td p:first-child,
+.markdown-excerpt td p:first-child {
   margin-top: 0;
+}
+
+/* Completely revise excerpt styling */
+.markdown-excerpt {
+  position: relative;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #5d6d7e;
+  max-height: 150px !important;
+  overflow: hidden !important;
+}
+
+.markdown-excerpt table {
+  margin: 0;
+  width: 100%;
+}
+
+.markdown-excerpt td {
+  vertical-align: top;
+  padding: 0 10px 0 0;
+}
+
+.markdown-excerpt td:first-child {
+  width: 40%;
+  min-width: 100px;
+}
+
+.markdown-excerpt td img {
+  max-width: 100%;
+  height: auto;
+  width: auto;
+}
+
+.markdown-excerpt::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(to bottom, transparent, #f0f5ff);
+  pointer-events: none;
+  z-index: 10;
 }

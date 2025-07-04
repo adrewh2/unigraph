@@ -224,7 +224,7 @@ function MarkdownViewer({
 
         // If excerpt is requested, truncate the content
         const finalContent = excerpt
-          ? processedMarkdown.substring(0, excerptLength) + "..."
+          ? processedMarkdown.split("</td>")[0] + "</td></tr></table>" // Only keep first table row with image
           : processedMarkdown;
 
         // Parse markdown to HTML
@@ -410,6 +410,7 @@ function MarkdownViewer({
       <div
         ref={contentRef}
         className={`markdown-content ${excerpt ? "markdown-excerpt" : ""}`}
+        style={excerpt ? { maxHeight: "300px", overflow: "hidden" } : {}}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={(e) => {
           const target = e.target as HTMLElement;
