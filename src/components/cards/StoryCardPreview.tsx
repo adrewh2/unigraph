@@ -1,6 +1,6 @@
 import React from "react";
-import MarkdownViewer from "../common/MarkdownViewer";
 import { StoryNode } from "../types/StoryTypes";
+import StoryCardPreviewContent from "./StoryCardPreviewContent";
 
 interface StoryCardPreviewProps {
   node: StoryNode;
@@ -25,31 +25,33 @@ const StoryCardPreview: React.FC<StoryCardPreviewProps> = ({
           position: "relative",
         }}
       >
-        {node.markdownFile ? (
+        {/* Content container with no fading */}
+        <div
+          style={{
+            width: "100%",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <StoryCardPreviewContent
+            node={node}
+            markdownContent={markdownContent}
+          />
+
+          {/* Gradient overlay that sits on top of the content */}
           <div
             style={{
-              overflow: "hidden",
-              maxHeight: "100%",
-              width: "100%",
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: "40px",
+              pointerEvents: "none",
+              background:
+                "linear-gradient(to top, #e4ecf7 50%, rgba(228, 236, 247, 0) 100%)",
             }}
-          >
-            <MarkdownViewer
-              filename={node.markdownFile}
-              excerpt={true}
-              excerptLength={250}
-              overrideMarkdown={markdownContent}
-              imageStyle={{
-                maxWidth: "180px",
-                maxHeight: "140px",
-                objectFit: "contain",
-                display: "block",
-                margin: "0 auto 12px auto",
-              }}
-            />
-          </div>
-        ) : (
-          <p className="child-card-description">{node.description}</p>
-        )}
+          />
+        </div>
       </div>
     </div>
   );

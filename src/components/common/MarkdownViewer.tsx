@@ -447,7 +447,7 @@ function MarkdownViewer({
     <div className="markdown-container" style={{ position: "relative" }}>
       <div
         ref={contentRef}
-        className={`markdown-content ${excerpt ? "markdown-excerpt" : ""}`}
+        className={`markdown-content ${excerpt ? "markdown-excerpt-no-fade" : ""}`}
         style={excerpt ? { maxHeight: "400px", overflow: "hidden" } : {}}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={(e) => {

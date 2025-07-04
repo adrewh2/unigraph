@@ -283,16 +283,25 @@
   color: #5d6d7e;
 }
 
-.markdown-excerpt::after {
+/* Create a new class without the fade effect */
+.markdown-excerpt-no-fade {
+  font-size: 1rem;
+  max-height: none;
+  position: relative;
+  overflow: hidden;
+  color: #5d6d7e;
+}
+
+/* Remove or comment out the fade effect from markdown-excerpt */
+/*.markdown-excerpt::after {
   content: "";
   position: absolute;
   bottom: 0;
   right: 0;
   left: 0;
   height: 60px;
-  /* Updated to use the exact background color of the child cards */
   background: linear-gradient(to bottom, transparent, #e4ecf7);
-}
+}*/
 
 .markdown-loading,
 .markdown-error {
