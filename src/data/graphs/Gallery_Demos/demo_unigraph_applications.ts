@@ -53,6 +53,40 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const scientificChallengeIsOrganizationalComplexity = graph.createNode({
+    id: "Scientific Challenge is Organizational Complexity",
+    type: "storyCard",
+    userData: {
+      title: "Scientific Challenge is Organizational Complexity",
+      description:
+        "The scientific challenge of our time is not just about discovering new facts, but about organizing and making sense of the vast amount of information we have. Unigraph provides a platform for codifying, inspecting, and navigating this information in a unified way.",
+      tags: ["unigraph", "scientific challenge", "organizational complexity"],
+      markdownFile: "unigraph/scientificChallenge.md",
+    },
+  });
+
+  const accessibleComputationForWeb30 = graph.createNode({
+    id: "Accessible Computation for Web 3.0",
+    type: "storyCard",
+    userData: {
+      title: "Accessible Computation for Web 3.0",
+      description:
+        "Unigraph aims to make computation accessible for everyone, enabling users to create and share complex applications without needing deep technical knowledge. This democratizes access to powerful tools and allows for a more inclusive approach to software development.",
+      tags: ["unigraph", "web 3.0", "accessible computation"],
+      markdownFile: "unigraph/accessibleComputation.md",
+    },
+  });
+
+  createEdgesTo(
+    graph,
+    theInspirationOfStoryCardsInUnigraph.getId(),
+    [
+      scientificChallengeIsOrganizationalComplexity,
+      accessibleComputationForWeb30,
+    ].map((node) => node.getId()),
+    { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
+
   const anIdea = graph.createNode({
     id: "An Idea",
     type: "storyCard",
@@ -203,6 +237,123 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const unifiedDataPlatform = graph.createNode({
+    id: "Unified Data Platform",
+    type: "storyCard",
+    userData: {
+      title: "Unified Data Platform",
+      description:
+        "Unigraph serves as a unified data platform, allowing users to create, share, and interact with complex data structures in a modular and composable way. This enables a new level of flexibility and extensibility in application development, making it easier to build and maintain complex systems.",
+      tags: ["unigraph", "data platform", "modular development"],
+      markdownFile: "unigraph/unifiedDataPlatform.md", // This will be loaded from /public/posts/unifiedDataPlatform.md
+    },
+  });
+
+  const unigraphTypeSystem = graph.createNode({
+    id: "Unigraph Type System",
+    type: "storyCard",
+    userData: {
+      title: "Unigraph Type System",
+      description:
+        "The Unigraph type system provides a way to define and enforce the structure of data in Unigraph, allowing for better organization and interaction with complex information. It enables users to create rich, structured data that can be easily navigated and understood.",
+      tags: ["unigraph", "type system", "data structure"],
+      markdownFile: "unigraph/typeSystem.md", // This will be loaded from /public/posts/unigraphTypeSystem.md
+    },
+  });
+
+  const modelAndSceneGraphs = graph.createNode({
+    id: "Model and Scene Graphs",
+    type: "storyCard",
+    userData: {
+      title: "Model and Scene Graphs",
+      description:
+        "Model and scene graphs are fundamental components of Unigraph, providing a way to represent and navigate complex information structures. They enable users to create, share, and interact with rich, structured data in a unified way, allowing for better organization and understanding of complex systems.",
+      tags: ["unigraph", "model graph", "scene graph"],
+      markdownFile: "unigraph/modelAndSceneGraphs.md", // This will be loaded from /public/posts/modelAndSceneGraphs.md
+    },
+  });
+
+  const annotations = graph.createNode({
+    id: "Annotations",
+    type: "storyCard",
+    userData: {
+      title: "Annotation Trees",
+      description:
+        "Annotation trees are a way to represent hierarchical relationships between different pieces of information, allowing for complex data structures to be easily navigated and understood. They are a key feature of Unigraph, enabling users to create and interact with rich, structured data in a unified way.",
+      tags: ["unigraph", "annotation trees", "hierarchical relationships"],
+      markdownFile: "unigraph/annotationTrees.md", // This will be loaded from /public/posts/annotationTrees.md
+    },
+  });
+
+  createEdgesTo(
+    graph,
+    aboutUnigraph.getId(),
+    [
+      unifiedDataPlatform,
+      unigraphTypeSystem,
+      modelAndSceneGraphs,
+      annotations,
+    ].map((node) => node.getId()),
+    { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
+
+  const imageBoxes = graph.createNode({
+    id: "Image Boxes",
+    type: "storyCard",
+    userData: {
+      title: "Image Boxes",
+      description:
+        "Image boxes are a way to represent images and their associated metadata in a structured way, allowing users to easily navigate and interact with visual information. They are a key feature of Unigraph, enabling users to create rich, interactive visualizations and galleries.",
+      tags: ["unigraph", "image boxes", "visual information"],
+      markdownFile: "unigraph/imageBoxes.md", // This will be loaded from /public/posts/imageBoxes.md
+    },
+  });
+
+  const documents = graph.createNode({
+    id: "Documents",
+    type: "storyCard",
+    userData: {
+      title: "Documents",
+      description:
+        "Documents in Unigraph are structured representations of information, allowing users to create, share, and interact with complex data in a modular and composable way. They serve as the foundation for building rich, interactive applications and stories, enabling a new level of flexibility and extensibility in information management.",
+      tags: ["unigraph", "documents", "information management"],
+      markdownFile: "unigraph/documents.md", // This will be loaded from /public/posts/documents.md
+    },
+  });
+
+  const songAnnotations = graph.createNode({
+    id: "Song Annotations",
+    type: "storyCard",
+    userData: {
+      title: "Song Annotations",
+      description:
+        "Song annotations are a way to represent and interact with musical information, allowing users to create, share, and explore complex musical structures in a unified way. They enable a new level of flexibility and extensibility in music applications, making it easier to build and maintain complex systems.",
+      tags: ["unigraph", "song annotations", "music applications"],
+      markdownFile: "unigraph/songAnnotations.md", // This will be loaded from /public/posts/songAnnotations.md
+    },
+  });
+
+  const termDefinitions = graph.createNode({
+    id: "Term Definitions",
+    type: "storyCard",
+    userData: {
+      title: "Term Definitions",
+      description:
+        "Term definitions in Unigraph provide a way to codify and standardize the meaning of terms and concepts, enabling users to create, share, and interact with complex information in a unified way. This allows for better communication and understanding across different domains and applications.",
+      tags: ["unigraph", "term definitions", "standardization"],
+      markdownFile: "unigraph/termDefinitions.md", // This will be loaded from /public/posts/termDefinitions.md
+    },
+  });
+
+  createEdgesTo(
+    graph,
+    annotations.getId(),
+    [imageBoxes, documents, songAnnotations, termDefinitions].map((node) =>
+      node.getId()
+    ),
+    { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
+
   const composabilityInUnigraph = graph.createNode({
     id: "Composability in Unigraph",
     type: "storyCard",
@@ -212,6 +363,41 @@ export const demo_Unigraph_Applications = () => {
         "Composability in Unigraph refers to the ability to create complex applications by combining simple, reusable components. This allows for flexible and modular development, enabling users to build applications that can be easily extended and customized.",
       tags: ["unigraph", "composability", "modular development"],
       markdownFile: "unigraph/composability.md", // This will be loaded from /public/posts/composabilityInUnigraph.md
+    },
+  });
+
+  const entityComponentSystem = graph.createNode({
+    id: "Entity Component System",
+    type: "storyCard",
+    userData: {
+      title: "Entity Component System",
+      description:
+        "An Entity Component System (ECS) is a software architectural pattern that allows for the composition of complex systems from simple, reusable components. It is widely used in game development and other domains where flexibility and modularity are important.",
+      tags: ["unigraph", "entity component system", "ecs"],
+      markdownFile: "unigraph/entityComponentSystem.md", // This will be loaded from /public/posts/entityComponentSystem.md
+    },
+  });
+
+  createEdgesTo(
+    graph,
+    composabilityInUnigraph.getId(),
+    [entityComponentSystem].map((node) => node.getId()),
+    { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
+
+  const unigraphIsIntermediateRepresentationLanguage = graph.createNode({
+    id: "an Intermediate Representation Language",
+    type: "storyCard",
+    userData: {
+      title: "Unigraph is an Intermediate Representation Language",
+      description:
+        "Unigraph serves as an intermediate representation language, allowing for the codification and inspection of information in a unified way. This enables users to create complex applications that can interact with various data formats and systems, providing a flexible and extensible platform for information management.",
+      tags: [
+        "unigraph",
+        "intermediate representation",
+        "information management",
+      ],
+      markdownFile: "unigraph/intermediateRepresentation.md", // This will be loaded from /public/posts/unigraphIsIntermediateRepresentationLanguage.md
     },
   });
 
@@ -227,15 +413,16 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
-  graph.createEdge(aboutUnigraph.getId(), composabilityInUnigraph.getId(), {
-    type: "StoryChoice",
-    tags: ["EntryPoint"],
-  });
-
-  graph.createEdge(aboutUnigraph.getId(), interspection.getId(), {
-    type: "StoryChoice",
-    tags: ["EntryPoint"],
-  });
+  createEdgesTo(
+    graph,
+    aboutUnigraph.getId(),
+    [
+      composabilityInUnigraph,
+      unigraphIsIntermediateRepresentationLanguage,
+      interspection,
+    ].map((node) => node.getId()),
+    { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
 
   const demo_stories = createEdgesTo(
     graph,
