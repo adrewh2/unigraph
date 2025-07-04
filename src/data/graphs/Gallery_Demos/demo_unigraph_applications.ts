@@ -30,10 +30,10 @@ export const demo_Unigraph_Applications = () => {
   });
 
   const howToCreateRealMagic = graph.createNode({
-    id: "How to Create Real Magic",
+    id: "Magic Explained",
     type: "storyCard",
     userData: {
-      title: "How to Create Real Magic",
+      title: "Magic Explained",
       description:
         "What would it take to create real magic? How would we technically achieve transfiguration?",
       tags: ["unigraph", "magic", "applications"],
