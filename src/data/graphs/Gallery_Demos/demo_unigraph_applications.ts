@@ -41,6 +41,20 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const fieldTheoreticalFrameworksAndComputationalPhilosophy = graph.createNode(
+    {
+      id: "Field Theoretical Frameworks and Computational Philosophy",
+      type: "storyCard",
+      userData: {
+        title: "Field Theoretical Frameworks and Computational Philosophy",
+        description:
+          "Field theoretical frameworks and computational philosophy provide a way to understand and model complex systems, allowing for the exploration of ideas and concepts in a structured and interactive way. Unigraph leverages these frameworks to create a unified platform for codifying, inspecting, and navigating information.",
+        tags: ["unigraph", "field theory", "computational philosophy"],
+        markdownFile: "unigraph/fieldTheoreticalFrameworks.md",
+      },
+    }
+  );
+
   const theInspirationOfStoryCardsInUnigraph = graph.createNode({
     id: "The Inspiration of Story Cards in Unigraph",
     type: "storyCard",
@@ -305,7 +319,7 @@ export const demo_Unigraph_Applications = () => {
       description:
         "Image boxes are a way to represent images and their associated metadata in a structured way, allowing users to easily navigate and interact with visual information. They are a key feature of Unigraph, enabling users to create rich, interactive visualizations and galleries.",
       tags: ["unigraph", "image boxes", "visual information"],
-      markdownFile: "unigraph/imageBoxes.md", // This will be loaded from /public/posts/imageBoxes.md
+      markdownFile: "unigraph/imageBoxCreator.md", // This will be loaded from /public/posts/imageBoxes.md
     },
   });
 
@@ -386,7 +400,7 @@ export const demo_Unigraph_Applications = () => {
   );
 
   const unigraphIsIntermediateRepresentationLanguage = graph.createNode({
-    id: "an Intermediate Representation Language",
+    id: "Intermediate Representation Language",
     type: "storyCard",
     userData: {
       title: "Unigraph is an Intermediate Representation Language",
@@ -397,7 +411,19 @@ export const demo_Unigraph_Applications = () => {
         "intermediate representation",
         "information management",
       ],
-      markdownFile: "unigraph/intermediateRepresentation.md", // This will be loaded from /public/posts/unigraphIsIntermediateRepresentationLanguage.md
+      markdownFile: "keyTerms/intermediateRepresentationLanguage.md", // This will be loaded from /public/posts/unigraphIsIntermediateRepresentationLanguage.md
+    },
+  });
+
+  const unigraphCopilot = graph.createNode({
+    id: "Unigraph Copilot",
+    type: "storyCard",
+    userData: {
+      title: "Unigraph Copilot",
+      description:
+        "Unigraph Copilot is an AI-powered assistant that helps users navigate and interact with Unigraph. It provides intelligent suggestions and insights, making it easier to explore complex information and build applications.",
+      tags: ["unigraph", "copilot", "ai assistant"],
+      markdownFile: "unigraph/copilot.md", // This will be loaded from /public/posts/unigraphCopilot.md
     },
   });
 
@@ -420,6 +446,7 @@ export const demo_Unigraph_Applications = () => {
       composabilityInUnigraph,
       unigraphIsIntermediateRepresentationLanguage,
       interspection,
+      unigraphCopilot,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
   );
@@ -430,6 +457,7 @@ export const demo_Unigraph_Applications = () => {
     [
       interactiveHarryPotterTimeTravelAnalysis,
       howToCreateRealMagic,
+      fieldTheoreticalFrameworksAndComputationalPhilosophy,
       theInspirationOfStoryCardsInUnigraph,
       aboutTheAlethiometer,
       anIdea,
