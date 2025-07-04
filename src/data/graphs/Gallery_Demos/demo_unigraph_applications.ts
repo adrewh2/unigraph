@@ -51,17 +51,6 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
-  const demo_stories = createEdgesTo(
-    graph,
-    storyCards.getId(),
-    [
-      interactiveHarryPotterTimeTravelAnalysis,
-      howToCreateRealMagic,
-      theInspirationOfStoryCardsInUnigraph,
-    ].map((node) => node.getId()),
-    { type: "StoryChoice", tags: ["EntryPoint"] }
-  );
-
   const interspection = graph.createNode({
     id: "Interspection in Unigraph",
     type: "storyCard",
@@ -104,6 +93,84 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const aboutTheAlethiometer = graph.createNode({
+    id: "About the Alethiometer",
+    type: "storyCard",
+    tags: ["EntryPoint"],
+    userData: {
+      title: "About the Alethiometer",
+      description:
+        "The alethiometer, or golden compass, is a fictional device from Philip Pullman's 'His Dark Materials' series. It is used to find truth and navigate complex moral landscapes.",
+      tags: ["alethiometer", "golden compass", "fiction"],
+      markdownFile: "alethiometer/intro.md", // This will be loaded from /public/posts/aboutTheAlethiometer.md
+    },
+  });
+
+  const simpleCaseAlethiometer = graph.createNode({
+    id: "Simple Case Alethiometer",
+    type: "storyCard",
+    userData: {
+      title: "Simple Case Alethiometer",
+      description:
+        "A simple case of using the alethiometer to answer a question about the legitimacy of astrology.",
+      tags: ["alethiometer", "factor graph", "simple case"],
+      markdownFile: "alethiometer/simpleCase.md", // Make sure this path matches your directory structure
+    },
+  });
+
+  const advancedCaseAlethiometer = graph.createNode({
+    id: "Advanced Case Alethiometer",
+    type: "storyCard",
+    userData: {
+      title: "Advanced Case Alethiometer",
+      description:
+        "An advanced case of using the alethiometer to answer a question about the legitimacy of astrology, involving multiple layers of complexity and decision-making.",
+      tags: ["alethiometer", "astrology", "advanced case"],
+      markdownFile: "alethiometer/advancedCase.md", // This will be loaded from /public/posts/advancedCaseAlethiometer.md
+    },
+  });
+
+  const constraintGraph = graph.createNode({
+    id: "Constraint Graph",
+    type: "storyCard",
+    userData: {
+      title: "Constraint Graph",
+      description:
+        "A constraint graph is a way to represent relationships between different entities in a system, allowing for complex decision-making and analysis.",
+      tags: ["constraint graph", "decision making", "analysis"],
+      markdownFile: "constraintGraph.md", // This will be loaded from /public/posts/constraintGraph.md
+    },
+  });
+
+  const factorGraph = graph.createNode({
+    id: "Factor Graph",
+    type: "storyCard",
+    userData: {
+      title: "Factor Graph",
+      description:
+        "A factor graph is a bipartite graph that represents the factorization of a function into a product of smaller functions, allowing for efficient computation and analysis of complex systems.",
+      tags: ["factor graph", "computation", "analysis"],
+      markdownFile: "factorGraph.md", // This will be loaded from /public/posts/factorGraph.md
+    },
+  });
+
+  graph.createEdge(simpleCaseAlethiometer.getId(), constraintGraph.getId(), {
+    type: "StoryChoice",
+  });
+
+  graph.createEdge(advancedCaseAlethiometer.getId(), factorGraph.getId(), {
+    type: "StoryChoice",
+  });
+
+  const alethiometerCases = createEdgesTo(
+    graph,
+    aboutTheAlethiometer.getId(),
+    [simpleCaseAlethiometer, advancedCaseAlethiometer].map((node) =>
+      node.getId()
+    ),
+    { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
+
   graph.createEdge(
     numerologyInformation.getId(),
     astrologyInformation.getId(),
@@ -111,6 +178,18 @@ export const demo_Unigraph_Applications = () => {
       type: "StoryChoice",
       label: "expansion",
     }
+  );
+
+  const demo_stories = createEdgesTo(
+    graph,
+    storyCards.getId(),
+    [
+      interactiveHarryPotterTimeTravelAnalysis,
+      howToCreateRealMagic,
+      theInspirationOfStoryCardsInUnigraph,
+      aboutTheAlethiometer,
+    ].map((node) => node.getId()),
+    { type: "StoryChoice", tags: ["EntryPoint"] }
   );
 
   return new SceneGraph({

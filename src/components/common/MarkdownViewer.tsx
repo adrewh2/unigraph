@@ -31,12 +31,21 @@ function MarkdownViewer({
 
     console.log(`Attempting to fetch markdown from: ${filePath}`);
 
+    // Try the first path
     fetch(filePath)
       .then((res) => {
         if (!res.ok) {
-          throw new Error(
-            `Failed to load markdown: ${res.status} ${res.statusText}`
-          );
+          // If first path fails, try an alternative path (storyCards vs storyCardFiles)
+          const alternatePath = `/storyCards/${normalizedFilename}${!normalizedFilename.endsWith(".md") ? ".md" : ""}`;
+          console.log(`First path failed, trying alternate path: ${alternatePath}`);
+          return fetch(alternatePath).then(altRes => {
+            if (!altRes.ok) {
+              throw new Error(
+                `Failed to load markdown from both paths: ${filePath} and ${alternatePath}`
+              );
+            }
+            return altRes.text();
+          });
         }
         return res.text();
       })
