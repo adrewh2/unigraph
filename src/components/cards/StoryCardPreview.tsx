@@ -38,9 +38,15 @@ const StoryCardPreview: React.FC<StoryCardPreviewProps> = ({
         className="child-card-title"
         style={{
           margin: "0 0 12px 0",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          // Updated styles to allow text wrapping
+          overflow: "visible",
+          wordWrap: "break-word",
+          hyphens: "auto",
+          lineHeight: "1.3",
+          maxHeight: "2.6em", // Limit to approximately 2 lines
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
         }}
       >
         {node.title}

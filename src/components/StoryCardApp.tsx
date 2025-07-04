@@ -238,7 +238,7 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
       <div
         className={`parent-card-container ${transitioning ? "transitioning" : ""}`}
       >
-        <StoryCard 
+        <StoryCard
           node={currentNode}
           onBack={handleBack}
           onRestart={handleRestart}
