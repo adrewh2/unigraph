@@ -261,7 +261,9 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
             )}
           </div>
 
+          {/* Single scrollable container for all content */}
           <div className="parent-card-content">
+            {/* Markdown content */}
             {currentNode.markdownFile ? (
               <MarkdownViewer filename={currentNode.markdownFile} />
             ) : (
@@ -269,39 +271,41 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
                 {currentNode.description}
               </p>
             )}
-          </div>
 
-          {currentNode.children && currentNode.children.length > 0 ? (
-            <div className="child-cards-container">
-              {currentNode.children.map((child) => (
-                <div
-                  key={child.id}
-                  className="child-card"
-                  onClick={() => handleSelectCard(child)}
-                >
-                  <h3 className="child-card-title">{child.title}</h3>
-                  {child.markdownFile ? (
-                    <MarkdownViewer
-                      filename={child.markdownFile}
-                      excerpt={true}
-                      excerptLength={150}
-                    />
-                  ) : (
-                    <p className="child-card-description">
-                      {child.description}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="story-ending">
-              <p>{"You've reached the end of this branch."}</p>
-              <button className="restart-button" onClick={handleRestart}>
-                Return to Start
-              </button>
-            </div>
-          )}
+            {/* Child cards */}
+            {currentNode.children && currentNode.children.length > 0 ? (
+              <div className="child-cards-container">
+                {currentNode.children.map((child) => (
+                  <div
+                    key={child.id}
+                    className="child-card"
+                    onClick={() => handleSelectCard(child)}
+                  >
+                    <h3 className="child-card-title">{child.title}</h3>
+                    {child.markdownFile ? (
+                      <MarkdownViewer
+                        filename={child.markdownFile}
+                        excerpt={true}
+                        excerptLength={150}
+                      />
+                    ) : (
+                      <p className="child-card-description">
+                        {child.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* End of branch message */
+              <div className="story-ending">
+                <p>{"You've reached the end of this branch."}</p>
+                <button className="restart-button" onClick={handleRestart}>
+                  Return to Start
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

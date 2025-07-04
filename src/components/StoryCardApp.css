@@ -71,8 +71,45 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  overflow: hidden;
-  position: relative;
+  overflow: hidden; /* Contain the scrollable area */
+}
+
+.parent-card-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll; /* Use scroll instead of auto to force scrollbar */
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+  padding: 0 15px 0 0; /* Right padding for scrollbar space */
+  /* Remove height calculation which may be causing issues */
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f8f9fa;
+}
+
+.parent-card-content::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
+  position: absolute;
+  right: 0;
+}
+
+.parent-card-content::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.parent-card-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 40px;
+}
+
+.parent-card-content::-webkit-scrollbar-thumb:hover {
+  background: #bfc7d1;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .parent-card-header {
@@ -137,11 +174,10 @@
   flex-wrap: wrap;
   gap: 1.5rem;
   padding: 0.5rem;
-  overflow-y: auto;
-  flex-grow: 1;
+  overflow-y: visible;
   align-content: flex-start;
-  max-height: 100%;
   margin-top: 1.5rem;
+  width: 100%;
 }
 
 .child-card {
@@ -184,17 +220,18 @@
   text-align: center;
   line-height: 1.4;
   flex-grow: 1;
-  overflow-y: auto;
+  overflow-y: hidden;
 }
 
 .story-ending {
   text-align: center;
-  margin-top: 2rem;
+  margin: 2rem 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding-bottom: 2rem;
 }
 
 .story-ending p {
@@ -238,9 +275,11 @@
   text-align: left;
   margin-bottom: 2rem;
   line-height: 1.5;
-  overflow-y: auto;
-  max-height: 50vh;
+  overflow-y: visible;
+  max-height: none;
   padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .markdown-excerpt {
