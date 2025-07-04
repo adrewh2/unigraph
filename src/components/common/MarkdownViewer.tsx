@@ -335,31 +335,26 @@ function MarkdownViewer({
 
       const element = e.currentTarget as HTMLElement;
       const termText = element.getAttribute("data-term");
-      console.log(`Term clicked: ${termText}`);
-
       if (!termText || !terms[termText]) return;
 
-      // Get term position
       const rect = element.getBoundingClientRect();
+      const positionX = rect.left + rect.width / 2 + window.scrollX;
+      const positionY = rect.top + window.scrollY - 12;
 
-      // Calculate popup position - placed above and centered on term
-      const positionX = rect.left + rect.width / 2; // Center horizontally
-      const positionY = rect.top; // Align with top of term
-
-      console.log("Setting popup position:", {
-        x: positionX,
-        y: positionY,
-      });
-
-      setActiveDefinition({
-        term: termText,
-        definition: terms[termText],
-        position: {
-          x: positionX,
-          y: positionY,
-        },
-        isDragging: false,
-      });
+      // If the popup is already open for this term, close it
+      if (activeDefinition && activeDefinition.term === termText) {
+        setActiveDefinition(null);
+      } else {
+        setActiveDefinition({
+          term: termText,
+          definition: terms[termText],
+          position: {
+            x: positionX,
+            y: positionY,
+          },
+          isDragging: false,
+        });
+      }
     };
 
     // Clean up previous listeners to prevent duplicates
@@ -417,24 +412,29 @@ function MarkdownViewer({
         className={`markdown-content ${excerpt ? "markdown-excerpt" : ""}`}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={(e) => {
-          // Direct click handler on the container as a fallback
           const target = e.target as HTMLElement;
           if (target.classList.contains("defined-term")) {
             const termText = target.getAttribute("data-term");
             if (termText && terms[termText]) {
               const rect = target.getBoundingClientRect();
-              // Use window scroll offsets for absolute positioning in the window
               const positionX = rect.left + rect.width / 2 + window.scrollX;
-              const positionY = rect.top + window.scrollY;
-              setActiveDefinition({
-                term: termText,
-                definition: terms[termText],
-                position: {
-                  x: positionX,
-                  y: positionY,
-                },
-                isDragging: false,
-              });
+              // Raise the popup 24px above the top of the term
+              const positionY = rect.top + window.scrollY - 24;
+
+              // If the popup is already open for this term, close it
+              if (activeDefinition && activeDefinition.term === termText) {
+                setActiveDefinition(null);
+              } else {
+                setActiveDefinition({
+                  term: termText,
+                  definition: terms[termText],
+                  position: {
+                    x: positionX,
+                    y: positionY,
+                  },
+                  isDragging: false,
+                });
+              }
             }
           }
         }}
