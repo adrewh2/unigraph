@@ -430,6 +430,18 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const unigraphChromeExtension = graph.createNode({
+    id: "Unigraph Chrome Extension",
+    type: "storyCard",
+    userData: {
+      title: "Unigraph Chrome Extension",
+      description:
+        "The Unigraph Chrome Extension allows users to interact with Unigraph directly from their browser, enabling seamless integration with web applications and services. It provides a powerful tool for codifying, inspecting, and navigating information in a unified way.",
+      tags: ["unigraph", "chrome extension", "browser integration"],
+      markdownFile: "unigraph/chromeExtension.md", // This will be loaded from /public/posts/unigraphChromeExtension.md
+    },
+  });
+
   const interspection = graph.createNode({
     id: "Interspection in Unigraph",
     type: "storyCard",
@@ -461,6 +473,7 @@ export const demo_Unigraph_Applications = () => {
       unigraphIsIntermediateRepresentationLanguage,
       interspection,
       unigraphCopilot,
+      unigraphChromeExtension,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
   );
