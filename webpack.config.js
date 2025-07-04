@@ -124,6 +124,7 @@ module.exports = {
       outputPath: path.resolve(__dirname, "docs/docs-structure.json"),
       throttleTime: 30000, // Only rebuild at most once per 30 seconds
       watchForChanges: true,
+      includeFiles: true, // Include files in the docs structure
     }),
   ],
   devServer: {

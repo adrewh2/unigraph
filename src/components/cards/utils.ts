@@ -131,6 +131,15 @@ export const createStoryCardsFromDocsDirectory = async (
       const relativePath = child.path;
       if (processedPaths.has(relativePath)) continue;
 
+      // Skip folders that start with underscore
+      const dirName = relativePath.split("/").pop();
+      if (child.type === "directory" && dirName?.startsWith("_")) {
+        console.log(
+          `Skipping directory that starts with underscore: ${relativePath}`
+        );
+        continue;
+      }
+
       processedPaths.add(relativePath);
 
       if (child.type === "directory") {
@@ -139,14 +148,21 @@ export const createStoryCardsFromDocsDirectory = async (
 
         console.log(`Creating node for directory: ${relativePath}`);
 
+        // Create a placeholder markdown path - we'll always create a node with an index.md path
+        // even if the file doesn't exist
+        const markdownPath = `docs/${relativePath}/index.md`;
+
         const dirNode = graph.createNode({
           id: `docs-${relativePath.replace(/\//g, "-")}`,
           type: "storyCard",
           userData: {
             title,
             description: `Documentation for ${title}`,
-            markdownFile: `docs/${relativePath}/index.md`,
+            markdownFile: markdownPath,
             tags: ["docs", "auto-generated"],
+            isPlaceholder: !child.children?.some(
+              (c: any) => c.type === "file" && c.path.endsWith("index.md")
+            ),
           },
         });
 
@@ -184,6 +200,9 @@ export const createStoryCardsFromDocsDirectory = async (
         // Recursively process this directory
         processDirectoryStructure(child, dirNode);
       } else if (child.type === "file") {
+        // Skip if this is an index.md file, as we already created a node for its directory
+        if (child.path.endsWith("/index.md")) continue;
+
         // It's a markdown file
         const title = getTitle(
           relativePath.split("/").pop()?.replace(/\.md$/, "") || relativePath
