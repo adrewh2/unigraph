@@ -3,16 +3,8 @@ import { NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { loadMarkdownFile } from "../utils/markdownLoader";
 import "./StoryCardApp.css";
-import MarkdownViewer from "./common/MarkdownViewer";
-
-interface StoryNode {
-  id: string;
-  title: string;
-  description: string;
-  markdownFile?: string;
-  markdownContent?: string;
-  children?: StoryNode[];
-}
+import StoryCard from "./cards/StoryCard";
+import { StoryNode } from "./types/StoryTypes";
 
 interface StoryCardAppProps {
   sceneGraph: SceneGraph;
@@ -246,67 +238,15 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
       <div
         className={`parent-card-container ${transitioning ? "transitioning" : ""}`}
       >
-        <div className="parent-card">
-          <div className="parent-card-header">
-            {path.length > 1 && (
-              <button className="back-button" onClick={handleBack}>
-                ← Back
-              </button>
-            )}
-            <h2 className="parent-card-title">{currentNode.title}</h2>
-            {path.length > 1 && (
-              <button className="restart-button" onClick={handleRestart}>
-                Start Over
-              </button>
-            )}
-          </div>
-
-          {/* Single scrollable container for all content */}
-          <div className="parent-card-content">
-            {/* Markdown content */}
-            {currentNode.markdownFile ? (
-              <MarkdownViewer filename={currentNode.markdownFile} />
-            ) : (
-              <p className="parent-card-description">
-                {currentNode.description}
-              </p>
-            )}
-
-            {/* Child cards */}
-            {currentNode.children && currentNode.children.length > 0 ? (
-              <div className="child-cards-container">
-                {currentNode.children.map((child) => (
-                  <div
-                    key={child.id}
-                    className="child-card"
-                    onClick={() => handleSelectCard(child)}
-                  >
-                    <h3 className="child-card-title">{child.title}</h3>
-                    {child.markdownFile ? (
-                      <MarkdownViewer
-                        filename={child.markdownFile}
-                        excerpt={true}
-                        excerptLength={150}
-                      />
-                    ) : (
-                      <p className="child-card-description">
-                        {child.description}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              /* End of branch message */
-              <div className="story-ending">
-                <p>{"You've reached the end of this branch."}</p>
-                <button className="restart-button" onClick={handleRestart}>
-                  Return to Start
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        <StoryCard 
+          node={currentNode}
+          onBack={handleBack}
+          onRestart={handleRestart}
+          onSelectChild={handleSelectCard}
+          showBackButton={path.length > 1}
+          showRestartButton={path.length > 1}
+          markdownContents={markdownContents}
+        />
       </div>
     </div>
   );

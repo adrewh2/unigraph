@@ -17,12 +17,14 @@ interface MarkdownViewerProps {
   filename: string;
   excerpt?: boolean;
   excerptLength?: number;
+  overrideMarkdown?: string; // Add this prop
 }
 
 function MarkdownViewer({
   filename,
   excerpt = false,
   excerptLength = 150,
+  overrideMarkdown,
 }: MarkdownViewerProps) {
   const [html, setHtml] = useState("");
   const [loading, setLoading] = useState(true);
@@ -193,24 +195,26 @@ function MarkdownViewer({
 
     console.log(`Attempting to fetch markdown from: ${filePath}`);
 
-    // Try loading the file
-    fetch(filePath)
-      .then((res) => {
-        if (!res.ok) {
-          // Try alternate path
-          const alternatePath = `/storyCards/${normalizedFilename}${
-            !normalizedFilename.endsWith(".md") ? ".md" : ""
-          }`;
-          console.log(`First path failed, trying: ${alternatePath}`);
-          return fetch(alternatePath).then((altRes) => {
-            if (!altRes.ok) {
-              throw new Error(`Failed to load markdown from both paths`);
-            }
-            return altRes.text();
-          });
-        }
-        return res.text();
-      })
+    // Try loading the file or use overrideMarkdown if provided
+    (overrideMarkdown
+      ? Promise.resolve(overrideMarkdown)
+      : fetch(filePath).then((res) => {
+          if (!res.ok) {
+            // Try alternate path
+            const alternatePath = `/storyCards/${normalizedFilename}${
+              !normalizedFilename.endsWith(".md") ? ".md" : ""
+            }`;
+            console.log(`First path failed, trying: ${alternatePath}`);
+            return fetch(alternatePath).then((altRes) => {
+              if (!altRes.ok) {
+                throw new Error(`Failed to load markdown from both paths`);
+              }
+              return altRes.text();
+            });
+          }
+          return res.text();
+        })
+    )
       .then((markdown) => {
         // Parse frontmatter to extract metadata including terms
         const { content, metadata } = parseFrontmatter(markdown);
@@ -248,7 +252,7 @@ function MarkdownViewer({
         );
         setLoading(false);
       });
-  }, [filename, excerpt, excerptLength]);
+  }, [filename, excerpt, excerptLength, overrideMarkdown]);
 
   // Handle dragging the definition popup
   const handleMouseDown = (e: React.MouseEvent) => {
