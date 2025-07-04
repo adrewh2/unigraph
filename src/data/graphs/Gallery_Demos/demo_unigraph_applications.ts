@@ -13,7 +13,7 @@ export const demo_Unigraph_Applications = () => {
     userData: {
       title: "Story Cards",
       description:
-        "Story cards are a way to represent complex information in a fun and interactive way. They allow creators a new paradigm for communication information, and users to explore different narratives that interest them.",
+        "Story cards are a way to represent complex information in a fun and interactive way.\nThey give creators a new paradigm for communication information, and users to explore different narratives that interest them.",
       tags: ["unigraph", "story cards", "interactive"],
     },
   });
@@ -49,18 +49,7 @@ export const demo_Unigraph_Applications = () => {
       description:
         "The inspiration for story cards in Unigraph comes from various sources, including interactive fiction, choose-your-own-adventure books, and the desire to create engaging, branching narratives that allow users to explore complex information in a fun and interactive way. Furthermore, taking a scientific approach to the codification, inspection, and navigation of information.",
       tags: ["unigraph", "story cards", "inspiration"],
-    },
-  });
-
-  const interspection = graph.createNode({
-    id: "Interspection in Unigraph",
-    type: "storyCard",
-    userData: {
-      title: "Interspection in Unigraph",
-      description:
-        "Interspection is the entire gamut of inspecting, navigating, and interacting with information in Unigraph. People can use Unigraph to inter information - codifying it in a standard language that allows it to be intered on in a unified application ecosystem. This spans from creating fun interactive stories, to complex linking annotation schemes across previously disparate data formats, or creating complex data science tools.",
-      tags: ["unigraph", "interspection", "information", "codification"],
-      markdownFile: "alethiometer/interspection.md", // This will be loaded from /public/posts/interspection.md
+      markdownFile: "unigraph/inspiration.md",
     },
   });
 
@@ -202,6 +191,52 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const aboutUnigraph = graph.createNode({
+    id: "About Unigraph",
+    type: "storyCard",
+    userData: {
+      title: "About Unigraph",
+      description:
+        "Unigraph is a platform for creating and sharing interactive stories, allowing users to explore complex information in a fun and engaging way. It provides tools for codifying, inspecting, and navigating information, enabling a new paradigm for communication and interaction.",
+      tags: ["unigraph", "platform", "interactive stories"],
+      markdownFile: "unigraph/about.md", // This will be loaded from /public/posts/aboutUnigraph.md
+    },
+  });
+
+  const composabilityInUnigraph = graph.createNode({
+    id: "Composability in Unigraph",
+    type: "storyCard",
+    userData: {
+      title: "Composability in Unigraph",
+      description:
+        "Composability in Unigraph refers to the ability to create complex applications by combining simple, reusable components. This allows for flexible and modular development, enabling users to build applications that can be easily extended and customized.",
+      tags: ["unigraph", "composability", "modular development"],
+      markdownFile: "unigraph/composability.md", // This will be loaded from /public/posts/composabilityInUnigraph.md
+    },
+  });
+
+  const interspection = graph.createNode({
+    id: "Interspection in Unigraph",
+    type: "storyCard",
+    userData: {
+      title: "Interspection in Unigraph",
+      description:
+        "Interspection is the entire gamut of inspecting, navigating, and interacting with information in Unigraph. People can use Unigraph to inter information - codifying it in a standard language that allows it to be intered on in a unified application ecosystem. This spans from creating fun interactive stories, to complex linking annotation schemes across previously disparate data formats, or creating complex data science tools.",
+      tags: ["unigraph", "interspection", "information", "codification"],
+      markdownFile: "alethiometer/interspection.md", // This will be loaded from /public/posts/interspection.md
+    },
+  });
+
+  graph.createEdge(aboutUnigraph.getId(), composabilityInUnigraph.getId(), {
+    type: "StoryChoice",
+    tags: ["EntryPoint"],
+  });
+
+  graph.createEdge(aboutUnigraph.getId(), interspection.getId(), {
+    type: "StoryChoice",
+    tags: ["EntryPoint"],
+  });
+
   const demo_stories = createEdgesTo(
     graph,
     storyCards.getId(),
@@ -210,9 +245,9 @@ export const demo_Unigraph_Applications = () => {
       howToCreateRealMagic,
       theInspirationOfStoryCardsInUnigraph,
       aboutTheAlethiometer,
-      interspection,
       anIdea,
       conceptAlbumGallery,
+      aboutUnigraph,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
   );
