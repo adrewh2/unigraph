@@ -265,7 +265,9 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
             {currentNode.markdownFile ? (
               <MarkdownViewer filename={currentNode.markdownFile} />
             ) : (
-              <p className="parent-card-description">{currentNode.description}</p>
+              <p className="parent-card-description">
+                {currentNode.description}
+              </p>
             )}
           </div>
 
@@ -285,7 +287,9 @@ const StoryCardApp: React.FC<StoryCardAppProps> = ({
                       excerptLength={150}
                     />
                   ) : (
-                    <p className="child-card-description">{child.description}</p>
+                    <p className="child-card-description">
+                      {child.description}
+                    </p>
                   )}
                 </div>
               ))}

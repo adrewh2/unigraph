@@ -252,7 +252,7 @@
 }
 
 .markdown-excerpt::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   right: 0;
@@ -261,7 +261,7 @@
   background: linear-gradient(to bottom, transparent, #f0f5ff);
 }
 
-.markdown-loading, 
+.markdown-loading,
 .markdown-error {
   text-align: center;
   padding: 20px;
@@ -272,9 +272,9 @@
   color: #e74c3c;
 }
 
-.markdown-content h1, 
-.markdown-content h2, 
-.markdown-content h3, 
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
 .markdown-content h4 {
   color: #2c3e50;
   margin-top: 1.5rem;
@@ -285,7 +285,7 @@
   margin-bottom: 1rem;
 }
 
-.markdown-content ul, 
+.markdown-content ul,
 .markdown-content ol {
   margin-left: 1.5rem;
   margin-bottom: 1rem;
@@ -323,7 +323,7 @@
 }
 
 .child-card-markdown::after {
-  content: '...';
+  content: "...";
   position: absolute;
   bottom: 0;
   right: 0;
@@ -348,11 +348,11 @@
   .parent-card-container {
     height: calc(100vh - 100px);
   }
-  
+
   .parent-card-description {
     margin-bottom: 1.5rem;
   }
-  
+
   .child-card {
     height: 320px;
   }
