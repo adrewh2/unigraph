@@ -331,6 +331,19 @@
   background: linear-gradient(to right, transparent, #f0f5ff 70%);
 }
 
+.latex-block {
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.latex-error {
+  color: #e74c3c;
+  font-style: italic;
+  padding: 0.5rem;
+  border-left: 3px solid #e74c3c;
+  background-color: #fadbd8;
+}
+
 @media (max-height: 800px) {
   .parent-card-container {
     height: calc(100vh - 100px);

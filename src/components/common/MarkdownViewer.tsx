@@ -1,3 +1,5 @@
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { marked } from "marked";
 import React, { useEffect, useState } from "react";
 
@@ -20,8 +22,60 @@ function MarkdownViewer({
     setLoading(true);
     setError(null);
 
-    // Fix the path construction to ensure we're using the correct location
-    // Normalize the path and handle file extension
+    // Configure marked with proper LaTeX support
+    const renderer = {
+      code(this: any, codeObj: { text: string; lang?: string }) {
+        const { text, lang } = codeObj;
+        if (lang === "latex" || lang === "math" || lang === "tex") {
+          try {
+            const renderedLatex = katex.renderToString(text, {
+              displayMode: true,
+              throwOnError: false,
+            });
+            return `<div class="latex-block">${renderedLatex}</div>`;
+          } catch (error) {
+            console.error("LaTeX rendering error:", error);
+            return `<div class="latex-error">LaTeX rendering error: ${error instanceof Error ? error.message : String(error)}</div>`;
+          }
+        }
+        return `<pre><code class="language-${lang}">${text}</code></pre>`;
+      },
+    };
+
+    marked.use({ renderer });
+
+    // Process text to handle inline LaTeX
+    const processText = (text: string) => {
+      // Handle display equations: $$...$$
+      let processed = text.replace(/\$\$([\s\S]*?)\$\$/g, (_, latex) => {
+        try {
+          return katex.renderToString(latex, {
+            displayMode: true,
+            throwOnError: false,
+          });
+        } catch (error) {
+          console.error("Display LaTeX error:", error);
+          return `$$${latex}$$`;
+        }
+      });
+
+      // Handle inline equations: $...$
+      processed = processed.replace(/\$([^$\n]+?)\$/g, (_, latex) => {
+        try {
+          return katex.renderToString(latex, {
+            displayMode: false,
+            throwOnError: false,
+          });
+        } catch (error) {
+          console.error("Inline LaTeX error:", error);
+          return `$${latex}$`;
+        }
+      });
+
+      return processed;
+    };
+
+    // Fix the path construction
     const normalizedFilename = filename.startsWith("/")
       ? filename.substring(1)
       : filename;
@@ -31,18 +85,16 @@ function MarkdownViewer({
 
     console.log(`Attempting to fetch markdown from: ${filePath}`);
 
-    // Try the first path
+    // Try loading the file
     fetch(filePath)
       .then((res) => {
         if (!res.ok) {
-          // If first path fails, try an alternative path (storyCards vs storyCardFiles)
+          // Try alternate path
           const alternatePath = `/storyCards/${normalizedFilename}${!normalizedFilename.endsWith(".md") ? ".md" : ""}`;
-          console.log(`First path failed, trying alternate path: ${alternatePath}`);
-          return fetch(alternatePath).then(altRes => {
+          console.log(`First path failed, trying: ${alternatePath}`);
+          return fetch(alternatePath).then((altRes) => {
             if (!altRes.ok) {
-              throw new Error(
-                `Failed to load markdown from both paths: ${filePath} and ${alternatePath}`
-              );
+              throw new Error(`Failed to load markdown from both paths`);
             }
             return altRes.text();
           });
@@ -50,25 +102,31 @@ function MarkdownViewer({
         return res.text();
       })
       .then((markdown) => {
+        // Pre-process markdown for LaTeX
+        const processedMarkdown = processText(markdown);
+
         // If excerpt is requested, truncate the content
         const content = excerpt
-          ? `${markdown.substring(0, excerptLength)}...`
-          : markdown;
+          ? processedMarkdown.substring(0, excerptLength) + "..."
+          : processedMarkdown;
 
-        const result = marked(content);
-        if (result instanceof Promise) {
-          result.then((html) => {
-            setHtml(html);
+        // Parse markdown to HTML
+        const parsed = marked.parse(content);
+        if (parsed instanceof Promise) {
+          parsed.then((htmlStr) => {
+            setHtml(htmlStr);
             setLoading(false);
           });
         } else {
-          setHtml(result);
+          setHtml(parsed);
           setLoading(false);
         }
       })
       .catch((err) => {
         console.error("Error loading markdown:", err);
-        setError(`Error loading markdown: ${err.message}`);
+        setError(
+          `Error loading markdown: ${err instanceof Error ? err.message : String(err)}`
+        );
         setLoading(false);
       });
   }, [filename, excerpt, excerptLength]);
