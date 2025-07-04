@@ -210,13 +210,29 @@ function MarkdownViewer({
       return processed;
     };
 
-    // Fix the path construction
+    // Fix the path construction to handle both docs/ and storyCardFiles/ paths
     const normalizedFilename = filename.startsWith("/")
       ? filename.substring(1)
       : filename;
-    const filePath = normalizedFilename.endsWith(".md")
-      ? `/storyCardFiles/${normalizedFilename}`
-      : `/storyCardFiles/${normalizedFilename}.md`;
+
+    let filePath;
+
+    // Check if the path explicitly starts with docs/
+    if (normalizedFilename.startsWith("docs/")) {
+      // Use the path as is for docs folder
+      filePath = `/${normalizedFilename}`;
+    }
+    // Check if the path explicitly starts with public/
+    else if (normalizedFilename.startsWith("public/")) {
+      // Strip "public/" prefix for fetching
+      filePath = `/${normalizedFilename.substring(7)}`;
+    }
+    // Default case: use storyCardFiles/ folder
+    else {
+      filePath = normalizedFilename.endsWith(".md")
+        ? `/storyCardFiles/${normalizedFilename}`
+        : `/storyCardFiles/${normalizedFilename}.md`;
+    }
 
     console.log(`Attempting to fetch markdown from: ${filePath}`);
 
@@ -225,17 +241,42 @@ function MarkdownViewer({
       ? Promise.resolve(overrideMarkdown)
       : fetch(filePath).then((res) => {
           if (!res.ok) {
-            // Try alternate path
-            const alternatePath = `/storyCards/${normalizedFilename}${
-              !normalizedFilename.endsWith(".md") ? ".md" : ""
-            }`;
-            console.log(`First path failed, trying: ${alternatePath}`);
-            return fetch(alternatePath).then((altRes) => {
-              if (!altRes.ok) {
-                throw new Error(`Failed to load markdown from both paths`);
-              }
-              return altRes.text();
-            });
+            // Try alternate paths in sequence
+            const alternatePaths = [];
+
+            // If not already trying docs/ path, add it as fallback
+            if (!normalizedFilename.startsWith("docs/")) {
+              alternatePaths.push(
+                `/docs/${normalizedFilename}${
+                  !normalizedFilename.endsWith(".md") ? ".md" : ""
+                }`
+              );
+            }
+
+            // Add storyCards as another fallback
+            alternatePaths.push(
+              `/storyCards/${normalizedFilename}${
+                !normalizedFilename.endsWith(".md") ? ".md" : ""
+              }`
+            );
+
+            // Try each path in sequence
+            return alternatePaths
+              .reduce<Promise<string>>(
+                (promise, path) =>
+                  promise.catch(() => {
+                    console.log(`Trying alternate path: ${path}`);
+                    return fetch(path).then((altRes) => {
+                      if (!altRes.ok)
+                        throw new Error(`Failed to load from ${path}`);
+                      return altRes.text();
+                    });
+                  }),
+                Promise.reject(new Error(`Initial path ${filePath} failed`))
+              )
+              .catch((_) => {
+                throw new Error(`Failed to load markdown from any path`);
+              });
           }
           return res.text();
         })

@@ -112,6 +112,10 @@ module.exports = {
             ignore: ["**/index.html"], // Avoid overwriting index.html if it's handled separately
           },
         },
+        {
+          from: "docs",
+          to: "docs",
+        },
       ],
     }),
   ],
@@ -123,6 +127,10 @@ module.exports = {
       },
       {
         directory: path.resolve(__dirname, "dist"),
+      },
+      {
+        directory: path.resolve(__dirname, "docs"),
+        publicPath: "/docs",
       },
     ],
     port: 3000,
