@@ -1,0 +1,66 @@
+/* Styles for defined terms */
+.defined-term {
+  color: #0066cc;
+  text-decoration: underline dotted;
+  cursor: pointer;
+  border-bottom: 1px dotted #0066cc;
+  transition: background-color 0.2s;
+}
+
+.defined-term:hover {
+  background-color: rgba(0, 102, 204, 0.1);
+}
+
+/* Definition popup styles */
+.definition-popup {
+  position: absolute;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-width: 300px;
+  animation: fadeIn 0.2s ease;
+}
+
+.definition-popup h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-weight: 600;
+}
+
+.definition-popup p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.definition-popup button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #999;
+}
+
+.definition-popup button:hover {
+  color: #333;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Additional markdown content styling */
+.markdown-content .defined-term {
+  font-weight: 500;
+}
