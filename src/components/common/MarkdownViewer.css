@@ -129,3 +129,30 @@
 .markdown-content .defined-term {
   font-weight: 500;
 }
+
+/* Style tables in markdown content better */
+.markdown-content table {
+  border-spacing: 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.markdown-content td {
+  padding: 0;
+  padding-bottom: 20px;
+  vertical-align: top;
+}
+
+.markdown-content td img {
+  display: block;
+  margin: 0;
+}
+
+.markdown-content td p {
+  margin-top: 0;
+  margin-bottom: 0.8em;
+}
+
+.markdown-content td p:first-child {
+  margin-top: 0;
+}
