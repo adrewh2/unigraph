@@ -59,11 +59,20 @@ export const demo_Unigraph_Applications = () => {
       description:
         "Interspection is the entire gamut of inspecting, navigating, and interacting with information in Unigraph. People can use Unigraph to inter information - codifying it in a standard language that allows it to be intered on in a unified application ecosystem. This spans from creating fun interactive stories, to complex linking annotation schemes across previously disparate data formats, or creating complex data science tools.",
       tags: ["unigraph", "interspection", "information", "codification"],
+      markdownFile: "alethiometer/interspection.md", // This will be loaded from /public/posts/interspection.md
     },
   });
 
-  graph.createEdge(storyCards.getId(), interspection.getId(), {
-    type: "concept",
+  const anIdea = graph.createNode({
+    id: "An Idea",
+    type: "storyCard",
+    userData: {
+      title: "An Idea",
+      description:
+        "An idea is a thought or suggestion as to a possible course of action. It can be a starting point for creating something new, or a way to solve a problem.",
+      tags: ["idea", "thought", "suggestion"],
+      markdownFile: "quips/anIdea.md",
+    },
   });
 
   // Add a node that references a markdown file
@@ -180,6 +189,8 @@ export const demo_Unigraph_Applications = () => {
     }
   );
 
+  console.log("what about this");
+
   const demo_stories = createEdgesTo(
     graph,
     storyCards.getId(),
@@ -188,9 +199,13 @@ export const demo_Unigraph_Applications = () => {
       howToCreateRealMagic,
       theInspirationOfStoryCardsInUnigraph,
       aboutTheAlethiometer,
+      interspection,
+      anIdea,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
   );
+
+  console.log("reached here");
 
   return new SceneGraph({
     graph,

@@ -752,18 +752,15 @@ const AppContent: React.FC<{
         } else {
           graph = graphGenerator;
         }
-
         handleLoadSceneGraph(graph, clearUrlOfQueryParams);
         setActiveProjectId(null); // Clear project ID since this is a demo graph
-
         // Update the URL query parameter
         const url = new URL(window.location.href);
         url.searchParams.set("graph", key);
         url.searchParams.delete("svgUrl");
         window.history.pushState({}, "", url.toString());
-        // eslint-disable-next-line unused-imports/no-unused-vars
       } catch (err) {
-        console.error(`Graph ${key} not found`);
+        console.error(`Graph ${key} not found: ${err}`);
         console.log(`Available graphs are: ${getAllDemoSceneGraphKeys()}`);
         handleLoadSceneGraph(new SceneGraph(), true);
         return;
