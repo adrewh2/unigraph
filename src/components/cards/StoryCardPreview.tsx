@@ -1,7 +1,6 @@
 import React from "react";
 import MarkdownViewer from "../common/MarkdownViewer";
 import { StoryNode } from "../types/StoryTypes";
-import { extractFirstImageSrc, removeFirstImage } from "../utils/markdownUtils";
 
 interface StoryCardPreviewProps {
   node: StoryNode;
@@ -14,14 +13,6 @@ const StoryCardPreview: React.FC<StoryCardPreviewProps> = ({
   onClick,
   markdownContent,
 }) => {
-  let firstImageSrc: string | null = null;
-  let markdownWithoutFirstImage: string | undefined = undefined;
-
-  if (markdownContent) {
-    firstImageSrc = extractFirstImageSrc(markdownContent);
-    markdownWithoutFirstImage = removeFirstImage(markdownContent);
-  }
-
   return (
     <div
       key={node.id}
@@ -30,20 +21,19 @@ const StoryCardPreview: React.FC<StoryCardPreviewProps> = ({
       style={{
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden", // Prevent content from overflowing
-        maxHeight: "100%", // Ensure it doesn't grow beyond container
+        overflow: "hidden",
+        maxHeight: "100%",
       }}
     >
       <h3
         className="child-card-title"
         style={{
           margin: "0 0 12px 0",
-          // Updated styles to allow text wrapping
           overflow: "visible",
           wordWrap: "break-word",
           hyphens: "auto",
           lineHeight: "1.3",
-          maxHeight: "2.6em", // Limit to approximately 2 lines
+          maxHeight: "2.6em",
           display: "-webkit-box",
           WebkitLineClamp: 2,
           WebkitBoxOrient: "vertical",
@@ -51,32 +41,6 @@ const StoryCardPreview: React.FC<StoryCardPreviewProps> = ({
       >
         {node.title}
       </h3>
-
-      {firstImageSrc && (
-        <div
-          style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            marginBottom: 12,
-            flexShrink: 0, // Prevent image from shrinking
-          }}
-        >
-          <img
-            src={firstImageSrc}
-            alt={node.title}
-            style={{
-              maxWidth: "90%",
-              maxHeight: 140,
-              objectFit: "contain",
-              display: "block",
-              borderRadius: 8,
-              background: "#f5f7fa",
-            }}
-          />
-        </div>
-      )}
 
       <div
         style={{
@@ -91,7 +55,14 @@ const StoryCardPreview: React.FC<StoryCardPreviewProps> = ({
               filename={node.markdownFile}
               excerpt={true}
               excerptLength={150}
-              overrideMarkdown={markdownWithoutFirstImage}
+              overrideMarkdown={markdownContent}
+              imageStyle={{
+                maxWidth: "180px",
+                maxHeight: "140px",
+                objectFit: "contain",
+                display: "block",
+                margin: "0 auto 12px auto",
+              }}
             />
           </div>
         ) : (

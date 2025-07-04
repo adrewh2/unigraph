@@ -18,6 +18,7 @@ interface MarkdownViewerProps {
   excerpt?: boolean;
   excerptLength?: number;
   overrideMarkdown?: string; // Add this prop
+  imageStyle?: React.CSSProperties; // Add imageStyle prop
 }
 
 function MarkdownViewer({
@@ -25,6 +26,7 @@ function MarkdownViewer({
   excerpt = false,
   excerptLength = 150,
   overrideMarkdown,
+  imageStyle,
 }: MarkdownViewerProps) {
   const [html, setHtml] = useState("");
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,29 @@ function MarkdownViewer({
     null
   );
   const eventHandlersSetupRef = useRef(false);
+
+  // Add post-processing function to apply styles to images
+  const applyImageStyles = React.useCallback(
+    (htmlContent: string): string => {
+      if (!imageStyle) return htmlContent;
+
+      // Convert React style object to inline CSS string
+      const styleString = Object.entries(imageStyle)
+        .map(([key, value]) => {
+          // Convert camelCase to kebab-case (e.g., maxWidth to max-width)
+          const cssKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+          return `${cssKey}: ${value}`;
+        })
+        .join("; ");
+
+      // Add the style attribute to all img tags
+      return htmlContent.replace(
+        /<img([^>]*)>/g,
+        `<img$1 style="${styleString}">`
+      );
+    },
+    [imageStyle]
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -235,11 +260,13 @@ function MarkdownViewer({
         const parsed = marked.parse(finalContent);
         if (parsed instanceof Promise) {
           parsed.then((htmlStr) => {
-            setHtml(htmlStr);
+            // Apply image styles to the parsed HTML
+            setHtml(imageStyle ? applyImageStyles(htmlStr) : htmlStr);
             setLoading(false);
           });
         } else {
-          setHtml(parsed);
+          // Apply image styles to the parsed HTML
+          setHtml(imageStyle ? applyImageStyles(parsed) : parsed);
           setLoading(false);
         }
       })
@@ -252,7 +279,14 @@ function MarkdownViewer({
         );
         setLoading(false);
       });
-  }, [filename, excerpt, excerptLength, overrideMarkdown]);
+  }, [
+    filename,
+    excerpt,
+    excerptLength,
+    overrideMarkdown,
+    imageStyle,
+    applyImageStyles,
+  ]); // Add imageStyle to dependencies
 
   // Handle dragging the definition popup
   const handleMouseDown = (e: React.MouseEvent) => {
