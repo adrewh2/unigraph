@@ -13,6 +13,30 @@ const extractWikipediaTitle = (url: string): string | null => {
   return match ? decodeURIComponent(match[1].replace(/_/g, " ")) : null;
 };
 
+// Helper function to highlight keywords in HTML content
+const highlightKeywordsFunc = (
+  html: string,
+  keywords: string[] = []
+): string => {
+  if (!keywords || keywords.length === 0) return html;
+
+  let result = html;
+  keywords.forEach((keyword) => {
+    if (!keyword || keyword.trim() === "") return;
+
+    const safeKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // This regex looks for the keyword between HTML tags
+    const regex = new RegExp(`(>)([^<>]*?)(${safeKeyword})([^<>]*?)(<)`, "gi");
+    result = result.replace(
+      regex,
+      (_, before, pre, match, post, after) =>
+        `${before}${pre}<span style="background-color: yellow; color: black; border-radius: 2px; padding: 0 2px;">${match}</span>${post}${after}`
+    );
+  });
+
+  return result;
+};
+
 type WikipediaArticleViewerFactorGraphProps = {
   style?: React.CSSProperties;
   highlightKeywords?: string[];
@@ -21,11 +45,19 @@ type WikipediaArticleViewerFactorGraphProps = {
 
 export const WikipediaArticleViewer_FactorGraph: React.FC<
   WikipediaArticleViewerFactorGraphProps
-> = ({ style = {}, initialArticle = "Factor graph" }) => {
+> = ({
+  style = {},
+  highlightKeywords = [],
+  initialArticle = "Factor graph",
+}) => {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentArticle, setCurrentArticle] = useState<string>(initialArticle);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Add breadcrumb history state
+  const [articleHistory, setArticleHistory] = useState<string[]>([
+    initialArticle,
+  ]);
   const cssInjected = useRef(false);
   const language = "en";
 
@@ -76,6 +108,11 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
 
           // Fix Wikipedia relative URLs to make links work
           htmlContent = fixWikipediaLinks(htmlContent, language);
+
+          // Apply keyword highlighting
+          if (highlightKeywords && highlightKeywords.length > 0) {
+            htmlContent = highlightKeywordsFunc(htmlContent, highlightKeywords);
+          }
 
           // Force insert the iframe without relying on heading detection
           const unigraphBaseUrl = getUnigraphBaseUrl();
@@ -180,7 +217,7 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
         cancelled = true;
       };
     },
-    [language]
+    [language, highlightKeywords]
   );
 
   // Load the initial article
@@ -194,6 +231,28 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
     };
   }, [currentArticle, fetchWikipediaArticle]);
 
+  // Navigate to a specific article with history tracking
+  const navigateToArticle = (title: string) => {
+    // If navigating to a new article that's not the current one
+    if (title !== currentArticle) {
+      setCurrentArticle(title);
+
+      // Update history - if we're navigating to an article already in our history,
+      // truncate the history up to that point
+      const existingIndex = articleHistory.indexOf(title);
+      if (existingIndex >= 0) {
+        // Article exists in history, truncate to that point
+        setArticleHistory(articleHistory.slice(0, existingIndex + 1));
+      } else {
+        // New article, add to history
+        setArticleHistory((prevHistory) => [...prevHistory, title]);
+      }
+
+      // Scroll back to top
+      window.scrollTo(0, 0);
+    }
+  };
+
   // Event handler for link clicks
   const handleLinkClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -203,9 +262,7 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
       const title = extractWikipediaTitle(anchor.href);
       if (title) {
         e.preventDefault();
-        setCurrentArticle(title);
-        // Scroll back to top when loading a new article
-        window.scrollTo(0, 0);
+        navigateToArticle(title);
       }
     }
   };
@@ -227,7 +284,7 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
       }}
       className="mw-parser-output wikipedia-article-viewer"
     >
-      {/* Add a navigation header */}
+      {/* Add a navigation header with breadcrumbs */}
       <div
         style={{
           marginBottom: 20,
@@ -236,18 +293,41 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
         }}
       >
         <h2>{currentArticle}</h2>
-        <div>
-          <button
-            onClick={() => setCurrentArticle("Factor graph")}
-            style={{
-              marginRight: 10,
-              padding: "4px 10px",
-              cursor: "pointer",
-              background: currentArticle === "Factor graph" ? "#eee" : "white",
-            }}
-          >
-            Back to Factor Graph
-          </button>
+
+        {/* Breadcrumb trail */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            marginBottom: 10,
+            fontSize: "0.9em",
+          }}
+        >
+          <span style={{ marginRight: 8, color: "#666" }}>Path:</span>
+          {articleHistory.map((article, index) => (
+            <React.Fragment key={`${article}-${index}`}>
+              {index > 0 && (
+                <span style={{ margin: "0 8px", color: "#999" }}>&gt;</span>
+              )}
+              <button
+                onClick={() => navigateToArticle(article)}
+                style={{
+                  cursor: "pointer",
+                  background: "transparent",
+                  border: "none",
+                  padding: "2px 4px",
+                  borderRadius: "3px",
+                  color: article === currentArticle ? "#333" : "#0645ad",
+                  fontWeight: article === currentArticle ? "bold" : "normal",
+                  textDecoration:
+                    article === currentArticle ? "none" : "underline",
+                }}
+              >
+                {article}
+              </button>
+            </React.Fragment>
+          ))}
         </div>
       </div>
 

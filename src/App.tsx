@@ -204,7 +204,11 @@ const getSimulations = (
         highlightKeywords={["the"]}
       />
     ),
-    factorGraph: <WikipediaArticleViewer_FactorGraph />,
+    factorGraph: (
+      <WikipediaArticleViewer_FactorGraph
+        highlightKeywords={["efficient computations"]}
+      />
+    ),
   };
 };
 
