@@ -25,6 +25,7 @@ import { demo_SceneGraph_StackedGalleryTransparent } from "./graphs/Gallery_Demo
 import { demo_SceneGraph_Thinking } from "./graphs/Gallery_Demos/demo_SceneGraph_Thinking";
 import { demo_SceneGraph_StoryCards } from "./graphs/Gallery_Demos/demo_story_cards.tsx";
 import { demo_Unigraph_Applications } from "./graphs/Gallery_Demos/demo_unigraph_applications";
+import { demo_Wikipedia_Articles } from "./graphs/Gallery_Demos/demo_wikipedia_articles";
 import { graphManagementWorkflowDiagram } from "./graphs/graphManagementWorkflow";
 import { graphManagementWorkflowDiagram2 } from "./graphs/graphManagementWorkflow2";
 import { randomBigGraph } from "./graphs/randomBig";
@@ -80,6 +81,7 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
       "Demo Story Cards": () => demo_SceneGraph_StoryCards(),
       numbers: () => demo_SceneGraph_Numbers_Story(),
       unigraphApplications: () => demo_Unigraph_Applications(),
+      wikipediaDemo: () => demo_Wikipedia_Articles(),
     },
   },
   Base: {

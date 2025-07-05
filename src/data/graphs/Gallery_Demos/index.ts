@@ -7,7 +7,7 @@ import { createEdgesTo } from "../../../core/model/GraphUtils";
 import { Node, NodeId } from "../../../core/model/Node";
 import { SceneGraph } from "../../../core/model/SceneGraph";
 
-export const demo_Unigraph_Applications = () => {
+export const demo_Wikipedia_Articles = () => {
   const graph = new Graph();
 
   const storyCards = graph.createNode({

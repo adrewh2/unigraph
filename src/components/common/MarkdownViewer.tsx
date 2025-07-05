@@ -317,17 +317,24 @@ function MarkdownViewer({
           ? processedMarkdown.split("</td>")[0] + "</td></tr></table>" // Only keep first table row with image
           : processedMarkdown;
 
-        // Parse markdown to HTML
-        const parsed = marked.parse(finalContent);
-        if (parsed instanceof Promise) {
-          parsed.then((htmlStr) => {
+        // Parse markdown to HTML using marked
+        let parsed: string | Promise<string>;
+        try {
+          parsed = marked.parse(finalContent);
+          if (parsed instanceof Promise) {
+            parsed.then((htmlStr) => {
+              // Apply image styles to the parsed HTML
+              setHtml(imageStyle ? applyImageStyles(htmlStr) : htmlStr);
+              setLoading(false);
+            });
+          } else {
             // Apply image styles to the parsed HTML
-            setHtml(imageStyle ? applyImageStyles(htmlStr) : htmlStr);
+            setHtml(imageStyle ? applyImageStyles(parsed) : parsed);
             setLoading(false);
-          });
-        } else {
-          // Apply image styles to the parsed HTML
-          setHtml(imageStyle ? applyImageStyles(parsed) : parsed);
+          }
+        } catch (parseError) {
+          console.error("Error parsing markdown:", parseError);
+          setError(`Error parsing markdown: ${parseError}`);
           setLoading(false);
         }
       })
