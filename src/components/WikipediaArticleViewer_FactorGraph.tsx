@@ -169,6 +169,82 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
       }}
       className="mw-parser-output wikipedia-article-viewer"
       dangerouslySetInnerHTML={html ? { __html: html } : undefined}
+      ref={(container) => {
+        // Add a second iframe after the component mounts and HTML is rendered
+        if (container && html) {
+          // Use setTimeout to ensure the DOM is fully rendered
+          setTimeout(() => {
+            // Find the image with "An Example factor graph" in caption or alt text
+            const images = container.querySelectorAll("img");
+            let targetImage = null;
+
+            for (const img of Array.from(images)) {
+              // Check caption (could be in figcaption or nearby element)
+              const caption =
+                img.closest("figure")?.querySelector("figcaption")
+                  ?.textContent ||
+                img.alt ||
+                img.title ||
+                img.parentElement?.nextElementSibling?.textContent;
+
+              if (
+                caption &&
+                caption.toLowerCase().includes("example factor graph")
+              ) {
+                targetImage = img;
+                break;
+              }
+
+              // Also check parent figure or div that might contain the image
+              const parentFigure = img.closest("figure, div.thumb");
+              if (
+                parentFigure &&
+                parentFigure.textContent &&
+                parentFigure.textContent
+                  .toLowerCase()
+                  .includes("example factor graph")
+              ) {
+                targetImage = img;
+                break;
+              }
+            }
+
+            // If we found the image or its container
+            if (targetImage) {
+              const targetContainer =
+                targetImage.closest("figure, div.thumb") ||
+                targetImage.parentElement;
+              if (targetContainer) {
+                console.log("Found target image for second iframe");
+
+                // Create second iframe
+                const secondIframe = document.createElement("div");
+                secondIframe.innerHTML = `
+                  <div style="margin: 20px 0; display: block; width: 100%;">
+                    <h4>Interactive Unigraph Visualization (Factor Graph Example)</h4>
+                    <iframe 
+                      src="https://unigraph.vercel.app/?graph=AcademicsKG&view=example" 
+                      width="100%" 
+                      height="450" 
+                      style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
+                      title="Unigraph Factor Graph Example"
+                      allowfullscreen>
+                    </iframe>
+                  </div>
+                `;
+
+                // Insert after the image container
+                if (secondIframe.firstElementChild) {
+                  targetContainer.insertAdjacentElement(
+                    "afterend",
+                    secondIframe.firstElementChild
+                  );
+                }
+              }
+            }
+          }, 500); // Small delay to ensure DOM is ready
+        }
+      }}
     />
   );
 };
