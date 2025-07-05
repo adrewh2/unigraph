@@ -47,6 +47,7 @@ import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationD
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import StoryCardApp from "./components/StoryCardApp";
+import WikipediaArticleViewer from "./components/WikipediaArticleViewer";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -196,6 +197,7 @@ const getSimulations = (
     // canvasSelection: <CanvasSelection />,
     // storyCard: <AnimatedStoryCardDemo3 />,
     storyCard: <StoryCardApp sceneGraph={sceneGraph} />,
+    wikipediaViewer: <WikipediaArticleViewer title="Factor graph" />,
   };
 };
 
@@ -1764,6 +1766,7 @@ const AppContent: React.FC<{
               .getNode(Array.from(getHoveredNodeIds())[0] as NodeId)}
           />
         )}
+
         {/* {getSelectedNodeId() && forceGraphInstance && (
           <NodeDisplayCard
             nodeId={getSelectedNodeId()!}
