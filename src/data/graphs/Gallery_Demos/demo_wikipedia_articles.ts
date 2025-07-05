@@ -18,12 +18,21 @@ export const loadWikipediaArticle = async (
     maxLinksPerArticle?: number;
     bfsDepth?: number;
     language?: string;
+    debug?: boolean;
   } = {}
 ): Promise<Node> => {
-  const { maxLinksPerArticle = 10, bfsDepth = 1, language = "en" } = options;
+  const {
+    maxLinksPerArticle = 50,
+    bfsDepth = 3, // Default to 4 levels deep
+    language = "en",
+    debug = false,
+  } = options;
 
   // Keep track of visited articles to avoid cycles
   const visitedArticles = new Set<string>();
+  const nodeLevels = new Map<string, number>(); // Track node depths for debugging
+
+  console.log(`Starting BFS from ${articleTitle} with max depth ${bfsDepth}`);
 
   // Queue for BFS with article titles and their depth level
   const queue: Array<{ title: string; depth: number; parentNode?: Node }> = [
@@ -32,34 +41,86 @@ export const loadWikipediaArticle = async (
 
   // Root node reference to return at the end
   let rootNode: Node | undefined;
-
   const baseApiUrl = `https://${language}.wikipedia.org/w/api.php`;
 
   while (queue.length > 0) {
     const { title, depth, parentNode } = queue.shift()!;
 
-    // Skip if we've already processed this article or exceeded max depth
-    if (visitedArticles.has(title) || depth > bfsDepth) {
+    // Always create or reuse the article node
+    const articleNodeId = `Wiki: ${title}`;
+    let articleNode = graph.maybeGetNode(articleNodeId as NodeId);
+
+    // Always create the node if it doesn't exist
+    if (!articleNode) {
+      articleNode = graph.createNode({
+        id: articleNodeId,
+        type: "wikiArticle",
+        userData: {
+          title: title,
+          url: `https://${language}.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`,
+          tags: ["wikipedia", "article", `depth-${depth}`],
+          depth: depth,
+        },
+      });
+      if (debug)
+        console.log(`Created node: ${articleNodeId} at depth ${depth}`);
+    }
+
+    // Always create the edge from parent to this node if parent exists
+    if (parentNode) {
+      // Prevent duplicate edges
+      if (
+        !graph
+          .getEdges()
+          .toArray()
+          .some(
+            (e) =>
+              e.getSource() === parentNode.getId() &&
+              e.getTarget() === articleNode.getId()
+          )
+      ) {
+        graph.createEdge(parentNode.getId(), articleNode.getId(), {
+          type: "WikiLink",
+          label: title,
+          userData: { depth },
+        });
+        if (debug)
+          console.log(
+            `Created edge from ${parentNode.getId()} to ${articleNode.getId()}`
+          );
+      }
+    }
+
+    // If already visited, skip further processing (but edge above is always created)
+    if (visitedArticles.has(title)) {
+      if (debug) console.log(`Skipping already visited article: ${title}`);
       continue;
     }
 
+    if (depth > bfsDepth) {
+      if (debug)
+        console.log(
+          `Skipping article beyond max depth: ${title} (depth ${depth})`
+        );
+      continue;
+    }
+
+    if (debug) console.log(`Processing article: ${title} at depth ${depth}`);
     visitedArticles.add(title);
+    nodeLevels.set(title, depth);
 
-    // Encode the article title for the URL
+    // Fetch article content with links
     const encodedTitle = encodeURIComponent(title.replace(/ /g, "_"));
-
     try {
-      // Fetch article content with links
       const articleUrl = `${baseApiUrl}?action=query&format=json&prop=extracts|links&titles=${encodedTitle}&exintro=1&explaintext=1&pllimit=${maxLinksPerArticle * 2}&origin=*`;
       const response = await fetch(articleUrl);
       const data = await response.json();
 
-      // Extract the page data
       const pages = data.query.pages;
       const pageId = Object.keys(pages)[0];
 
       if (pageId === "-1") {
-        console.warn(`Article "${title}" not found`);
+        if (debug) console.warn(`Article "${title}" not found`);
         continue;
       }
 
@@ -68,91 +129,64 @@ export const loadWikipediaArticle = async (
       const links = page.links || [];
       const fullUrl = `https://${language}.wikipedia.org/wiki/${encodedTitle}`;
 
-      // Create the article node
-      const articleNode = graph.createNode({
-        id: `Wiki: ${title}`,
-        type: "wikiArticle",
-        userData: {
-          title: title,
-          description:
-            extract.substring(0, 300) + (extract.length > 300 ? "..." : ""),
-          url: fullUrl,
-          fullContent: extract,
-          lastModified: page.touched,
-          tags: ["wikipedia", "article", `depth-${depth}`],
-          depth: depth, // Store depth for potential UI filtering
-        },
-      });
+      // Update node with extract and description if it was just a stub before
+      if (articleNode) {
+        articleNode.setUserData(
+          "description",
+          extract.substring(0, 300) + (extract.length > 300 ? "..." : "")
+        );
+        articleNode.setUserData("fullContent", extract);
+        articleNode.setUserData("lastModified", page.touched);
+        articleNode.setUserData("url", fullUrl);
+      }
 
-      // Store the root node to return later
       if (depth === 0) {
         rootNode = articleNode;
+        if (debug) console.log(`Set root node: ${articleNode.getId()}`);
       }
 
-      // Connect to parent node if it exists
-      if (parentNode) {
-        graph.createEdge(parentNode.getId(), articleNode.getId(), {
-          type: "WikiLink",
-          label: title,
-        });
-      }
+      if (depth < bfsDepth) {
+        // Now get content links - we need to make another API call to get the actual content HTML
+        const contentUrl = `${baseApiUrl}?action=parse&format=json&page=${encodedTitle}&prop=text&origin=*`;
+        const contentResponse = await fetch(contentUrl);
+        const contentData = await contentResponse.json();
 
-      // Now get content links - we need to make another API call to get the actual content HTML
-      // to determine which links are in the main content
-      const contentUrl = `${baseApiUrl}?action=parse&format=json&page=${encodedTitle}&prop=text&origin=*`;
-      const contentResponse = await fetch(contentUrl);
-      const contentData = await contentResponse.json();
-
-      // Only proceed if we can get the content
-      if (contentData.parse && contentData.parse.text) {
-        const htmlContent = contentData.parse.text["*"];
-
-        // Process links if we haven't reached max depth
-        if (depth < bfsDepth) {
-          // Get valid links from the article content
+        if (contentData.parse && contentData.parse.text) {
+          const htmlContent = contentData.parse.text["*"];
           const contentLinks = new Set<string>();
-
-          // Extract links from the HTML content that are in the main article body
-          // This uses a regex approach - in a production app, proper HTML parsing would be better
-          const mainContentMatches = htmlContent.match(
-            /<div class="mw-parser-output">([\s\S]*?)<\/div>/
-          );
-          if (mainContentMatches && mainContentMatches[1]) {
-            const mainContent = mainContentMatches[1];
-            const linkRegex = /<a href="\/wiki\/([^"]+)"[^>]*>([^<]+)<\/a>/g;
-            let match;
-
-            while ((match = linkRegex.exec(mainContent)) !== null) {
-              const linkTarget = decodeURIComponent(match[1]);
-              // Skip special pages, files, etc.
-              if (!linkTarget.includes(":") && !linkTarget.includes("#")) {
-                contentLinks.add(linkTarget.replace(/_/g, " "));
-              }
-            }
+          // FIX: Extract all <a href="/wiki/..."> links from the entire htmlContent, not just the first div
+          const linkRegex = /<a href="\/wiki\/([^"#:]+)"[^>]*>([^<]+)<\/a>/g;
+          let match;
+          while ((match = linkRegex.exec(htmlContent)) !== null) {
+            const linkTarget = decodeURIComponent(match[1]);
+            // Normalize: trim, lower, collapse spaces
+            const normalized = linkTarget
+              .replace(/_/g, " ")
+              .trim()
+              .replace(/\s+/g, " ")
+              .toLowerCase();
+            contentLinks.add(normalized);
           }
 
-          // Filter links to only include those in the content
           let linksAdded = 0;
-
+          console.log("links are ", links);
           for (const link of links) {
-            // Skip non-article namespace links
-            if (link.ns !== 0) continue;
-
             const linkTitle = link.title;
+            const normalizedLinkTitle = linkTitle
+              .trim()
+              .replace(/\s+/g, " ")
+              .toLowerCase();
+            if (!contentLinks.has(normalizedLinkTitle)) continue;
+            console.log("reached here with link ", linkTitle);
 
-            // For all valid links, create nodes and edges immediately
-            // This ensures they appear in the graph even if we don't process them further
-            const encodedLinkTitle = encodeURIComponent(
-              linkTitle.replace(/ /g, "_")
-            );
-            const linkUrl = `https://${language}.wikipedia.org/wiki/${encodedLinkTitle}`;
-
-            // Check if we've already created this node to avoid duplicates
             const linkNodeId = `Wiki: ${linkTitle}`;
             let linkNode = graph.maybeGetNode(linkNodeId as NodeId);
 
             if (!linkNode) {
-              // Create a basic node for the link
+              const encodedLinkTitle = encodeURIComponent(
+                linkTitle.replace(/ /g, "_")
+              );
+              const linkUrl = `https://${language}.wikipedia.org/wiki/${encodedLinkTitle}`;
               linkNode = graph.createNode({
                 id: linkNodeId,
                 type: "wikiArticle",
@@ -163,35 +197,75 @@ export const loadWikipediaArticle = async (
                   depth: depth + 1,
                 },
               });
+              if (debug)
+                console.log(
+                  `Created new node: ${linkNodeId} at depth ${depth + 1}`
+                );
             }
 
-            // Create an edge from the current article to this link
-            graph.createEdge(articleNode.getId(), linkNode.getId(), {
-              type: "WikiLink",
-              label: linkTitle,
-            });
-
-            // Only add links that appear in the content to the BFS queue for further processing
+            // Always create the edge, even if the node already existed
             if (
-              contentLinks.has(linkTitle) &&
-              linksAdded < maxLinksPerArticle &&
-              !visitedArticles.has(linkTitle)
+              !graph
+                .getEdges()
+                .toArray()
+                .some(
+                  (e) =>
+                    e.getSource() === articleNode.getId() &&
+                    e.getTarget() === linkNode.getId()
+                )
             ) {
-              // Add to BFS queue for next level
+              graph.createEdge(articleNode.getId(), linkNode.getId(), {
+                type: "WikiLink",
+                label: linkTitle,
+                userData: { depth: depth + 1 },
+              });
+            }
+
+            // Only queue for BFS if not visited and within link limit
+            if (
+              !visitedArticles.has(linkTitle) &&
+              !queue.some((q) => q.title === linkTitle) &&
+              linksAdded < maxLinksPerArticle
+            ) {
               queue.push({
                 title: linkTitle,
                 depth: depth + 1,
                 parentNode: articleNode,
               });
-
+              if (debug)
+                console.log(
+                  `Queued for BFS: ${linkTitle} at depth ${depth + 1}`
+                );
               linksAdded++;
             }
           }
         }
+      } else {
+        if (debug)
+          console.log(
+            `Reached max depth for ${title}, not fetching more links`
+          );
       }
     } catch (error) {
       console.error(`Error processing article "${title}":`, error);
     }
+  }
+
+  // Log statistics about the BFS traversal
+  console.log(
+    `BFS traversal complete. Visited ${visitedArticles.size} articles.`
+  );
+  console.log(`Depth distribution:`);
+
+  // Count articles at each depth level
+  const depthCounts = new Map<number, number>();
+  nodeLevels.forEach((depth) => {
+    depthCounts.set(depth, (depthCounts.get(depth) || 0) + 1);
+  });
+
+  // Log the counts
+  for (let i = 0; i <= bfsDepth; i++) {
+    console.log(`  Depth ${i}: ${depthCounts.get(i) || 0} articles`);
   }
 
   // Return the root node or an error node if something went wrong
@@ -225,46 +299,24 @@ export const demo_Wikipedia_Articles = async () => {
     },
   });
 
-  // Load articles with different topics and depths
-  //   const graphTheoryArticle = await loadWikipediaArticle(graph, "Graph theory", {
-  //     maxLinksPerArticle: 5,
-  //     bfsDepth: 2,
-  //   });
+  console.log("Starting Wikipedia article graph generation...");
 
+  // Load articles with different topics and depths
   const factorGraphArticle = await loadWikipediaArticle(graph, "Factor graph", {
-    maxLinksPerArticle: 100,
-    bfsDepth: 4,
+    maxLinksPerArticle: 100, // Reduce to make sure we're processing correctly
+    bfsDepth: 4, // Start with a reasonable depth
+    debug: true, // Enable debugging
   });
 
-  //   // You can add more starting points for different topics
-  //   const artificialIntelligenceArticle = await loadWikipediaArticle(
-  //     graph,
-  //     "Artificial intelligence",
-  //     {
-  //       maxLinksPerArticle: 5,
-  //       bfsDepth: 1,
-  //     }
-  //   );
-
-  // Connect all articles to the root node
-  //   graph.createEdge(wikiRootNode.getId(), graphTheoryArticle.getId(), {
-  //     type: "WikiStart",
-  //     label: "Graph Theory",
-  //   });
-
+  // Connect the article to the root node
   graph.createEdge(wikiRootNode.getId(), factorGraphArticle.getId(), {
     type: "WikiStart",
     label: "Factor Graph",
   });
 
-  //   graph.createEdge(
-  //     wikiRootNode.getId(),
-  //     artificialIntelligenceArticle.getId(),
-  //     {
-  //       type: "WikiStart",
-  //       label: "AI",
-  //     }
-  //   );
+  console.log("Wikipedia graph generation complete!");
+  console.log(`Total nodes in graph: ${graph.getNodes().size()}`);
+  console.log(`Total edges in graph: ${graph.getEdges().size()}`);
 
   return new SceneGraph({
     graph,
