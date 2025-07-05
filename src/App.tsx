@@ -197,7 +197,12 @@ const getSimulations = (
     // canvasSelection: <CanvasSelection />,
     // storyCard: <AnimatedStoryCardDemo3 />,
     storyCard: <StoryCardApp sceneGraph={sceneGraph} />,
-    wikipediaViewer: <WikipediaArticleViewer title="Factor graph" />,
+    wikipediaViewer: (
+      <WikipediaArticleViewer
+        title="Factor graph"
+        highlightKeywords={["the"]}
+      />
+    ),
   };
 };
 
