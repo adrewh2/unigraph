@@ -97,7 +97,10 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
     useState<DefinitionPopupData | null>(null);
 
   // Add state for context menu
-  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [selectedText, setSelectedText] = useState<string>("");
 
   // Wikipedia CSS links for <link rel="stylesheet" ... />
@@ -149,10 +152,10 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
           htmlContent = fixWikipediaLinks(htmlContent, language);
 
           // Reduce debug logging to avoid console noise
-          if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV !== "production") {
             console.log("Applying custom terms highlighting:", customTerms);
           }
-          
+
           // Highlight custom terms in the HTML
           htmlContent = highlightCustomTerms(htmlContent, customTerms);
 
@@ -315,7 +318,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
     if (termElements.length === 0) return;
 
     // Only log in development mode
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== "production") {
       console.log(`Found ${termElements.length} term elements`);
       console.log("Available terms:", customTerms);
     }
@@ -328,7 +331,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       const termText = element.getAttribute("data-term");
 
       // Debug the clicked term only in development
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== "production") {
         console.log(
           "Term clicked:",
           termText,
@@ -396,62 +399,67 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
   // Handle context menu for text selection
   const handleContextMenu = (e: React.MouseEvent) => {
     const selection = window.getSelection();
+    console.log("Selection:", selection);
     const text = selection?.toString().trim();
-    
+    console.log("Selected text:", text);
     if (text && text.length > 0) {
       e.preventDefault(); // Prevent default browser context menu
+      e.stopPropagation(); // Stop propagation to avoid triggering other handlers
       setSelectedText(text);
-      setContextMenuPosition({ x: e.clientX, y: e.clientY });
+      // setContextMenuPosition({ x: e.clientX, y: e.clientY });
     }
   };
-  
+
   // Define context menu items - more compact without icons
   const getContextMenuItems = () => [
     {
-      id: 'annotate',
-      label: 'Annotate',
+      id: "annotate",
+      label: "Annotate",
       onClick: () => {
         onAnnotate(selectedText);
         // Clear selection
         window.getSelection()?.removeAllRanges();
-      }
+      },
     },
     {
-      id: 'copy',
-      label: 'Copy',
+      id: "copy",
+      label: "Copy",
       onClick: () => {
         navigator.clipboard.writeText(selectedText);
-      }
+      },
     },
     {
-      id: 'search',
-      label: 'Search Google',
+      id: "search",
+      label: "Search Google",
       onClick: () => {
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, '_blank');
-      }
-    }
+        window.open(
+          `https://www.google.com/search?q=${encodeURIComponent(selectedText)}`,
+          "_blank"
+        );
+      },
+    },
   ];
-  
+
   // Close context menu when clicking outside
   useEffect(() => {
     if (!contextMenuPosition) return;
-    
+
     const handleClickOutside = () => {
       setContextMenuPosition(null);
     };
-    
-    document.addEventListener('mousedown', handleClickOutside);
+
+    document.addEventListener("mousedown", handleClickOutside);
     // Also close on Escape key
     const handleEscapeKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         setContextMenuPosition(null);
       }
     };
-    document.addEventListener('keydown', handleEscapeKey);
-    
+    document.addEventListener("keydown", handleEscapeKey);
+
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [contextMenuPosition]);
 
@@ -530,8 +538,8 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       <div
         ref={contentRef}
         className="wikipedia-article-content"
-        style={{ 
-          flexGrow: 1, 
+        style={{
+          flexGrow: 1,
           overflowY: "auto",
           paddingBottom: "80px",
           // Add scrollbar styling for this element too
@@ -640,9 +648,9 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
 };
 
 // Modify the scrollbar styles code to only run once
-if (!document.getElementById('wikipedia-scrollbar-styles')) {
-  const scrollbarStyles = document.createElement('style');
-  scrollbarStyles.id = 'wikipedia-scrollbar-styles';
+if (!document.getElementById("wikipedia-scrollbar-styles")) {
+  const scrollbarStyles = document.createElement("style");
+  scrollbarStyles.id = "wikipedia-scrollbar-styles";
   scrollbarStyles.textContent = `
     .wikipedia-article-viewer::-webkit-scrollbar,
     .wikipedia-article-content::-webkit-scrollbar {
