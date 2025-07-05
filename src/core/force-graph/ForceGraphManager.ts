@@ -249,17 +249,127 @@ export class ForceGraphManager {
 
       // Default node rendering
       const nodeEl = document.createElement("div");
-      if (config.nodeTextLabels) {
-        nodeEl.textContent = `${n.getLabel()}` as string;
-        nodeEl.className = "node-label";
-      }
-      nodeEl.style.color = RenderingManager.getColor(
-        n,
-        getNodeLegendConfig(),
-        getLegendMode()
-      );
 
-      nodeEl.style.fontSize = `${config.fontSize}px`;
+      // Get the node shape if it exists
+      const nodeShape = n.getData().shape as string | undefined;
+
+      // Apply shape-specific styling if a shape is defined
+      if (nodeShape) {
+        nodeEl.style.display = "flex";
+        nodeEl.style.alignItems = "center";
+        nodeEl.style.justifyContent = "center";
+
+        // Base shape dimensions
+        const shapeSize = `${config.nodeSize * 8}px`;
+
+        switch (nodeShape.toLowerCase()) {
+          case "square":
+          case "rect":
+          case "rectangle":
+            nodeEl.style.width = shapeSize;
+            nodeEl.style.height = shapeSize;
+            nodeEl.style.background = RenderingManager.getColor(
+              n,
+              getNodeLegendConfig(),
+              getLegendMode()
+            );
+            break;
+
+          case "circle":
+            nodeEl.style.width = shapeSize;
+            nodeEl.style.height = shapeSize;
+            nodeEl.style.borderRadius = "50%";
+            nodeEl.style.background = RenderingManager.getColor(
+              n,
+              getNodeLegendConfig(),
+              getLegendMode()
+            );
+            break;
+
+          case "triangle": {
+            // For triangle, we use a different approach with borders
+            nodeEl.style.width = "0";
+            nodeEl.style.height = "0";
+            const borderSize = `${config.nodeSize * 5}px`;
+            nodeEl.style.borderLeft = borderSize + " solid transparent";
+            nodeEl.style.borderRight = borderSize + " solid transparent";
+            nodeEl.style.borderBottom =
+              borderSize +
+              " solid " +
+              RenderingManager.getColor(
+                n,
+                getNodeLegendConfig(),
+                getLegendMode()
+              );
+            break;
+          }
+
+          case "diamond":
+            nodeEl.style.width = shapeSize;
+            nodeEl.style.height = shapeSize;
+            nodeEl.style.background = RenderingManager.getColor(
+              n,
+              getNodeLegendConfig(),
+              getLegendMode()
+            );
+            nodeEl.style.transform = "rotate(45deg)";
+            break;
+
+          // Add more shapes as needed
+        }
+
+        // If we have text labels, add a span for the text that won't be affected by the shape's transform
+        if (config.nodeTextLabels) {
+          const textEl = document.createElement("span");
+          textEl.textContent = `${n.getLabel()}`;
+          textEl.style.position = "absolute";
+          textEl.style.textAlign = "center";
+          textEl.style.width = "max-content";
+          
+          // Center text on the shape instead of below it
+          textEl.style.top = "50%";
+          textEl.style.left = "50%";
+          textEl.style.transform = "translate(-50%, -50%)";
+          textEl.style.pointerEvents = "none"; // Allow clicks to go through to the shape
+          
+          // For better visibility with background shapes
+          textEl.style.textShadow = "1px 1px 1px rgba(0,0,0,0.5)";
+          textEl.style.color = "#fff";
+          textEl.style.fontWeight = "bold";
+
+          // Set font color if specified
+          if (n.getData().fontColor) {
+            textEl.style.color = n.getData().fontColor as string;
+          }
+
+          // Set font size
+          if (config.fontSize) {
+            textEl.style.fontSize = `${config.fontSize}px`;
+          }
+
+          nodeEl.appendChild(textEl);
+        }
+
+        nodeEl.className = "node-shape";
+      } else {
+        // Regular text label rendering when no shape is specified
+        if (config.nodeTextLabels) {
+          nodeEl.textContent = `${n.getLabel()}` as string;
+          nodeEl.className = "node-label";
+        }
+        if (n.getData().fontColor) {
+          nodeEl.style.color = n.getData().fontColor as string;
+        } else {
+          nodeEl.style.color = RenderingManager.getColor(
+            n,
+            getNodeLegendConfig(),
+            getLegendMode()
+          );
+        }
+
+        nodeEl.style.fontSize = `${config.fontSize}px`;
+      }
+
       return new CSS2DObject(nodeEl);
     });
     instance.nodeThreeObjectExtend(true);

@@ -21,6 +21,8 @@ const createGraph = (): Graph => {
     color: "rgb(100, 150, 255)",
     dimensions: { width: 1, height: 1 },
     size: 1.5,
+    fontColor: "rgb(0, 0, 0)", // Optional font color for labels
+    shape: "square",
   });
 
   const x2 = g.createNode({
@@ -31,6 +33,8 @@ const createGraph = (): Graph => {
     color: "rgb(100, 150, 255)",
     dimensions: { width: 1, height: 1 },
     size: 1.5,
+    fontColor: "rgb(0, 0, 0)", // Optional font color for labels
+    shape: "square",
   });
 
   const x3 = g.createNode({
@@ -41,6 +45,8 @@ const createGraph = (): Graph => {
     color: "rgb(100, 150, 255)",
     dimensions: { width: 1, height: 1 },
     size: 1.5,
+    fontColor: "rgb(0, 0, 0)", // Optional font color for labels
+    shape: "square",
   });
 
   // Create factor nodes (typically represented as squares)
@@ -52,6 +58,8 @@ const createGraph = (): Graph => {
     color: "rgb(255, 150, 100)",
     dimensions: { width: 1, height: 1 },
     size: 1.2,
+    fontColor: "rgb(0, 0, 0)", // Optional font color for labels
+    shape: "square",
   });
 
   const f2 = g.createNode({
@@ -62,6 +70,8 @@ const createGraph = (): Graph => {
     color: "rgb(255, 150, 100)",
     dimensions: { width: 1, height: 1 },
     size: 1.2,
+    fontColor: "rgb(0, 0, 0)", // Optional font color for labels
+    shape: "square",
   });
 
   const f3 = g.createNode({
@@ -72,6 +82,8 @@ const createGraph = (): Graph => {
     color: "rgb(255, 150, 100)",
     dimensions: { width: 1, height: 1 },
     size: 1.2,
+    fontColor: "rgb(0, 0, 0)", // Optional font color for labels
+    shape: "square",
   });
 
   const f4 = g.createNode({
@@ -82,6 +94,8 @@ const createGraph = (): Graph => {
     color: "rgb(255, 150, 100)",
     dimensions: { width: 1, height: 1 },
     size: 1.2,
+    fontColor: "rgb(0, 0, 0)", // Optional font color for labels
+    shape: "square",
   });
 
   // Create edges connecting factors to variables
