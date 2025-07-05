@@ -65,6 +65,19 @@ module.exports = {
           },
         ],
       },
+      {
+        test: /\.csv$/,
+        include: path.resolve(__dirname, "public/data"),
+        use: [
+          {
+            loader: "file-loader",
+            options: {
+              name: "[name].[ext]",
+              outputPath: "data/",
+            },
+          },
+        ],
+      },
       // Handle Web Workers
       {
         test: /\.worker\.(js|ts)$/, // Support both .worker.js and .worker.ts
