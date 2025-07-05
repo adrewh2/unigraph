@@ -1116,7 +1116,9 @@ const AppContent: React.FC<{
 
     if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
       console.log("Cannot render nodes without positions");
-      return;
+      console.log("Extracting from node data...");
+      const nodePositions = extractPositionsFromNodes(currentSceneGraph);
+      currentSceneGraph.setNodePositions(nodePositions);
     }
 
     const data = exportGraphDataForReactFlow(currentSceneGraph);
