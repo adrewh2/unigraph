@@ -4,15 +4,8 @@ import { marked } from "marked";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { replaceUnigraphUrlsWithLocalhost } from "../../utils/urlUtils";
-import "./MarkdownViewer.css"; // Import CSS file
-
-// Define interfaces for our popup
-interface DefinitionPopup {
-  term: string;
-  definition: string;
-  position: { x: number; y: number };
-  isDragging?: boolean;
-}
+import { DefinitionPopup, DefinitionPopupData } from "./DefinitionPopup";
+import "./MarkdownViewer.css";
 
 interface MarkdownViewerProps {
   filename: string;
@@ -34,7 +27,7 @@ function MarkdownViewer({
   const [error, setError] = useState<string | null>(null);
   const [terms, setTerms] = useState<Record<string, string>>({});
   const [activeDefinition, setActiveDefinition] =
-    useState<DefinitionPopup | null>(null);
+    useState<DefinitionPopupData | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
@@ -244,11 +237,12 @@ function MarkdownViewer({
     // Try loading the file or use overrideMarkdown if provided
     (overrideMarkdown
       ? Promise.resolve(overrideMarkdown)
-      : fetch(filePath).then((res) => {
+      : (async () => {
+          const res = await fetch(filePath);
           if (!res.ok) {
             // Try a limited set of alternates without excessive retries
-            let alternatePromise: Promise<string> = Promise.reject(
-              new Error(`Initial path ${filePath} failed`)
+            let lastError: Error | null = new Error(
+              `Initial path ${filePath} failed`
             );
 
             // Only try these alternates if we haven't already
@@ -274,33 +268,35 @@ function MarkdownViewer({
               alternates.push(storyCardsPath);
             }
 
-            // Build a promise chain that only tries each path once
             for (const alternatePath of alternates) {
               console.log(`Trying alternate path: ${alternatePath}`);
-              alternatePromise = alternatePromise.catch(() => {
-                return fetch(alternatePath).then((altRes) => {
-                  if (!altRes.ok) {
-                    throw new Error(`Failed to load from ${alternatePath}`);
-                  }
-                  return altRes.text();
-                });
-              });
+              try {
+                const altRes = await fetch(alternatePath);
+                if (!altRes.ok) {
+                  throw new Error(`Failed to load from ${alternatePath}`);
+                }
+                return await altRes.text();
+              } catch (e) {
+                lastError = e instanceof Error ? e : new Error(String(e));
+                console.error(
+                  `Error loading alternate path ${lastError}:`,
+                  lastError
+                );
+              }
             }
 
-            return alternatePromise.catch(() => {
-              // Final fallback - return a friendly error message as markdown
-              console.error(
-                `Failed to load markdown from any path for ${filename}`
-              );
-              return `# File Not Found\n\nThe requested file \`${filename}\` could not be loaded.\n\n**Paths attempted:**\n${Array.from(
-                attemptedPaths
-              )
-                .map((p) => `- \`${p}\``)
-                .join("\n")}`;
-            });
+            // Final fallback - return a friendly error message as markdown
+            console.error(
+              `Failed to load markdown from any path for ${filename}`
+            );
+            return `# File Not Found\n\nThe requested file \`${filename}\` could not be loaded.\n\n**Paths attempted:**\n${Array.from(
+              attemptedPaths
+            )
+              .map((p) => `- \`${p}\``)
+              .join("\n")}`;
           }
           return res.text();
-        })
+        })()
     )
       .then((markdown) => {
         // Parse frontmatter to extract metadata including terms
@@ -563,32 +559,12 @@ function MarkdownViewer({
 
       {activeDefinition &&
         createPortal(
-          <div
-            ref={popupRef}
-            className={`definition-popup ${activeDefinition.isDragging ? "dragging" : ""}`}
-            style={{
-              position: "absolute",
-              top: `${activeDefinition.position.y}px`,
-              left: `${activeDefinition.position.x}px`,
-              zIndex: 1000,
-              cursor: activeDefinition.isDragging ? "grabbing" : "grab",
-              transform: "translate(-50%, -100%)",
-            }}
-          >
-            <h4
-              onMouseDown={handleMouseDown}
-              className="definition-popup-header"
-            >
-              {activeDefinition.term}
-            </h4>
-            <p>{activeDefinition.definition}</p>
-            <button
-              className="definition-popup-close"
-              onClick={() => setActiveDefinition(null)}
-            >
-              ×
-            </button>
-          </div>,
+          <DefinitionPopup
+            popup={activeDefinition}
+            onClose={() => setActiveDefinition(null)}
+            onMouseDown={handleMouseDown}
+            popupRef={popupRef as React.RefObject<HTMLDivElement>}
+          />,
           document.body
         )}
     </div>

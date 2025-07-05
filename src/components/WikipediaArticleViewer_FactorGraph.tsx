@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   fixWikipediaLinks,
   getUnigraphBaseUrl,
   replaceUnigraphUrlsWithLocalhost,
 } from "../utils/urlUtils";
+import { DefinitionPopup, DefinitionPopupData } from "./common/DefinitionPopup";
 
 // Add a utility function to extract article title from Wikipedia URLs
 const extractWikipediaTitle = (url: string): string | null => {
@@ -60,6 +62,7 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
   ]);
   const cssInjected = useRef(false);
   const language = "en";
+  const popupRef = useRef<HTMLDivElement>(null);
 
   // Wikipedia CSS links for <link rel="stylesheet" ... />
   const cssLinks = [
@@ -267,6 +270,13 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
     }
   };
 
+  const [activeDefinition, setActiveDefinition] =
+    useState<DefinitionPopupData | null>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   if (error) return <div style={style}>Error: {error}</div>;
   if (isLoading) return <div style={style}>Loading...</div>;
 
@@ -437,6 +447,18 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
           }, 500); // Small delay to ensure DOM is ready
         }}
       />
+
+      {activeDefinition &&
+        createPortal(
+          <DefinitionPopup
+            popup={activeDefinition}
+            onClose={() => setActiveDefinition(null)}
+            onMouseDown={handleMouseDown}
+            // Fix type: pass popupRef as RefObject<HTMLDivElement>
+            popupRef={popupRef as React.RefObject<HTMLDivElement>}
+          />,
+          document.body
+        )}
     </div>
   );
 };
