@@ -5,6 +5,7 @@ import {
   replaceUnigraphUrlsWithLocalhost,
 } from "../utils/urlUtils";
 import { DefinitionPopup, DefinitionPopupData } from "./common/DefinitionPopup";
+import StaticHtmlComponent from "./common/StaticHtmlComponent";
 import TextBasedContextMenu from "./common/TextBasedContextMenu";
 
 // Add a utility function to extract article title from Wikipedia URLs
@@ -406,7 +407,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       e.preventDefault(); // Prevent default browser context menu
       e.stopPropagation(); // Stop propagation to avoid triggering other handlers
       setSelectedText(text);
-      // setContextMenuPosition({ x: e.clientX, y: e.clientY });
+      setContextMenuPosition({ x: e.clientX, y: e.clientY });
     }
   };
 
@@ -416,9 +417,10 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       id: "annotate",
       label: "Annotate",
       onClick: () => {
-        onAnnotate(selectedText);
-        // Clear selection
-        window.getSelection()?.removeAllRanges();
+        // Keep the selection intact until the action is completed
+        const currentSelection = selectedText;
+        onAnnotate(currentSelection);
+        // Don't clear selection here - let user manage that
       },
     },
     {
@@ -462,6 +464,45 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       document.removeEventListener("keydown", handleEscapeKey);
     };
   }, [contextMenuPosition]);
+
+  // Handle clicks on article content
+  const handleContentClick = (e: React.MouseEvent) => {
+    // Improved click handler for term definitions
+    const target = e.target as HTMLElement;
+    if (target.classList.contains("wikipedia-defined-term")) {
+      const termText = target.getAttribute("data-term");
+      // Use customTerms directly
+      if (termText && customTerms[termText]) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log("Clicked term:", termText);
+
+        const rect = target.getBoundingClientRect();
+        const positionX = rect.left + rect.width / 2 + window.scrollX;
+        const positionY = rect.top + window.scrollY - 24;
+
+        if (activeDefinition && activeDefinition.term === termText) {
+          setActiveDefinition(null);
+        } else {
+          setActiveDefinition({
+            term: termText,
+            definition: customTerms[termText],
+            position: {
+              x: positionX,
+              y: positionY,
+            },
+            isDragging: false,
+          });
+        }
+      }
+    }
+
+    // Also close the context menu when clicking
+    if (contextMenuPosition) {
+      setContextMenuPosition(null);
+    }
+  };
 
   if (error) return <div style={style}>Error: {error}</div>;
   if (isLoading) return <div style={style}>Loading...</div>;
@@ -535,8 +576,9 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       </div>
 
       {/* Render article content */}
-      <div
-        ref={contentRef}
+      <StaticHtmlComponent
+        contentRef={contentRef as React.RefObject<HTMLDivElement>}
+        html={html}
         className="wikipedia-article-content"
         style={{
           flexGrow: 1,
@@ -546,57 +588,21 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
           scrollbarWidth: "thin", // For Firefox
           scrollbarColor: "#bbb #f1f1f1", // For Firefox
         }}
-        dangerouslySetInnerHTML={html ? { __html: html } : undefined}
-        onContextMenu={handleContextMenu} // Add context menu handler
-        onClick={(e) => {
-          // Improved click handler for term definitions
-          const target = e.target as HTMLElement;
-          if (target.classList.contains("wikipedia-defined-term")) {
-            const termText = target.getAttribute("data-term");
-            // Use customTerms directly
-            if (termText && customTerms[termText]) {
-              e.preventDefault();
-              e.stopPropagation();
-
-              console.log("Clicked term:", termText);
-
-              const rect = target.getBoundingClientRect();
-              const positionX = rect.left + rect.width / 2 + window.scrollX;
-              const positionY = rect.top + window.scrollY - 24;
-
-              if (activeDefinition && activeDefinition.term === termText) {
-                setActiveDefinition(null);
-              } else {
-                setActiveDefinition({
-                  term: termText,
-                  definition: customTerms[termText],
-                  position: {
-                    x: positionX,
-                    y: positionY,
-                  },
-                  isDragging: false,
-                });
-              }
-            }
-          }
-
-          // Also close the context menu when clicking
-          if (contextMenuPosition) {
-            setContextMenuPosition(null);
-          }
-        }}
+        onContextMenu={handleContextMenu}
+        onClick={handleContentClick}
       />
 
       {/* Render the context menu when position is available */}
-      {createPortal(
-        <TextBasedContextMenu
-          position={contextMenuPosition}
-          selectedText={selectedText}
-          items={getContextMenuItems()}
-          onClose={() => setContextMenuPosition(null)}
-        />,
-        document.body
-      )}
+      {contextMenuPosition &&
+        createPortal(
+          <TextBasedContextMenu
+            position={contextMenuPosition}
+            selectedText={selectedText}
+            items={getContextMenuItems()}
+            onClose={() => setContextMenuPosition(null)}
+          />,
+          document.body
+        )}
 
       {/* Setup link handlers after render */}
       <div
