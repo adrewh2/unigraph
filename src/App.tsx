@@ -202,6 +202,7 @@ const getSimulations = (
       <WikipediaArticleViewer
         initialArticle="Factor graph"
         highlightKeywords={["the"]}
+        customTerms={{ representing: "yep" }}
       />
     ),
     factorGraph: (

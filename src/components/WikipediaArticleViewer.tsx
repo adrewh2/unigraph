@@ -85,7 +85,6 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
   const cssInjected = useRef(false);
   const language = "en";
   const popupRef = useRef<HTMLDivElement>(null);
-  const [terms] = useState<Record<string, string>>(customTerms);
   const contentRef = useRef<HTMLDivElement>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
     null
@@ -118,6 +117,14 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update terms state when customTerms prop changes
+  useEffect(() => {
+    // This ensures the terms state is updated when customTerms prop changes
+    if (Object.keys(customTerms).length > 0) {
+      console.log("Setting custom terms:", customTerms);
+    }
+  }, [customTerms]);
+
   // Function to fetch and display a Wikipedia article
   const fetchWikipediaArticle = React.useCallback(
     async (articleTitle: string) => {
@@ -141,8 +148,9 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
           // Fix Wikipedia relative URLs to make links work
           htmlContent = fixWikipediaLinks(htmlContent, language);
 
-          // Highlight custom terms in the HTML
-          htmlContent = highlightCustomTerms(htmlContent, terms);
+          console.log("Applying custom terms highlighting:", customTerms);
+          // Highlight custom terms in the HTML - use customTerms directly from props
+          htmlContent = highlightCustomTerms(htmlContent, customTerms);
 
           // Apply keyword highlighting
           if (highlightKeywords && highlightKeywords.length > 0) {
@@ -163,7 +171,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
         cancelled = true;
       };
     },
-    [language, highlightKeywords, terms]
+    [language, highlightKeywords, customTerms] // Use customTerms directly in dependencies
   );
 
   // Load the initial article
@@ -290,13 +298,26 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
 
     if (termElements.length === 0) return;
 
+    // Debugging
+    console.log(`Found ${termElements.length} term elements`);
+    console.log("Available terms:", customTerms);
+
     const handleTermClick = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
 
       const element = e.currentTarget as HTMLElement;
       const termText = element.getAttribute("data-term");
-      if (!termText || !terms[termText]) return;
+
+      // Debug the clicked term
+      console.log(
+        "Term clicked:",
+        termText,
+        "Available:",
+        customTerms[termText || ""]
+      );
+
+      if (!termText || !customTerms[termText]) return;
 
       const rect = element.getBoundingClientRect();
       const positionX = rect.left + rect.width / 2 + window.scrollX;
@@ -307,7 +328,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       } else {
         setActiveDefinition({
           term: termText,
-          definition: terms[termText],
+          definition: customTerms[termText],
           position: {
             x: positionX,
             y: positionY,
@@ -322,12 +343,13 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       element.removeEventListener("click", handleTermClick as EventListener);
     });
 
-    // Setup new listeners
+    // Setup new listeners - make them more robust
     termElements.forEach((element) => {
       element.addEventListener("click", handleTermClick as EventListener);
-      (element as HTMLElement).onclick = (e: any) => {
-        handleTermClick(e);
-      };
+      (element as HTMLElement).style.cursor = "pointer";
+      (element as HTMLElement).style.borderBottom = "2px dotted #0645ad";
+      // Add a tooltip to show it's clickable
+      element.setAttribute("title", "Click to see definition");
     });
 
     // Close popup when clicking outside
@@ -350,7 +372,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       });
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [html, terms, activeDefinition]);
+  }, [html, customTerms, activeDefinition]); // Use customTerms directly here
 
   if (error) return <div style={style}>Error: {error}</div>;
   if (isLoading) return <div style={style}>Loading...</div>;
@@ -419,15 +441,19 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       {/* Render article content */}
       <div
         ref={contentRef}
+        className="wikipedia-article-content"
         dangerouslySetInnerHTML={html ? { __html: html } : undefined}
         onClick={(e) => {
-          // Add direct click handler for term definitions
+          // Improved click handler for term definitions
           const target = e.target as HTMLElement;
           if (target.classList.contains("wikipedia-defined-term")) {
             const termText = target.getAttribute("data-term");
-            if (termText && terms[termText]) {
+            // Use customTerms directly
+            if (termText && customTerms[termText]) {
               e.preventDefault();
               e.stopPropagation();
+
+              console.log("Clicked term:", termText);
 
               const rect = target.getBoundingClientRect();
               const positionX = rect.left + rect.width / 2 + window.scrollX;
@@ -438,7 +464,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
               } else {
                 setActiveDefinition({
                   term: termText,
-                  definition: terms[termText],
+                  definition: customTerms[termText],
                   position: {
                     x: positionX,
                     y: positionY,
