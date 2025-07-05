@@ -3,6 +3,7 @@ import "katex/dist/katex.min.css";
 import { marked } from "marked";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { replaceUnigraphUrlsWithLocalhost } from "../../utils/urlUtils";
 import "./MarkdownViewer.css"; // Import CSS file
 
 // Define interfaces for our popup
@@ -323,13 +324,19 @@ function MarkdownViewer({
           parsed = marked.parse(finalContent);
           if (parsed instanceof Promise) {
             parsed.then((htmlStr) => {
-              // Apply image styles to the parsed HTML
-              setHtml(imageStyle ? applyImageStyles(htmlStr) : htmlStr);
+              // Apply image styles and replace Unigraph URLs
+              const styledHtml = imageStyle
+                ? applyImageStyles(htmlStr)
+                : htmlStr;
+              const finalHtml = replaceUnigraphUrlsWithLocalhost(styledHtml);
+              setHtml(finalHtml);
               setLoading(false);
             });
           } else {
-            // Apply image styles to the parsed HTML
-            setHtml(imageStyle ? applyImageStyles(parsed) : parsed);
+            // Apply image styles and replace Unigraph URLs
+            const styledHtml = imageStyle ? applyImageStyles(parsed) : parsed;
+            const finalHtml = replaceUnigraphUrlsWithLocalhost(styledHtml);
+            setHtml(finalHtml);
             setLoading(false);
           }
         } catch (parseError) {

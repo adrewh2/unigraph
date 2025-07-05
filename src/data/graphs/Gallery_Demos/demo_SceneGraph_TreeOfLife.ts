@@ -26,7 +26,7 @@ const createGraph = (
   nodeData: TreeNode[] = [],
   linkData: TreeLink[] = [],
   maxNodes: number = 2000,
-  maxEdges: number = 2000
+  maxEdges: number = 3000
 ): Graph => {
   // Limit the number of nodes and edges to prevent performance issues
   let limitedNodeData = nodeData;
@@ -291,8 +291,8 @@ const parseEdgeData = (csvData: string[][]): TreeLink[] => {
 export const createTreeOfLifeSceneGraph = async (
   nodesCsvPath: string = "/data/tree-of-life/treeoflife_nodes.csv",
   edgesCsvPath: string = "/data/tree-of-life/treeoflife_links.csv",
-  maxNodes: number = 1000,
-  maxEdges: number = 1000
+  maxNodes: number = 2000,
+  maxEdges: number = 3000
 ): Promise<SceneGraph> => {
   let nodes: TreeNode[] = [];
   let links: TreeLink[] = [];
@@ -366,8 +366,8 @@ export const createTreeOfLifeSceneGraph = async (
 export const demo_SceneGraph_TreeOfLife = async (
   nodesCsvPath?: string,
   edgesCsvPath?: string,
-  maxNodes: number = 1000,
-  maxEdges: number = 1000
+  maxNodes: number = 2000,
+  maxEdges: number = 3000
 ) =>
   await createTreeOfLifeSceneGraph(
     nodesCsvPath,

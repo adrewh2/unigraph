@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { replaceUnigraphUrlsWithLocalhost } from "../utils/urlUtils";
 
 type WikipediaArticleViewerProps = {
   title: string;
@@ -42,6 +43,9 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
           let html = data.parse.text["*"];
           html = highlightHtml(html, highlightKeywords);
 
+          // Replace any unigraph.vercel.app links with localhost:3000 when running locally
+          html = replaceUnigraphUrlsWithLocalhost(html);
+
           // Wikipedia CSS (main stylesheet, plus vector skin and content)
           const cssLinks = [
             `https://${language}.wikipedia.org/w/load.php?debug=false&lang=${language}&modules=site.styles&only=styles&skin=vector`,
@@ -72,7 +76,8 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
               </body>
             </html>
           `;
-          setSrcDoc(srcDoc);
+          // Apply URL replacement to the entire srcDoc as well
+          setSrcDoc(replaceUnigraphUrlsWithLocalhost(srcDoc));
         } else {
           setError("Article not found or could not be loaded.");
         }

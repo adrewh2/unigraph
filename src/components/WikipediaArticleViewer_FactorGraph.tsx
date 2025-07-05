@@ -1,4 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import {
+  getUnigraphBaseUrl,
+  replaceUnigraphUrlsWithLocalhost,
+} from "../utils/urlUtils";
 
 type WikipediaArticleViewerFactorGraphProps = {
   style?: React.CSSProperties;
@@ -54,11 +58,13 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
           let htmlContent = data.parse.text["*"];
 
           // Force insert the iframe without relying on heading detection
+          const unigraphBaseUrl = getUnigraphBaseUrl();
+
           const unigraphIframe = `
             <div style="margin: 20px 0; display: block; width: 100%;">
               <h4>Interactive Unigraph Visualization</h4>
               <iframe 
-                src="https://unigraph.vercel.app/?graph=AcademicsKG" 
+                src="${unigraphBaseUrl}/?graph=AcademicsKG" 
                 width="100%" 
                 height="500" 
                 style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
@@ -137,7 +143,8 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
             }
           }
 
-          if (!cancelled) setHtml(htmlContent);
+          if (!cancelled)
+            setHtml(replaceUnigraphUrlsWithLocalhost(htmlContent));
         } else {
           if (!cancelled) setError("Article not found or could not be loaded.");
         }
@@ -217,13 +224,15 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
               if (targetContainer) {
                 console.log("Found target image for second iframe");
 
-                // Create second iframe
+                // Create second iframe using the utility function for base URL
+                const unigraphBaseUrl = getUnigraphBaseUrl();
+
                 const secondIframe = document.createElement("div");
                 secondIframe.innerHTML = `
                   <div style="margin: 20px 0; display: block; width: 100%;">
                     <h4>Interactive Unigraph Visualization (Factor Graph Example)</h4>
                     <iframe 
-                      src="https://unigraph.vercel.app/?graph=AcademicsKG&view=example" 
+                      src="${unigraphBaseUrl}/?graph=AcademicsKG&view=example" 
                       width="100%" 
                       height="450" 
                       style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
