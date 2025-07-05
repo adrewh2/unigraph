@@ -1,24 +1,35 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  fixWikipediaLinks,
   getUnigraphBaseUrl,
   replaceUnigraphUrlsWithLocalhost,
-  fixWikipediaLinks,
 } from "../utils/urlUtils";
+
+// Add a utility function to extract article title from Wikipedia URLs
+const extractWikipediaTitle = (url: string): string | null => {
+  // Handle both relative and absolute URLs
+  const wikiPathRegex = /\/wiki\/([^#?]*)/;
+  const match = url.match(wikiPathRegex);
+  return match ? decodeURIComponent(match[1].replace(/_/g, " ")) : null;
+};
 
 type WikipediaArticleViewerFactorGraphProps = {
   style?: React.CSSProperties;
   highlightKeywords?: string[];
+  initialArticle?: string;
 };
 
 export const WikipediaArticleViewer_FactorGraph: React.FC<
   WikipediaArticleViewerFactorGraphProps
-> = ({ style = {} }) => {
+> = ({ style = {}, initialArticle = "Factor graph" }) => {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentArticle, setCurrentArticle] = useState<string>(initialArticle);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const cssInjected = useRef(false);
+  const language = "en";
 
   // Wikipedia CSS links for <link rel="stylesheet" ... />
-  const language = "en";
   const cssLinks = [
     `https://${language}.wikipedia.org/w/load.php?debug=false&lang=${language}&modules=site.styles&only=styles&skin=vector`,
     `https://${language}.wikipedia.org/w/load.php?debug=false&lang=${language}&modules=mediawiki.legacy.commonPrint,shared|mediawiki.skinning.content.parsoid|mediawiki.skinning.interface|mediawiki.skinning.content&only=styles&skin=vector`,
@@ -43,18 +54,23 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    setError(null);
-    // Only setHtml(null) if highlightKeywords changes, not on every render
-    const fetchAndInject = async () => {
+  // Function to fetch and display a Wikipedia article
+  const fetchWikipediaArticle = React.useCallback(
+    async (articleTitle: string) => {
+      setIsLoading(true);
+      setError(null);
+      let cancelled = false;
+
       try {
-        const title = "Factor graph";
-        const language = "en";
-        const encodedTitle = encodeURIComponent(title.replace(/ /g, "_"));
+        const encodedTitle = encodeURIComponent(
+          articleTitle.replace(/ /g, "_")
+        );
         const url = `https://${language}.wikipedia.org/w/api.php?action=parse&page=${encodedTitle}&format=json&origin=*&prop=text`;
         const resp = await fetch(url);
         const data = await resp.json();
+
+        if (cancelled) return;
+
         if (data.parse && data.parse.text) {
           let htmlContent = data.parse.text["*"];
 
@@ -64,107 +80,138 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
           // Force insert the iframe without relying on heading detection
           const unigraphBaseUrl = getUnigraphBaseUrl();
 
-          const unigraphIframe = `
-            <div style="margin: 20px 0; display: block; width: 100%;">
-              <h4>Interactive Unigraph Visualization</h4>
-              <iframe 
-                src="${unigraphBaseUrl}/?graph=AcademicsKG" 
-                width="100%" 
-                height="500" 
-                style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
-                title="Unigraph AcademicsKG"
-                allowfullscreen>
-              </iframe>
-            </div>
-          `;
+          // Only add Unigraph visualization for Factor graph article
+          if (articleTitle.toLowerCase() === "factor graph") {
+            const unigraphIframe = `
+              <div style="margin: 20px 0; display: block; width: 100%;">
+                <h4>Interactive Unigraph Visualization</h4>
+                <iframe 
+                  src="${unigraphBaseUrl}/?graph=AcademicsKG" 
+                  width="100%" 
+                  height="500" 
+                  style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
+                  title="Unigraph AcademicsKG"
+                  allowfullscreen>
+                </iframe>
+              </div>
+            `;
 
-          // Find a good insertion point - either after an example heading or at a specific point in the document
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(htmlContent, "text/html");
+            // Find a good insertion point - either after an example heading or at a specific point in the document
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, "text/html");
 
-          console.log(
-            "Sections in article:",
-            Array.from(doc.querySelectorAll("h2, h3, h4, h5, h6")).map((el) =>
-              el.textContent?.replace(/\[.*?\]/g, "").trim()
-            )
-          );
-
-          // Try multiple approaches to find the right location
-          let insertionDone = false;
-
-          // Approach 1: Look for example heading
-          const heading = Array.from(
-            doc.querySelectorAll("h2, h3, h4, h5, h6")
-          ).find((el) => {
-            const text =
-              el.textContent
-                ?.replace(/\[.*?\]/g, "")
-                .trim()
-                .toLowerCase() || "";
-            return (
-              text.includes("example factor graph") ||
-              text.includes("example of factor graph")
-            );
-          });
-
-          if (heading) {
-            console.log("Found heading:", heading.textContent);
-            const container = document.createElement("div");
-            container.innerHTML = unigraphIframe;
-            heading.insertAdjacentHTML("afterend", unigraphIframe);
-            insertionDone = true;
-            htmlContent = doc.documentElement.innerHTML;
-          }
-
-          // Approach 2: Insert after a specific paragraph
-          if (!insertionDone) {
-            // Find a paragraph containing "factor graph"
-            const paragraphs = Array.from(doc.querySelectorAll("p"));
-            const targetParagraph = paragraphs.find((p) =>
-              p.textContent?.toLowerCase().includes("factor graph")
+            console.log(
+              "Sections in article:",
+              Array.from(doc.querySelectorAll("h2, h3, h4, h5, h6")).map((el) =>
+                el.textContent?.replace(/\[.*?\]/g, "").trim()
+              )
             );
 
-            if (targetParagraph) {
-              console.log(
-                "Inserting after paragraph containing 'factor graph'"
+            // Try multiple approaches to find the right location
+            let insertionDone = false;
+
+            // Approach 1: Look for example heading
+            const heading = Array.from(
+              doc.querySelectorAll("h2, h3, h4, h5, h6")
+            ).find((el) => {
+              const text =
+                el.textContent
+                  ?.replace(/\[.*?\]/g, "")
+                  .trim()
+                  .toLowerCase() || "";
+              return (
+                text.includes("example factor graph") ||
+                text.includes("example of factor graph")
               );
-              targetParagraph.insertAdjacentHTML("afterend", unigraphIframe);
+            });
+
+            if (heading) {
+              console.log("Found heading:", heading.textContent);
+              const container = document.createElement("div");
+              container.innerHTML = unigraphIframe;
+              heading.insertAdjacentHTML("afterend", unigraphIframe);
               insertionDone = true;
               htmlContent = doc.documentElement.innerHTML;
             }
-          }
 
-          // Approach 3: Fallback - insert at the beginning of the article
-          if (!insertionDone) {
-            console.log("Fallback: Inserting at the beginning");
-            const firstElem = doc.querySelector(".mw-parser-output");
-            if (firstElem) {
-              firstElem.insertAdjacentHTML("afterbegin", unigraphIframe);
-              htmlContent = doc.documentElement.innerHTML;
-            } else {
-              // Last resort - just prepend to the content
-              htmlContent = unigraphIframe + htmlContent;
+            // Approach 2: Insert after a specific paragraph
+            if (!insertionDone) {
+              // Find a paragraph containing "factor graph"
+              const paragraphs = Array.from(doc.querySelectorAll("p"));
+              const targetParagraph = paragraphs.find((p) =>
+                p.textContent?.toLowerCase().includes("factor graph")
+              );
+
+              if (targetParagraph) {
+                console.log(
+                  "Inserting after paragraph containing 'factor graph'"
+                );
+                targetParagraph.insertAdjacentHTML("afterend", unigraphIframe);
+                insertionDone = true;
+                htmlContent = doc.documentElement.innerHTML;
+              }
+            }
+
+            // Approach 3: Fallback - insert at the beginning of the article
+            if (!insertionDone) {
+              console.log("Fallback: Inserting at the beginning");
+              const firstElem = doc.querySelector(".mw-parser-output");
+              if (firstElem) {
+                firstElem.insertAdjacentHTML("afterbegin", unigraphIframe);
+                htmlContent = doc.documentElement.innerHTML;
+              } else {
+                // Last resort - just prepend to the content
+                htmlContent = unigraphIframe + htmlContent;
+              }
             }
           }
 
-          if (!cancelled)
-            setHtml(replaceUnigraphUrlsWithLocalhost(htmlContent));
+          setHtml(replaceUnigraphUrlsWithLocalhost(htmlContent));
         } else {
-          if (!cancelled) setError("Article not found or could not be loaded.");
+          setError("Article not found or could not be loaded.");
         }
       } catch (e) {
-        if (!cancelled) setError("Failed to fetch Wikipedia article." + e);
+        if (!cancelled) setError(`Failed to fetch Wikipedia article: ${e}`);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-    };
-    fetchAndInject();
+
+      return () => {
+        cancelled = true;
+      };
+    },
+    [language]
+  );
+
+  // Load the initial article
+  useEffect(() => {
+    let cleanupFn: (() => void) | undefined;
+    fetchWikipediaArticle(currentArticle).then((fn) => {
+      cleanupFn = fn;
+    });
     return () => {
-      cancelled = true;
+      if (cleanupFn) cleanupFn();
     };
-  }, []);
+  }, [currentArticle, fetchWikipediaArticle]);
+
+  // Event handler for link clicks
+  const handleLinkClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const anchor = target.closest("a");
+
+    if (anchor && anchor.href) {
+      const title = extractWikipediaTitle(anchor.href);
+      if (title) {
+        e.preventDefault();
+        setCurrentArticle(title);
+        // Scroll back to top when loading a new article
+        window.scrollTo(0, 0);
+      }
+    }
+  };
 
   if (error) return <div style={style}>Error: {error}</div>;
-  // Only show loading if html is null AND error is null (prevents flicker)
-  if (html === null && !error) return <div style={style}>Loading...</div>;
+  if (isLoading) return <div style={style}>Loading...</div>;
 
   return (
     <div
@@ -179,94 +226,138 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
         ...style,
       }}
       className="mw-parser-output wikipedia-article-viewer"
-      dangerouslySetInnerHTML={html ? { __html: html } : undefined}
-      ref={(container) => {
-        // Add a second iframe after the component mounts and HTML is rendered
-        if (container && html) {
-          // Use setTimeout to ensure the DOM is fully rendered
+    >
+      {/* Add a navigation header */}
+      <div
+        style={{
+          marginBottom: 20,
+          borderBottom: "1px solid #ddd",
+          paddingBottom: 10,
+        }}
+      >
+        <h2>{currentArticle}</h2>
+        <div>
+          <button
+            onClick={() => setCurrentArticle("Factor graph")}
+            style={{
+              marginRight: 10,
+              padding: "4px 10px",
+              cursor: "pointer",
+              background: currentArticle === "Factor graph" ? "#eee" : "white",
+            }}
+          >
+            Back to Factor Graph
+          </button>
+        </div>
+      </div>
+
+      {/* Render article content */}
+      <div
+        dangerouslySetInnerHTML={html ? { __html: html } : undefined}
+        ref={(container) => {
+          if (!container || !html) return;
+
+          // Add click event listeners to all links in the container
           setTimeout(() => {
-            // Find the image with "An Example factor graph" in caption or alt text
-            const images = container.querySelectorAll("img");
-            let targetImage = null;
+            // Attach click handlers to Wikipedia links
+            container.querySelectorAll("a").forEach((link) => {
+              // Remove existing listeners first to avoid duplicates
+              link.removeEventListener(
+                "click",
+                handleLinkClick as EventListener
+              );
 
-            for (const img of Array.from(images)) {
-              // Check caption (could be in figcaption or nearby element)
-              const caption =
-                img.closest("figure")?.querySelector("figcaption")
-                  ?.textContent ||
-                img.alt ||
-                img.title ||
-                img.parentElement?.nextElementSibling?.textContent;
-
-              if (
-                caption &&
-                caption.toLowerCase().includes("example factor graph")
-              ) {
-                targetImage = img;
-                break;
-              }
-
-              // Also check parent figure or div that might contain the image
-              const parentFigure = img.closest("figure, div.thumb");
-              if (
-                parentFigure &&
-                parentFigure.textContent &&
-                parentFigure.textContent
-                  .toLowerCase()
-                  .includes("example factor graph")
-              ) {
-                targetImage = img;
-                break;
-              }
-            }
-
-            // If we found the image or its container
-            if (targetImage) {
-              const targetContainer =
-                targetImage.closest("figure, div.thumb") ||
-                targetImage.parentElement;
-              if (targetContainer) {
-                console.log("Found target image for second iframe");
-
-                // Create second iframe using the utility function for base URL
-                const unigraphBaseUrl = getUnigraphBaseUrl();
-
-                const secondIframe = document.createElement("div");
-                secondIframe.innerHTML = `
-                  <div style="margin: 20px 0; display: block; width: 100%;">
-                    <h4>Interactive Unigraph Visualization (Factor Graph Example)</h4>
-                    <iframe 
-                      src="${unigraphBaseUrl}/?graph=AcademicsKG&view=example" 
-                      width="100%" 
-                      height="450" 
-                      style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
-                      title="Unigraph Factor Graph Example"
-                      allowfullscreen>
-                    </iframe>
-                  </div>
-                `;
-
-                // Insert after the image container
-                if (secondIframe.firstElementChild) {
-                  targetContainer.insertAdjacentElement(
-                    "afterend",
-                    secondIframe.firstElementChild
+              if (link.getAttribute("href")) {
+                // If it's a Wikipedia article link, intercept it
+                if (extractWikipediaTitle(link.href)) {
+                  link.addEventListener(
+                    "click",
+                    handleLinkClick as EventListener
                   );
+                } else {
+                  // For external links, open in new tab
+                  link.setAttribute("target", "_blank");
+                }
+              }
+            });
+
+            // Add Unigraph iframe for factor graph example if needed
+            if (currentArticle.toLowerCase() === "factor graph") {
+              // Find the target image with "Example factor graph" caption
+              const images = container.querySelectorAll("img");
+              let targetImage = null;
+
+              for (const img of Array.from(images)) {
+                // Check caption (could be in figcaption or nearby element)
+                const caption =
+                  img.closest("figure")?.querySelector("figcaption")
+                    ?.textContent ||
+                  img.alt ||
+                  img.title ||
+                  img.parentElement?.nextElementSibling?.textContent;
+
+                if (
+                  caption &&
+                  caption.toLowerCase().includes("example factor graph")
+                ) {
+                  targetImage = img;
+                  break;
+                }
+
+                // Also check parent figure or div that might contain the image
+                const parentFigure = img.closest("figure, div.thumb");
+                if (
+                  parentFigure &&
+                  parentFigure.textContent &&
+                  parentFigure.textContent
+                    .toLowerCase()
+                    .includes("example factor graph")
+                ) {
+                  targetImage = img;
+                  break;
+                }
+              }
+
+              // If we found the image or its container
+              if (targetImage) {
+                const targetContainer =
+                  targetImage.closest("figure, div.thumb") ||
+                  targetImage.parentElement;
+                if (targetContainer) {
+                  console.log("Found target image for second iframe");
+
+                  // Create second iframe using the utility function for base URL
+                  const unigraphBaseUrl = getUnigraphBaseUrl();
+
+                  const secondIframe = document.createElement("div");
+                  secondIframe.innerHTML = `
+                    <div style="margin: 20px 0; display: block; width: 100%;">
+                      <h4>Interactive Unigraph Visualization (Factor Graph Example)</h4>
+                      <iframe 
+                        src="${unigraphBaseUrl}/?graph=AcademicsKG&view=example" 
+                        width="100%" 
+                        height="450" 
+                        style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
+                        title="Unigraph Factor Graph Example"
+                        allowfullscreen>
+                      </iframe>
+                    </div>
+                  `;
+
+                  // Insert after the image container
+                  if (secondIframe.firstElementChild) {
+                    targetContainer.insertAdjacentElement(
+                      "afterend",
+                      secondIframe.firstElementChild
+                    );
+                  }
                 }
               }
             }
-
-            // We also need to make all links in the container open in a new tab
-            // to prevent navigation within our embedded viewer
-            container.querySelectorAll('a').forEach(link => {
-              if (link.getAttribute('href') && !link.getAttribute('target')) {
-                link.setAttribute('target', '_blank');
-              }
-            });
           }, 500); // Small delay to ensure DOM is ready
-        }
-      }}
-    />
+        }}
+      />
+    </div>
   );
 };
 
