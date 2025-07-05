@@ -68,7 +68,7 @@ const TextBasedContextMenu: React.FC<TextBasedContextMenuProps> = ({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const menuWidth = 180; // Reduced width for more compact menu
-    const menuHeight = items.length * 28 + 30; // Estimated height based on items and text preview
+    const menuHeight = items.length * 28; // Estimated height based on items only (removed text preview)
 
     let left = position.x;
     let top = position.y;
@@ -87,12 +87,6 @@ const TextBasedContextMenu: React.FC<TextBasedContextMenuProps> = ({
   };
 
   const { left, top } = adjustPosition();
-
-  // Truncate text preview if too long
-  const truncatedText =
-    selectedText.length > 30
-      ? `${selectedText.substring(0, 30)}...`
-      : selectedText;
 
   return (
     <div
@@ -116,22 +110,7 @@ const TextBasedContextMenu: React.FC<TextBasedContextMenuProps> = ({
       onMouseUp={preventTextDeselection}
       onClick={preventTextDeselection}
     >
-      {/* Text preview */}
-      <div
-        style={{
-          padding: "4px 8px",
-          color: "#666",
-          fontStyle: "italic",
-          borderBottom: "1px solid #eee",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {truncatedText}
-      </div>
-
-      {/* Menu items */}
+      {/* Menu items - removed text preview section */}
       {items.map((item) => (
         <div
           key={item.id}

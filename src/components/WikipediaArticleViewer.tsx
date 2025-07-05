@@ -400,9 +400,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
   // Handle context menu for text selection
   const handleContextMenu = (e: React.MouseEvent) => {
     const selection = window.getSelection();
-    console.log("Selection:", selection);
     const text = selection?.toString().trim();
-    console.log("Selected text:", text);
     if (text && text.length > 0) {
       e.preventDefault(); // Prevent default browser context menu
       e.stopPropagation(); // Stop propagation to avoid triggering other handlers
