@@ -112,7 +112,7 @@ export const createForceGraph = (
       );
     })
     .linkLabel("type")
-    .backgroundColor("#1a1a1a")
+    .backgroundColor(options.backgroundColor ?? "#1a1a1a")
     .enableNodeDrag(true)
     .onNodeClick((node) => {
       flyToNode(graph, node);

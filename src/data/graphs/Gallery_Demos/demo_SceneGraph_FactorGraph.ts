@@ -147,11 +147,12 @@ export const createFactorGraphSceneGraph = async (): Promise<SceneGraph> => {
     forceGraphDisplayConfig: {
       nodeTextLabels: true,
       nodeSize: 3,
-      nodeOpacity: 0.2,
+      nodeOpacity: 1,
       linkTextLabels: false,
       linkWidth: 1.5,
-      linkOpacity: 0.3,
+      linkOpacity: 1,
       chargeStrength: -30,
+      backgroundColor: "rgba(211, 211, 211, 1)",
     },
   });
 };

@@ -6,6 +6,7 @@ export interface IForceGraphRenderConfig {
   nodeOpacity: number;
   linkOpacity: number;
   chargeStrength: number;
+  backgroundColor?: string;
 }
 
 export const DEFAULT_FORCE_GRAPH_RENDER_CONFIG: IForceGraphRenderConfig = {
@@ -17,6 +18,8 @@ export const DEFAULT_FORCE_GRAPH_RENDER_CONFIG: IForceGraphRenderConfig = {
   linkOpacity: 1,
   //phyics
   chargeStrength: -30, // default.
+  // color
+  backgroundColor: "#1a1a1a", // default
 };
 
 // type ForceGraphConfigState = {
