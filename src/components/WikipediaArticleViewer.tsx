@@ -5,6 +5,7 @@ import {
   replaceUnigraphUrlsWithLocalhost,
 } from "../utils/urlUtils";
 import { DefinitionPopup, DefinitionPopupData } from "./common/DefinitionPopup";
+import TextBasedContextMenu from "./common/TextBasedContextMenu";
 
 // Add a utility function to extract article title from Wikipedia URLs
 const extractWikipediaTitle = (url: string): string | null => {
@@ -38,7 +39,7 @@ const highlightKeywordsFunc = (
   return result;
 };
 
-// Helper to highlight terms in HTML (wrap with span)
+// Helper to highlight terms in HTML (wrap with span and add styling directly)
 const highlightCustomTerms = (
   html: string,
   terms: Record<string, string>
@@ -54,9 +55,10 @@ const highlightCustomTerms = (
       `(?<!<span[^>]*?>)\\b(${safeTerm})\\b(?![^<]*?</span>)`,
       "g"
     );
+    // Include the styling directly in the HTML output to ensure it's always applied
     result = result.replace(
       regex,
-      `<span class="wikipedia-defined-term" data-term="$1">$1</span>`
+      `<span class="wikipedia-defined-term" data-term="$1" style="cursor: pointer; border-bottom: 2px dotted #0645ad;" title="Click to see definition">$1</span>`
     );
   });
   return result;
@@ -67,6 +69,7 @@ type WikipediaArticleViewerProps = {
   highlightKeywords?: string[];
   initialArticle?: string;
   customTerms?: Record<string, string>;
+  onAnnotate?: (selectedText: string) => void; // Add annotation callback
 };
 
 export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
@@ -74,6 +77,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
   highlightKeywords = [],
   initialArticle = "Wikipedia",
   customTerms = {},
+  onAnnotate = (text) => console.log("Annotate text:", text), // Default implementation
 }) => {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +95,10 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
   );
   const [activeDefinition, setActiveDefinition] =
     useState<DefinitionPopupData | null>(null);
+
+  // Add state for context menu
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [selectedText, setSelectedText] = useState<string>("");
 
   // Wikipedia CSS links for <link rel="stylesheet" ... />
   const cssLinks = [
@@ -117,14 +125,6 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update terms state when customTerms prop changes
-  useEffect(() => {
-    // This ensures the terms state is updated when customTerms prop changes
-    if (Object.keys(customTerms).length > 0) {
-      console.log("Setting custom terms:", customTerms);
-    }
-  }, [customTerms]);
-
   // Function to fetch and display a Wikipedia article
   const fetchWikipediaArticle = React.useCallback(
     async (articleTitle: string) => {
@@ -148,8 +148,12 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
           // Fix Wikipedia relative URLs to make links work
           htmlContent = fixWikipediaLinks(htmlContent, language);
 
-          console.log("Applying custom terms highlighting:", customTerms);
-          // Highlight custom terms in the HTML - use customTerms directly from props
+          // Reduce debug logging to avoid console noise
+          if (process.env.NODE_ENV !== 'production') {
+            console.log("Applying custom terms highlighting:", customTerms);
+          }
+          
+          // Highlight custom terms in the HTML
           htmlContent = highlightCustomTerms(htmlContent, customTerms);
 
           // Apply keyword highlighting
@@ -171,19 +175,31 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
         cancelled = true;
       };
     },
-    [language, highlightKeywords, customTerms] // Use customTerms directly in dependencies
+    [language, highlightKeywords, customTerms]
+  );
+
+  // Memoize the fetch article function to prevent unnecessary re-creation
+  const memoizedFetchArticle = React.useMemo(
+    () => fetchWikipediaArticle,
+    [fetchWikipediaArticle]
   );
 
   // Load the initial article
   useEffect(() => {
     let cleanupFn: (() => void) | undefined;
-    fetchWikipediaArticle(currentArticle).then((fn) => {
-      cleanupFn = fn;
+    let isMounted = true;
+
+    memoizedFetchArticle(currentArticle).then((fn) => {
+      if (isMounted) {
+        cleanupFn = fn;
+      }
     });
+
     return () => {
+      isMounted = false;
       if (cleanupFn) cleanupFn();
     };
-  }, [currentArticle, fetchWikipediaArticle]);
+  }, [currentArticle, memoizedFetchArticle]);
 
   // Navigate to a specific article with history tracking
   const navigateToArticle = (title: string) => {
@@ -298,9 +314,11 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
 
     if (termElements.length === 0) return;
 
-    // Debugging
-    console.log(`Found ${termElements.length} term elements`);
-    console.log("Available terms:", customTerms);
+    // Only log in development mode
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`Found ${termElements.length} term elements`);
+      console.log("Available terms:", customTerms);
+    }
 
     const handleTermClick = (e: Event) => {
       e.preventDefault();
@@ -309,13 +327,15 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       const element = e.currentTarget as HTMLElement;
       const termText = element.getAttribute("data-term");
 
-      // Debug the clicked term
-      console.log(
-        "Term clicked:",
-        termText,
-        "Available:",
-        customTerms[termText || ""]
-      );
+      // Debug the clicked term only in development
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          "Term clicked:",
+          termText,
+          "Available:",
+          customTerms[termText || ""]
+        );
+      }
 
       if (!termText || !customTerms[termText]) return;
 
@@ -343,13 +363,12 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       element.removeEventListener("click", handleTermClick as EventListener);
     });
 
-    // Setup new listeners - make them more robust
+    // Setup new listeners - style is already applied in the HTML generation
     termElements.forEach((element) => {
       element.addEventListener("click", handleTermClick as EventListener);
-      (element as HTMLElement).style.cursor = "pointer";
-      (element as HTMLElement).style.borderBottom = "2px dotted #0645ad";
-      // Add a tooltip to show it's clickable
-      element.setAttribute("title", "Click to see definition");
+      (element as HTMLElement).onclick = (e: any) => {
+        handleTermClick(e);
+      };
     });
 
     // Close popup when clicking outside
@@ -372,7 +391,69 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       });
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [html, customTerms, activeDefinition]); // Use customTerms directly here
+  }, [html, customTerms, activeDefinition]);
+
+  // Handle context menu for text selection
+  const handleContextMenu = (e: React.MouseEvent) => {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+    
+    if (text && text.length > 0) {
+      e.preventDefault(); // Prevent default browser context menu
+      setSelectedText(text);
+      setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    }
+  };
+  
+  // Define context menu items - more compact without icons
+  const getContextMenuItems = () => [
+    {
+      id: 'annotate',
+      label: 'Annotate',
+      onClick: () => {
+        onAnnotate(selectedText);
+        // Clear selection
+        window.getSelection()?.removeAllRanges();
+      }
+    },
+    {
+      id: 'copy',
+      label: 'Copy',
+      onClick: () => {
+        navigator.clipboard.writeText(selectedText);
+      }
+    },
+    {
+      id: 'search',
+      label: 'Search Google',
+      onClick: () => {
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, '_blank');
+      }
+    }
+  ];
+  
+  // Close context menu when clicking outside
+  useEffect(() => {
+    if (!contextMenuPosition) return;
+    
+    const handleClickOutside = () => {
+      setContextMenuPosition(null);
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    // Also close on Escape key
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setContextMenuPosition(null);
+      }
+    };
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [contextMenuPosition]);
 
   if (error) return <div style={style}>Error: {error}</div>;
   if (isLoading) return <div style={style}>Loading...</div>;
@@ -383,10 +464,16 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
         background: "#fff",
         padding: 24,
         borderRadius: 8,
-        maxWidth: 900,
+        maxWidth: "1100px", // Increased from 900px to 1100px for wider content
         margin: "0 auto",
         overflow: "auto",
-        maxHeight: "80vh",
+        height: "calc(100vh - 64px)",
+        maxHeight: "unset",
+        display: "flex",
+        flexDirection: "column",
+        // Add scrollbar styling
+        scrollbarWidth: "thin", // For Firefox
+        scrollbarColor: "#bbb #f1f1f1", // For Firefox: thumb and track colors
         ...style,
       }}
       className="mw-parser-output wikipedia-article-viewer"
@@ -397,6 +484,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
           marginBottom: 20,
           borderBottom: "1px solid #ddd",
           paddingBottom: 10,
+          flexShrink: 0, // Prevent header from shrinking
         }}
       >
         <h2>{currentArticle}</h2>
@@ -442,7 +530,16 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       <div
         ref={contentRef}
         className="wikipedia-article-content"
+        style={{ 
+          flexGrow: 1, 
+          overflowY: "auto",
+          paddingBottom: "80px",
+          // Add scrollbar styling for this element too
+          scrollbarWidth: "thin", // For Firefox
+          scrollbarColor: "#bbb #f1f1f1", // For Firefox
+        }}
         dangerouslySetInnerHTML={html ? { __html: html } : undefined}
+        onContextMenu={handleContextMenu} // Add context menu handler
         onClick={(e) => {
           // Improved click handler for term definitions
           const target = e.target as HTMLElement;
@@ -474,8 +571,24 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
               }
             }
           }
+
+          // Also close the context menu when clicking
+          if (contextMenuPosition) {
+            setContextMenuPosition(null);
+          }
         }}
       />
+
+      {/* Render the context menu when position is available */}
+      {createPortal(
+        <TextBasedContextMenu
+          position={contextMenuPosition}
+          selectedText={selectedText}
+          items={getContextMenuItems()}
+          onClose={() => setContextMenuPosition(null)}
+        />,
+        document.body
+      )}
 
       {/* Setup link handlers after render */}
       <div
@@ -526,4 +639,31 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
   );
 };
 
-export default WikipediaArticleViewer;
+// Modify the scrollbar styles code to only run once
+if (!document.getElementById('wikipedia-scrollbar-styles')) {
+  const scrollbarStyles = document.createElement('style');
+  scrollbarStyles.id = 'wikipedia-scrollbar-styles';
+  scrollbarStyles.textContent = `
+    .wikipedia-article-viewer::-webkit-scrollbar,
+    .wikipedia-article-content::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .wikipedia-article-viewer::-webkit-scrollbar-track,
+    .wikipedia-article-content::-webkit-scrollbar-track {
+      background: #f1f1f1; 
+    }
+    .wikipedia-article-viewer::-webkit-scrollbar-thumb,
+    .wikipedia-article-content::-webkit-scrollbar-thumb {
+      background: #bbb; 
+      border-radius: 4px;
+    }
+    .wikipedia-article-viewer::-webkit-scrollbar-thumb:hover,
+    .wikipedia-article-content::-webkit-scrollbar-thumb:hover {
+      background: #999; 
+    }
+  `;
+  document.head.appendChild(scrollbarStyles);
+}
+
+export default React.memo(WikipediaArticleViewer);
