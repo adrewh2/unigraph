@@ -17,6 +17,7 @@ import {
   demo_SceneGraph_e8petrieProjection,
   demo_SceneGraph_e8petrieProjection_421t2b6,
 } from "./graphs/Gallery_Demos/demo_SceneGraph_e8petrieProjection";
+import demo_SceneGraph_FactorGraph from "./graphs/Gallery_Demos/demo_SceneGraph_FactorGraph";
 import { demo_SceneGraph_ImageGallery } from "./graphs/Gallery_Demos/demo_SceneGraph_ImageGallery";
 import { demo_SceneGraph_Numbers_Story } from "./graphs/Gallery_Demos/demo_scenegraph_numbers_story";
 import { demo_SceneGraph_SolvayConference } from "./graphs/Gallery_Demos/demo_SceneGraph_SolvayConference";
@@ -82,6 +83,7 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
       numbers: () => demo_SceneGraph_Numbers_Story(),
       unigraphApplications: () => demo_Unigraph_Applications(),
       wikipediaDemo: () => demo_Wikipedia_Articles(),
+      factorGraph: () => demo_SceneGraph_FactorGraph(),
     },
   },
   Base: {
