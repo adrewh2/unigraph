@@ -19,6 +19,7 @@ const createGraph = (): Graph => {
     label: "X₁",
     position: { x: 250, y: 50, z: 0 },
     color: "rgb(100, 150, 255)",
+    dimensions: { width: 1, height: 1 },
     size: 1.5,
   });
 
@@ -28,6 +29,7 @@ const createGraph = (): Graph => {
     label: "X₂",
     position: { x: 250, y: 150, z: 0 },
     color: "rgb(100, 150, 255)",
+    dimensions: { width: 1, height: 1 },
     size: 1.5,
   });
 
@@ -37,6 +39,7 @@ const createGraph = (): Graph => {
     label: "X₃",
     position: { x: 50, y: 150, z: 0 },
     color: "rgb(100, 150, 255)",
+    dimensions: { width: 1, height: 1 },
     size: 1.5,
   });
 
@@ -47,6 +50,7 @@ const createGraph = (): Graph => {
     label: "f₁",
     position: { x: 150, y: 50, z: 0 },
     color: "rgb(255, 150, 100)",
+    dimensions: { width: 1, height: 1 },
     size: 1.2,
   });
 
@@ -56,6 +60,7 @@ const createGraph = (): Graph => {
     label: "f₂",
     position: { x: 150, y: 100, z: 0 },
     color: "rgb(255, 150, 100)",
+    dimensions: { width: 1, height: 1 },
     size: 1.2,
   });
 
@@ -65,6 +70,7 @@ const createGraph = (): Graph => {
     label: "f₃",
     position: { x: 250, y: 100, z: 0 },
     color: "rgb(255, 150, 100)",
+    dimensions: { width: 1, height: 1 },
     size: 1.2,
   });
 
@@ -74,6 +80,7 @@ const createGraph = (): Graph => {
     label: "f₄",
     position: { x: 150, y: 150, z: 0 },
     color: "rgb(255, 150, 100)",
+    dimensions: { width: 1, height: 1 },
     size: 1.2,
   });
 
