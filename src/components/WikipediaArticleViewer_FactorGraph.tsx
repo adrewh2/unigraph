@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   getUnigraphBaseUrl,
   replaceUnigraphUrlsWithLocalhost,
+  fixWikipediaLinks,
 } from "../utils/urlUtils";
 
 type WikipediaArticleViewerFactorGraphProps = {
@@ -56,6 +57,9 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
         const data = await resp.json();
         if (data.parse && data.parse.text) {
           let htmlContent = data.parse.text["*"];
+
+          // Fix Wikipedia relative URLs to make links work
+          htmlContent = fixWikipediaLinks(htmlContent, language);
 
           // Force insert the iframe without relying on heading detection
           const unigraphBaseUrl = getUnigraphBaseUrl();
@@ -251,6 +255,14 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
                 }
               }
             }
+
+            // We also need to make all links in the container open in a new tab
+            // to prevent navigation within our embedded viewer
+            container.querySelectorAll('a').forEach(link => {
+              if (link.getAttribute('href') && !link.getAttribute('target')) {
+                link.setAttribute('target', '_blank');
+              }
+            });
           }, 500); // Small delay to ensure DOM is ready
         }
       }}

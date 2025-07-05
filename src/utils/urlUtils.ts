@@ -31,3 +31,30 @@ export function getUnigraphBaseUrl(): string {
     window.location.hostname === "127.0.0.1";
   return isLocalhost ? "http://localhost:3000" : "https://unigraph.vercel.app";
 }
+
+/**
+ * Fixes relative Wikipedia links in HTML content to make them work in iframes/embeds
+ * @param html HTML content from Wikipedia API
+ * @param language Wikipedia language code (e.g., 'en')
+ * @returns HTML with fixed Wikipedia links
+ */
+export function fixWikipediaLinks(html: string, language: string = 'en'): string {
+  const baseUrl = `https://${language}.wikipedia.org`;
+  
+  // Fix relative URLs in href and src attributes
+  return html
+    // Fix links to Wikipedia articles (convert /wiki/Article to full URL)
+    .replace(/href=["']\/wiki\/([^"']*)["']/gi, `href="${baseUrl}/wiki/$1"`)
+    
+    // Fix links to special pages
+    .replace(/href=["']\/(w\/[^"']*)["']/gi, `href="${baseUrl}/$1"`)
+    
+    // Fix image sources
+    .replace(/src=["']\/\/(upload\.wikimedia\.org[^"']*)["']/gi, `src="https://$1"`)
+    
+    // Fix other relative sources
+    .replace(/src=["']\/([^"']*)["']/gi, `src="${baseUrl}/$1"`)
+    
+    // Add target="_blank" to all external links to open in new tab
+    .replace(/<a([^>]*href=["'][^"']*["'][^>]*)>/gi, '<a$1 target="_blank">');
+}
