@@ -200,7 +200,7 @@ const getSimulations = (
     storyCard: <StoryCardApp sceneGraph={sceneGraph} />,
     wikipediaViewer: (
       <WikipediaArticleViewer
-        title="Factor graph"
+        initialArticle="Factor graph"
         highlightKeywords={["the"]}
       />
     ),
