@@ -7,6 +7,7 @@ export interface IForceGraphRenderConfig {
   linkOpacity: number;
   chargeStrength: number;
   backgroundColor?: string;
+  fontSize?: number;
 }
 
 export const DEFAULT_FORCE_GRAPH_RENDER_CONFIG: IForceGraphRenderConfig = {

@@ -258,6 +258,8 @@ export class ForceGraphManager {
         getNodeLegendConfig(),
         getLegendMode()
       );
+
+      nodeEl.style.fontSize = `${config.fontSize}px`;
       return new CSS2DObject(nodeEl);
     });
     instance.nodeThreeObjectExtend(true);

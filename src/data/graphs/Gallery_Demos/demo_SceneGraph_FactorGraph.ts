@@ -153,6 +153,7 @@ export const createFactorGraphSceneGraph = async (): Promise<SceneGraph> => {
       linkOpacity: 1,
       chargeStrength: -30,
       backgroundColor: "rgba(211, 211, 211, 1)",
+      fontSize: 25, // Default font size for labels
     },
   });
 };

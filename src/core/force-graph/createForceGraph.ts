@@ -72,9 +72,7 @@ export const createForceGraph = (
   // console.log("creating here", options, layout, positions);
   const data = exportGraphDataForReactFlow(sceneGraph);
   // console.log("data is ", data);
-
   // const controlMode = getMouseControlMode();
-
   const graph = new ForceGraph3D(dom, {
     extraRenderers: [new CSS2DRenderer()],
   })
@@ -302,6 +300,9 @@ export const createForceGraph = (
           getNodeLegendConfig(),
           getLegendMode()
         );
+
+        nodeEl.style.fontSize = `${options.fontSize}px`;
+
         nodeEl.className = "node-label";
         return new CSS2DObject(nodeEl);
       })
