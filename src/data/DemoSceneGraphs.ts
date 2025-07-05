@@ -39,6 +39,7 @@ import { thinkers2 } from "./graphs/thinkers2Graph";
 import { thoughtDiagram } from "./graphs/thoughtDiagram";
 import { unigraphGraph } from "./graphs/unigraph";
 import { unigraphGraph2 } from "./graphs/unigraph2";
+import { demo_SceneGraph_PhylogeneticTree } from "./graphs/Gallery_Demos/demo_SceneGraph_PhylogeneticTree";
 
 export interface SceneGraphCategory {
   label: string;
@@ -86,6 +87,7 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
       wikipediaDemo: () => demo_Wikipedia_Articles(),
       factorGraph: () => demo_SceneGraph_FactorGraph(),
       complexFactorGraph: () => demo_SceneGraph_FactorGraph_ComplexExpansion(),
+      phylogeneticTree: () => demo_SceneGraph_PhylogeneticTree(),
     },
   },
   Base: {
