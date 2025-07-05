@@ -39,10 +39,35 @@ const highlightKeywordsFunc = (
   return result;
 };
 
+// Helper to highlight terms in HTML (wrap with span)
+const highlightCustomTerms = (
+  html: string,
+  terms: Record<string, string>
+): string => {
+  console.log("terms are ", terms);
+  if (!terms || Object.keys(terms).length === 0) return html;
+  const sortedTerms = Object.keys(terms).sort((a, b) => b.length - a.length);
+  let result = html;
+  sortedTerms.forEach((term) => {
+    if (!term) return;
+    const safeTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(
+      `(?<!<span[^>]*?>)\\b(${safeTerm})\\b(?![^<]*?</span>)`,
+      "g"
+    );
+    result = result.replace(
+      regex,
+      `<span class="wikipedia-defined-term" data-term="$1">$1</span>`
+    );
+  });
+  return result;
+};
+
 type WikipediaArticleViewerFactorGraphProps = {
   style?: React.CSSProperties;
   highlightKeywords?: string[];
   initialArticle?: string;
+  customTerms?: Record<string, string>; // Add property for custom term definitions
 };
 
 export const WikipediaArticleViewer_FactorGraph: React.FC<
@@ -51,6 +76,7 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
   style = {},
   highlightKeywords = [],
   initialArticle = "Factor graph",
+  customTerms = { "sum-product": "test", enabling: "test2" }, // Default to empty object
 }) => {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +89,11 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
   const cssInjected = useRef(false);
   const language = "en";
   const popupRef = useRef<HTMLDivElement>(null);
+  const [terms] = useState<Record<string, string>>(customTerms);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(
+    null
+  );
 
   // Wikipedia CSS links for <link rel="stylesheet" ... />
   const cssLinks = [
@@ -111,6 +142,9 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
 
           // Fix Wikipedia relative URLs to make links work
           htmlContent = fixWikipediaLinks(htmlContent, language);
+
+          // Highlight custom terms in the HTML
+          htmlContent = highlightCustomTerms(htmlContent, terms);
 
           // Apply keyword highlighting
           if (highlightKeywords && highlightKeywords.length > 0) {
@@ -220,7 +254,7 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
         cancelled = true;
       };
     },
-    [language, highlightKeywords]
+    [language, highlightKeywords, terms]
   );
 
   // Load the initial article
@@ -273,9 +307,144 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
   const [activeDefinition, setActiveDefinition] =
     useState<DefinitionPopupData | null>(null);
 
+  // Enhanced handleMouseDown for popup dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    if (!activeDefinition) return;
+
+    // Only initiate drag on the header, not on the close button
+    if ((e.target as HTMLElement).tagName === "BUTTON") return;
+
+    setDragStart({
+      x: e.clientX - activeDefinition.position.x,
+      y: e.clientY - activeDefinition.position.y,
+    });
+
+    setActiveDefinition({
+      ...activeDefinition,
+      isDragging: true,
+    });
+
+    e.preventDefault();
   };
+
+  const handleMouseMove = React.useCallback(
+    (e: MouseEvent) => {
+      if (!dragStart || !activeDefinition?.isDragging) return;
+
+      setActiveDefinition((prev) =>
+        prev
+          ? {
+              ...prev,
+              position: {
+                x: e.clientX - (dragStart?.x ?? 0),
+                y: e.clientY - (dragStart?.y ?? 0),
+              },
+            }
+          : prev
+      );
+    },
+    [dragStart, activeDefinition?.isDragging]
+  );
+
+  const handleMouseUp = React.useCallback(() => {
+    if (!activeDefinition?.isDragging) return;
+
+    setActiveDefinition((prev) =>
+      prev
+        ? {
+            ...prev,
+            isDragging: false,
+          }
+        : prev
+    );
+
+    setDragStart(null);
+  }, [activeDefinition]);
+
+  // Add global mouse move and up event listeners for dragging
+  useEffect(() => {
+    if (activeDefinition?.isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [activeDefinition, dragStart, handleMouseMove, handleMouseUp]);
+
+  // Setup event handlers for term definition popups
+  useEffect(() => {
+    if (!contentRef.current || !html) return;
+
+    const termElements = contentRef.current.querySelectorAll(
+      ".wikipedia-defined-term"
+    );
+
+    if (termElements.length === 0) return;
+
+    const handleTermClick = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const element = e.currentTarget as HTMLElement;
+      const termText = element.getAttribute("data-term");
+      if (!termText || !terms[termText]) return;
+
+      const rect = element.getBoundingClientRect();
+      const positionX = rect.left + rect.width / 2 + window.scrollX;
+      const positionY = rect.top + window.scrollY - 24;
+
+      if (activeDefinition && activeDefinition.term === termText) {
+        setActiveDefinition(null);
+      } else {
+        setActiveDefinition({
+          term: termText,
+          definition: terms[termText],
+          position: {
+            x: positionX,
+            y: positionY,
+          },
+          isDragging: false,
+        });
+      }
+    };
+
+    // Clean up previous listeners to prevent duplicates
+    termElements.forEach((element) => {
+      element.removeEventListener("click", handleTermClick as EventListener);
+    });
+
+    // Setup new listeners
+    termElements.forEach((element) => {
+      element.addEventListener("click", handleTermClick as EventListener);
+      (element as HTMLElement).onclick = (e: any) => {
+        handleTermClick(e);
+      };
+    });
+
+    // Close popup when clicking outside
+    const handleClickOutside = (e: MouseEvent) => {
+      if (activeDefinition && popupRef.current) {
+        if (
+          !popupRef.current.contains(e.target as Node) &&
+          !Array.from(termElements).some((el) => el.contains(e.target as Node))
+        ) {
+          setActiveDefinition(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      termElements.forEach((element) => {
+        element.removeEventListener("click", handleTermClick as EventListener);
+        (element as HTMLElement).onclick = null;
+      });
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [html, terms, activeDefinition]);
 
   if (error) return <div style={style}>Error: {error}</div>;
   if (isLoading) return <div style={style}>Loading...</div>;
@@ -423,11 +592,11 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
                   secondIframe.innerHTML = `
                     <div style="margin: 20px 0; display: block; width: 100%;">
                       <h4>Interactive Unigraph Visualization (Factor Graph Example)</h4>
-                      <iframe 
-                        src="${unigraphBaseUrl}/?graph=unigraph&view=ForceGraph3d" 
-                        width="100%" 
-                        height="450" 
-                        style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
+                      <iframe
+                        src="${unigraphBaseUrl}/?graph=unigraph&view=ForceGraph3d"
+                        width="100%"
+                        height="450"
+                        style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;"
                         title="Unigraph Factor Graph Example"
                         allowfullscreen>
                       </iframe>
