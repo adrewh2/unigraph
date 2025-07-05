@@ -19,10 +19,12 @@ const createGraph = (): Graph => {
     label: "X₁",
     position: { x: 250, y: 50, z: 0 },
     color: "rgb(100, 150, 255)",
-    dimensions: { width: 1, height: 1 },
+    dimensions: { width: 25, height: 25 },
     size: 1.5,
     fontColor: "rgb(0, 0, 0)", // Optional font color for labels
-    shape: "square",
+    shape: "circle",
+    borderWidth: 2,
+    borderColor: "rgb(255, 197, 6)",
   });
 
   const x2 = g.createNode({
@@ -31,10 +33,12 @@ const createGraph = (): Graph => {
     label: "X₂",
     position: { x: 250, y: 150, z: 0 },
     color: "rgb(100, 150, 255)",
-    dimensions: { width: 1, height: 1 },
+    dimensions: { width: 25, height: 25 },
     size: 1.5,
     fontColor: "rgb(0, 0, 0)", // Optional font color for labels
-    shape: "square",
+    shape: "circle",
+    borderWidth: 2,
+    borderColor: "rgb(255, 197, 6)",
   });
 
   const x3 = g.createNode({
@@ -43,10 +47,12 @@ const createGraph = (): Graph => {
     label: "X₃",
     position: { x: 50, y: 150, z: 0 },
     color: "rgb(100, 150, 255)",
-    dimensions: { width: 1, height: 1 },
+    dimensions: { width: 25, height: 25 },
     size: 1.5,
     fontColor: "rgb(0, 0, 0)", // Optional font color for labels
-    shape: "square",
+    shape: "circle",
+    borderWidth: 2,
+    borderColor: "rgb(255, 197, 6)",
   });
 
   // Create factor nodes (typically represented as squares)
@@ -56,10 +62,12 @@ const createGraph = (): Graph => {
     label: "f₁",
     position: { x: 150, y: 50, z: 0 },
     color: "rgb(255, 150, 100)",
-    dimensions: { width: 1, height: 1 },
+    dimensions: { width: 25, height: 25 },
     size: 1.2,
     fontColor: "rgb(0, 0, 0)", // Optional font color for labels
     shape: "square",
+    borderWidth: 2,
+    borderColor: "rgb(255, 197, 6)",
   });
 
   const f2 = g.createNode({
@@ -68,10 +76,12 @@ const createGraph = (): Graph => {
     label: "f₂",
     position: { x: 150, y: 100, z: 0 },
     color: "rgb(255, 150, 100)",
-    dimensions: { width: 1, height: 1 },
+    dimensions: { width: 25, height: 25 },
     size: 1.2,
     fontColor: "rgb(0, 0, 0)", // Optional font color for labels
     shape: "square",
+    borderWidth: 2,
+    borderColor: "rgb(255, 197, 6)",
   });
 
   const f3 = g.createNode({
@@ -80,10 +90,12 @@ const createGraph = (): Graph => {
     label: "f₃",
     position: { x: 250, y: 100, z: 0 },
     color: "rgb(255, 150, 100)",
-    dimensions: { width: 1, height: 1 },
+    dimensions: { width: 25, height: 25 },
     size: 1.2,
     fontColor: "rgb(0, 0, 0)", // Optional font color for labels
     shape: "square",
+    borderWidth: 2,
+    borderColor: "rgb(255, 197, 6)",
   });
 
   const f4 = g.createNode({
@@ -92,10 +104,12 @@ const createGraph = (): Graph => {
     label: "f₄",
     position: { x: 150, y: 150, z: 0 },
     color: "rgb(255, 150, 100)",
-    dimensions: { width: 1, height: 1 },
+    dimensions: { width: 25, height: 25 },
     size: 1.2,
     fontColor: "rgb(0, 0, 0)", // Optional font color for labels
     shape: "square",
+    borderWidth: 2,
+    borderColor: "rgb(255, 197, 6)",
   });
 
   // Create edges connecting factors to variables
@@ -118,6 +132,12 @@ const createGraph = (): Graph => {
   // f₃ connections
   g.createEdgeIfMissing(f3.getId(), x1.getId(), {
     id: "f3-X1",
+    type: "factor-variable",
+  });
+
+  // f₃ connections
+  g.createEdgeIfMissing(f3.getId(), x2.getId(), {
+    id: "f3-X2",
     type: "factor-variable",
   });
 
@@ -168,6 +188,18 @@ export const createFactorGraphSceneGraph = async (): Promise<SceneGraph> => {
       chargeStrength: -30,
       backgroundColor: "rgba(211, 211, 211, 1)",
       fontSize: 25, // Default font size for labels
+    },
+    displayConfig: {
+      mode: "type",
+      nodeConfig: {
+        types: {
+          factor: { color: "rgb(255, 150, 100)", isVisible: true },
+          variable: { color: "rgb(100, 150, 255)", isVisible: true },
+        },
+        tags: {},
+      },
+      edgeConfig: { types: {}, tags: {} },
+      nodePositions: {},
     },
   });
 };

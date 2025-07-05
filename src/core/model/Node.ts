@@ -22,6 +22,8 @@ export interface DisplayNodeData {
   fontSize?: number; // Optional font size for labels
   fontColor?: string; // Optional font color for labels
   shape?: "circle" | "square" | "triangle"; // Optional shape for the node
+  borderWidth?: number; // Optional border width for the node
+  borderColor?: string; // Optional border color for the node
 }
 
 export type DisplayNodeDataArgs = Partial<DisplayNodeData>;
