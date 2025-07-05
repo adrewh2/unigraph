@@ -51,7 +51,39 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
         const resp = await fetch(url);
         const data = await resp.json();
         if (data.parse && data.parse.text) {
-          if (!cancelled) setHtml(data.parse.text["*"]);
+          let htmlContent = data.parse.text["*"];
+          // Inject iframe after "An example factor graph"
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(htmlContent, "text/html");
+          const heading = Array.from(
+            doc.querySelectorAll("h2, h3, h4, h5, h6")
+          ).find(
+            (el) =>
+              el.textContent &&
+              el.textContent
+                .trim()
+                .toLowerCase()
+                .includes("an example factor graph")
+          );
+          if (heading && heading.parentNode) {
+            const iframe = doc.createElement("iframe");
+            iframe.src = "https://unigraph.vercel.app/?graph=AcademicsKG";
+            iframe.width = "100%";
+            iframe.height = "400";
+            iframe.style.display = "block";
+            iframe.style.border = "1px solid #ccc";
+            iframe.style.margin = "16px 0";
+            iframe.style.background = "#fff";
+            iframe.setAttribute("title", "Unigraph AcademicsKG");
+            // Insert after heading's next sibling if possible, else after heading
+            if (heading.nextElementSibling) {
+              heading.parentNode.insertBefore(iframe, heading.nextElementSibling);
+            } else {
+              heading.parentNode.appendChild(iframe);
+            }
+            htmlContent = doc.body.innerHTML;
+          }
+          if (!cancelled) setHtml(htmlContent);
         } else {
           if (!cancelled) setError("Article not found or could not be loaded.");
         }
@@ -77,6 +109,8 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
         borderRadius: 8,
         maxWidth: 900,
         margin: "0 auto",
+        overflow: "auto",
+        maxHeight: "80vh",
         ...style,
       }}
       className="mw-parser-output wikipedia-article-viewer"
