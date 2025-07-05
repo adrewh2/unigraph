@@ -48,6 +48,7 @@ import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import StoryCardApp from "./components/StoryCardApp";
 import WikipediaArticleViewer from "./components/WikipediaArticleViewer";
+import WikipediaArticleViewer_FactorGraph from "./components/WikipediaArticleViewer_FactorGraph";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -203,6 +204,7 @@ const getSimulations = (
         highlightKeywords={["the"]}
       />
     ),
+    factorGraph: <WikipediaArticleViewer_FactorGraph />,
   };
 };
 
