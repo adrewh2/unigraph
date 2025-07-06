@@ -7,6 +7,8 @@ import {
 import { DefinitionPopup, DefinitionPopupData } from "./common/DefinitionPopup";
 import StaticHtmlComponent from "./common/StaticHtmlComponent";
 import TextBasedContextMenu from "./common/TextBasedContextMenu";
+import { saveAnnotationToSceneGraph } from "./common/saveAnnotationToSceneGraph";
+import { SceneGraph } from "../core/model/SceneGraph";
 
 // Add a utility function to extract article title from Wikipedia URLs
 const extractWikipediaTitle = (url: string): string | null => {
@@ -71,6 +73,7 @@ type WikipediaArticleViewerProps = {
   initialArticle?: string;
   customTerms?: Record<string, string>;
   onAnnotate?: (selectedText: string) => void; // Add annotation callback
+  sceneGraph?: SceneGraph; // Add sceneGraph prop
 };
 
 export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
@@ -79,6 +82,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
   initialArticle = "Wikipedia",
   customTerms = {},
   onAnnotate = (text) => console.log("Annotate text:", text), // Default implementation
+  sceneGraph,
 }) => {
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -409,6 +413,44 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
     }
   };
 
+  // Enhanced annotation handler that saves to scene graph
+  const handleAnnotate = (text: string) => {
+    if (!text.trim()) return;
+
+    // Get the surrounding HTML context if possible
+    let surroundingHtml = "";
+    const selection = window.getSelection();
+
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+
+      // Get the surrounding context - either the parent element or a few words before/after
+      const container = range.commonAncestorContainer;
+      if (container.nodeType === Node.ELEMENT_NODE) {
+        // If the container is an element, use its HTML
+        surroundingHtml = (container as Element).outerHTML;
+      } else if (container.parentElement) {
+        // If it's a text node, use the parent element's HTML
+        surroundingHtml = container.parentElement.outerHTML;
+      }
+    }
+
+    // Save to scene graph if available, otherwise use the default onAnnotate
+    if (sceneGraph) {
+      try {
+        const node = saveAnnotationToSceneGraph(text, surroundingHtml, sceneGraph);
+        console.log("Created annotation node:", node);
+      } catch (error) {
+        console.error("Failed to save annotation to scene graph:", error);
+        // Fall back to the default onAnnotate
+        onAnnotate(text);
+      }
+    } else {
+      // Use the provided onAnnotate callback
+      onAnnotate(text);
+    }
+  };
+
   // Define context menu items - more compact without icons
   const getContextMenuItems = () => [
     {
@@ -417,7 +459,7 @@ export const WikipediaArticleViewer: React.FC<WikipediaArticleViewerProps> = ({
       onClick: () => {
         // Keep the selection intact until the action is completed
         const currentSelection = selectedText;
-        onAnnotate(currentSelection);
+        handleAnnotate(currentSelection);
         // Don't clear selection here - let user manage that
       },
     },

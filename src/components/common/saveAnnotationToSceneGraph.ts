@@ -1,9 +1,15 @@
 import { Node } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";
 
+export interface ResourceSpecifier {
+  type: "wikipedia";
+  resource_id: string;
+}
+
 export const saveAnnotationToSceneGraph = (
   text: string,
   surroundingHtml: string,
+  resource: ResourceSpecifier,
   sceneGraph: SceneGraph
 ): Node => {
   const graph = sceneGraph.getGraph();

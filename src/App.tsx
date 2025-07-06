@@ -203,6 +203,7 @@ const getSimulations = (
         initialArticle="Factor graph"
         highlightKeywords={["the"]}
         customTerms={{ representing: "yep" }}
+        sceneGraph={sceneGraph}
       />
     ),
     factorGraph: (
