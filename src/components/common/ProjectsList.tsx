@@ -37,12 +37,10 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     { headerName: "Name", field: "name", flex: 1, filter: false },
     { headerName: "Description", field: "description", flex: 2, filter: false },
     {
-      headerName: "Created",
-      field: "created_at",
+      headerName: "Last Updated",
+      field: "last_updated_at",
       flex: 1,
       filter: false,
-      hide: true, // Hidden by default
-      // Show only date and hour:minute, but keep full value for sorting
       valueFormatter: (params) =>
         params.value
           ? new Date(params.value as string).toLocaleString(undefined, {
@@ -55,18 +53,16 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             })
           : "",
       comparator: (valueA, valueB) => {
-        // Sort by full date/time (including seconds)
         const a = valueA ? new Date(valueA as string).getTime() : 0;
         const b = valueB ? new Date(valueB as string).getTime() : 0;
         return a - b;
       },
     },
     {
-      headerName: "Last Updated",
-      field: "last_updated_at",
+      headerName: "Created",
+      field: "created_at",
       flex: 1,
       filter: false,
-      // Show only date and hour:minute, but keep full value for sorting
       valueFormatter: (params) =>
         params.value
           ? new Date(params.value as string).toLocaleString(undefined, {
@@ -79,7 +75,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             })
           : "",
       comparator: (valueA, valueB) => {
-        // Sort by full date/time (including seconds)
         const a = valueA ? new Date(valueA as string).getTime() : 0;
         const b = valueB ? new Date(valueB as string).getTime() : 0;
         return a - b;

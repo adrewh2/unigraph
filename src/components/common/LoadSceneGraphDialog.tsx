@@ -479,7 +479,8 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
                     ) {
                       return true;
                     }
-                  } catch (e) {
+                    // eslint-disable-next-line unused-imports/no-unused-vars
+                  } catch (_) {
                     // If date parsing fails, try searching the raw string
                     if (
                       project.last_updated_at
@@ -528,7 +529,8 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
                     ) {
                       return true;
                     }
-                  } catch (e) {
+                    // eslint-disable-next-line unused-imports/no-unused-vars
+                  } catch (_) {
                     // If date parsing fails, try searching the raw string
                     if (
                       project.created_at.toLowerCase().includes(searchTermLower)
