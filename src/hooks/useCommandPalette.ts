@@ -1,10 +1,16 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
+import { GraphologyLayoutType } from "../core/layouts/GraphologyLayoutEngine";
+import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutType";
 import {
   getAllDemoSceneGraphKeys,
   getSceneGraph,
 } from "../data/DemoSceneGraphs";
-import useAppConfigStore from "../store/appConfigStore";
+import useAppConfigStore, {
+  getCurrentSceneGraph,
+} from "../store/appConfigStore";
 import useDialogStore from "../store/dialogStore";
+import { computeLayoutAndTriggerUpdateForCurrentSceneGraph } from "../store/sceneGraphHooks";
 
 export interface Command {
   id: string;
@@ -67,6 +73,44 @@ export const useCommandPalette = () => {
       );
     } else {
       // Main command palette
+
+      // Layout children commands
+      const layoutChildren: Command[] = [
+        // Graphviz layouts
+        ...Object.entries(GraphvizLayoutType).map(([_key, label]) => ({
+          id: `layout-graphviz-${label}`,
+          title: `Graphviz: ${label}`,
+          description: `Apply Graphviz ${label} layout to the graph`,
+          execute: () =>
+            computeLayoutAndTriggerUpdateForCurrentSceneGraph(
+              label,
+              getCurrentSceneGraph().getVisibleNodes()
+            ),
+        })),
+        // Graphology layouts
+        ...Object.entries(GraphologyLayoutType).map(([_key, label]) => ({
+          id: `layout-graphology-${label}`,
+          title: `Graphology: ${label}`,
+          description: `Apply Graphology ${label} layout to the graph`,
+          execute: () =>
+            computeLayoutAndTriggerUpdateForCurrentSceneGraph(
+              label,
+              getCurrentSceneGraph().getVisibleNodes()
+            ),
+        })),
+        // Custom layouts
+        ...Object.entries(CustomLayoutType).map(([_key, label]) => ({
+          id: `layout-custom-${label}`,
+          title: `Custom: ${label}`,
+          description: `Apply custom ${label} layout to the graph`,
+          execute: () =>
+            computeLayoutAndTriggerUpdateForCurrentSceneGraph(
+              label,
+              getCurrentSceneGraph().getVisibleNodes()
+            ),
+        })),
+      ];
+
       const demoChildren = demoGraphKeys.map((key) => ({
         id: `demo-graph-${key}`,
         title: key,
@@ -145,6 +189,13 @@ export const useCommandPalette = () => {
           description: "Browse and open demo graphs",
           execute: () => {},
           children: demoChildren,
+        },
+        {
+          id: "layout",
+          title: "Layout",
+          description: "Choose a layout for the graph",
+          execute: () => {},
+          children: layoutChildren,
         },
         {
           id: "view-forcegraph3d",
