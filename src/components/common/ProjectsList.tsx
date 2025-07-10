@@ -178,10 +178,17 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
   // Action column renderer
   const ActionCellRenderer = (props: any) => {
     const { data } = props;
-    console.log("ActionCellRenderer rendered for data:", data);
-    console.log("ActionCellRenderer props:", props);
     return (
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+          minHeight: 36,
+        }}
+      >
         <button
           title="Export"
           style={{
@@ -190,6 +197,9 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             cursor: "pointer",
             color: "#1976d2",
             padding: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           onClick={(e) => {
             console.log("Export button clicked for project:", data?.id);
@@ -311,8 +321,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     );
   };
 
-  console.log("ActionCellRenderer defined");
-
   const [colDefs] = useState<ColDef<ProjectRow>[]>([
     { headerName: "Name", field: "name", flex: 1, filter: false },
     { headerName: "Description", field: "description", flex: 2, filter: false },
@@ -361,7 +369,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
       },
     },
     {
-      headerName: "Actions",
+      headerName: "",
       flex: 1,
       minWidth: 120,
       maxWidth: 160,
@@ -370,11 +378,13 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
       filter: false,
       resizable: false,
       suppressMovable: true,
+      cellStyle: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      },
     },
   ]);
-
-  console.log("ProjectsList rendered with projects:", projects);
-  console.log("Column definitions:", colDefs);
 
   // Debug the first project structure
   if (projects.length > 0) {
@@ -420,6 +430,10 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
         suppressContextMenu={false}
         allowContextMenuWithControlKey={false}
         suppressMenuHide={false}
+        getRowStyle={() => ({
+          display: "flex",
+          alignItems: "center",
+        })}
         onGridReady={(params) => {
           console.log("AG Grid ready with params:", params);
           console.log("Grid API:", params.api);
