@@ -68,10 +68,17 @@ const AnnotationNode = (props: any) => {
   const annotation: Annotation | undefined = props.data?.annotation;
   if (!annotation) return <div>Invalid annotation</div>;
   // console.log("valid annotation", annotation);
-  return <ResizableAnnotationCard annotation={annotation} />;
+  return (
+    <ResizableAnnotationCard
+      annotation={annotation}
+      dimensions={props.data?.dimensions}
+      onResizeEnd={props.data?.onResizeEnd}
+      style={props.style}
+    />
+  );
 };
 
-const nodeTypes = {
+export const nodeTypes = {
   customNode: CustomNode, // Register the custom node component
   resizerNode: ResizerNode,
   annotation: AnnotationNode,

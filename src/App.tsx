@@ -33,7 +33,9 @@ import NodeEditorWizard from "./components/NodeEditorWizard";
 import SceneGraphDetailView from "./components/SceneGraphDetailView";
 import SceneGraphTitle from "./components/SceneGraphTitle";
 import GravitySimulation3 from "./components/simulations/GravitySimulation3";
-import ReactFlowPanel from "./components/simulations/ReactFlowPanel";
+import ReactFlowPanel, {
+  nodeTypes,
+} from "./components/simulations/ReactFlowPanel";
 import SolarSystem from "./components/simulations/solarSystemSimulation";
 import ChatGptImporter from "./components/tools/ChatGptImporter";
 import YasguiPanel from "./components/YasguiPanel";
@@ -1147,7 +1149,7 @@ const AppContent: React.FC<{
     const nodesWithPositions = data.nodes.map((node) => ({
       ...node,
       position: nodePositions[node.id] || { x: 200, y: 200 },
-      type: node.type,
+      type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
       data: {
         description: currentSceneGraph
           .getGraph()
