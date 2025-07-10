@@ -75,9 +75,6 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
       // Call the provided callback
       onSignOut();
 
-      // Force page reload to ensure all auth state is cleared
-      window.location.reload();
-
       return true;
     } catch (error) {
       console.error("ProfileIcon: Error signing out:", error);
@@ -113,8 +110,6 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
         if (event.data.type === "SIGNED_IN") {
           console.log("User signed in via popup:", event.data.user);
           window.removeEventListener("message", handleMessage);
-          // Refresh the page to update auth state
-          window.location.reload();
         } else if (event.data.type === "SIGNIN_CANCELLED") {
           console.log("Sign-in was cancelled");
           window.removeEventListener("message", handleMessage);
@@ -152,8 +147,6 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
         if (event.data.type === "SIGNED_IN") {
           console.log("User switched account via popup:", event.data.user);
           window.removeEventListener("message", handleMessage);
-          // Refresh the page to update auth state
-          window.location.reload();
         } else if (event.data.type === "SIGNIN_CANCELLED") {
           console.log("Account switch was cancelled");
           window.removeEventListener("message", handleMessage);

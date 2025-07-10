@@ -614,8 +614,6 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
                               "message",
                               handleMessage
                             );
-                            // Refresh the page to update auth state
-                            window.location.reload();
                           } else if (event.data.type === "SIGNIN_CANCELLED") {
                             console.log("Sign-in was cancelled");
                             window.removeEventListener(
