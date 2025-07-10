@@ -410,9 +410,31 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
         width: "100%",
         height: "100%",
         overflow: "auto",
+        borderRadius: 10,
         ...style,
       }}
+      // Add a class for custom scrollbar styling
+      className="projects-list-scrollbar"
     >
+      <style>
+        {`
+        .projects-list-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #d1d5db #f5f6fa;
+        }
+        .projects-list-scrollbar::-webkit-scrollbar {
+          width: 10px;
+          background: #f5f6fa;
+        }
+        .projects-list-scrollbar::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 6px;
+        }
+        .projects-list-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #bfc7d1;
+        }
+        `}
+      </style>
       <AgGridReact
         theme={themeBalham}
         rowData={projects}
