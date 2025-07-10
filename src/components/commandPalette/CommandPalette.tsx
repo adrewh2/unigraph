@@ -17,18 +17,43 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 }) => {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [commandStack, setCommandStack] = useState<Command[][]>([commands]);
 
   // Reset state when opened
   useEffect(() => {
     if (isOpen) {
       setQuery("");
       setSelectedIndex(0);
+      setCommandStack([commands]);
     }
-  }, [isOpen]);
+  }, [isOpen, commands]);
+
+  const currentCommands = commandStack[commandStack.length - 1];
 
   // Filter commands based on query
-  const filteredCommands = commands.filter((cmd) =>
+  const filteredCommands = currentCommands.filter((cmd) =>
     cmd.title.toLowerCase().includes(query.toLowerCase())
+  );
+
+  // Handle selection (enter/click)
+  const handleSelect = React.useCallback(
+    (command: Command) => {
+      if (command.children && command.children.length > 0) {
+        setCommandStack((prevStack) => [...prevStack, command.children ?? []]);
+        setQuery("");
+        setSelectedIndex(0);
+      } else if (command.id === "demos") {
+        // Special case: Demos command triggers a repopulation, not close
+        onExecuteCommand(command);
+        // Do NOT close the palette here!
+        // The parent will update the commands prop, which will reset the stack
+        // and show the demo list.
+      } else {
+        onExecuteCommand(command);
+        onClose();
+      }
+    },
+    [onExecuteCommand, onClose]
   );
 
   // Handle keyboard navigation
@@ -38,7 +63,13 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case "Escape":
-          onClose();
+          if (commandStack.length > 1) {
+            setCommandStack(commandStack.slice(0, -1));
+            setQuery("");
+            setSelectedIndex(0);
+          } else {
+            onClose();
+          }
           break;
         case "ArrowUp":
           e.preventDefault();
@@ -54,8 +85,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
           break;
         case "Enter":
           if (filteredCommands[selectedIndex]) {
-            onExecuteCommand(filteredCommands[selectedIndex]);
-            onClose();
+            handleSelect(filteredCommands[selectedIndex]);
           }
           break;
       }
@@ -63,7 +93,15 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, selectedIndex, filteredCommands, onClose, onExecuteCommand]);
+  }, [
+    isOpen,
+    selectedIndex,
+    filteredCommands,
+    onClose,
+    onExecuteCommand,
+    commandStack,
+    handleSelect,
+  ]);
 
   if (!isOpen) return null;
 
@@ -81,6 +119,19 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
           }}
         />
         <div className="command-palette-list">
+          {commandStack.length > 1 && (
+            <div
+              className="command-palette-item"
+              onClick={() => {
+                setCommandStack(commandStack.slice(0, -1));
+                setQuery("");
+                setSelectedIndex(0);
+              }}
+              style={{ fontStyle: "italic", color: "#888" }}
+            >
+              ← Back
+            </div>
+          )}
           {filteredCommands.length === 0 ? (
             <div className="command-palette-no-results">No commands found</div>
           ) : (
@@ -90,10 +141,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 className={`command-palette-item ${
                   index === selectedIndex ? "selected" : ""
                 }`}
-                onClick={() => {
-                  onExecuteCommand(command);
-                  onClose();
-                }}
+                onClick={() => handleSelect(command)}
                 onMouseEnter={() => setSelectedIndex(index)}
               >
                 <div className="command-title">{command.title}</div>
@@ -101,6 +149,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                   <div className="command-description">
                     {command.description}
                   </div>
+                )}
+                {command.children && command.children.length > 0 && (
+                  <span style={{ float: "right", color: "#888" }}>→</span>
                 )}
               </div>
             ))
