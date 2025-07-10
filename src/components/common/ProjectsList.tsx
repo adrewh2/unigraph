@@ -66,7 +66,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
       setCopyDialog({
         projectId,
         projectName: project.name,
-        newName: `Copy of ${project.name}`,
+        newName: `${project.name} - copy`,
       });
     }
   };

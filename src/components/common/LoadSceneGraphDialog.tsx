@@ -392,7 +392,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
           ) {
             return true;
           }
-        } catch (_) {
+        } catch {
           if (project.last_updated_at.toLowerCase().includes(term)) {
             return true;
           }
@@ -434,7 +434,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
           ) {
             return true;
           }
-        } catch (_) {
+        } catch {
           if (project.created_at.toLowerCase().includes(term)) {
             return true;
           }
