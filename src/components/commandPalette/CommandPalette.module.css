@@ -83,3 +83,35 @@
   text-align: center;
   color: #a0a0a0;
 }
+
+.arrowContainer {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  margin-left: auto;
+}
+
+.itemRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  color: #e0e0e0;
+}
+
+.itemLeft {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.itemRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 24px;
+  margin-left: 12px;
+}

@@ -143,7 +143,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             filteredCommands.map((command, index) => (
               <div
                 key={command.id}
-                className={`${styles.item} ${
+                className={`${styles.itemRow} ${
                   index === selectedIndex ? styles.selected : ""
                 }`}
                 onClick={() => handleSelect(command)}
@@ -154,14 +154,18 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                   }
                 }}
               >
-                <div className={styles.title}>{command.title}</div>
-                {command.description && (
-                  <div className={styles.description}>
-                    {command.description}
-                  </div>
-                )}
+                <div className={styles.itemLeft}>
+                  <div className={styles.title}>{command.title}</div>
+                  {command.description && (
+                    <div className={styles.description}>
+                      {command.description}
+                    </div>
+                  )}
+                </div>
                 {command.children && command.children.length > 0 && (
-                  <span style={{ float: "right", color: "#888" }}>→</span>
+                  <div className={styles.itemRight}>
+                    <span style={{ float: "right", color: "#888" }}>→</span>
+                  </div>
                 )}
               </div>
             ))
