@@ -26,6 +26,7 @@ interface UserStore {
   // Auth methods
   initializeAuth: () => Promise<void>;
   signOut: () => Promise<void>;
+  checkAuthStatus: () => Promise<boolean>;
 
   // User details
   getUserDetails: () => User | null;
@@ -124,17 +125,87 @@ export const useUserStore = create<UserStore>((set, get) => ({
   // Sign out
   signOut: async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      console.log("UserStore: Starting sign out process...");
 
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("UserStore: Supabase sign out error:", error);
+        throw error;
+      }
+
+      // Clear local state
       set({
         isSignedIn: false,
         user: null,
       });
+
+      // Clear any Supabase-related local storage
+      try {
+        // Clear Supabase auth tokens from localStorage
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes("supabase")) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+        // Also clear sessionStorage
+        const sessionKeysToRemove = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (key && key.includes("supabase")) {
+            sessionKeysToRemove.push(key);
+          }
+        }
+        sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key));
+
+        console.log("UserStore: Cleared local storage and session storage");
+      } catch (storageError) {
+        console.warn("UserStore: Error clearing storage:", storageError);
+        // Don't throw here, as the main sign out was successful
+      }
+
+      // Verify logout was successful
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        console.warn(
+          "UserStore: Session still exists after logout, attempting to clear again"
+        );
+        // Try one more time
+        await supabase.auth.signOut();
+      } else {
+        console.log("UserStore: Logout verified - no active session found");
+      }
+
       console.log("UserStore: User signed out successfully");
     } catch (error) {
       console.error("UserStore: Error signing out:", error);
       throw error;
+    }
+  },
+
+  // Check if user is still authenticated (for debugging)
+  checkAuthStatus: async () => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      console.log(
+        "UserStore: Current auth status - Session exists:",
+        !!session
+      );
+      if (session) {
+        console.log("UserStore: Session user ID:", session.user.id);
+      }
+      return !!session;
+    } catch (error) {
+      console.error("UserStore: Error checking auth status:", error);
+      return false;
     }
   },
 
