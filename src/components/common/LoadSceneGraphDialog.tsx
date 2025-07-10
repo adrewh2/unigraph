@@ -115,7 +115,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   handleLoadSceneGraph,
 }) => {
   // Get user state from store
-  const { isSignedIn, isLoading: authLoading } = useUserStore();
+  const { isSignedIn } = useUserStore();
 
   console.log("LoadSceneGraphDialog - isSignedIn:", isSignedIn);
 
