@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../../utils/supabaseClient";
 import UserSettingsPanel from "./UserSettingsPanel";
+import { useUserStore } from "../../store/userStore";
 
 // Simple generic profile SVG icon with blue border
 const GenericProfileIcon = ({
@@ -51,6 +52,7 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
   const [avatarLoaded, setAvatarLoaded] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const setSignedIn = useUserStore((s) => s.setSignedIn);
 
   // Fetch and track user authentication state
   useEffect(() => {
@@ -58,6 +60,7 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
     supabase.auth.getUser().then(({ data }) => {
       setUser(data?.user);
       setAvatarError(false); // Reset error state when user changes
+      setSignedIn(!!data?.user); // Update global sign-in state
     });
 
     // Listen for auth changes
@@ -65,13 +68,14 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
       (_event, session) => {
         setUser(session?.user ?? null);
         setAvatarError(false); // Reset error state when user changes
+        setSignedIn(!!session?.user); // Update global sign-in state
       }
     );
 
     return () => {
       listener?.subscription.unsubscribe();
     };
-  }, []);
+  }, [setSignedIn]);
 
   // Get avatar URL with fallbacks
   const getAvatarUrl = () => {

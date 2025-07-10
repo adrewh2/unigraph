@@ -18,6 +18,7 @@ import { loadSceneGraphFromFile } from "../../core/serializers/sceneGraphLoader"
 import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { addNotification } from "../../store/notificationStore";
+import { useUserStore } from "../../store/userStore"; // <-- new import for user state
 import styles from "./LoadSceneGraphDialog.module.css";
 import ProjectsList from "./ProjectsList";
 
@@ -111,9 +112,13 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   isDarkMode,
   handleLoadSceneGraph,
 }) => {
+  // Get user state from store
+  const { isSignedIn } = useUserStore();
+
+  // Set default tab based on user sign-in state
   const [activeTab, setActiveTab] = useState<
-    "Server" | "File" | "Text" | "SVG URL" | "Demos"
-  >("Demos");
+    "Server" | "File" | "Text" | "Svg Url" | "Demos"
+  >(isSignedIn ? "Server" : "Demos");
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
@@ -262,7 +267,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
       handleLoadSceneGraph(sceneGraph);
       onClose();
     } catch (error) {
-      console.error("Failed to load SVG URL:", error);
+      console.error("Failed to load Svg Url:", error);
     }
   };
 
@@ -283,6 +288,14 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
         <div className={styles.tabs}>
           <button
             className={`${styles.tabButton} ${
+              activeTab === "Server" ? styles.activeTab : ""
+            }`}
+            onClick={() => setActiveTab("Server")}
+          >
+            Server
+          </button>
+          <button
+            className={`${styles.tabButton} ${
               activeTab === "File" ? styles.activeTab : ""
             }`}
             onClick={() => setActiveTab("File")}
@@ -299,27 +312,11 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
           </button>
           <button
             className={`${styles.tabButton} ${
-              activeTab === "Text" ? styles.activeTab : ""
+              activeTab === "Svg Url" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Text")}
+            onClick={() => setActiveTab("Svg Url")}
           >
-            Text
-          </button>
-          <button
-            className={`${styles.tabButton} ${
-              activeTab === "SVG URL" ? styles.activeTab : ""
-            }`}
-            onClick={() => setActiveTab("SVG URL")}
-          >
-            SVG URL
-          </button>
-          <button
-            className={`${styles.tabButton} ${
-              activeTab === "Server" ? styles.activeTab : ""
-            }`}
-            onClick={() => setActiveTab("Server")}
-          >
-            Server
+            Svg Url
           </button>
         </div>
         {activeTab === "File" && (
@@ -381,11 +378,11 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             </button>
           </div>
         )}
-        {activeTab === "SVG URL" && (
+        {activeTab === "Svg Url" && (
           <div className={styles.svgUrlTab}>
             <input
               type="text"
-              placeholder="Enter SVG URL..."
+              placeholder="Enter Svg Url..."
               className={styles.svgUrlInput}
               value={svgUrl}
               onChange={(e) => setSvgUrl(e.target.value)}
