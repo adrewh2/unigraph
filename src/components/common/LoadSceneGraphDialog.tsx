@@ -403,7 +403,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             <div className={styles.toolbar}>
               <input
                 type="text"
-                placeholder="Search projects..."
+                placeholder="Search by name, description, or date (any substring)..."
                 className={styles.searchBar}
                 value={serverSearchTerm}
                 onChange={(e) => setServerSearchTerm(e.target.value)}
@@ -421,14 +421,125 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
               </button>
             </div>
             <ProjectsList
-              projects={serverProjects.filter(
-                (project) =>
-                  project &&
-                  project.name &&
-                  project.name
-                    .toLowerCase()
-                    .includes(serverSearchTerm.toLowerCase())
-              )}
+              projects={serverProjects.filter((project) => {
+                if (!project || !project.name) return false;
+
+                const searchTerm = serverSearchTerm.trim();
+                if (!searchTerm) return true; // Show all if no search term
+
+                const searchTermLower = searchTerm.toLowerCase();
+
+                // Search in name
+                if (project.name.toLowerCase().includes(searchTermLower)) {
+                  return true;
+                }
+
+                // Search in description
+                if (
+                  project.description &&
+                  project.description.toLowerCase().includes(searchTermLower)
+                ) {
+                  return true;
+                }
+
+                // Search in last updated date - multiple string representations
+                if (project.last_updated_at) {
+                  try {
+                    const date = new Date(project.last_updated_at);
+                    const searchableStrings = [
+                      date.toString(),
+                      date.toLocaleString(),
+                      date.toLocaleDateString(),
+                      date.toISOString(),
+                      date.toUTCString(),
+                      date.getFullYear().toString(),
+                      (date.getMonth() + 1).toString().padStart(2, "0"),
+                      date.getDate().toString().padStart(2, "0"),
+                      date.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                      }),
+                      date.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }),
+                      date.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      }),
+                    ];
+
+                    if (
+                      searchableStrings.some((str) =>
+                        str.toLowerCase().includes(searchTermLower)
+                      )
+                    ) {
+                      return true;
+                    }
+                  } catch (e) {
+                    // If date parsing fails, try searching the raw string
+                    if (
+                      project.last_updated_at
+                        .toLowerCase()
+                        .includes(searchTermLower)
+                    ) {
+                      return true;
+                    }
+                  }
+                }
+
+                // Search in created date - multiple string representations
+                if (project.created_at) {
+                  try {
+                    const date = new Date(project.created_at);
+                    const searchableStrings = [
+                      date.toString(),
+                      date.toLocaleString(),
+                      date.toLocaleDateString(),
+                      date.toISOString(),
+                      date.toUTCString(),
+                      date.getFullYear().toString(),
+                      (date.getMonth() + 1).toString().padStart(2, "0"),
+                      date.getDate().toString().padStart(2, "0"),
+                      date.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                      }),
+                      date.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }),
+                      date.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      }),
+                    ];
+
+                    if (
+                      searchableStrings.some((str) =>
+                        str.toLowerCase().includes(searchTermLower)
+                      )
+                    ) {
+                      return true;
+                    }
+                  } catch (e) {
+                    // If date parsing fails, try searching the raw string
+                    if (
+                      project.created_at.toLowerCase().includes(searchTermLower)
+                    ) {
+                      return true;
+                    }
+                  }
+                }
+
+                return false;
+              })}
               loading={serverLoading}
               error={serverError}
               onProjectDoubleClick={handleServerProjectSelect}
