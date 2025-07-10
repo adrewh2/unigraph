@@ -197,16 +197,21 @@ export const loadAnnotationsToSceneGraph = async (
     // sceneGraph.setNodePositions(positions);
     console.log("sceneGraph after loading annotations", sceneGraph);
     if (getActiveView() === "ReactFlow") {
-      await computeLayoutAndTriggerAppUpdate(
+      const output = await computeLayoutAndTriggerAppUpdate(
         sceneGraph,
         GraphvizLayoutType.Graphviz_dot,
         undefined // No specific node selection for now)
       );
+      if (output) {
+        sceneGraph.setNodePositions(output?.positions);
+      }
     }
 
     sceneGraph.notifyGraphChanged();
   } finally {
     // Restore the original auto-fitview setting and clear processing flag
+    sceneGraph.commitDisplayConfig();
+
     setAutoFitView(wasAutoFitViewEnabled);
     handleReactFlowFitView(0.1);
   }
