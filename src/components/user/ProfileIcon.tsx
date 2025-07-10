@@ -139,14 +139,79 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
 
   // Sign in handler for the panel
   const handleSignIn = () => {
-    window.location.href = "/signin";
+    setShowDropdown(false);
+    // Open signin page as popup with better dimensions and centering
+    const width = 800;
+    const height = 600;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    const popup = window.open(
+      "/signin",
+      "signin",
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no`
+    );
+
+    if (popup) {
+      // Listen for messages from popup
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+
+        if (event.data.type === "SIGNED_IN") {
+          console.log("User signed in via popup:", event.data.user);
+          window.removeEventListener("message", handleMessage);
+          // Refresh the page to update auth state
+          window.location.reload();
+        } else if (event.data.type === "SIGNIN_CANCELLED") {
+          console.log("Sign-in was cancelled");
+          window.removeEventListener("message", handleMessage);
+        }
+      };
+
+      window.addEventListener("message", handleMessage);
+    } else {
+      // Popup was blocked, fallback to redirect
+      window.location.href = "/signin";
+    }
     onSignIn();
   };
 
   // Switch account handler - navigate to signin without logging out
   const handleSwitchAccount = () => {
     setShowDropdown(false);
-    window.location.href = "/signin";
+    // Open signin page as popup with better dimensions and centering
+    const width = 400;
+    const height = 500;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+
+    const popup = window.open(
+      "/signin",
+      "signin",
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no`
+    );
+
+    if (popup) {
+      // Listen for messages from popup
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+
+        if (event.data.type === "SIGNED_IN") {
+          console.log("User switched account via popup:", event.data.user);
+          window.removeEventListener("message", handleMessage);
+          // Refresh the page to update auth state
+          window.location.reload();
+        } else if (event.data.type === "SIGNIN_CANCELLED") {
+          console.log("Account switch was cancelled");
+          window.removeEventListener("message", handleMessage);
+        }
+      };
+
+      window.addEventListener("message", handleMessage);
+    } else {
+      // Popup was blocked, fallback to redirect
+      window.location.href = "/signin";
+    }
   };
 
   // Close dropdown when clicking outside
