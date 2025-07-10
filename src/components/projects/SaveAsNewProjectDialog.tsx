@@ -171,16 +171,17 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
               className={`save-project-input ${nameExists ? "error" : ""}`}
               disabled={isSaving}
             />
-            {isValidating && (
-              <div className="validation-message validating">
-                Checking name availability...
-              </div>
-            )}
-            {nameExists && !isValidating && (
-              <div className="validation-message error">
-                Project name already exists. Please choose a different name.
-              </div>
-            )}
+            <div
+              className={`validation-message ${isValidating ? "validating" : ""} ${nameExists && !isValidating ? "error" : ""}`}
+            >
+              <span className="validation-text">
+                {isValidating
+                  ? "Checking name availability..."
+                  : nameExists && !isValidating
+                    ? "Project name already exists. Please choose a different name."
+                    : "\u00A0"}
+              </span>
+            </div>
           </div>
           <div className="save-project-field">
             <label htmlFor="project-description">Description (optional)</label>
