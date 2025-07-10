@@ -120,7 +120,33 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             setSelectedIndex(0);
           }}
         />
-        <div className="command-palette-list" style={{ maxHeight: 320, overflowY: "auto" }}>
+        <div
+          className="command-palette-list"
+          style={{
+            maxHeight: 320,
+            overflowY: "auto",
+            scrollbarColor: "#888 #222",
+          }}
+        >
+          <style>
+            {`
+              .command-palette-list {
+                scrollbar-width: thin;
+                scrollbar-color: #888 #222;
+              }
+              .command-palette-list::-webkit-scrollbar {
+                width: 10px;
+                background: #222;
+              }
+              .command-palette-list::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 6px;
+              }
+              .command-palette-list::-webkit-scrollbar-thumb:hover {
+                background: #666;
+              }
+            `}
+          </style>
           {commandStack.length > 1 && (
             <div
               className="command-palette-item"
