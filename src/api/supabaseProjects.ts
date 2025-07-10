@@ -129,9 +129,7 @@ export async function updateProject(
   if (userError || !userData?.user?.id) throw new Error("User not logged in");
 
   // Prepare update data
-  const updateData: Partial<SupabaseProject> = {
-    // last_updated_at: new Date().toISOString(),
-  };
+  const updateData: Partial<SupabaseProject> = {};
 
   if (updates.name !== undefined) {
     updateData.name = updates.name;
