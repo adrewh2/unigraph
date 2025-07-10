@@ -13,7 +13,7 @@ interface ISceneGraphDetailViewState {
 type DialogState = {
   showLoadSceneGraphWindow: boolean;
   showSaveSceneGraphDialog: boolean;
-  showSaveAsNewDialog: boolean;
+  showSaveAsNewProjectDialog: boolean;
   showPathAnalysis: boolean;
   showEntityTables: boolean;
   showLayoutManager: { mode: "save" | "load"; show: boolean };
@@ -23,7 +23,7 @@ type DialogState = {
 
   setShowLoadSceneGraphWindow: (show: boolean) => void;
   setShowSaveSceneGraphDialog: (show: boolean) => void;
-  setShowSaveAsNewDialog: (show: boolean) => void;
+  setShowSaveAsNewProjectDialog: (show: boolean) => void;
   setShowPathAnalysis: (show: boolean) => void;
   setShowEntityTables: (show: boolean) => void;
   setShowLayoutManager: (args: ILayoutManagerState) => void;
@@ -35,7 +35,7 @@ type DialogState = {
 const useDialogStore = create<DialogState>((set) => ({
   showLoadSceneGraphWindow: false,
   showSaveSceneGraphDialog: false,
-  showSaveAsNewDialog: false,
+  showSaveAsNewProjectDialog: false,
   showPathAnalysis: false,
   showEntityTables: false,
   showLayoutManager: { mode: "load", show: false },
@@ -47,7 +47,8 @@ const useDialogStore = create<DialogState>((set) => ({
     set({ showLoadSceneGraphWindow: show }),
   setShowSaveSceneGraphDialog: (show) =>
     set({ showSaveSceneGraphDialog: show }),
-  setShowSaveAsNewDialog: (show) => set({ showSaveAsNewDialog: show }),
+  setShowSaveAsNewProjectDialog: (show) =>
+    set({ showSaveAsNewProjectDialog: show }),
   setShowPathAnalysis: (show) => set({ showPathAnalysis: show }),
   setShowEntityTables: (show) => set({ showEntityTables: show }),
   setShowLayoutManager: (args: ILayoutManagerState) =>

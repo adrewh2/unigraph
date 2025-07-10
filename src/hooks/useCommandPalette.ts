@@ -20,7 +20,7 @@ export const useCommandPalette = () => {
   const {
     setShowLoadSceneGraphWindow,
     setShowSaveSceneGraphDialog,
-    setShowSaveAsNewDialog,
+    setShowSaveAsNewProjectDialog,
     setShowEntityTables,
     setShowPathAnalysis,
     setShowFilterWindow,
@@ -44,10 +44,10 @@ export const useCommandPalette = () => {
         execute: () => setShowSaveSceneGraphDialog(true),
       },
       {
-        id: "save-as-new",
-        title: "Save As New",
+        id: "save-as-new-project",
+        title: "Project: Save as new",
         description: "Save current project as a new project",
-        execute: () => setShowSaveAsNewDialog(true),
+        execute: () => setShowSaveAsNewProjectDialog(true),
       },
       {
         id: "view-forcegraph3d",
@@ -133,7 +133,7 @@ export const useCommandPalette = () => {
     setActiveView,
     setShowLoadSceneGraphWindow,
     setShowSaveSceneGraphDialog,
-    setShowSaveAsNewDialog,
+    setShowSaveAsNewProjectDialog,
     setShowEntityTables,
     setShowPathAnalysis,
     setShowFilterWindow,

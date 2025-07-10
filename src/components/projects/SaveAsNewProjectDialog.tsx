@@ -8,14 +8,14 @@ import {
 import { addNotification } from "../../store/notificationStore";
 import "./SaveProjectDialog.css";
 
-interface SaveAsNewDialogProps {
+interface SaveAsNewProjectDialogProps {
   onSave: (projectId: string) => void;
   onCancel: () => void;
   isDarkMode: boolean;
   sceneGraph: SceneGraph;
 }
 
-const SaveAsNewDialog: React.FC<SaveAsNewDialogProps> = ({
+const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
   onSave,
   onCancel,
   isDarkMode,
@@ -135,4 +135,4 @@ const SaveAsNewDialog: React.FC<SaveAsNewDialogProps> = ({
   );
 };
 
-export default SaveAsNewDialog;
+export default SaveAsNewProjectDialog;

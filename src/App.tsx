@@ -49,7 +49,7 @@ import { getNodeContextMenuItems } from "./components/common/singleNodeContextMe
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
-import SaveAsNewDialog from "./components/projects/SaveAsNewDialog";
+import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog";
 import StoryCardApp from "./components/StoryCardApp";
 import WikipediaArticleViewer from "./components/WikipediaArticleViewer";
 import WikipediaArticleViewer_FactorGraph from "./components/WikipediaArticleViewer_FactorGraph";
@@ -248,8 +248,8 @@ const AppContent: React.FC<{
     setShowLoadSceneGraphWindow,
     showSaveSceneGraphDialog,
     setShowSaveSceneGraphDialog,
-    showSaveAsNewDialog,
-    setShowSaveAsNewDialog,
+    showSaveAsNewProjectDialog,
+    setShowSaveAsNewProjectDialog,
     showEntityTables,
     // showLayoutManager,
     showSceneGraphDetailView,
@@ -1699,13 +1699,13 @@ const AppContent: React.FC<{
     showSaveSceneGraphDialog,
   ]);
 
-  const maybeRenderSaveAsNewDialog = useMemo(() => {
-    if (showSaveAsNewDialog) {
+  const maybeRenderSaveAsNewProjectDialog = useMemo(() => {
+    if (showSaveAsNewProjectDialog) {
       return (
-        <SaveAsNewDialog
+        <SaveAsNewProjectDialog
           sceneGraph={currentSceneGraph}
           onSave={(projectId: string) => {
-            setShowSaveAsNewDialog(false);
+            setShowSaveAsNewProjectDialog(false);
             setActiveProjectId(projectId);
             addNotification({
               message: "Project saved as new successfully",
@@ -1713,7 +1713,7 @@ const AppContent: React.FC<{
               duration: 8000,
             });
           }}
-          onCancel={() => setShowSaveAsNewDialog(false)}
+          onCancel={() => setShowSaveAsNewProjectDialog(false)}
           isDarkMode={isDarkMode}
         />
       );
@@ -1721,8 +1721,8 @@ const AppContent: React.FC<{
     return null;
   }, [
     currentSceneGraph,
-    setShowSaveAsNewDialog,
-    showSaveAsNewDialog,
+    setShowSaveAsNewProjectDialog,
+    showSaveAsNewProjectDialog,
     isDarkMode,
   ]);
 
@@ -1831,7 +1831,7 @@ const AppContent: React.FC<{
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
-        {maybeRenderSaveAsNewDialog}
+        {maybeRenderSaveAsNewProjectDialog}
         {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (
           <EntityDataDisplayCard
             entityData={currentSceneGraph
