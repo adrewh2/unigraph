@@ -121,7 +121,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   console.log("LoadSceneGraphDialog - isSignedIn:", isSignedIn);
 
   // Check actual Supabase authentication state
-  const [actualIsSignedIn, setActualIsSignedIn] = useState(false);
+  const [actualIsSignedIn, setActualIsSignedIn] = useState(isSignedIn);
 
   useEffect(() => {
     const checkAuth = async () => {
