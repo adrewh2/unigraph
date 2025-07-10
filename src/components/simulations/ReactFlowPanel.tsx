@@ -40,6 +40,7 @@ import useWorkspaceConfigStore, {
   setRightActiveSection,
 } from "../../store/workspaceConfigStore";
 import CustomNode from "../CustomNode";
+import WebpageNode from "../webpages/WebpageNode";
 
 import "@xyflow/react/dist/style.css";
 import { EdgeId } from "../../core/model/Edge";
@@ -73,7 +74,8 @@ const AnnotationNode = (props: any) => {
 const nodeTypes = {
   customNode: CustomNode, // Register the custom node component
   resizerNode: ResizerNode,
-  annotationNode: AnnotationNode,
+  annotation: AnnotationNode,
+  webpage: WebpageNode,
 };
 
 // Add a style tag for selected and hovered nodes

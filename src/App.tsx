@@ -1147,7 +1147,7 @@ const AppContent: React.FC<{
     const nodesWithPositions = data.nodes.map((node) => ({
       ...node,
       position: nodePositions[node.id] || { x: 200, y: 200 },
-      type: node.type === "annotation" ? "annotationNode" : "resizerNode", // Use the custom node type
+      type: node.type,
       data: {
         description: currentSceneGraph
           .getGraph()
@@ -1181,6 +1181,7 @@ const AppContent: React.FC<{
         },
         dimensions: node.data.dimensions,
         annotation: node.type == "annotation" ? node.data.userData : undefined,
+        webpage: node.type == "webpage" ? node.data.userData : undefined,
       },
       style: {
         background: RenderingManager.getColor(
