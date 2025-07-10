@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Command } from "../../hooks/useCommandPalette";
-import "./CommandPalette.css";
+import styles from "./CommandPalette.module.css";
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -108,10 +108,10 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="command-palette-overlay" onClick={onClose}>
-      <div className="command-palette" onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.palette} onClick={(e) => e.stopPropagation()}>
         <input
-          className="command-palette-input"
+          className={styles.input}
           autoFocus
           placeholder="Type a command..."
           value={query}
@@ -121,35 +121,12 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
           }}
         />
         <div
-          className="command-palette-list"
-          style={{
-            maxHeight: 320,
-            overflowY: "auto",
-            scrollbarColor: "#888 #222",
-          }}
+          className={styles.list}
+          style={{ maxHeight: 320, overflowY: "auto" }}
         >
-          <style>
-            {`
-              .command-palette-list {
-                scrollbar-width: thin;
-                scrollbar-color: #888 #222;
-              }
-              .command-palette-list::-webkit-scrollbar {
-                width: 10px;
-                background: #222;
-              }
-              .command-palette-list::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 6px;
-              }
-              .command-palette-list::-webkit-scrollbar-thumb:hover {
-                background: #666;
-              }
-            `}
-          </style>
           {commandStack.length > 1 && (
             <div
-              className="command-palette-item"
+              className={styles.item}
               onClick={() => {
                 setCommandStack(commandStack.slice(0, -1));
                 setQuery("");
@@ -161,25 +138,25 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             </div>
           )}
           {filteredCommands.length === 0 ? (
-            <div className="command-palette-no-results">No commands found</div>
+            <div className={styles.noResults}>No commands found</div>
           ) : (
             filteredCommands.map((command, index) => (
               <div
                 key={command.id}
-                className={`command-palette-item ${
-                  index === selectedIndex ? "selected" : ""
+                className={`${styles.item} ${
+                  index === selectedIndex ? styles.selected : ""
                 }`}
                 onClick={() => handleSelect(command)}
                 onMouseEnter={() => setSelectedIndex(index)}
-                ref={el => {
+                ref={(el) => {
                   if (index === selectedIndex && el) {
                     el.scrollIntoView({ block: "nearest" });
                   }
                 }}
               >
-                <div className="command-title">{command.title}</div>
+                <div className={styles.title}>{command.title}</div>
                 {command.description && (
-                  <div className="command-description">
+                  <div className={styles.description}>
                     {command.description}
                   </div>
                 )}
