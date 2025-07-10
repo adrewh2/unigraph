@@ -124,6 +124,16 @@
   margin-top: 4px;
   font-size: 12px;
   font-weight: 500;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.3s ease-out;
+}
+
+.validation-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .validation-message.validating {

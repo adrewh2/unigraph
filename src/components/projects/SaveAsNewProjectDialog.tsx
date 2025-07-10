@@ -32,6 +32,7 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
   const [isValidating, setIsValidating] = useState(false);
   const [nameExists, setNameExists] = useState(false);
   const [existingProjects, setExistingProjects] = useState<string[]>([]);
+  const [validationOpacity, setValidationOpacity] = useState(0);
 
   // Load existing project names on component mount
   useEffect(() => {
@@ -54,17 +55,27 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
     const validateName = async () => {
       if (!name.trim()) {
         setNameExists(false);
+        // Fade out validation message
+        setValidationOpacity(0);
         return;
       }
 
       setIsValidating(true);
+      // Fade in validation message
+      setValidationOpacity(1);
+
       try {
         // Check if name already exists (case-insensitive)
         const nameExists = existingProjects.includes(name.trim().toLowerCase());
         setNameExists(nameExists);
+
+        if (!nameExists) {
+          setValidationOpacity(0);
+        }
       } catch (error) {
         console.error("Error validating name:", error);
         setNameExists(false);
+        setValidationOpacity(0);
       } finally {
         setIsValidating(false);
       }
@@ -173,6 +184,7 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
             />
             <div
               className={`validation-message ${isValidating ? "validating" : ""} ${nameExists && !isValidating ? "error" : ""}`}
+              style={{ opacity: validationOpacity }}
             >
               <span className="validation-text">
                 {isValidating
