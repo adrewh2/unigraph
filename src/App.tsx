@@ -1727,11 +1727,6 @@ const AppContent: React.FC<{
           onSave={(projectId: string) => {
             setShowSaveAsNewProjectDialog(false);
             setActiveProjectId(projectId);
-            addNotification({
-              message: "Project saved as new successfully",
-              type: "success",
-              duration: 8000,
-            });
           }}
           onCancel={() => setShowSaveAsNewProjectDialog(false)}
           isDarkMode={isDarkMode}

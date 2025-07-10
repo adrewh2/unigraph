@@ -5,8 +5,6 @@ import {
   setShowFilterManager,
   setShowFilterWindow,
   setShowLoadSceneGraphWindow,
-  setShowSaveAsNewProjectDialog,
-  setShowSaveSceneGraphDialog,
   setShowSceneGraphDetailView,
 } from "../store/dialogStore";
 
@@ -20,14 +18,14 @@ export const getHotkeyConfig = (
   }),
 
   // Project actions
-  cmdOrCtrl(() => setShowSaveSceneGraphDialog(true), "s", {
-    description: "Save Project",
-  }),
+  //   cmdOrCtrl(() => setShowSaveSceneGraphDialog(true), "s", {
+  //     description: "Save Project",
+  //   }),
 
-  cmdOrCtrl(() => setShowSaveAsNewProjectDialog(true), "s", {
-    shiftKey: true,
-    description: "Save Project As",
-  }),
+  //   cmdOrCtrl(() => setShowSaveAsNewProjectDialog(true), "s", {
+  //     shiftKey: true,
+  //     description: "Save Project As",
+  //   }),
 
   cmdOrCtrl(() => setShowLoadSceneGraphWindow(true), "o", {
     shiftKey: true,

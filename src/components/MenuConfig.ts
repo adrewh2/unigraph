@@ -55,6 +55,7 @@ import {
 import {
   setShowCommandPalette,
   setShowLoadSceneGraphWindow,
+  setShowSaveAsNewProjectDialog,
 } from "../store/dialogStore";
 import { clearDocuments, getAllDocuments } from "../store/documentStore";
 
@@ -184,8 +185,7 @@ export class MenuConfig {
           },
           "Save as new": {
             action: () => {
-              // TODO: Implement Save as new project
-              console.log("Save as new project");
+              setShowSaveAsNewProjectDialog(true);
             },
             tooltip: "cmd+shift+s",
           },
