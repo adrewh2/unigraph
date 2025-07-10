@@ -408,8 +408,8 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     <div
       style={{
         width: "100%",
-        height: "320px",
-        borderRadius: 10,
+        height: "100%",
+        overflow: "auto",
         ...style,
       }}
     >
@@ -422,7 +422,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
         loading={loading}
         columnDefs={colDefs}
         defaultColDef={defaultColDef}
-        domLayout="autoHeight"
+        domLayout="normal"
         rowSelection="single"
         animateRows={true}
         suppressCellFocus={true}
