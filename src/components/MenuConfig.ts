@@ -160,6 +160,56 @@ export class MenuConfig {
 
   getConfig(): MenuConfigType {
     return {
+      Project: {
+        submenu: {
+          "Save as new": {
+            action: () => {
+              // TODO: Implement Save as new project
+              console.log("Save as new project");
+            },
+          },
+          Save: {
+            action: () => {
+              // TODO: Implement Save project
+              console.log("Save project");
+            },
+          },
+          Load: {
+            action: () => {
+              // TODO: Implement Load project
+              console.log("Load project");
+            },
+          },
+          "Open manager": {
+            action: () => {
+              // TODO: Implement Open project manager
+              console.log("Open project manager");
+            },
+          },
+        },
+      },
+      Window: {
+        submenu: {
+          "Project Detail View": {
+            action: () => {
+              // TODO: Implement Project Detail View window
+              console.log("Open Project Detail View");
+            },
+          },
+          "Entity Manager": {
+            action: () => {
+              // TODO: Implement Entity Manager window
+              console.log("Open Entity Manager");
+            },
+          },
+          "Display Manager": {
+            action: () => {
+              // TODO: Implement Display Manager window
+              console.log("Open Display Manager");
+            },
+          },
+        },
+      },
       View: {
         submenu: {
           "Fit to View": {
@@ -598,23 +648,19 @@ export class MenuConfig {
                   playConfigSequence(this.forceGraphInstance, configs);
                 },
               },
-            },
-          },
-        },
-      },
-      Funcs: {
-        submenu: {
-          "Update scenegraph entities display": {
-            action: () => {
-              DisplayManager.applyRenderingConfigToGraph(
-                this.sceneGraph.getGraph(),
-                this.sceneGraph.getDisplayConfig()
-              );
-            },
-          },
-          "Load image annotations": {
-            action: () => {
-              processImageNodesInSceneGraph(this.sceneGraph);
+              "Update scenegraph entities display": {
+                action: () => {
+                  DisplayManager.applyRenderingConfigToGraph(
+                    this.sceneGraph.getGraph(),
+                    this.sceneGraph.getDisplayConfig()
+                  );
+                },
+              },
+              "Load image annotations": {
+                action: () => {
+                  processImageNodesInSceneGraph(this.sceneGraph);
+                },
+              },
             },
           },
         },
