@@ -149,6 +149,12 @@ export const useCommandPalette = (
           execute: () => setShowLoadSceneGraphWindow(true),
         },
         {
+          id: "save-as-new-project",
+          title: "Project: Save as new",
+          description: "Save current project as a new project",
+          execute: () => setShowSaveAsNewProjectDialog(true),
+        },
+        {
           id: "save-project",
           title: "Project: Save",
           description: "Save current project",
@@ -156,12 +162,6 @@ export const useCommandPalette = (
             throw new Error("Save project command not implemented yet");
             // setShowSaveSceneGraphDialog(true);
           },
-        },
-        {
-          id: "save-as-new-project",
-          title: "Project: Save as new",
-          description: "Save current project as a new project",
-          execute: () => setShowSaveAsNewProjectDialog(true),
         },
         {
           id: "export-project",

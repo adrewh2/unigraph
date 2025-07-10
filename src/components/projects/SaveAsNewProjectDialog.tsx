@@ -155,6 +155,17 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
 
   const hasValidationErrors = nameExists || !name.trim();
 
+  useEffect(() => {
+    // Add Escape key handler to close dialog
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancel();
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onCancel]);
+
   return (
     <div className={`save-project-overlay ${isDarkMode ? "dark" : ""}`}>
       <div className="save-project-dialog">

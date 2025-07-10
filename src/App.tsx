@@ -677,7 +677,11 @@ const AppContent: React.FC<{
   );
 
   const handleLoadSceneGraph = useCallback(
-    async (graph: SceneGraph, clearQueryParams: boolean = true) => {
+    async (
+      graph: SceneGraph,
+      clearQueryParams: boolean = true,
+      onLoaded?: (sceneGraph?: SceneGraph) => void
+    ) => {
       const tick = Date.now();
       console.log("Loading SceneGraph", graph.getMetadata().name, "...");
       loadDocumentsFromSceneGraph(graph); // clears existing store, and loads in new documents
@@ -740,6 +744,7 @@ const AppContent: React.FC<{
 
         const tock = Date.now();
         console.log("TOTAL TIME", tock - tick);
+        onLoaded?.(graph);
         initialSceneGraphLoaded = true;
         addNotification({
           message: `Loaded SceneGraph: ${graph.getMetadata().name}`,
@@ -762,12 +767,16 @@ const AppContent: React.FC<{
   );
 
   const handleSetSceneGraph = useCallback(
-    async (key: string, clearUrlOfQueryParams: boolean = true) => {
+    async (
+      key: string,
+      clearUrlOfQueryParams: boolean = true,
+      onLoaded?: (sceneGraph?: SceneGraph) => void
+    ) => {
       // First try to load from persistent store
       try {
         const persistedGraph = await persistentStore.loadSceneGraph(key);
         if (persistedGraph) {
-          handleLoadSceneGraph(persistedGraph, clearUrlOfQueryParams);
+          handleLoadSceneGraph(persistedGraph, clearUrlOfQueryParams, onLoaded);
           setActiveProjectId(key); // Set the active project ID
 
           // Update the URL query parameter
@@ -792,7 +801,7 @@ const AppContent: React.FC<{
         } else {
           graph = graphGenerator;
         }
-        handleLoadSceneGraph(graph, clearUrlOfQueryParams);
+        handleLoadSceneGraph(graph, clearUrlOfQueryParams, onLoaded);
         setActiveProjectId(null); // Clear project ID since this is a demo graph
         // Update the URL query parameter
         const url = new URL(window.location.href);
@@ -802,7 +811,7 @@ const AppContent: React.FC<{
       } catch (err) {
         console.error(`Graph ${key} not found: ${err}`);
         console.log(`Available graphs are: ${getAllDemoSceneGraphKeys()}`);
-        handleLoadSceneGraph(new SceneGraph(), true);
+        handleLoadSceneGraph(new SceneGraph(), true, onLoaded);
         return;
       }
     },
