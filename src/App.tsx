@@ -49,6 +49,7 @@ import { getNodeContextMenuItems } from "./components/common/singleNodeContextMe
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
+import SaveAsNewDialog from "./components/projects/SaveAsNewDialog";
 import StoryCardApp from "./components/StoryCardApp";
 import WikipediaArticleViewer from "./components/WikipediaArticleViewer";
 import WikipediaArticleViewer_FactorGraph from "./components/WikipediaArticleViewer_FactorGraph";
@@ -247,6 +248,8 @@ const AppContent: React.FC<{
     setShowLoadSceneGraphWindow,
     showSaveSceneGraphDialog,
     setShowSaveSceneGraphDialog,
+    showSaveAsNewDialog,
+    setShowSaveAsNewDialog,
     showEntityTables,
     // showLayoutManager,
     showSceneGraphDetailView,
@@ -1696,6 +1699,33 @@ const AppContent: React.FC<{
     showSaveSceneGraphDialog,
   ]);
 
+  const maybeRenderSaveAsNewDialog = useMemo(() => {
+    if (showSaveAsNewDialog) {
+      return (
+        <SaveAsNewDialog
+          sceneGraph={currentSceneGraph}
+          onSave={(projectId: string) => {
+            setShowSaveAsNewDialog(false);
+            setActiveProjectId(projectId);
+            addNotification({
+              message: "Project saved as new successfully",
+              type: "success",
+              duration: 8000,
+            });
+          }}
+          onCancel={() => setShowSaveAsNewDialog(false)}
+          isDarkMode={isDarkMode}
+        />
+      );
+    }
+    return null;
+  }, [
+    currentSceneGraph,
+    setShowSaveAsNewDialog,
+    showSaveAsNewDialog,
+    isDarkMode,
+  ]);
+
   const maybeRenderYasgui = useMemo(() => {
     if (activeView !== "Yasgui") {
       return null;
@@ -1801,6 +1831,7 @@ const AppContent: React.FC<{
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
+        {maybeRenderSaveAsNewDialog}
         {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (
           <EntityDataDisplayCard
             entityData={currentSceneGraph
