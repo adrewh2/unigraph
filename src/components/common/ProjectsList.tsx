@@ -4,7 +4,6 @@ import {
   ModuleRegistry,
   themeBalham,
 } from "ag-grid-community";
-import "ag-grid-community/styles/ag-theme-balham.css";
 import { AgGridReact } from "ag-grid-react";
 import React, { useMemo, useState } from "react";
 
@@ -34,8 +33,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
   onProjectDoubleClick,
   style = {},
 }) => {
-  const [showCreatedColumn, setShowCreatedColumn] = useState(false);
-
   const [colDefs] = useState<ColDef<ProjectRow>[]>([
     { headerName: "Name", field: "name", flex: 1, filter: false },
     { headerName: "Description", field: "description", flex: 2, filter: false },
@@ -90,16 +87,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     },
   ]);
 
-  // Update column visibility based on state
-  const updatedColDefs = useMemo(() => {
-    return colDefs.map((col) => {
-      if (col.field === "created_at") {
-        return { ...col, hide: !showCreatedColumn };
-      }
-      return col;
-    });
-  }, [colDefs, showCreatedColumn]);
-
   const defaultColDef = useMemo(
     () => ({
       filter: false, // Disable built-in filtering to prevent interference
@@ -127,7 +114,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
           loadingMessage: "Loading projects...",
         }}
         loading={loading}
-        columnDefs={updatedColDefs}
+        columnDefs={colDefs}
         defaultColDef={defaultColDef}
         domLayout="autoHeight"
         rowSelection="single"
