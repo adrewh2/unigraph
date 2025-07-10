@@ -53,7 +53,6 @@ export const useCommandPalette = () => {
               if (typeof graph === "function") {
                 // Handle async loading later in App.tsx
               }
-              // The actual loading is handled in App.tsx's handleSetSceneGraph
               const url = new URL(window.location.href);
               url.searchParams.set("graph", key);
               window.history.pushState({}, "", url.toString());
@@ -68,6 +67,26 @@ export const useCommandPalette = () => {
       );
     } else {
       // Main command palette
+      const demoChildren = demoGraphKeys.map((key) => ({
+        id: `demo-graph-${key}`,
+        title: key,
+        description: `Load the ${key} demo graph`,
+        execute: () => {
+          try {
+            const graph = getSceneGraph(key);
+            if (typeof graph === "function") {
+              // Handle async loading later in App.tsx
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.set("graph", key);
+            window.history.pushState({}, "", url.toString());
+            window.location.reload();
+          } catch (err) {
+            console.error(`Error loading demo graph ${key}:`, err);
+          }
+        },
+      }));
+
       const defaultCommands: Command[] = [
         {
           id: "open-project",
@@ -124,10 +143,8 @@ export const useCommandPalette = () => {
           id: "demos",
           title: "Demos",
           description: "Browse and open demo graphs",
-          execute: () => {
-            setDemoStep(true);
-            setDemoFilter("");
-          },
+          execute: () => {},
+          children: demoChildren,
         },
         {
           id: "view-forcegraph3d",
@@ -233,27 +250,17 @@ export const useCommandPalette = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, demoStep]);
 
-  const executeCommand = useCallback(
-    (command: Command) => {
-      // If in demoStep, always execute and close palette after
-      if (demoStep) {
-        command.execute();
-        setIsOpen(false);
-        setDemoStep(false);
-        setDemoFilter("");
-      } else {
-        // If "Demos" command, open demoStep and don't close palette
-        if (command.id === "demos") {
-          setDemoStep(true);
-          setDemoFilter("");
-        } else {
-          command.execute();
-          setIsOpen(false);
-        }
-      }
-    },
-    [demoStep]
-  );
+  const executeCommand = useCallback((command: Command) => {
+    // If the command has children, push them as a new stack (handled by CommandPalette UI)
+    if (command.children && command.children.length > 0) {
+      // Do not close palette, let UI handle showing children
+      return;
+    }
+    command.execute();
+    setIsOpen(false);
+    setDemoStep(false);
+    setDemoFilter("");
+  }, []);
 
   return {
     isOpen,
