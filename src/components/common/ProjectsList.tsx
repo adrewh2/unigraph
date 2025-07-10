@@ -92,33 +92,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     []
   );
 
-  const sideBar = useMemo(
-    () => ({
-      toolPanels: [
-        {
-          id: "columns",
-          labelDefault: "Columns",
-          labelKey: "columns",
-          iconKey: "columns",
-          toolPanel: "agColumnsToolPanel",
-          toolPanelParams: {
-            suppressRowGroups: true,
-            suppressValues: true,
-            suppressPivots: true,
-            suppressPivotMode: true,
-            suppressColumnFilter: true,
-            suppressColumnSelectAll: true,
-            suppressColumnExpandAll: true,
-          },
-        },
-      ],
-      defaultToolPanel: "columns",
-      hiddenByDefault: false,
-      position: "right" as const,
-    }),
-    []
-  );
-
   return (
     <div
       style={{
@@ -156,7 +129,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             ? `<span style="color:red;">${error}</span>`
             : `<span style="color:#888;">No projects found</span>`
         }
-        sideBar={sideBar}
+        sideBar={true}
       />
     </div>
   );
