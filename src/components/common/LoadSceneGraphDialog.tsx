@@ -1,7 +1,6 @@
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
-import { AgGridReact } from "ag-grid-react";
 import {
   ChevronDown,
   ChevronRight,
@@ -22,6 +21,7 @@ import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { addNotification } from "../../store/notificationStore";
 import styles from "./LoadSceneGraphDialog.module.css";
+import ProjectsList from "./ProjectsList";
 
 // Register AG Grid community modules (fixes AG Grid error #272)
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -273,36 +273,6 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     onClose();
   };
 
-  // AG Grid columns for server projects
-  const serverProjectColumns = [
-    {
-      headerName: "Name",
-      field: "name",
-      flex: 1,
-      cellRenderer: (params: any) => (
-        <span style={{ fontWeight: 600 }}>{params.value}</span>
-      ),
-    },
-    {
-      headerName: "Description",
-      field: "description",
-      flex: 2,
-      cellRenderer: (params: any) =>
-        params.value ? (
-          <span style={{ color: "#666" }}>{params.value}</span>
-        ) : (
-          ""
-        ),
-    },
-    {
-      headerName: "Last Updated",
-      field: "last_updated_at",
-      flex: 1,
-      valueFormatter: (params: any) =>
-        params.value ? new Date(params.value).toLocaleDateString() : "",
-    },
-  ];
-
   return (
     <div className={`${styles.overlay} ${isDarkMode ? styles.dark : ""}`}>
       <div className={styles.dialog}>
@@ -452,45 +422,20 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
                 />
               </button>
             </div>
-            <div className={styles.content} style={{ height: 320 }}>
-              {serverLoading && <p>Loading projects...</p>}
-              {serverError && <p style={{ color: "red" }}>{serverError}</p>}
-              {!serverLoading &&
-                !serverError &&
-                serverProjects.length === 0 && (
-                  <p>No projects found on server</p>
-                )}
-              {!serverLoading && !serverError && serverProjects.length > 0 && (
-                <div
-                  className="ag-theme-alpine"
-                  style={{ width: "100%", height: "100%" }}
-                >
-                  <AgGridReact
-                    rowData={serverProjects
-                      // Defensive: filter out undefined/null
-                      ?.filter((project) => project && project.name)
-                      // Filter by search term
-                      .filter((project) =>
-                        project.name
-                          .toLowerCase()
-                          .includes(serverSearchTerm.toLowerCase())
-                      )}
-                    columnDefs={serverProjectColumns}
-                    domLayout="autoHeight"
-                    rowSelection="single"
-                    onRowDoubleClicked={(event) => {
-                      if (event.data && event.data.id) {
-                        handleServerProjectSelect(event.data.id);
-                      }
-                    }}
-                    suppressCellFocus={true}
-                    getRowStyle={() => ({
-                      cursor: "pointer",
-                    })}
-                  />
-                </div>
+            <ProjectsList
+              projects={serverProjects.filter(
+                (project) =>
+                  project &&
+                  project.name &&
+                  project.name
+                    .toLowerCase()
+                    .includes(serverSearchTerm.toLowerCase())
               )}
-            </div>
+              loading={serverLoading}
+              error={serverError}
+              onProjectDoubleClick={handleServerProjectSelect}
+              style={{ marginTop: 0 }}
+            />
           </div>
         )}
       </div>

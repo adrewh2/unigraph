@@ -1,0 +1,112 @@
+import type { ColDef } from "ag-grid-community";
+import {
+  AllCommunityModule,
+  ModuleRegistry,
+  themeBalham,
+} from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
+import React, { useMemo, useState } from "react";
+
+// Register AG Grid modules
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+export interface ProjectRow {
+  id: string;
+  name: string;
+  description?: string;
+  last_updated_at?: string;
+}
+
+interface ProjectsListProps {
+  projects: ProjectRow[];
+  loading?: boolean;
+  error?: string | null;
+  onProjectDoubleClick?: (projectId: string) => void;
+  style?: React.CSSProperties;
+}
+
+const ProjectsList: React.FC<ProjectsListProps> = ({
+  projects,
+  loading,
+  error,
+  onProjectDoubleClick,
+  style = {},
+}) => {
+  const [colDefs] = useState<ColDef<ProjectRow>[]>([
+    { headerName: "Name", field: "name", flex: 1, filter: true },
+    { headerName: "Description", field: "description", flex: 2, filter: true },
+    {
+      headerName: "Last Updated",
+      field: "last_updated_at",
+      flex: 1,
+      filter: true,
+      // Show only date and hour:minute, but keep full value for sorting
+      valueFormatter: (params) =>
+        params.value
+          ? new Date(params.value as string).toLocaleString(undefined, {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            })
+          : "",
+      comparator: (valueA, valueB) => {
+        // Sort by full date/time (including seconds)
+        const a = valueA ? new Date(valueA as string).getTime() : 0;
+        const b = valueB ? new Date(valueB as string).getTime() : 0;
+        return a - b;
+      },
+    },
+  ]);
+
+  const defaultColDef = useMemo(
+    () => ({
+      filter: true,
+      sortable: true,
+      resizable: true,
+      minWidth: 120,
+    }),
+    []
+  );
+
+  return (
+    <div
+      className="ag-theme-alpine"
+      style={{
+        width: "100%",
+        height: "320px",
+        borderRadius: 10,
+        ...style,
+      }}
+    >
+      <AgGridReact
+        rowData={projects}
+        loadingOverlayComponentParams={{
+          loadingMessage: "Loading projects...",
+        }}
+        theme={themeBalham}
+        loading={loading}
+        columnDefs={colDefs}
+        defaultColDef={defaultColDef}
+        domLayout="autoHeight"
+        rowSelection="single"
+        animateRows={true}
+        suppressCellFocus={true}
+        onRowDoubleClicked={(event) => {
+          if (event.data && event.data.id && onProjectDoubleClick) {
+            onProjectDoubleClick(event.data.id);
+          }
+        }}
+        overlayNoRowsTemplate={
+          error
+            ? `<span style="color:red;">${error}</span>`
+            : `<span style="color:#888;">No projects found</span>`
+        }
+      />
+    </div>
+  );
+};
+
+export default ProjectsList;
