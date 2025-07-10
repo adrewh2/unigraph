@@ -120,7 +120,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
             setSelectedIndex(0);
           }}
         />
-        <div className="command-palette-list">
+        <div className="command-palette-list" style={{ maxHeight: 320, overflowY: "auto" }}>
           {commandStack.length > 1 && (
             <div
               className="command-palette-item"
@@ -145,6 +145,11 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                 }`}
                 onClick={() => handleSelect(command)}
                 onMouseEnter={() => setSelectedIndex(index)}
+                ref={el => {
+                  if (index === selectedIndex && el) {
+                    el.scrollIntoView({ block: "nearest" });
+                  }
+                }}
               >
                 <div className="command-title">{command.title}</div>
                 {command.description && (
