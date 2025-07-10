@@ -134,6 +134,14 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Prevent form submission on Enter if there are validation errors
+    if (e.key === "Enter" && hasValidationErrors) {
+      e.preventDefault();
+      return;
+    }
+  };
+
   const hasValidationErrors = nameExists || !name.trim();
 
   return (
@@ -145,7 +153,11 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
             ×
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="save-project-form">
+        <form
+          onSubmit={handleSubmit}
+          className="save-project-form"
+          onKeyDown={handleKeyDown}
+        >
           <div className="save-project-field">
             <label htmlFor="project-name">Project Name</label>
             <input

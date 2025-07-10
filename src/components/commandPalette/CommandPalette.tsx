@@ -86,6 +86,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
           );
           break;
         case "Enter":
+          e.preventDefault();
           if (filteredCommands[selectedIndex]) {
             handleSelect(filteredCommands[selectedIndex]);
           }
