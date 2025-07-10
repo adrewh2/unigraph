@@ -10,7 +10,9 @@ import {
   setShowSceneGraphDetailView,
 } from "../store/dialogStore";
 
-export const getHotkeyConfig = (): HotkeyAction[] => [
+export const getHotkeyConfig = (
+  handleSetSceneGraph?: (key: string, clearQueryParams?: boolean) => void
+): HotkeyAction[] => [
   // Command Palette
   cmdOrCtrl(() => setShowCommandPalette(true), "p", {
     shiftKey: true,
@@ -53,6 +55,20 @@ export const getHotkeyConfig = (): HotkeyAction[] => [
   cmdOrCtrl(() => setShowSceneGraphDetailView(true), "d", {
     description: "Show Scene Graph Details",
   }),
+
+  cmdOrCtrl(
+    () => {
+      if (handleSetSceneGraph) {
+        console.log("Creating new project");
+        handleSetSceneGraph("Empty", true);
+      }
+    },
+    "n",
+    {
+      shiftKey: true,
+      description: "Create new project",
+    }
+  ),
 
   // Additional hotkeys can be added here
   // Example:

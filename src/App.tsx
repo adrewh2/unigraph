@@ -248,10 +248,6 @@ const AppContent: React.FC<{
     initializeAuth();
   }, [initializeAuth]);
 
-  // Initialize hotkeys
-  const hotkeys = getHotkeyConfig();
-  useHotkeys(hotkeys);
-
   const {
     showPathAnalysis,
     setShowEntityTables,
@@ -817,6 +813,10 @@ const AppContent: React.FC<{
   const { isCommandPaletteOpen, setCommandPaletteOpen } = useDialogStore();
   const { commands, executeCommand } = useCommandPalette(handleSetSceneGraph);
 
+  // Initialize hotkeys after handleSetSceneGraph is defined
+  const hotkeys = getHotkeyConfig(handleSetSceneGraph);
+  useHotkeys(hotkeys);
+
   // useEffect(() => {
   //   // Hide scrollbar
   //   document.body.style.overflow = "hidden";
@@ -1079,6 +1079,7 @@ const AppContent: React.FC<{
 
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
+      handleSetSceneGraph,
       handleImportConfig,
       handleFitToView,
       GraphMenuActions,
@@ -1105,6 +1106,7 @@ const AppContent: React.FC<{
     forceGraphInstance,
     handleFitToView,
     handleImportConfig,
+    handleSetSceneGraph,
     setShowEntityTables,
     setShowLayoutManager,
     setShowSceneGraphDetailView,

@@ -117,6 +117,7 @@ const customLayoutMenuActions = (): IMenuConfig => {
 };
 
 export interface IMenuConfigCallbacks {
+  handleSetSceneGraph: (key: string, clearQueryParams?: boolean) => void;
   handleImportConfig: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleFitToView: (activeView: string) => void;
   GraphMenuActions: () => { [key: string]: { action: () => void } };
@@ -168,6 +169,12 @@ export class MenuConfig {
     return {
       Project: {
         submenu: {
+          New: {
+            action: () => {
+              this.callbacks.handleSetSceneGraph("Empty", true);
+            },
+            tooltip: "cmd+shift+n",
+          },
           Save: {
             action: () => {
               // TODO: Implement Save project
