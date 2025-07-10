@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "../utils/supabaseClient";
+import { addNotification } from "./notificationStore";
 
 interface User {
   id: string;
@@ -81,6 +82,15 @@ export const useUserStore = create<UserStore>((set, get) => ({
             isLoading: false,
           });
           console.log("UserStore: User signed in:", session.user.id);
+
+          // Show login notification
+          const userName =
+            session.user.user_metadata?.name || session.user.email || "User";
+          addNotification({
+            message: `Logged in as: ${userName}`,
+            type: "success",
+            duration: 3000,
+          });
         } else if (event === "SIGNED_OUT") {
           set({
             isSignedIn: false,
@@ -88,6 +98,13 @@ export const useUserStore = create<UserStore>((set, get) => ({
             isLoading: false,
           });
           console.log("UserStore: User signed out");
+
+          // Show logout notification
+          addNotification({
+            message: "User logged out",
+            type: "info",
+            duration: 3000,
+          });
         } else if (event === "TOKEN_REFRESHED" && session?.user) {
           set({
             user: session.user,
