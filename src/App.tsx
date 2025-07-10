@@ -53,6 +53,7 @@ import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog
 import StoryCardApp from "./components/StoryCardApp";
 import WikipediaArticleViewer from "./components/WikipediaArticleViewer";
 import WikipediaArticleViewer_FactorGraph from "./components/WikipediaArticleViewer_FactorGraph";
+import { getHotkeyConfig } from "./configs/hotkeyConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -100,6 +101,7 @@ import {
 } from "./data/DemoSceneGraphs";
 import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
 import { useCommandPalette } from "./hooks/useCommandPalette";
+import { useHotkeys } from "./hooks/useHotkeys";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
@@ -238,6 +240,10 @@ const AppContent: React.FC<{
   defaultActiveView?: string;
   defaultActiveLayout?: string;
 }> = ({ defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout }) => {
+  // Initialize hotkeys
+  const hotkeys = getHotkeyConfig();
+  useHotkeys(hotkeys);
+
   const {
     showPathAnalysis,
     setShowEntityTables,
