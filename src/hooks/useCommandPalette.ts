@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "../core/layouts/GraphologyLayoutEngine";
 import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutType";
+import { SceneGraph } from "../core/model/SceneGraph";
 import { getAllDemoSceneGraphKeys } from "../data/DemoSceneGraphs";
 import useAppConfigStore, {
   getCurrentSceneGraph,
@@ -18,7 +19,11 @@ export interface Command {
 }
 
 export const useCommandPalette = (
-  handleSetSceneGraph?: (key: string, clearQueryParams?: boolean) => void
+  handleSetSceneGraph?: (
+    key: string,
+    clearQueryParams?: boolean,
+    onLoaded?: (sceneGraph?: SceneGraph) => void
+  ) => void
 ) => {
   const [isOpen, setIsOpen] = useState(false);
   const [commands, setCommands] = useState<Command[]>([]);
@@ -132,7 +137,9 @@ export const useCommandPalette = (
           description: "Create a new project",
           execute: () => {
             if (handleSetSceneGraph) {
-              handleSetSceneGraph("Empty", true);
+              handleSetSceneGraph("Empty", true, () => {
+                setShowSaveAsNewProjectDialog(true);
+              });
             } else {
               // Fallback to URL-based loading
               const url = new URL(window.location.href);
