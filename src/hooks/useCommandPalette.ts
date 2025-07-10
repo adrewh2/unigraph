@@ -35,6 +35,7 @@ export const useCommandPalette = () => {
     setShowFilterWindow,
     setShowFilterManager,
     setShowSceneGraphDetailView,
+    setCommandPaletteOpen,
   } = useDialogStore();
 
   // Memoize demo graph keys for filtering
@@ -276,19 +277,35 @@ export const useCommandPalette = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMac = navigator.platform.toLowerCase().includes("mac");
       if (
-        (isMac && e.metaKey && e.shiftKey && e.key === "p") ||
-        (!isMac && e.ctrlKey && e.shiftKey && e.key === "p")
+        (isMac && e.metaKey && e.shiftKey && e.key.toLowerCase() === "p") ||
+        (!isMac && e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "p")
       ) {
         e.preventDefault();
-        setIsOpen(true);
+        setCommandPaletteOpen(true); // <-- open the app's command palette
+        setIsOpen(true); // keep for legacy, but not used for actual open state
         setDemoStep(false);
         setDemoFilter("");
+      }
+      // VSCode style: allow typing to filter demo list in demo step
+      if (isOpen && demoStep) {
+        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          setDemoFilter((prev) => prev + e.key);
+        } else if (e.key === "Backspace") {
+          setDemoFilter((prev) => {
+            if (prev.length > 0) return prev.slice(0, -1);
+            setDemoStep(false);
+            return "";
+          });
+        } else if (e.key === "Escape") {
+          setDemoStep(false);
+          setDemoFilter("");
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, demoStep]);
+  }, [isOpen, demoStep, setCommandPaletteOpen]);
 
   const executeCommand = useCallback((command: Command) => {
     // If the command has children, push them as a new stack (handled by CommandPalette UI)
