@@ -16,6 +16,11 @@ export interface SupabaseProject {
   data: any;
 }
 
+export interface UpdateProjectParams {
+  name?: string;
+  description?: string;
+}
+
 export async function saveProjectToSupabase(sceneGraph: SceneGraph) {
   const metadata = sceneGraph.getMetadata() || {};
   // Get the current user
@@ -84,6 +89,66 @@ export async function getProject(params: {
   const { data, error } = await result.single();
   if (error) throw error;
   return (data as SupabaseProject) || null;
+}
+
+/**
+ * Delete a project from Supabase by id.
+ * @param projectId The ID of the project to delete
+ */
+export async function deleteProject(projectId: string): Promise<void> {
+  // Get the current user
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user?.id) throw new Error("User not logged in");
+
+  // Delete the project, ensuring it belongs to the current user
+  const { error } = await supabase
+    .from("projects")
+    .delete()
+    .eq("id", projectId)
+    .eq("user_id", userData.user.id);
+
+  if (error) throw error;
+}
+
+/**
+ * Update a project's name and/or description in Supabase.
+ * @param projectId The ID of the project to update
+ * @param updates Object containing name and/or description to update
+ */
+export async function updateProject(
+  projectId: string,
+  updates: UpdateProjectParams
+): Promise<SupabaseProject> {
+  // Get the current user
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user?.id) throw new Error("User not logged in");
+
+  // Prepare update data
+  const updateData: Partial<SupabaseProject> = {
+    last_updated_at: new Date().toISOString(),
+  };
+
+  if (updates.name !== undefined) {
+    updateData.name = updates.name;
+  }
+
+  if (updates.description !== undefined) {
+    updateData.description = updates.description;
+  }
+
+  // Update the project, ensuring it belongs to the current user
+  const { data, error } = await supabase
+    .from("projects")
+    .update(updateData)
+    .eq("id", projectId)
+    .eq("user_id", userData.user.id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("Project not found or not accessible");
+
+  return data as SupabaseProject;
 }
 
 export const toSceneGraph = (project: SupabaseProject): SceneGraph => {

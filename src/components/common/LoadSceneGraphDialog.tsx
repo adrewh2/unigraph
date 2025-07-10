@@ -8,13 +8,16 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  deleteProject,
   getProject,
   listProjects,
   toSceneGraph,
+  updateProject,
 } from "../../api/supabaseProjects";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { deserializeDotToSceneGraph } from "../../core/serializers/fromDot";
 import { loadSceneGraphFromFile } from "../../core/serializers/sceneGraphLoader";
+import { persistentStore } from "../../core/storage/PersistentStoreManager";
 import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { addNotification } from "../../store/notificationStore";
@@ -132,6 +135,15 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
 
+  // Edit project state
+  const [editingProject, setEditingProject] = useState<{
+    id: string;
+    name: string;
+    description: string;
+  } | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+
   // Load server projects when Server tab is selected
   useEffect(() => {
     if (activeTab === "Server" && serverProjects.length === 0) {
@@ -182,6 +194,138 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
         duration: 5000,
       });
     }
+  };
+
+  // Export a scene graph to a file
+  const handleExport = async (projectId: string) => {
+    try {
+      const blob = await persistentStore.exportSceneGraph(projectId);
+      const project = serverProjects.find((p) => p.id === projectId);
+      const fileName = `${project?.name || "scene-graph"}.json`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      addNotification({
+        message: `Exported "${fileName}" successfully`,
+        type: "success",
+        duration: 8000,
+      });
+    } catch (err) {
+      console.error("Error exporting project:", err);
+      addNotification({
+        message: "Failed to export project",
+        type: "error",
+        duration: 8000,
+      });
+    }
+  };
+
+  // Copy a project
+  const handleCopy = async (projectId: string) => {
+    try {
+      const sceneGraph = await persistentStore.loadSceneGraph(projectId);
+      if (sceneGraph) {
+        // Update the scene graph with a "Copy of" prefix
+        const metadata = sceneGraph.getMetadata();
+        sceneGraph.setMetadata({
+          ...metadata,
+          name: `Copy of ${metadata.name || "Untitled"}`,
+        });
+        handleLoadSceneGraph(sceneGraph);
+        onClose();
+        addNotification({
+          message: "Ready to save copy of project",
+          type: "info",
+          duration: 8000,
+        });
+      }
+    } catch (err) {
+      console.error("Error copying project:", err);
+      addNotification({
+        message: "Failed to copy project",
+        type: "error",
+        duration: 8000,
+      });
+    }
+  };
+
+  // Delete a project
+  const handleDelete = async (projectId: string) => {
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      try {
+        const project = serverProjects.find((p) => p.id === projectId);
+        await deleteProject(projectId);
+        await loadServerProjects(); // Refresh the list
+        addNotification({
+          message: `Project "${project?.name || projectId}" deleted`,
+          type: "info",
+          duration: 8000,
+        });
+      } catch (err) {
+        console.error("Error deleting project:", err);
+        addNotification({
+          message: "Failed to delete project",
+          type: "error",
+          duration: 8000,
+        });
+      }
+    }
+  };
+
+  // Edit a project
+  const handleEdit = (projectId: string) => {
+    const project = serverProjects.find((p) => p.id === projectId);
+    if (project) {
+      setEditingProject({
+        id: projectId,
+        name: project.name || "",
+        description: project.description || "",
+      });
+      setEditName(project.name || "");
+      setEditDescription(project.description || "");
+    }
+  };
+
+  // Save edit changes
+  const handleSaveEdit = React.useCallback(async () => {
+    if (!editingProject) return;
+
+    try {
+      await updateProject(editingProject.id, {
+        name: editName.trim(),
+        description: editDescription.trim(),
+      });
+
+      await loadServerProjects(); // Refresh the list
+      setEditingProject(null);
+      setEditName("");
+      setEditDescription("");
+
+      addNotification({
+        message: "Project updated successfully",
+        type: "success",
+        duration: 3000,
+      });
+    } catch (err) {
+      console.error("Error updating project:", err);
+      addNotification({
+        message: "Failed to update project",
+        type: "error",
+        duration: 5000,
+      });
+    }
+  }, [editingProject, editName, editDescription]);
+
+  // Cancel edit
+  const handleCancelEdit = () => {
+    setEditingProject(null);
+    setEditName("");
+    setEditDescription("");
   };
 
   const toggleExpand = (category: string) => {
@@ -280,12 +424,19 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        if (editingProject) {
+          handleCancelEdit();
+        } else {
+          onClose();
+        }
+      } else if (e.key === "Enter" && e.ctrlKey && editingProject) {
+        e.preventDefault();
+        handleSaveEdit();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, editingProject, handleSaveEdit]);
 
   return (
     <div className={`${styles.overlay} ${isDarkMode ? styles.dark : ""}`}>
@@ -553,11 +704,67 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
               loading={serverLoading}
               error={serverError}
               onProjectDoubleClick={handleServerProjectSelect}
+              onExport={handleExport}
+              onCopy={handleCopy}
+              onDelete={handleDelete}
+              onEdit={handleEdit}
               style={{ marginTop: 0 }}
             />
           </div>
         )}
       </div>
+
+      {/* Edit Project Dialog */}
+      {editingProject && (
+        <div className={styles.editOverlay} onClick={handleCancelEdit}>
+          <div
+            className={styles.editDialog}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.editHeader}>
+              <h3>Edit Project</h3>
+              <button onClick={handleCancelEdit} className={styles.closeButton}>
+                ×
+              </button>
+            </div>
+            <div className={styles.editContent}>
+              <div className={styles.editField}>
+                <label htmlFor="edit-name">Name:</label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Project name"
+                  className={styles.editInput}
+                />
+              </div>
+              <div className={styles.editField}>
+                <label htmlFor="edit-description">Description:</label>
+                <textarea
+                  id="edit-description"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Project description"
+                  className={styles.editTextarea}
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className={styles.editActions}>
+              <button
+                onClick={handleCancelEdit}
+                className={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button onClick={handleSaveEdit} className={styles.saveButton}>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

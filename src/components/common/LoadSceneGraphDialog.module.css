@@ -370,3 +370,132 @@
     transform: rotate(360deg);
   }
 }
+
+/* Edit Dialog Styles */
+.editOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.editDialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dark .editDialog {
+  background: #1f2937;
+  color: white;
+}
+
+.editHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.editHeader h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.editContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.editField label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.editInput,
+.editTextarea {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  color: #333;
+}
+
+.dark .editInput,
+.dark .editTextarea {
+  background: #2d3748;
+  color: white;
+  border: 1px solid #4a5568;
+}
+
+.editInput:focus,
+.editTextarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.dark .editInput:focus,
+.dark .editTextarea:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+}
+
+.editTextarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.editActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cancelButton {
+  padding: 8px 16px;
+  font-size: 14px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: #5a6268;
+}
+
+.saveButton {
+  padding: 8px 16px;
+  font-size: 14px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.saveButton:hover {
+  background: #0056b3;
+}
