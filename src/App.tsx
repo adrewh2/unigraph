@@ -813,6 +813,10 @@ const AppContent: React.FC<{
     [handleLoadSceneGraph]
   );
 
+  // Initialize command palette after handleSetSceneGraph is defined
+  const { isCommandPaletteOpen, setCommandPaletteOpen } = useDialogStore();
+  const { commands, executeCommand } = useCommandPalette(handleSetSceneGraph);
+
   // useEffect(() => {
   //   // Hide scrollbar
   //   document.body.style.overflow = "hidden";
@@ -1796,10 +1800,10 @@ const AppContent: React.FC<{
         onMouseMove={handleMouseMove}
       >
         <CommandPalette
-          isOpen={false}
-          commands={[]}
-          onClose={() => {}}
-          onExecuteCommand={() => {}}
+          isOpen={isCommandPaletteOpen}
+          commands={commands}
+          onClose={() => setCommandPaletteOpen(false)}
+          onExecuteCommand={executeCommand}
         />
         <Workspace
           menuConfig={menuConfig}
@@ -2014,19 +2018,8 @@ const App: React.FC<AppProps> = ({
   defaultActiveView,
   defaultActiveLayout,
 }) => {
-  // Initialize the command palette
-  const { isCommandPaletteOpen, setCommandPaletteOpen } = useDialogStore();
-  const { commands, executeCommand } = useCommandPalette();
-
   return (
     <MousePositionProvider>
-      {/* Add the CommandPalette component */}
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        commands={commands}
-        onClose={() => setCommandPaletteOpen(false)}
-        onExecuteCommand={executeCommand}
-      />
       <AppContent
         defaultGraph={defaultGraph}
         svgUrl={svgUrl}

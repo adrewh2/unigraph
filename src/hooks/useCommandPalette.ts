@@ -2,10 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "../core/layouts/GraphologyLayoutEngine";
 import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutType";
-import {
-  getAllDemoSceneGraphKeys,
-  getSceneGraph,
-} from "../data/DemoSceneGraphs";
+import { getAllDemoSceneGraphKeys } from "../data/DemoSceneGraphs";
 import useAppConfigStore, {
   getCurrentSceneGraph,
 } from "../store/appConfigStore";
@@ -20,7 +17,9 @@ export interface Command {
   children?: Command[];
 }
 
-export const useCommandPalette = () => {
+export const useCommandPalette = (
+  handleSetSceneGraph?: (key: string, clearQueryParams?: boolean) => void
+) => {
   const [isOpen, setIsOpen] = useState(false);
   const [commands, setCommands] = useState<Command[]>([]);
   const [demoStep, setDemoStep] = useState(false); // Track if in demo selection step
@@ -55,17 +54,14 @@ export const useCommandPalette = () => {
           title: key,
           description: `Load the ${key} demo graph`,
           execute: () => {
-            try {
-              const graph = getSceneGraph(key);
-              if (typeof graph === "function") {
-                // Handle async loading later in App.tsx
-              }
+            if (handleSetSceneGraph) {
+              handleSetSceneGraph(key, true);
+            } else {
+              // Fallback to URL-based loading
               const url = new URL(window.location.href);
               url.searchParams.set("graph", key);
               window.history.pushState({}, "", url.toString());
               window.location.reload();
-            } catch (err) {
-              console.error(`Error loading demo graph ${key}:`, err);
             }
             setDemoStep(false);
             setDemoFilter("");
@@ -117,22 +113,35 @@ export const useCommandPalette = () => {
         title: key,
         description: `Load the ${key} demo graph`,
         execute: () => {
-          try {
-            const graph = getSceneGraph(key);
-            if (typeof graph === "function") {
-              // Handle async loading later in App.tsx
-            }
+          if (handleSetSceneGraph) {
+            handleSetSceneGraph(key, true);
+          } else {
+            // Fallback to URL-based loading
             const url = new URL(window.location.href);
             url.searchParams.set("graph", key);
             window.history.pushState({}, "", url.toString());
             window.location.reload();
-          } catch (err) {
-            console.error(`Error loading demo graph ${key}:`, err);
           }
         },
       }));
 
       const defaultCommands: Command[] = [
+        {
+          id: "new-project",
+          title: "Project: New",
+          description: "Create a new project",
+          execute: () => {
+            if (handleSetSceneGraph) {
+              handleSetSceneGraph("Empty", true);
+            } else {
+              // Fallback to URL-based loading
+              const url = new URL(window.location.href);
+              url.searchParams.set("graph", "Empty");
+              window.history.pushState({}, "", url.toString());
+              window.location.reload();
+            }
+          },
+        },
         {
           id: "open-project",
           title: "Project: Open",
@@ -270,6 +279,7 @@ export const useCommandPalette = () => {
     demoStep,
     demoFilter,
     demoGraphKeys,
+    handleSetSceneGraph,
   ]);
 
   // Register keyboard shortcut
