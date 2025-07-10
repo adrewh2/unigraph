@@ -1,8 +1,11 @@
 import type { ColDef } from "ag-grid-community";
-import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import "ag-grid-community/styles/ag-theme-alpine.css";
+import {
+  AllCommunityModule,
+  ModuleRegistry,
+  themeBalham,
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -29,19 +32,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
   onProjectDoubleClick,
   style = {},
 }) => {
-  // Debug: Check if Alpine theme CSS is loaded
-  useEffect(() => {
-    const alpineStyles = Array.from(document.styleSheets).some(
-      (sheet) =>
-        sheet.href?.includes("ag-theme-alpine") ||
-        ((sheet as any).cssRules &&
-          Array.from((sheet as any).cssRules).some((rule: any) =>
-            rule.selectorText?.includes("ag-theme-alpine")
-          ))
-    );
-    console.log("Alpine theme loaded:", alpineStyles);
-  }, []);
-
   const [colDefs] = useState<ColDef<ProjectRow>[]>([
     { headerName: "Name", field: "name", flex: 1, filter: true },
     { headerName: "Description", field: "description", flex: 2, filter: true },
@@ -83,7 +73,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
 
   return (
     <div
-      className="ag-theme-alpine"
       style={{
         width: "100%",
         height: "320px",
@@ -93,6 +82,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
       }}
     >
       <AgGridReact
+        theme={themeBalham}
         rowData={projects}
         loadingOverlayComponentParams={{
           loadingMessage: "Loading projects...",
