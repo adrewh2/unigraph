@@ -130,7 +130,7 @@ export async function updateProject(
 
   // Prepare update data
   const updateData: Partial<SupabaseProject> = {
-    last_updated_at: new Date().toISOString(),
+    // last_updated_at: new Date().toISOString(),
   };
 
   if (updates.name !== undefined) {

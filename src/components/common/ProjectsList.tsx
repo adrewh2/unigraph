@@ -50,7 +50,10 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     newName: string;
   } | null>(null);
 
-  // Edit dialog state
+  // Spinner state for copy progress
+  const [copying, setCopying] = useState(false);
+
+  // Edit dialog state (was missing)
   const [editDialog, setEditDialog] = useState<{
     projectId: string;
     projectName: string;
@@ -74,13 +77,21 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
   // Save copy to Supabase
   const handleSaveCopy = async () => {
     if (!copyDialog) return;
-
-    const result = await copyProject(copyDialog.projectId, copyDialog.newName);
-
-    handleProjectActionResult(result, () => {
+    setCopying(true);
+    try {
+      const result = await copyProject(
+        copyDialog.projectId,
+        copyDialog.newName
+      );
+      handleProjectActionResult(result, () => {
+        setCopyDialog(null);
+        setCopying(false);
+        onRefresh?.(); // Refresh the project list
+      });
+    } finally {
+      setCopying(false);
       setCopyDialog(null);
-      onRefresh?.(); // Refresh the project list
-    });
+    }
   };
 
   // Cancel copy
@@ -441,147 +452,215 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
         }
       />
 
-      {/* Copy Dialog */}
-      {copyDialog && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 2000,
-          }}
-          onClick={handleCancelCopy}
-        >
+      {/* Copy Dialog or Spinner */}
+      {copyDialog &&
+        (copying ? (
           <div
             style={{
-              background: "white",
-              borderRadius: "8px",
-              padding: "24px",
-              width: "400px",
-              maxWidth: "90vw",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
               display: "flex",
-              flexDirection: "column",
-              gap: "16px",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 2000,
             }}
-            onClick={(e) => e.stopPropagation()}
           >
             <div
               style={{
+                background: "white",
+                borderRadius: "8px",
+                padding: "32px",
                 display: "flex",
-                justifyContent: "space-between",
+                flexDirection: "column",
                 alignItems: "center",
-                marginBottom: "8px",
+                gap: "16px",
+                minWidth: 120,
               }}
             >
-              <h3 style={{ margin: 0, fontSize: "18px" }}>Copy Project</h3>
-              <button
-                onClick={handleCancelCopy}
-                style={{
-                  background: "none",
-                  border: "none",
-                  fontSize: "24px",
-                  cursor: "pointer",
-                  color: "#666",
-                }}
+              <svg
+                style={{ margin: 8, animation: "spin 1s linear infinite" }}
+                width={40}
+                height={40}
+                viewBox="0 0 50 50"
               >
-                ×
-              </button>
+                <circle
+                  cx="25"
+                  cy="25"
+                  r="20"
+                  fill="none"
+                  stroke="#1976d2"
+                  strokeWidth="5"
+                  strokeDasharray="31.4 31.4"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div style={{ color: "#1976d2", fontWeight: 600, fontSize: 16 }}>
+                Copying project...
+              </div>
             </div>
+            <style>
+              {`@keyframes spin { 100% { transform: rotate(360deg); } }`}
+            </style>
+          </div>
+        ) : (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 2000,
+            }}
+            onClick={handleCancelCopy}
+          >
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+              style={{
+                background: "white",
+                borderRadius: "8px",
+                padding: "24px",
+                width: "400px",
+                maxWidth: "90vw",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div
-                style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "8px",
+                }}
               >
-                <label style={{ fontWeight: 500, fontSize: "14px" }}>
-                  Original Project:
-                </label>
-                <div style={{ fontSize: "14px", color: "#666" }}>
-                  {copyDialog.projectName}
+                <h3 style={{ margin: 0, fontSize: "18px" }}>Copy Project</h3>
+                <button
+                  onClick={handleCancelCopy}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                    color: "#666",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  <label style={{ fontWeight: 500, fontSize: "14px" }}>
+                    Original Project:
+                  </label>
+                  <div style={{ fontSize: "14px", color: "#666" }}>
+                    {copyDialog.projectName}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  <label
+                    htmlFor="copy-name"
+                    style={{ fontWeight: 500, fontSize: "14px" }}
+                  >
+                    New Project Name:
+                  </label>
+                  <input
+                    id="copy-name"
+                    type="text"
+                    value={copyDialog.newName}
+                    onChange={(e) =>
+                      setCopyDialog((prev) =>
+                        prev ? { ...prev, newName: e.target.value } : null
+                      )
+                    }
+                    placeholder="Enter new project name"
+                    style={{
+                      padding: "8px 12px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSaveCopy();
+                      } else if (e.key === "Escape") {
+                        handleCancelCopy();
+                      }
+                    }}
+                    autoFocus
+                  />
                 </div>
               </div>
               <div
-                style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                  marginTop: "8px",
+                }}
               >
-                <label
-                  htmlFor="copy-name"
-                  style={{ fontWeight: 500, fontSize: "14px" }}
-                >
-                  New Project Name:
-                </label>
-                <input
-                  id="copy-name"
-                  type="text"
-                  value={copyDialog.newName}
-                  onChange={(e) =>
-                    setCopyDialog((prev) =>
-                      prev ? { ...prev, newName: e.target.value } : null
-                    )
-                  }
-                  placeholder="Enter new project name"
+                <button
+                  onClick={handleCancelCopy}
                   style={{
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
+                    padding: "8px 16px",
                     fontSize: "14px",
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSaveCopy();
-                    } else if (e.key === "Escape") {
-                      handleCancelCopy();
-                    }
+                  disabled={copying}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveCopy}
+                  style={{
+                    padding: "8px 16px",
+                    fontSize: "14px",
+                    background: "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: copying ? "not-allowed" : "pointer",
+                    opacity: copying ? 0.7 : 1,
                   }}
-                  autoFocus
-                />
+                  disabled={copying}
+                >
+                  Copy
+                </button>
               </div>
             </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "12px",
-                marginTop: "8px",
-              }}
-            >
-              <button
-                onClick={handleCancelCopy}
-                style={{
-                  padding: "8px 16px",
-                  fontSize: "14px",
-                  background: "#6c757d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveCopy}
-                style={{
-                  padding: "8px 16px",
-                  fontSize: "14px",
-                  background: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Copy
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        ))}
 
       {/* Edit Dialog */}
       {editDialog && (
