@@ -51,6 +51,7 @@ import {
   getShowEntityDataCard,
   setShowEntityDataCard,
 } from "../store/appConfigStore";
+import { openCommandPalette } from "../store/dialogStore";
 import { clearDocuments, getAllDocuments } from "../store/documentStore";
 import {
   applyLayoutAndTriggerAppUpdate,
@@ -206,6 +207,11 @@ export class MenuConfig {
             action: () => {
               // TODO: Implement Display Manager window
               console.log("Open Display Manager");
+            },
+          },
+          "Command Palette": {
+            action: () => {
+              openCommandPalette();
             },
           },
         },

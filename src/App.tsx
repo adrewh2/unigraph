@@ -2001,15 +2001,16 @@ const App: React.FC<AppProps> = ({
   defaultActiveLayout,
 }) => {
   // Initialize the command palette
-  const { isOpen, setIsOpen, commands, executeCommand } = useCommandPalette();
+  const { isCommandPaletteOpen, setCommandPaletteOpen } = useDialogStore();
+  const { commands, executeCommand } = useCommandPalette();
 
   return (
     <MousePositionProvider>
       {/* Add the CommandPalette component */}
       <CommandPalette
-        isOpen={isOpen}
+        isOpen={isCommandPaletteOpen}
         commands={commands}
-        onClose={() => setIsOpen(false)}
+        onClose={() => setCommandPaletteOpen(false)}
         onExecuteCommand={executeCommand}
       />
       <AppContent

@@ -20,6 +20,7 @@ type DialogState = {
   showSceneGraphDetailView: ISceneGraphDetailViewState;
   showFilterManager: ILayoutManagerState;
   showFilterWindow: boolean;
+  isCommandPaletteOpen: boolean;
 
   setShowLoadSceneGraphWindow: (show: boolean) => void;
   setShowSaveSceneGraphDialog: (show: boolean) => void;
@@ -30,6 +31,7 @@ type DialogState = {
   setShowSceneGraphDetailView: (args: ISceneGraphDetailViewState) => void;
   setShowFilterManager: (mode: "save" | "load", show: boolean) => void;
   setShowFilterWindow: (show: boolean) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
 };
 
 const useDialogStore = create<DialogState>((set) => ({
@@ -42,6 +44,7 @@ const useDialogStore = create<DialogState>((set) => ({
   showSceneGraphDetailView: { show: false, readOnly: true },
   showFilterManager: { mode: "load", show: false },
   showFilterWindow: false,
+  isCommandPaletteOpen: false,
 
   setShowLoadSceneGraphWindow: (show) =>
     set({ showLoadSceneGraphWindow: show }),
@@ -60,6 +63,7 @@ const useDialogStore = create<DialogState>((set) => ({
   setShowFilterManager: (mode, show) =>
     set({ showFilterManager: { mode, show } }),
   setShowFilterWindow: (show) => set({ showFilterWindow: show }),
+  setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
 }));
 
 export const setShowSceneGraphDetailView = () => {
@@ -69,3 +73,12 @@ export const setShowSceneGraphDetailView = () => {
 };
 
 export default useDialogStore;
+
+// Public methods for controlling the command palette
+export function openCommandPalette() {
+  useDialogStore.getState().setCommandPaletteOpen(true);
+}
+
+export function closeCommandPalette() {
+  useDialogStore.getState().setCommandPaletteOpen(false);
+}
