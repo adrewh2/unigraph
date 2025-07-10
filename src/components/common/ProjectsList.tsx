@@ -400,14 +400,9 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
         width: "100%",
         height: "320px",
         borderRadius: 10,
-        border: "2px solid red", // Make border more visible for debugging
-        backgroundColor: "#f0f0f0", // Add background for debugging
         ...style,
       }}
     >
-      <div style={{ padding: "10px", backgroundColor: "yellow" }}>
-        Debug: Projects count = {projects.length}
-      </div>
       <AgGridReact
         theme={themeBalham}
         rowData={projects}
