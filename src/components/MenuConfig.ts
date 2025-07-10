@@ -51,8 +51,13 @@ import {
   getShowEntityDataCard,
   setShowEntityDataCard,
 } from "../store/appConfigStore";
-import { openCommandPalette } from "../store/dialogStore";
+
+import {
+  setShowCommandPalette,
+  setShowLoadSceneGraphWindow,
+} from "../store/dialogStore";
 import { clearDocuments, getAllDocuments } from "../store/documentStore";
+
 import {
   applyLayoutAndTriggerAppUpdate,
   computeLayoutAndTriggerUpdateForCurrentSceneGraph,
@@ -163,23 +168,25 @@ export class MenuConfig {
     return {
       Project: {
         submenu: {
-          "Save as new": {
-            action: () => {
-              // TODO: Implement Save as new project
-              console.log("Save as new project");
-            },
-          },
           Save: {
             action: () => {
               // TODO: Implement Save project
               console.log("Save project");
             },
+            tooltip: "cmd+s",
+          },
+          "Save as new": {
+            action: () => {
+              // TODO: Implement Save as new project
+              console.log("Save as new project");
+            },
+            tooltip: "cmd+shift+s",
           },
           Load: {
             action: () => {
-              // TODO: Implement Load project
-              console.log("Load project");
+              setShowLoadSceneGraphWindow(true);
             },
+            tooltip: "cmd+shift+o",
           },
           "Open manager": {
             action: () => {
@@ -211,7 +218,7 @@ export class MenuConfig {
           },
           "Command Palette": {
             action: () => {
-              openCommandPalette();
+              setShowCommandPalette(true);
             },
             tooltip: "cmd+shift+p",
           },

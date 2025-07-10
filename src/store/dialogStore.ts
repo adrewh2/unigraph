@@ -66,19 +66,49 @@ const useDialogStore = create<DialogState>((set) => ({
   setCommandPaletteOpen: (open) => set({ isCommandPaletteOpen: open }),
 }));
 
-export const setShowSceneGraphDetailView = () => {
-  useDialogStore.setState(() => ({
-    showSceneGraphDetailView: { show: true, readOnly: false },
-  }));
-};
+// Public methods for controlling dialogs
+export function setShowLoadSceneGraphWindow(show: boolean) {
+  useDialogStore.getState().setShowLoadSceneGraphWindow(show);
+}
 
-export default useDialogStore;
+export function setShowSaveSceneGraphDialog(show: boolean) {
+  useDialogStore.getState().setShowSaveSceneGraphDialog(show);
+}
+
+export function setShowSaveAsNewProjectDialog(show: boolean) {
+  useDialogStore.getState().setShowSaveAsNewProjectDialog(show);
+}
+
+export function setShowPathAnalysis(show: boolean) {
+  useDialogStore.getState().setShowPathAnalysis(show);
+}
+
+export function setShowEntityTables(show: boolean) {
+  useDialogStore.getState().setShowEntityTables(show);
+}
+
+export function setShowLayoutManager(mode: "save" | "load", show: boolean) {
+  useDialogStore.getState().setShowLayoutManager({ mode, show });
+}
+
+export function setShowSceneGraphDetailView(
+  show: boolean,
+  readOnly: boolean = true
+) {
+  useDialogStore.getState().setShowSceneGraphDetailView({ show, readOnly });
+}
+
+export function setShowFilterManager(mode: "save" | "load", show: boolean) {
+  useDialogStore.getState().setShowFilterManager(mode, show);
+}
+
+export function setShowFilterWindow(show: boolean) {
+  useDialogStore.getState().setShowFilterWindow(show);
+}
 
 // Public methods for controlling the command palette
-export function openCommandPalette() {
-  useDialogStore.getState().setCommandPaletteOpen(true);
+export function setShowCommandPalette(open: boolean) {
+  useDialogStore.getState().setCommandPaletteOpen(open);
 }
 
-export function closeCommandPalette() {
-  useDialogStore.getState().setCommandPaletteOpen(false);
-}
+export default useDialogStore;
