@@ -24,6 +24,7 @@ export async function exportProject(
   projectId: string,
   projectName: string
 ): Promise<ProjectActionResult> {
+  console.log("export called");
   try {
     // Get the project from Supabase
     const project = await getProject({ id: projectId });

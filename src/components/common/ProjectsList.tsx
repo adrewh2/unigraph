@@ -5,7 +5,7 @@ import {
   themeBalham,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   confirmAction,
   copyProject,
@@ -61,7 +61,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
 
   // Handle copy with custom name
   const handleCopy = async (projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
+    const project = projectsRef.current.find((p) => p.id === projectId);
     if (project) {
       setCopyDialog({
         projectId,
@@ -90,7 +90,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
 
   // Handle edit
   const handleEdit = async (projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
+    const project = projectsRef.current.find((p) => p.id === projectId);
     if (project) {
       setEditDialog({
         projectId,
@@ -122,18 +122,34 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     setEditDialog(null);
   };
 
+  // Add a ref to always have the latest projects array
+  const projectsRef = useRef<ProjectRow[]>(projects);
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
+
   // Handle export
   const handleExport = async (projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
+    // Use the ref to get the latest projects array
+    console.log(
+      "handleExport called with projectId:",
+      projectId,
+      projectsRef.current
+    );
+    const project = projectsRef.current.find((p) => p.id === projectId);
     if (project) {
+      console.log("Found project:", project);
       const result = await exportProject(projectId, project.name);
       handleProjectActionResult(result);
+    } else {
+      console.log("Project not found for ID:", projectId);
     }
   };
 
   // Handle delete
   const handleDelete = async (projectId: string) => {
-    const project = projects.find((p) => p.id === projectId);
+    console.log("handleDelete called with projectId:", projectId);
+    const project = projectsRef.current.find((p) => p.id === projectId);
     if (project) {
       const confirmed = await confirmAction(
         `Are you sure you want to delete "${project.name}"?`
@@ -151,6 +167,8 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
   // Action column renderer
   const ActionCellRenderer = (props: any) => {
     const { data } = props;
+    console.log("ActionCellRenderer rendered for data:", data);
+    console.log("ActionCellRenderer props:", props);
     return (
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
         <button
@@ -163,6 +181,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             padding: 2,
           }}
           onClick={(e) => {
+            console.log("Export button clicked for project:", data?.id);
             e.stopPropagation();
             handleExport(data.id);
           }}
@@ -187,6 +206,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             padding: 2,
           }}
           onClick={(e) => {
+            console.log("Copy button clicked for project:", data?.id);
             e.stopPropagation();
             handleCopy(data.id);
           }}
@@ -222,6 +242,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             padding: 2,
           }}
           onClick={(e) => {
+            console.log("Edit button clicked for project:", data?.id);
             e.stopPropagation();
             handleEdit(data.id);
           }}
@@ -253,6 +274,7 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             padding: 2,
           }}
           onClick={(e) => {
+            console.log("Delete button clicked for project:", data?.id);
             e.stopPropagation();
             handleDelete(data.id);
           }}
@@ -277,6 +299,8 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
       </div>
     );
   };
+
+  console.log("ActionCellRenderer defined");
 
   const [colDefs] = useState<ColDef<ProjectRow>[]>([
     { headerName: "Name", field: "name", flex: 1, filter: false },
@@ -338,6 +362,17 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
     },
   ]);
 
+  console.log("ProjectsList rendered with projects:", projects);
+  console.log("Column definitions:", colDefs);
+
+  // Debug the first project structure
+  if (projects.length > 0) {
+    console.log("First project structure:", projects[0]);
+    console.log("First project keys:", Object.keys(projects[0]));
+    console.log("First project id:", projects[0].id);
+    console.log("First project name:", projects[0].name);
+  }
+
   const defaultColDef = useMemo(
     () => ({
       filter: false, // Disable built-in filtering to prevent interference
@@ -354,10 +389,14 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
         width: "100%",
         height: "320px",
         borderRadius: 10,
-        border: "1px solid #ccc",
+        border: "2px solid red", // Make border more visible for debugging
+        backgroundColor: "#f0f0f0", // Add background for debugging
         ...style,
       }}
     >
+      <div style={{ padding: "10px", backgroundColor: "yellow" }}>
+        Debug: Projects count = {projects.length}
+      </div>
       <AgGridReact
         theme={themeBalham}
         rowData={projects}
@@ -375,7 +414,22 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
         suppressContextMenu={false}
         allowContextMenuWithControlKey={false}
         suppressMenuHide={false}
+        onGridReady={(params) => {
+          console.log("AG Grid ready with params:", params);
+          console.log("Grid API:", params.api);
+          console.log("Row data at grid ready:", projects);
+          console.log("Column definitions at grid ready:", colDefs);
+        }}
+        onRowDataUpdated={(event) => {
+          console.log("Row data updated event:", event);
+          console.log("Current row data:", event.api.getRenderedNodes());
+        }}
+        onModelUpdated={(event) => {
+          console.log("Model updated event:", event);
+          console.log("Row count:", event.api.getDisplayedRowCount());
+        }}
         onRowDoubleClicked={(event) => {
+          console.log("Row double clicked:", event);
           if (event.data && event.data.id && onProjectDoubleClick) {
             onProjectDoubleClick(event.data.id);
           }
@@ -385,7 +439,6 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             ? `<span style="color:red;">${error}</span>`
             : `<span style="color:#888;">No projects found</span>`
         }
-        sideBar={true}
       />
 
       {/* Copy Dialog */}

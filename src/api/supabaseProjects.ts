@@ -51,8 +51,11 @@ export async function saveProjectToSupabase(sceneGraph: SceneGraph) {
 }
 
 export async function listProjects(): Promise<Omit<SupabaseProject, "data">[]> {
+  console.log("listProjects called");
   // Get the current user
   const { data: userData, error: userError } = await supabase.auth.getUser();
+  console.log("User data:", userData);
+  console.log("User error:", userError);
   if (userError || !userData?.user?.id) throw new Error("User not logged in");
 
   // Select all columns except 'data'
@@ -62,6 +65,8 @@ export async function listProjects(): Promise<Omit<SupabaseProject, "data">[]> {
     .eq("user_id", userData.user.id)
     .order("last_updated_at", { ascending: false });
 
+  console.log("Database query result - data:", data);
+  console.log("Database query result - error:", error);
   if (error) throw error;
   return data || [];
 }

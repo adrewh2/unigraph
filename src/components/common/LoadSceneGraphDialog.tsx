@@ -21,6 +21,7 @@ import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { addNotification } from "../../store/notificationStore";
 import { useUserStore } from "../../store/userStore"; // <-- new import for user state
+import { supabase } from "../../utils/supabaseClient";
 import styles from "./LoadSceneGraphDialog.module.css";
 import ProjectsList from "./ProjectsList";
 
@@ -117,10 +118,39 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   // Get user state from store
   const { isSignedIn } = useUserStore();
 
+  console.log("LoadSceneGraphDialog - isSignedIn:", isSignedIn);
+
+  // Check actual Supabase authentication state
+  const [actualIsSignedIn, setActualIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const signedIn = !!user;
+      console.log("Actual Supabase auth state:", signedIn, "User:", user);
+      setActualIsSignedIn(signedIn);
+    };
+    checkAuth();
+  }, []);
+
   // Set default tab based on user sign-in state
   const [activeTab, setActiveTab] = useState<
     "Server" | "File" | "Text" | "Svg Url" | "Demos"
-  >(isSignedIn ? "Server" : "Demos");
+  >(actualIsSignedIn ? "Server" : "Demos");
+
+  // Update active tab when authentication state changes
+  useEffect(() => {
+    console.log("Auth state changed - actualIsSignedIn:", actualIsSignedIn);
+    if (actualIsSignedIn && activeTab !== "Server") {
+      console.log("Switching to Server tab due to authentication");
+      setActiveTab("Server");
+    } else if (!actualIsSignedIn && activeTab === "Server") {
+      console.log("Switching to Demos tab due to no authentication");
+      setActiveTab("Demos");
+    }
+  }, [actualIsSignedIn, activeTab]);
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
@@ -134,12 +164,30 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
 
+  console.log("LoadSceneGraphDialog - activeTab:", activeTab);
+  console.log("LoadSceneGraphDialog - serverProjects:", serverProjects);
+
   // Load server projects when Server tab is selected
   useEffect(() => {
-    if (activeTab === "Server" && serverProjects.length === 0) {
+    console.log(
+      "useEffect triggered - activeTab:",
+      activeTab,
+      "serverProjects.length:",
+      serverProjects.length,
+      "actualIsSignedIn:",
+      actualIsSignedIn
+    );
+    if (
+      activeTab === "Server" &&
+      serverProjects.length === 0 &&
+      actualIsSignedIn
+    ) {
+      console.log("Loading server projects...");
       loadServerProjects();
+    } else {
+      console.log("Not loading server projects - conditions not met");
     }
-  }, [activeTab, serverProjects.length]);
+  }, [activeTab, serverProjects.length, actualIsSignedIn]);
 
   const loadServerProjects = async () => {
     setServerLoading(true);
@@ -147,6 +195,8 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     try {
       const projects = await listProjects();
       setServerProjects(projects);
+      // Add this log to verify the loaded projects
+      console.log("loadServerProjects: loaded projects", projects);
     } catch (error) {
       console.error("Error loading server projects:", error);
       setServerError("Failed to load projects from server");
@@ -288,6 +338,118 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  // Filtering function for server projects
+  const filterServerProjects = (projects: any[], searchTerm: string): any[] => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return projects;
+
+    return projects.filter((project) => {
+      if (!project || !project.name) return false;
+
+      // Search in name
+      if (project.name.toLowerCase().includes(term)) return true;
+
+      // Search in description
+      if (
+        project.description &&
+        project.description.toLowerCase().includes(term)
+      )
+        return true;
+
+      // Search in last updated date - multiple string representations
+      if (project.last_updated_at) {
+        try {
+          const date = new Date(project.last_updated_at);
+          const searchableStrings = [
+            date.toString(),
+            date.toLocaleString(),
+            date.toLocaleDateString(),
+            date.toISOString(),
+            date.toUTCString(),
+            date.getFullYear().toString(),
+            (date.getMonth() + 1).toString().padStart(2, "0"),
+            date.getDate().toString().padStart(2, "0"),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+          ];
+
+          if (
+            searchableStrings.some((str) => str.toLowerCase().includes(term))
+          ) {
+            return true;
+          }
+        } catch (_) {
+          if (project.last_updated_at.toLowerCase().includes(term)) {
+            return true;
+          }
+        }
+      }
+
+      // Search in created date - multiple string representations
+      if (project.created_at) {
+        try {
+          const date = new Date(project.created_at);
+          const searchableStrings = [
+            date.toString(),
+            date.toLocaleString(),
+            date.toLocaleDateString(),
+            date.toISOString(),
+            date.toUTCString(),
+            date.getFullYear().toString(),
+            (date.getMonth() + 1).toString().padStart(2, "0"),
+            date.getDate().toString().padStart(2, "0"),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+          ];
+
+          if (
+            searchableStrings.some((str) => str.toLowerCase().includes(term))
+          ) {
+            return true;
+          }
+        } catch (_) {
+          if (project.created_at.toLowerCase().includes(term)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+  };
+
+  // Memoize filtered projects to avoid unnecessary recalculation
+  const filteredServerProjects = React.useMemo(
+    () => filterServerProjects(serverProjects, serverSearchTerm),
+    [serverProjects, serverSearchTerm]
+  );
 
   return (
     <div className={`${styles.overlay} ${isDarkMode ? styles.dark : ""}`}>
@@ -431,127 +593,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
               </button>
             </div>
             <ProjectsList
-              projects={serverProjects.filter((project) => {
-                if (!project || !project.name) return false;
-
-                const searchTerm = serverSearchTerm.trim();
-                if (!searchTerm) return true; // Show all if no search term
-
-                const searchTermLower = searchTerm.toLowerCase();
-
-                // Search in name
-                if (project.name.toLowerCase().includes(searchTermLower)) {
-                  return true;
-                }
-
-                // Search in description
-                if (
-                  project.description &&
-                  project.description.toLowerCase().includes(searchTermLower)
-                ) {
-                  return true;
-                }
-
-                // Search in last updated date - multiple string representations
-                if (project.last_updated_at) {
-                  try {
-                    const date = new Date(project.last_updated_at);
-                    const searchableStrings = [
-                      date.toString(),
-                      date.toLocaleString(),
-                      date.toLocaleDateString(),
-                      date.toISOString(),
-                      date.toUTCString(),
-                      date.getFullYear().toString(),
-                      (date.getMonth() + 1).toString().padStart(2, "0"),
-                      date.getDate().toString().padStart(2, "0"),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }),
-                    ];
-
-                    if (
-                      searchableStrings.some((str) =>
-                        str.toLowerCase().includes(searchTermLower)
-                      )
-                    ) {
-                      return true;
-                    }
-                    // eslint-disable-next-line unused-imports/no-unused-vars
-                  } catch (_) {
-                    // If date parsing fails, try searching the raw string
-                    if (
-                      project.last_updated_at
-                        .toLowerCase()
-                        .includes(searchTermLower)
-                    ) {
-                      return true;
-                    }
-                  }
-                }
-
-                // Search in created date - multiple string representations
-                if (project.created_at) {
-                  try {
-                    const date = new Date(project.created_at);
-                    const searchableStrings = [
-                      date.toString(),
-                      date.toLocaleString(),
-                      date.toLocaleDateString(),
-                      date.toISOString(),
-                      date.toUTCString(),
-                      date.getFullYear().toString(),
-                      (date.getMonth() + 1).toString().padStart(2, "0"),
-                      date.getDate().toString().padStart(2, "0"),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }),
-                    ];
-
-                    if (
-                      searchableStrings.some((str) =>
-                        str.toLowerCase().includes(searchTermLower)
-                      )
-                    ) {
-                      return true;
-                    }
-                    // eslint-disable-next-line unused-imports/no-unused-vars
-                  } catch (_) {
-                    // If date parsing fails, try searching the raw string
-                    if (
-                      project.created_at.toLowerCase().includes(searchTermLower)
-                    ) {
-                      return true;
-                    }
-                  }
-                }
-
-                return false;
-              })}
+              projects={filteredServerProjects}
               loading={serverLoading}
               error={serverError}
               onProjectDoubleClick={handleServerProjectSelect}

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useUserStore } from "../../store/userStore";
 import { supabase } from "../../utils/supabaseClient";
 import UserSettingsPanel from "./UserSettingsPanel";
-import { useUserStore } from "../../store/userStore";
 
 // Simple generic profile SVG icon with blue border
 const GenericProfileIcon = ({
