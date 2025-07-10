@@ -62,12 +62,14 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
+        case "Backspace":
+        case "Delete":
         case "Escape":
           if (commandStack.length > 1) {
             setCommandStack(commandStack.slice(0, -1));
             setQuery("");
             setSelectedIndex(0);
-          } else {
+          } else if (e.key === "Escape") {
             onClose();
           }
           break;

@@ -284,17 +284,6 @@ export const useCommandPalette = () => {
         setDemoStep(false);
         setDemoFilter("");
       }
-      // VSCode style: allow typing to filter demo list in demo step
-      if (isOpen && demoStep) {
-        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
-          setDemoFilter((prev) => prev + e.key);
-        } else if (e.key === "Backspace") {
-          setDemoFilter((prev) => prev.slice(0, -1));
-        } else if (e.key === "Escape") {
-          setDemoStep(false);
-          setDemoFilter("");
-        }
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
