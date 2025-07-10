@@ -33,21 +33,54 @@ export const useCommandPalette = () => {
     const defaultCommands: Command[] = [
       {
         id: "open-project",
-        title: "Open Project",
+        title: "Project: Open",
         description: "Open a saved project",
         execute: () => setShowLoadSceneGraphWindow(true),
       },
       {
         id: "save-project",
-        title: "Save Project",
+        title: "Project: Save",
         description: "Save current project",
-        execute: () => setShowSaveSceneGraphDialog(true),
+        execute: () => {
+          throw new Error("Save project command not implemented yet");
+          // setShowSaveSceneGraphDialog(true);
+        },
       },
       {
         id: "save-as-new-project",
         title: "Project: Save as new",
         description: "Save current project as a new project",
         execute: () => setShowSaveAsNewProjectDialog(true),
+      },
+      {
+        id: "export-project",
+        title: "Project: Export",
+        description: "Export current project as JSON file",
+        execute: () => {
+          try {
+            const sceneGraph = currentSceneGraph;
+            const metadata = sceneGraph.getMetadata();
+            const fileName = metadata?.name || "scene-graph";
+
+            // Serialize the scene graph to JSON
+            const jsonData = JSON.stringify(sceneGraph, null, 2);
+            const blob = new Blob([jsonData], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            // Create download link and trigger download
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `${fileName}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Clean up the URL object
+            URL.revokeObjectURL(url);
+          } catch (error) {
+            console.error("Error exporting project:", error);
+          }
+        },
       },
       {
         id: "view-forcegraph3d",
