@@ -276,6 +276,17 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     onClose();
   };
 
+  // Close dialog on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className={`${styles.overlay} ${isDarkMode ? styles.dark : ""}`}>
       <div className={styles.dialog}>
@@ -400,7 +411,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             <div className={styles.toolbar}>
               <input
                 type="text"
-                placeholder="Search by name, description, or date (any substring)..."
+                placeholder="Search for projects..."
                 className={styles.searchBar}
                 value={serverSearchTerm}
                 onChange={(e) => setServerSearchTerm(e.target.value)}
