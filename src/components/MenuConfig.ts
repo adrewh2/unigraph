@@ -213,6 +213,7 @@ export class MenuConfig {
             action: () => {
               openCommandPalette();
             },
+            tooltip: "cmd+shift+p",
           },
         },
       },
