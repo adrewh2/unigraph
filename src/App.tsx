@@ -158,6 +158,7 @@ import {
   applyActiveFilterToAppInstance,
   filterSceneGraphToOnlyVisibleNodes,
 } from "./store/sceneGraphHooks";
+import { useUserStore } from "./store/userStore";
 import useWorkspaceConfigStore, {
   getLeftSidebarConfig,
   getRightSidebarConfig,
@@ -240,6 +241,13 @@ const AppContent: React.FC<{
   defaultActiveView?: string;
   defaultActiveLayout?: string;
 }> = ({ defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout }) => {
+  // Initialize auth store
+  const { initializeAuth } = useUserStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   // Initialize hotkeys
   const hotkeys = getHotkeyConfig();
   useHotkeys(hotkeys);

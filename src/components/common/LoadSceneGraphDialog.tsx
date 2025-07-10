@@ -21,7 +21,6 @@ import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { addNotification } from "../../store/notificationStore";
 import { useUserStore } from "../../store/userStore"; // <-- new import for user state
-import { supabase } from "../../utils/supabaseClient";
 import styles from "./LoadSceneGraphDialog.module.css";
 import ProjectsList from "./ProjectsList";
 
@@ -116,46 +115,31 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   handleLoadSceneGraph,
 }) => {
   // Get user state from store
-  const { isSignedIn } = useUserStore();
+  const { isSignedIn, isLoading: authLoading } = useUserStore();
 
   console.log("LoadSceneGraphDialog - isSignedIn:", isSignedIn);
-
-  // Check actual Supabase authentication state
-  const [actualIsSignedIn, setActualIsSignedIn] = useState(isSignedIn);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const signedIn = !!user;
-      console.log("Actual Supabase auth state:", signedIn, "User:", user);
-      setActualIsSignedIn(signedIn);
-    };
-    checkAuth();
-  }, []);
 
   // Set default tab based on user sign-in state
   const [activeTab, setActiveTab] = useState<
     "Server" | "File" | "Text" | "Svg Url" | "Demos"
-  >(actualIsSignedIn ? "Server" : "Demos");
+  >(isSignedIn ? "Server" : "Demos");
 
   // Track if user manually selected a tab
   const [userSelectedTab, setUserSelectedTab] = useState(false);
 
   // Update active tab when authentication state changes (only if user hasn't manually selected)
   useEffect(() => {
-    console.log("Auth state changed - actualIsSignedIn:", actualIsSignedIn);
+    console.log("Auth state changed - isSignedIn:", isSignedIn);
     if (!userSelectedTab) {
-      if (actualIsSignedIn && activeTab !== "Server") {
+      if (isSignedIn && activeTab !== "Server") {
         console.log("Switching to Server tab due to authentication");
         setActiveTab("Server");
-      } else if (!actualIsSignedIn && activeTab === "Server") {
+      } else if (!isSignedIn && activeTab === "Server") {
         console.log("Switching to Demos tab due to no authentication");
         setActiveTab("Demos");
       }
     }
-  }, [activeTab, actualIsSignedIn, userSelectedTab]);
+  }, [activeTab, isSignedIn, userSelectedTab]);
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
@@ -172,29 +156,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   console.log("LoadSceneGraphDialog - activeTab:", activeTab);
   console.log("LoadSceneGraphDialog - serverProjects:", serverProjects);
 
-  // Load server projects when Server tab is selected
-  useEffect(() => {
-    console.log(
-      "useEffect triggered - activeTab:",
-      activeTab,
-      "serverProjects.length:",
-      serverProjects.length,
-      "actualIsSignedIn:",
-      actualIsSignedIn
-    );
-    if (
-      activeTab === "Server" &&
-      serverProjects.length === 0 &&
-      actualIsSignedIn
-    ) {
-      console.log("Loading server projects...");
-      loadServerProjects();
-    } else {
-      console.log("Not loading server projects - conditions not met");
-    }
-  }, [activeTab, serverProjects.length, actualIsSignedIn]);
-
-  const loadServerProjects = async () => {
+  const loadServerProjects = useCallback(async () => {
     setServerLoading(true);
     setServerError(null);
     try {
@@ -213,7 +175,33 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     } finally {
       setServerLoading(false);
     }
-  };
+  }, []);
+
+  // Load server projects when Server tab is selected
+  useEffect(() => {
+    console.log(
+      "useEffect triggered - activeTab:",
+      activeTab,
+      "serverProjects.length:",
+      serverProjects.length,
+      "isSignedIn:",
+      isSignedIn
+    );
+    if (activeTab === "Server" && serverProjects.length === 0 && isSignedIn) {
+      console.log("Loading server projects...");
+      loadServerProjects();
+    } else {
+      console.log("Not loading server projects - conditions not met");
+    }
+  }, [activeTab, serverProjects.length, isSignedIn, loadServerProjects]);
+
+  // Refresh server projects when authentication state changes
+  useEffect(() => {
+    if (activeTab === "Server" && isSignedIn) {
+      console.log("Auth state changed, refreshing server projects...");
+      loadServerProjects();
+    }
+  }, [isSignedIn, activeTab, loadServerProjects]);
 
   const handleServerProjectSelect = async (projectId: string) => {
     try {
@@ -589,7 +577,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
         )}
         {activeTab === "Server" && (
           <div className={styles.serverTab}>
-            {!actualIsSignedIn ? (
+            {!isSignedIn ? (
               <div className={styles.loginPrompt}>
                 <div className={styles.loginContent}>
                   <h3>Sign in to access your projects</h3>
@@ -601,8 +589,8 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
                     className={styles.loginButton}
                     onClick={() => {
                       // Open signin page as popup with better dimensions and centering
-                      const width = 400;
-                      const height = 500;
+                      const width = 800;
+                      const height = 600;
                       const left = (window.screen.width - width) / 2;
                       const top = (window.screen.height - height) / 2;
 

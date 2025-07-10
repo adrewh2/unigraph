@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useUserStore } from "../../store/userStore";
-import { supabase } from "../../utils/supabaseClient";
 import UserSettingsPanel from "./UserSettingsPanel";
 
 // Simple generic profile SVG icon with blue border
@@ -47,59 +46,20 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
   onSignOut = () => {},
 }) => {
   // Track user session and avatar
-  const [user, setUser] = useState<any>(null);
+  const { isSignedIn, user, getAvatarUrl, signOut } = useUserStore();
   const [avatarError, setAvatarError] = useState(false);
   const [avatarLoaded, setAvatarLoaded] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const setSignedIn = useUserStore((s) => s.setSignedIn);
-
-  // Fetch and track user authentication state
-  useEffect(() => {
-    // Get current user from Supabase
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data?.user);
-      setAvatarError(false); // Reset error state when user changes
-      setSignedIn(!!data?.user); // Update global sign-in state
-    });
-
-    // Listen for auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        setAvatarError(false); // Reset error state when user changes
-        setSignedIn(!!session?.user); // Update global sign-in state
-      }
-    );
-
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
-  }, [setSignedIn]);
 
   // Get avatar URL with fallbacks
-  const getAvatarUrl = () => {
-    if (!user) return null;
-
-    // Try different possible locations for avatar URL
-    const avatarUrl =
-      user?.user_metadata?.avatar_url ||
-      user?.user_metadata?.picture ||
-      user?.identities?.[0]?.identity_data?.avatar_url ||
-      user?.identities?.[0]?.identity_data?.picture;
-
-    return avatarUrl && !avatarError ? avatarUrl : null;
-  };
-
   const avatarUrl = getAvatarUrl();
 
   // Reset avatar loaded state when URL changes
   useEffect(() => {
     setAvatarLoaded(false);
+    setAvatarError(false);
   }, [avatarUrl]);
-
-  // Track sign-in state
-  const isSignedIn = !!user;
 
   // Handle sign out - improved with better error handling
   const handleSignOut = async () => {
@@ -107,17 +67,10 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
       console.log("ProfileIcon: Sign out initiated");
       setShowDropdown(false);
 
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
+      // Sign out using the centralized store
+      await signOut();
 
-      if (error) {
-        throw error;
-      }
-
-      console.log("ProfileIcon: Supabase signout successful");
-
-      // Reset user state
-      setUser(null);
+      console.log("ProfileIcon: Sign out successful");
 
       // Call the provided callback
       onSignOut();
@@ -283,10 +236,10 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
           }}
         >
           {/* Generic icon shown while avatar is loading or if there's an error */}
-          {(!user || !avatarUrl || !avatarLoaded) && (
+          {(!isSignedIn || !avatarUrl || !avatarLoaded || avatarError) && (
             <div
               style={{
-                position: avatarUrl ? "absolute" : "static",
+                position: avatarUrl && !avatarError ? "absolute" : "static",
                 width: "100%",
                 height: "100%",
               }}
@@ -296,7 +249,7 @@ const ProfileIcon: React.FC<ProfileIconProps> = ({
           )}
 
           {/* User avatar */}
-          {user && avatarUrl && (
+          {isSignedIn && avatarUrl && !avatarError && (
             <img
               src={avatarUrl}
               alt="Profile"

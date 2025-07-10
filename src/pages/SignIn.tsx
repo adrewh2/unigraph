@@ -2,6 +2,23 @@ import React, { useEffect, useState } from "react";
 import { FaGithub, FaGoogle } from "react-icons/fa";
 import { supabase } from "../utils/supabaseClient";
 
+// Immediate check for authentication - runs before React renders
+if (typeof window !== "undefined" && window.opener) {
+  // This is a popup window, check auth immediately
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session?.user) {
+      console.log(
+        "SignIn: User already authenticated, closing popup immediately"
+      );
+      window.opener.postMessage(
+        { type: "SIGNED_IN", user: session.user },
+        window.location.origin
+      );
+      window.close();
+    }
+  });
+}
+
 const providers = [
   { name: "Google", id: "google", icon: <FaGoogle /> },
   { name: "GitHub", id: "github", icon: <FaGithub /> },
@@ -12,6 +29,7 @@ export default function SignIn() {
   const [isAlreadySignedIn, setIsAlreadySignedIn] = useState(false);
   const [isPopup, setIsPopup] = useState(false);
   const [initialSession, setInitialSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check if this is a popup window
   useEffect(() => {
@@ -38,9 +56,24 @@ export default function SignIn() {
       setIsAlreadySignedIn(!!user);
       setInitialSession(session);
       console.log("SignIn: Initial session =", session?.user?.id);
+
+      // If this is a popup and user is already signed in, close it immediately
+      if (user && isPopup && window.opener) {
+        console.log(
+          "SignIn: User already signed in, closing popup immediately"
+        );
+        window.opener.postMessage(
+          { type: "SIGNED_IN", user: user },
+          window.location.origin
+        );
+        window.close();
+        return; // Don't set loading to false, let the popup close
+      }
+
+      setIsLoading(false);
     };
     checkAuth();
-  }, []);
+  }, [isPopup]);
 
   const handleSignIn = async (provider: string) => {
     console.log("SignIn: Starting OAuth with", provider);
@@ -125,17 +158,10 @@ export default function SignIn() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isPopup]);
 
-  // If user is already signed in and this is a popup, close it immediately
-  useEffect(() => {
-    if (isAlreadySignedIn && isPopup && window.opener) {
-      console.log("SignIn: User already signed in, closing popup");
-      window.opener.postMessage(
-        { type: "SIGNED_IN", user: initialSession?.user },
-        window.location.origin
-      );
-      window.close();
-    }
-  }, [isAlreadySignedIn, isPopup, initialSession]);
+  // Don't render anything while loading (prevents flash)
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <div
