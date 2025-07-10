@@ -140,17 +140,22 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     "Server" | "File" | "Text" | "Svg Url" | "Demos"
   >(actualIsSignedIn ? "Server" : "Demos");
 
-  // Update active tab when authentication state changes
+  // Track if user manually selected a tab
+  const [userSelectedTab, setUserSelectedTab] = useState(false);
+
+  // Update active tab when authentication state changes (only if user hasn't manually selected)
   useEffect(() => {
     console.log("Auth state changed - actualIsSignedIn:", actualIsSignedIn);
-    if (actualIsSignedIn && activeTab !== "Server") {
-      console.log("Switching to Server tab due to authentication");
-      setActiveTab("Server");
-    } else if (!actualIsSignedIn && activeTab === "Server") {
-      console.log("Switching to Demos tab due to no authentication");
-      setActiveTab("Demos");
+    if (!userSelectedTab) {
+      if (actualIsSignedIn && activeTab !== "Server") {
+        console.log("Switching to Server tab due to authentication");
+        setActiveTab("Server");
+      } else if (!actualIsSignedIn && activeTab === "Server") {
+        console.log("Switching to Demos tab due to no authentication");
+        setActiveTab("Demos");
+      }
     }
-  }, [actualIsSignedIn, activeTab]);
+  }, [activeTab, actualIsSignedIn, userSelectedTab]);
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
@@ -465,7 +470,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "Server" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Server")}
+            onClick={() => {
+              setActiveTab("Server");
+              setUserSelectedTab(true);
+            }}
           >
             Server
           </button>
@@ -473,7 +481,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "File" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("File")}
+            onClick={() => {
+              setActiveTab("File");
+              setUserSelectedTab(true);
+            }}
           >
             File
           </button>
@@ -481,7 +492,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "Demos" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Demos")}
+            onClick={() => {
+              setActiveTab("Demos");
+              setUserSelectedTab(true);
+            }}
           >
             Demos
           </button>
@@ -489,7 +503,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "Svg Url" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Svg Url")}
+            onClick={() => {
+              setActiveTab("Svg Url");
+              setUserSelectedTab(true);
+            }}
           >
             Svg Url
           </button>
@@ -572,34 +589,56 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
         )}
         {activeTab === "Server" && (
           <div className={styles.serverTab}>
-            <div className={styles.toolbar}>
-              <input
-                type="text"
-                placeholder="Search for projects..."
-                className={styles.searchBar}
-                value={serverSearchTerm}
-                onChange={(e) => setServerSearchTerm(e.target.value)}
-              />
-              <button
-                className={styles.toolbarIconButton}
-                onClick={loadServerProjects}
-                disabled={serverLoading}
-                title="Refresh projects"
-              >
-                <RefreshCw
-                  size={20}
-                  className={serverLoading ? styles.spinning : ""}
+            {!actualIsSignedIn ? (
+              <div className={styles.loginPrompt}>
+                <div className={styles.loginContent}>
+                  <h3>Sign in to access your projects</h3>
+                  <p>
+                    You need to be signed in to view and load projects from the
+                    server.
+                  </p>
+                  <button
+                    className={styles.loginButton}
+                    onClick={() => {
+                      window.location.href = "/signin";
+                    }}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.toolbar}>
+                  <input
+                    type="text"
+                    placeholder="Search for projects..."
+                    className={styles.searchBar}
+                    value={serverSearchTerm}
+                    onChange={(e) => setServerSearchTerm(e.target.value)}
+                  />
+                  <button
+                    className={styles.toolbarIconButton}
+                    onClick={loadServerProjects}
+                    disabled={serverLoading}
+                    title="Refresh projects"
+                  >
+                    <RefreshCw
+                      size={20}
+                      className={serverLoading ? styles.spinning : ""}
+                    />
+                  </button>
+                </div>
+                <ProjectsList
+                  projects={filteredServerProjects}
+                  loading={serverLoading}
+                  error={serverError}
+                  onProjectDoubleClick={handleServerProjectSelect}
+                  onRefresh={loadServerProjects}
+                  style={{ marginTop: 0 }}
                 />
-              </button>
-            </div>
-            <ProjectsList
-              projects={filteredServerProjects}
-              loading={serverLoading}
-              error={serverError}
-              onProjectDoubleClick={handleServerProjectSelect}
-              onRefresh={loadServerProjects}
-              style={{ marginTop: 0 }}
-            />
+              </>
+            )}
           </div>
         )}
       </div>

@@ -503,3 +503,71 @@
 .saveButton:hover {
   background: #0056b3;
 }
+
+.loginPrompt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 200px;
+}
+
+.loginContent {
+  text-align: center;
+  max-width: 400px;
+  padding: 32px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.dark .loginContent {
+  background: #2d3748;
+  border: 1px solid #4a5568;
+}
+
+.loginContent h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.dark .loginContent h3 {
+  color: #e2e8f0;
+}
+
+.loginContent p {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dark .loginContent p {
+  color: #a0aec0;
+}
+
+.loginButton {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.loginButton:hover {
+  background: #0056b3;
+}
+
+.dark .loginButton {
+  background: #4a90e2;
+}
+
+.dark .loginButton:hover {
+  background: #357abd;
+}
