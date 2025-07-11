@@ -325,11 +325,11 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         setIsEditing(true);
         setEditValue(props.value || "");
 
-        // Calculate position for the portal dropdown
+        // Calculate position for the portal dropdown to fit exactly on top of the column
         if (cellRef.current) {
           const rect = cellRef.current.getBoundingClientRect();
           setDropdownPosition({
-            top: rect.bottom + window.scrollY,
+            top: rect.top + window.scrollY, // Position at the top of the cell, not bottom
             left: rect.left + window.scrollX,
             width: rect.width,
           });
@@ -349,16 +349,16 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         setIsEditing(false);
       };
 
-      const handleCancel = () => {
-        setEditValue(props.value || "");
-        setIsEditing(false);
-      };
+      //   const handleCancel = () => {
+      //     setEditValue(props.value || "");
+      //     setIsEditing(false);
+      //   };
 
-      const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "Escape") {
-          handleCancel();
-        }
-      };
+      //   const handleKeyDown = (e: React.KeyboardEvent) => {
+      //     if (e.key === "Escape") {
+      //       handleCancel();
+      //     }
+      //   };
 
       // Portal dropdown component
       const DropdownPortal = () => {
@@ -370,7 +370,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
               position: "fixed",
               top: dropdownPosition.top,
               left: dropdownPosition.left,
-              width: Math.max(dropdownPosition.width, 200),
+              width: dropdownPosition.width,
               zIndex: 2147483647,
               backgroundColor: "white",
               border: "1px solid #ccc",
