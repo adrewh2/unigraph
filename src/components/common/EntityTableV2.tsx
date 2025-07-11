@@ -13,6 +13,7 @@ import { SceneGraph } from "../../core/model/SceneGraph";
 import { ContextMenuItem } from "./ContextMenu";
 import EntityJsonViewer from "./EntityJsonViewer";
 import styles from "./EntityTableV2.module.css";
+import EntityTypeSelectDropdown from "./EntityTypeSelectDropdown";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -310,32 +311,17 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   const TypeCellRenderer = (props: { data: Entity; value: string }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(props.value || "");
-    const selectRef = useRef<HTMLSelectElement>(null);
-
-    // Get available types from sceneGraph
-    const availableTypes = useMemo(() => {
-      try {
-        return Array.from(sceneGraph.getNodes().getTypes()).sort();
-      } catch (error) {
-        console.warn("Could not get types from sceneGraph:", error);
-        return [];
-      }
-    }, []);
 
     const handleDoubleClick = (e: React.MouseEvent) => {
       e.stopPropagation();
       setIsEditing(true);
       setEditValue(props.value || "");
-      // Focus the select after a brief delay to ensure it's rendered
-      setTimeout(() => {
-        selectRef.current?.focus();
-      }, 10);
     };
 
-    const handleSave = () => {
-      if (props.data && editValue !== props.value) {
+    const handleSave = (newType: string) => {
+      if (props.data && newType !== props.value) {
         // Update the entity's type using the proper setter method
-        props.data.setType(editValue);
+        props.data.setType(newType);
 
         // Trigger a refresh of the grid
         if (gridRef.current?.api) {
@@ -351,49 +337,34 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        handleSave();
-      } else if (e.key === "Escape") {
+      if (e.key === "Escape") {
         handleCancel();
       }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setEditValue(e.target.value);
-    };
-
-    const handleBlur = () => {
-      handleSave();
-    };
-
     if (isEditing) {
       return (
-        <select
-          ref={selectRef}
-          value={editValue}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onBlur={handleBlur}
+        <div
           style={{
             width: "100%",
             height: "100%",
-            border: "2px solid #007acc",
-            borderRadius: "4px",
-            padding: "4px 8px",
-            fontSize: "14px",
-            outline: "none",
-            background: "white",
+            display: "flex",
+            alignItems: "center",
+            padding: "4px",
           }}
+          onKeyDown={handleKeyDown}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onMouseUp={(e) => e.stopPropagation()}
         >
-          {availableTypes.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
+          <EntityTypeSelectDropdown
+            sceneGraph={sceneGraph}
+            nodeId={null}
+            value={editValue}
+            setValue={handleSave}
+            isDarkMode={false}
+          />
+        </div>
       );
     }
 
