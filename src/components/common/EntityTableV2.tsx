@@ -151,16 +151,72 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       },
     },
     {
-      label: "Action 1",
+      label: "View as JSON",
       action: () => {
-        console.log("Action 1 clicked");
-        handleClose();
-      },
-    },
-    {
-      label: "Action 2",
-      action: () => {
-        console.log("Action 2 clicked");
+        if (contextMenu?.entity) {
+          const entityData = contextMenu.entity.getData();
+          const fullEntity = {
+            id: contextMenu.entity.getId?.(),
+            type: contextMenu.entity.getType?.(),
+            data: entityData,
+            // Include any other entity properties that might be useful
+          };
+
+          // Create a new window/tab with the JSON data
+          const jsonWindow = window.open("", "_blank");
+          if (jsonWindow) {
+            jsonWindow.document.write(`
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <title>Entity JSON - ${contextMenu.entity.getId?.() || "Unknown"}</title>
+                  <style>
+                    body { 
+                      font-family: 'Courier New', monospace; 
+                      background: #1e1e1e; 
+                      color: #d4d4d4; 
+                      padding: 20px; 
+                      margin: 0;
+                      font-size: 14px;
+                      line-height: 1.5;
+                    }
+                    pre { 
+                      background: #2d2d2d; 
+                      padding: 20px; 
+                      border-radius: 8px; 
+                      overflow-x: auto;
+                      white-space: pre-wrap;
+                      word-wrap: break-word;
+                    }
+                    .header {
+                      margin-bottom: 20px;
+                      padding-bottom: 10px;
+                      border-bottom: 1px solid #404040;
+                    }
+                    .header h1 {
+                      margin: 0;
+                      color: #4ec9b0;
+                      font-size: 18px;
+                    }
+                    .header p {
+                      margin: 5px 0 0 0;
+                      color: #9cdcfe;
+                      font-size: 12px;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="header">
+                    <h1>Entity: ${contextMenu.entity.getId?.() || "Unknown"}</h1>
+                    <p>Type: ${contextMenu.entity.getType?.() || "Unknown"}</p>
+                  </div>
+                  <pre>${JSON.stringify(fullEntity, null, 2)}</pre>
+                </body>
+              </html>
+            `);
+            jsonWindow.document.close();
+          }
+        }
         handleClose();
       },
     },
@@ -168,11 +224,16 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
   // Generate column definitions dynamically
   const columnDefs = useMemo<ColDef<Entity>[]>(() => {
-    const COLUMN_ORDER = ["id", "type", "tags", "userData"];
+    const COLUMN_ORDER = ["id", "type", "tags"];
+    const EXCLUDED_COLUMNS = ["userData"]; // Exclude userData from columns
     const allColumns = new Set<string>();
 
     container.forEach((entity) => {
-      Object.keys(entity.getData()).forEach((key) => allColumns.add(key));
+      Object.keys(entity.getData()).forEach((key) => {
+        if (!EXCLUDED_COLUMNS.includes(key)) {
+          allColumns.add(key);
+        }
+      });
     });
 
     const orderedColumns = COLUMN_ORDER.filter((col) => allColumns.has(col));
