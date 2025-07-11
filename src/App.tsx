@@ -1469,6 +1469,27 @@ const AppContent: React.FC<{
     graphvizFitToView,
   ]);
 
+  // Add window resize handler for ForceGraph3D
+  useEffect(() => {
+    const handleWindowResize = () => {
+      if (
+        forceGraphInstance &&
+        activeView === "ForceGraph3d" &&
+        forceGraphRef.current
+      ) {
+        const container = forceGraphRef.current;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        forceGraphInstance.width(width).height(height);
+      }
+    };
+
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [forceGraphInstance, activeView]);
+
   const handleSearchResult = useCallback((nodeIds: string[]) => {
     console.log("Search results:", nodeIds);
     // You can use this to update visualization state
