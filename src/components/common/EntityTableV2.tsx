@@ -26,6 +26,7 @@ interface EntityTableV2Props {
 
 const EntityTableV2: React.FC<EntityTableV2Props> = ({
   container,
+  sceneGraph,
   onEntityClick,
   maxHeight = 600,
 }) => {
@@ -305,6 +306,116 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     );
   };
 
+  // Type cell renderer component with dropdown editing
+  const TypeCellRenderer = (props: { data: Entity; value: string }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editValue, setEditValue] = useState(props.value || "");
+    const selectRef = useRef<HTMLSelectElement>(null);
+
+    // Get available types from sceneGraph
+    const availableTypes = useMemo(() => {
+      try {
+        return Array.from(sceneGraph.getNodes().getTypes()).sort();
+      } catch (error) {
+        console.warn("Could not get types from sceneGraph:", error);
+        return [];
+      }
+    }, []);
+
+    const handleDoubleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsEditing(true);
+      setEditValue(props.value || "");
+      // Focus the select after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        selectRef.current?.focus();
+      }, 10);
+    };
+
+    const handleSave = () => {
+      if (props.data && editValue !== props.value) {
+        // Update the entity's type using the proper setter method
+        props.data.setType(editValue);
+
+        // Trigger a refresh of the grid
+        if (gridRef.current?.api) {
+          gridRef.current.api.refreshCells();
+        }
+      }
+      setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+      setEditValue(props.value || "");
+      setIsEditing(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSave();
+      } else if (e.key === "Escape") {
+        handleCancel();
+      }
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setEditValue(e.target.value);
+    };
+
+    const handleBlur = () => {
+      handleSave();
+    };
+
+    if (isEditing) {
+      return (
+        <select
+          ref={selectRef}
+          value={editValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          style={{
+            width: "100%",
+            height: "100%",
+            border: "2px solid #007acc",
+            borderRadius: "4px",
+            padding: "4px 8px",
+            fontSize: "14px",
+            outline: "none",
+            background: "white",
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+        >
+          {availableTypes.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    return (
+      <div
+        onDoubleClick={handleDoubleClick}
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          padding: "8px",
+          cursor: "pointer",
+          userSelect: "text",
+        }}
+        title="Double-click to edit"
+      >
+        {props.value || ""}
+      </div>
+    );
+  };
+
   // Color cell renderer component
   const ColorCellRenderer = (props: { data: Entity; value: string }) => {
     // For Node entities, color is in the NodeData, for other entities it might be in userData
@@ -474,7 +585,9 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           ? ColorCellRenderer
           : col === "label"
             ? LabelCellRenderer
-            : undefined,
+            : col === "type"
+              ? TypeCellRenderer
+              : undefined,
       valueGetter: (params: any) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
@@ -513,7 +626,13 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
     // Return actions column + data columns
     return [actionsColumn, ...dataColumns];
-  }, [container, ActionsCellRenderer, formatValue, searchInValue]);
+  }, [
+    container,
+    ActionsCellRenderer,
+    TypeCellRenderer,
+    formatValue,
+    searchInValue,
+  ]);
 
   // Default column definition
   const defaultColDef = useMemo(

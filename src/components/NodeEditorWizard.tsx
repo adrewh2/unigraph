@@ -7,10 +7,9 @@ import { SceneGraph } from "../core/model/SceneGraph";
 import { setNodeKeyData } from "../store/activeLegendConfigStore";
 import { getLegendMode } from "../store/appConfigStore";
 import { DisplayConfigManager } from "../store/TagManager";
-import { getRandomColorFromPalette } from "../utils/colorUtils";
 import EdgeListItem, { EdgeInfo } from "./common/EdgeListItem";
+import EntityTypeSelectDropdown from "./common/EntityTypeSelectDropdown";
 import MultiSelectDropdown from "./common/MultiSelectDropdown";
-import SelectDropdown from "./common/SelectDropdown";
 import "./NodeEditorWizard.css";
 
 interface NodeEditorWizardProps {
@@ -97,22 +96,6 @@ const NodeEditorWizard: React.FC<NodeEditorWizardProps> = ({
       setTags([]);
     }
   }, [nodeId, sceneGraph]);
-
-  const availableTypes = Array.from(
-    new Set(
-      sceneGraph
-        .getGraph()
-        .getNodes()
-        .map((n) => n.getType())
-    )
-  ).map((type) => ({
-    value: type,
-    label: type,
-    color: RenderingManager.getColorByKeySimple(
-      type,
-      sceneGraph.getDisplayConfig().nodeConfig.types
-    ),
-  }));
 
   const availableTags = Array.from(
     sceneGraph.getGraph().getNodes().getTags()
@@ -282,44 +265,12 @@ const NodeEditorWizard: React.FC<NodeEditorWizardProps> = ({
             </div>
             <div className="form-group">
               <label>Type:</label>
-              <SelectDropdown
-                options={availableTypes}
-                allowNewItems={true}
-                showColorPicker={true}
-                value={{
-                  value: type,
-                  label: type,
-                  color: RenderingManager.getColorByKeySimple(
-                    type,
-                    sceneGraph.getDisplayConfig().nodeConfig.types
-                  ),
-                }}
-                onChange={(option) => setType(option?.value || "")}
-                placeholder="Search types..."
+              <EntityTypeSelectDropdown
+                sceneGraph={sceneGraph}
+                nodeId={nodeId}
+                value={type}
+                setValue={setType}
                 isDarkMode={isDarkMode}
-                onAddNewItem={(_newType) => {
-                  console.log(_newType);
-                  const randomColor = getRandomColorFromPalette();
-                  DisplayConfigManager.addKeyToDisplayConfig(
-                    _newType.label,
-                    {
-                      color: _newType.color ?? randomColor,
-                      isVisible: true,
-                    },
-                    "type",
-                    "Node",
-                    sceneGraph
-                  );
-                  if (getLegendMode() === "type") {
-                    setNodeKeyData(_newType.label as NodeId, {
-                      color: _newType.color ?? randomColor,
-                      isVisible: true,
-                    });
-                  }
-                  sceneGraph.getNodeById(nodeId!)?.setType(_newType.label);
-                  setType(_newType.label);
-                  sceneGraph.notifyGraphChanged();
-                }}
               />
             </div>
             <div className="form-group">
