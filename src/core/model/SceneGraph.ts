@@ -44,9 +44,10 @@ export interface ISceneGraphMetadata {
 }
 
 export const DEFAULT_SCENE_GRAPH_DATA = (): SceneGraphData => {
-  const displayConfig = GET_DEFAULT_RENDERING_CONFIG(new Graph());
+  const graph = new Graph();
+  const displayConfig = GET_DEFAULT_RENDERING_CONFIG(graph);
   return {
-    graph: new Graph(),
+    graph: graph,
     displayConfig: displayConfig,
     forceGraphDisplayConfig: {
       nodeTextLabels: false,
@@ -56,6 +57,7 @@ export const DEFAULT_SCENE_GRAPH_DATA = (): SceneGraphData => {
       linkWidth: 2,
       linkOpacity: 0.3,
       chargeStrength: -30,
+      backgroundColor: "rgb(0, 0, 0)",
     },
     metadata: {},
     entityCache: new EntityCache(),
@@ -249,6 +251,18 @@ export class SceneGraph {
     this.listeners?.onPositionsChanged?.(positions);
   }
 
+  setNodePosition(nodeId: NodeId, position: Position, notify: boolean = true) {
+    if (!this.data.displayConfig.nodePositions) {
+      this.data.displayConfig.nodePositions = {};
+    }
+    this.data.displayConfig.nodePositions[nodeId] = position;
+    if (notify) {
+      this.listeners?.onPositionsChanged?.(
+        this.data.displayConfig.nodePositions
+      );
+    }
+  }
+
   getNode(nodeId: NodeId) {
     return this.data.graph.getNode(nodeId);
   }
@@ -413,7 +427,8 @@ export class SceneGraph {
     const graph = this.getGraph();
 
     // Clear existing graph
-    graph.getNodes().forEach((node) => graph.removeNode(node.getId()));
+    graph.getNodes().clear();
+    graph.getEdges().clear();
 
     // Add nodes from serialized data
     serialized.graph.nodes.forEach((nodeData) => {

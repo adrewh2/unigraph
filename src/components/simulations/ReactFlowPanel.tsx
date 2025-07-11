@@ -16,6 +16,7 @@ import {
 } from "@xyflow/react";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { SelectionMode } from "reactflow";
+import { Annotation } from "../../api/annotationsApi";
 import {
   MOUSE_HOVERED_NODE_COLOR,
   SELECTED_NODE_COLOR,
@@ -39,9 +40,11 @@ import useWorkspaceConfigStore, {
   setRightActiveSection,
 } from "../../store/workspaceConfigStore";
 import CustomNode from "../CustomNode";
+import WebpageNode from "../webpages/WebpageNode";
 
 import "@xyflow/react/dist/style.css";
 import { EdgeId } from "../../core/model/Edge";
+import ResizableAnnotationCard from "../annotations/ResizableAnnotationCard";
 import ResizerNode from "../resizerNode";
 
 // Remove the custom Node interface that was causing the type conflict
@@ -60,9 +63,26 @@ interface ReactFlowPanelProps {
   // sceneGraph: SceneGraph;
 }
 
-const nodeTypes = {
+// AnnotationNode component for annotation nodes
+const AnnotationNode = (props: any) => {
+  const annotation: Annotation | undefined = props.data?.annotation;
+  if (!annotation) return <div>Invalid annotation</div>;
+  // console.log("valid annotation", annotation);
+  return (
+    <ResizableAnnotationCard
+      annotation={annotation}
+      dimensions={props.data?.dimensions}
+      onResizeEnd={props.data?.onResizeEnd}
+      style={props.style}
+    />
+  );
+};
+
+export const nodeTypes = {
   customNode: CustomNode, // Register the custom node component
   resizerNode: ResizerNode,
+  annotation: AnnotationNode,
+  webpage: WebpageNode,
 };
 
 // Add a style tag for selected and hovered nodes

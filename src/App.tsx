@@ -12,6 +12,7 @@ import { AppConfig, DEFAULT_APP_CONFIG } from "./AppConfig";
 import PathAnalysisWizard, {
   IPathArgs,
 } from "./components/analysis/PathAnalysisWizard";
+import CommandPalette from "./components/commandPalette/CommandPalette";
 import ContextMenu, { ContextMenuItem } from "./components/common/ContextMenu";
 import EntityDataDisplayCard from "./components/common/EntityDataDisplayCard";
 import EntityJsonEditorDialog from "./components/common/EntityJsonEditorDialog";
@@ -32,11 +33,14 @@ import NodeEditorWizard from "./components/NodeEditorWizard";
 import SceneGraphDetailView from "./components/SceneGraphDetailView";
 import SceneGraphTitle from "./components/SceneGraphTitle";
 import GravitySimulation3 from "./components/simulations/GravitySimulation3";
-import ReactFlowPanel from "./components/simulations/ReactFlowPanel";
+import ReactFlowPanel, {
+  nodeTypes,
+} from "./components/simulations/ReactFlowPanel";
 import SolarSystem from "./components/simulations/solarSystemSimulation";
 import ChatGptImporter from "./components/tools/ChatGptImporter";
 import YasguiPanel from "./components/YasguiPanel";
 
+import EntityTableDialogV2 from "./components/common/EntityTableDialogV2";
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
@@ -46,6 +50,11 @@ import { getNodeContextMenuItems } from "./components/common/singleNodeContextMe
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
+import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog";
+import StoryCardApp from "./components/StoryCardApp";
+import WikipediaArticleViewer from "./components/WikipediaArticleViewer";
+import WikipediaArticleViewer_FactorGraph from "./components/WikipediaArticleViewer_FactorGraph";
+import { getHotkeyConfig } from "./configs/hotkeyConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -92,6 +101,8 @@ import {
   getSceneGraph,
 } from "./data/DemoSceneGraphs";
 import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
+import { useCommandPalette } from "./hooks/useCommandPalette";
+import { useHotkeys } from "./hooks/useHotkeys";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
@@ -113,6 +124,7 @@ import useActiveLegendConfigStore, {
 } from "./store/activeLegendConfigStore";
 import useAppConfigStore, {
   getActiveView,
+  getAutoFitView,
   getCurrentSceneGraph,
   getForceGraphInstance,
   getLegendMode,
@@ -147,6 +159,7 @@ import {
   applyActiveFilterToAppInstance,
   filterSceneGraphToOnlyVisibleNodes,
 } from "./store/sceneGraphHooks";
+import { useUserStore } from "./store/userStore";
 import useWorkspaceConfigStore, {
   getLeftSidebarConfig,
   getRightSidebarConfig,
@@ -193,6 +206,21 @@ const getSimulations = (
     // imageSegmenter: <ImageSegmenter />,
     // timelineTestbed: <TimelineTestbed annotations={solvay_annotations} />,
     // canvasSelection: <CanvasSelection />,
+    // storyCard: <AnimatedStoryCardDemo3 />,
+    storyCard: <StoryCardApp sceneGraph={sceneGraph} />,
+    wikipediaViewer: (
+      <WikipediaArticleViewer
+        initialArticle="Factor graph"
+        highlightKeywords={["the"]}
+        customTerms={{ representing: "yep" }}
+        sceneGraph={sceneGraph}
+      />
+    ),
+    factorGraph: (
+      <WikipediaArticleViewer_FactorGraph
+        highlightKeywords={["efficient computations"]}
+      />
+    ),
   };
 };
 
@@ -214,9 +242,17 @@ const AppContent: React.FC<{
   defaultActiveView?: string;
   defaultActiveLayout?: string;
 }> = ({ defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout }) => {
+  // Initialize auth store
+  const { initializeAuth } = useUserStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   const {
     showPathAnalysis,
     setShowEntityTables,
+    setShowEntityTablesV2,
     setShowLayoutManager,
     setShowSceneGraphDetailView,
     setShowPathAnalysis,
@@ -224,7 +260,10 @@ const AppContent: React.FC<{
     setShowLoadSceneGraphWindow,
     showSaveSceneGraphDialog,
     setShowSaveSceneGraphDialog,
+    showSaveAsNewProjectDialog,
+    setShowSaveAsNewProjectDialog,
     showEntityTables,
+    showEntityTablesV2,
     // showLayoutManager,
     showSceneGraphDetailView,
   } = useDialogStore();
@@ -331,7 +370,7 @@ const AppContent: React.FC<{
 
   const handleReactFlowFitView = useCallback(
     (padding: number = 0.1, duration: number = 0) => {
-      if (activeView === "ReactFlow" && reactFlowInstance) {
+      if (activeView === "ReactFlow" && reactFlowInstance && getAutoFitView()) {
         setTimeout(() => {
           reactFlowInstance.fitView({ padding, duration });
         }, 0);
@@ -369,19 +408,19 @@ const AppContent: React.FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout]);
 
-  useEffect(() => {
-    if (activeView === "ReactFlow" && reactFlowInstance) {
-      if (getPreviousView() !== "Editor") {
-        handleReactFlowFitView();
-      }
-    }
-  }, [
-    nodeLegendConfig,
-    edgeLegendConfig,
-    activeView,
-    handleReactFlowFitView,
-    reactFlowInstance,
-  ]);
+  // useEffect(() => {
+  //   if (activeView === "ReactFlow" && reactFlowInstance) {
+  //     if (getPreviousView() !== "Editor") {
+  //       handleReactFlowFitView();
+  //     }
+  //   }
+  // }, [
+  //   nodeLegendConfig,
+  //   edgeLegendConfig,
+  //   activeView,
+  //   handleReactFlowFitView,
+  //   reactFlowInstance,
+  // ]);
 
   const handleMouseHoverLegendItem = useCallback(
     (type: GraphEntityType) =>
@@ -423,6 +462,7 @@ const AppContent: React.FC<{
       sceneGraph: SceneGraph,
       layout: LayoutEngineOption | string | null
     ) => {
+      console.log("Computing layout for", layout);
       // Get layout result directly from store when needed
       if (Object.keys(getSavedLayouts()).includes(layout as string)) {
         console.log("Skipping layout computation for saved layout", layout);
@@ -493,6 +533,7 @@ const AppContent: React.FC<{
       //   output.svg = svg;
       // }
       sceneGraph.getDisplayConfig().svg = output.svg;
+      console.log("setting current layout result", output);
       setCurrentLayoutResult(output);
       isComputing = false;
     },
@@ -571,6 +612,8 @@ const AppContent: React.FC<{
   const initializeForceGraph = useCallback(() => {
     console.log(
       "Creating new force graph instance...",
+      currentSceneGraph.getDisplayConfig(),
+      getActiveLayoutResult()?.positions,
       currentSceneGraph.getDisplayConfig().nodePositions ??
         getActiveLayoutResult()?.positions,
       forceGraph3dOptions.layout
@@ -611,7 +654,9 @@ const AppContent: React.FC<{
     (displayConfig: RenderingConfig) => {
       console.log(
         "notified changed",
-        currentSceneGraph.getGraph().getEdges().getTypes()
+        currentSceneGraph,
+        currentSceneGraph.getGraph().getNodes(),
+        currentSceneGraph.getGraph().getEdges()
       );
       SetCurrentDisplayConfigOf(
         currentSceneGraph.getDisplayConfig(),
@@ -635,7 +680,11 @@ const AppContent: React.FC<{
   );
 
   const handleLoadSceneGraph = useCallback(
-    async (graph: SceneGraph, clearQueryParams: boolean = true) => {
+    async (
+      graph: SceneGraph,
+      clearQueryParams: boolean = true,
+      onLoaded?: (sceneGraph?: SceneGraph) => void
+    ) => {
       const tick = Date.now();
       console.log("Loading SceneGraph", graph.getMetadata().name, "...");
       loadDocumentsFromSceneGraph(graph); // clears existing store, and loads in new documents
@@ -663,10 +712,11 @@ const AppContent: React.FC<{
           GetCurrentDisplayConfigOf(graph.getDisplayConfig(), "Edge")
         );
         setGraphStatistics(getGraphStatistics(graph.getGraph()));
-
+        console.log("binding listeners to new graph", graph);
         graph.bindListeners({
           onDisplayConfigChanged: handleDisplayConfigChanged,
           onGraphChanged: (g) => {
+            console.log("graph changed", g);
             setGraphStatistics(getGraphStatistics(g));
             if (forceGraphInstance) {
               syncMissingNodesAndEdgesInForceGraph(forceGraphInstance, graph);
@@ -697,6 +747,7 @@ const AppContent: React.FC<{
 
         const tock = Date.now();
         console.log("TOTAL TIME", tock - tick);
+        onLoaded?.(graph);
         initialSceneGraphLoaded = true;
         addNotification({
           message: `Loaded SceneGraph: ${graph.getMetadata().name}`,
@@ -719,12 +770,16 @@ const AppContent: React.FC<{
   );
 
   const handleSetSceneGraph = useCallback(
-    async (key: string, clearUrlOfQueryParams: boolean = true) => {
+    async (
+      key: string,
+      clearUrlOfQueryParams: boolean = true,
+      onLoaded?: (sceneGraph?: SceneGraph) => void
+    ) => {
       // First try to load from persistent store
       try {
         const persistedGraph = await persistentStore.loadSceneGraph(key);
         if (persistedGraph) {
-          handleLoadSceneGraph(persistedGraph, clearUrlOfQueryParams);
+          handleLoadSceneGraph(persistedGraph, clearUrlOfQueryParams, onLoaded);
           setActiveProjectId(key); // Set the active project ID
 
           // Update the URL query parameter
@@ -749,25 +804,30 @@ const AppContent: React.FC<{
         } else {
           graph = graphGenerator;
         }
-
-        handleLoadSceneGraph(graph, clearUrlOfQueryParams);
+        handleLoadSceneGraph(graph, clearUrlOfQueryParams, onLoaded);
         setActiveProjectId(null); // Clear project ID since this is a demo graph
-
         // Update the URL query parameter
         const url = new URL(window.location.href);
         url.searchParams.set("graph", key);
         url.searchParams.delete("svgUrl");
         window.history.pushState({}, "", url.toString());
-        // eslint-disable-next-line unused-imports/no-unused-vars
       } catch (err) {
-        console.error(`Graph ${key} not found`);
+        console.error(`Graph ${key} not found: ${err}`);
         console.log(`Available graphs are: ${getAllDemoSceneGraphKeys()}`);
-        handleLoadSceneGraph(new SceneGraph(), true);
+        handleLoadSceneGraph(new SceneGraph(), true, onLoaded);
         return;
       }
     },
     [handleLoadSceneGraph]
   );
+
+  // Initialize command palette after handleSetSceneGraph is defined
+  const { isCommandPaletteOpen, setCommandPaletteOpen } = useDialogStore();
+  const { commands, executeCommand } = useCommandPalette(handleSetSceneGraph);
+
+  // Initialize hotkeys after handleSetSceneGraph is defined
+  const hotkeys = getHotkeyConfig(handleSetSceneGraph);
+  useHotkeys(hotkeys);
 
   // useEffect(() => {
   //   // Hide scrollbar
@@ -790,6 +850,7 @@ const AppContent: React.FC<{
 
   const handleFitToView = useCallback(
     (activeView: string, duration: number = 0) => {
+      console.log("Fitting to view for", activeView);
       if (activeView === "Graphviz" && graphvizRef.current) {
         graphvizFitToView(graphvizRef.current);
       } else if (activeView === "ForceGraph3d" && forceGraphInstance) {
@@ -934,10 +995,12 @@ const AppContent: React.FC<{
   ]);
 
   const handleSetActiveView = useCallback(
-    (key: string) => {
+    (key: string, fitToView: boolean = false) => {
       console.log("Setting active view", key);
       setActiveView(key);
-      handleFitToView(key);
+      if (fitToView) {
+        handleFitToView(key);
+      }
       const url = new URL(window.location.href);
       url.searchParams.set("view", key);
       window.history.pushState({}, "", url.toString());
@@ -960,7 +1023,7 @@ const AppContent: React.FC<{
       actions[key] = {
         action: () => {
           setSelectedSimulation(key);
-          handleSetActiveView(key);
+          handleSetActiveView(key, true);
         },
       };
     }
@@ -1028,6 +1091,7 @@ const AppContent: React.FC<{
 
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
+      handleSetSceneGraph,
       handleImportConfig,
       handleFitToView,
       GraphMenuActions,
@@ -1054,6 +1118,7 @@ const AppContent: React.FC<{
     forceGraphInstance,
     handleFitToView,
     handleImportConfig,
+    handleSetSceneGraph,
     setShowEntityTables,
     setShowLayoutManager,
     setShowSceneGraphDetailView,
@@ -1107,7 +1172,9 @@ const AppContent: React.FC<{
 
     if (currentSceneGraph.getDisplayConfig().nodePositions === undefined) {
       console.log("Cannot render nodes without positions");
-      return;
+      console.log("Extracting from node data...");
+      const nodePositions = extractPositionsFromNodes(currentSceneGraph);
+      currentSceneGraph.setNodePositions(nodePositions);
     }
 
     const data = exportGraphDataForReactFlow(currentSceneGraph);
@@ -1117,8 +1184,12 @@ const AppContent: React.FC<{
     const nodesWithPositions = data.nodes.map((node) => ({
       ...node,
       position: nodePositions[node.id] || { x: 200, y: 200 },
-      type: "resizerNode", // Use the custom node type
+      type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
       data: {
+        description: currentSceneGraph
+          .getGraph()
+          .getNode(node.id as NodeId)
+          .getDescription(),
         label: currentSceneGraph
           .getGraph()
           .getNode(node.id as NodeId)
@@ -1146,6 +1217,8 @@ const AppContent: React.FC<{
           }
         },
         dimensions: node.data.dimensions,
+        annotation: node.type == "annotation" ? node.data.userData : undefined,
+        webpage: node.type == "webpage" ? node.data.userData : undefined,
       },
       style: {
         background: RenderingManager.getColor(
@@ -1194,7 +1267,10 @@ const AppContent: React.FC<{
           onLoad={(instance) => {
             if (reactFlowInstance !== instance) {
               setReactFlowInstance(instance);
-              setTimeout(() => handleReactFlowFitView(), 100);
+              console.log("React Flow instance set", instance);
+              if (getAutoFitView()) {
+                setTimeout(() => handleReactFlowFitView(), 100);
+              }
             }
           }}
           onNodesContextMenu={(event, nodeIds) =>
@@ -1331,6 +1407,7 @@ const AppContent: React.FC<{
     currentSceneGraph,
     forceGraphInstance,
     currentLayoutResult,
+    graphModelUpdateTime,
     // selectedNodeIds, //not sure why I had these here to begin with. can prob remove now
     // selectedEdgeIds,
   ]);
@@ -1394,6 +1471,27 @@ const AppContent: React.FC<{
     forceGraph3dOptions.layout,
     graphvizFitToView,
   ]);
+
+  // Add window resize handler for ForceGraph3D
+  useEffect(() => {
+    const handleWindowResize = () => {
+      if (
+        forceGraphInstance &&
+        activeView === "ForceGraph3d" &&
+        forceGraphRef.current
+      ) {
+        const container = forceGraphRef.current;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        forceGraphInstance.width(width).height(height);
+      }
+    };
+
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [forceGraphInstance, activeView]);
 
   const handleSearchResult = useCallback((nodeIds: string[]) => {
     console.log("Search results:", nodeIds);
@@ -1654,6 +1752,28 @@ const AppContent: React.FC<{
     showSaveSceneGraphDialog,
   ]);
 
+  const maybeRenderSaveAsNewProjectDialog = useMemo(() => {
+    if (showSaveAsNewProjectDialog) {
+      return (
+        <SaveAsNewProjectDialog
+          sceneGraph={currentSceneGraph}
+          onSave={(projectId: string) => {
+            setShowSaveAsNewProjectDialog(false);
+            setActiveProjectId(projectId);
+          }}
+          onCancel={() => setShowSaveAsNewProjectDialog(false)}
+          isDarkMode={isDarkMode}
+        />
+      );
+    }
+    return null;
+  }, [
+    currentSceneGraph,
+    setShowSaveAsNewProjectDialog,
+    showSaveAsNewProjectDialog,
+    isDarkMode,
+  ]);
+
   const maybeRenderYasgui = useMemo(() => {
     if (activeView !== "Yasgui") {
       return null;
@@ -1709,6 +1829,12 @@ const AppContent: React.FC<{
         style={{ margin: 0, padding: 0 }}
         onMouseMove={handleMouseMove}
       >
+        <CommandPalette
+          isOpen={isCommandPaletteOpen}
+          commands={commands}
+          onClose={() => setCommandPaletteOpen(false)}
+          onExecuteCommand={executeCommand}
+        />
         <Workspace
           menuConfig={menuConfig}
           currentSceneGraph={currentSceneGraph}
@@ -1753,6 +1879,7 @@ const AppContent: React.FC<{
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
+        {maybeRenderSaveAsNewProjectDialog}
         {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (
           <EntityDataDisplayCard
             entityData={currentSceneGraph
@@ -1760,6 +1887,7 @@ const AppContent: React.FC<{
               .getNode(Array.from(getHoveredNodeIds())[0] as NodeId)}
           />
         )}
+
         {/* {getSelectedNodeId() && forceGraphInstance && (
           <NodeDisplayCard
             nodeId={getSelectedNodeId()!}
@@ -1824,6 +1952,27 @@ const AppContent: React.FC<{
               }
             }}
             isDarkMode={isDarkMode}
+          />
+        )}
+        {showEntityTablesV2 && (
+          <EntityTableDialogV2
+            container={currentSceneGraph.getGraph().getNodes()}
+            title="Entity Table V2"
+            onClose={() => setShowEntityTablesV2(false)}
+            onNodeClick={(nodeId: NodeId) => {
+              setSelectedNodeId(nodeId as NodeId);
+              setShowEntityTablesV2(false);
+              if (activeView === "ForceGraph3d" && forceGraphInstance) {
+                const node = forceGraphInstance
+                  .graphData()
+                  .nodes.find((n) => n.id === nodeId);
+                if (node) {
+                  flyToNode(forceGraphInstance, node);
+                }
+              }
+            }}
+            isDarkMode={isDarkMode}
+            sceneGraph={currentSceneGraph}
           />
         )}
         {editingEntity && (

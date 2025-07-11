@@ -13,9 +13,10 @@ import ForceGraphRenderConfigEditor from "../components/force-graph/ForceGraphRe
 import LayoutManagerV2 from "../components/layouts/LayoutManagerV2";
 import ProjectManager from "../components/projects/ProjectManager"; // Import the new component
 import ReactFlowConfigEditor from "../components/react-flow/ReactFlowConfigEditor";
+import ProfileIcon from "../components/user/ProfileIcon";
 import { CustomLayoutType } from "../core/layouts/CustomLayoutEngine";
 import { GraphologyLayoutType } from "../core/layouts/GraphologyLayoutEngine";
-import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutEngine";
+import { GraphvizLayoutType } from "../core/layouts/GraphvizLayoutType";
 import {
   LayoutEngineOption,
   PresetLayoutType,
@@ -57,6 +58,11 @@ export interface MenuItem {
   subMenus?: SubMenuItem[];
 }
 
+export interface SidebarConfig {
+  mainMenus: MenuItem[];
+  bottomElements?: React.ReactNode;
+}
+
 export const createDefaultLeftMenus = ({
   sceneGraph,
   onLayoutChange,
@@ -73,14 +79,15 @@ export const createDefaultLeftMenus = ({
   activeFilter,
   handleLoadSceneGraph,
   handleSetActiveFilter,
-  currentPositions, // Make sure to pass this from the parent,
-}: any) => {
+  currentPositions, // Make sure to pass this from the parent
+  includeBottomElements = true, // Flag to control if bottom elements are included
+}: any): SidebarConfig => {
   // Ensure case consistency by converting to lowercase for comparison
   const normalizedActiveView = activeView ? activeView.toLowerCase() : "";
   const isForceGraph3D = normalizedActiveView === "forcegraph3d";
   const isReactFlow = normalizedActiveView === "reactflow";
 
-  return [
+  const mainMenuItems = [
     // Add the Projects section at the top with its custom width
     {
       id: "projects",
@@ -252,16 +259,54 @@ export const createDefaultLeftMenus = ({
       })(),
     },
   ];
+
+  // Create bottom elements with a ProfileIcon
+  const bottomElements = includeBottomElements ? (
+    <div className={styles.sidebarBottomElements}>
+      <div
+        className={styles.bottomElement}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center", // Center horizontally
+          marginTop: "auto",
+          marginBottom: "16px", // Add bottom margin
+          width: "100%", // Ensure full width for proper centering
+        }}
+      >
+        <ProfileIcon
+          style={{
+            margin: 0,
+            width: 30,
+            height: 30,
+            minWidth: 30,
+            minHeight: 30,
+            boxShadow: "none",
+          }}
+          size={30}
+        />
+      </div>
+    </div>
+  ) : null;
+
+  return {
+    mainMenus: mainMenuItems,
+    bottomElements,
+  };
 };
 
-export const leftFooterContent = (isOpen: boolean) => (
-  <a
-    href="https://aesgraph.github.io/unigraph/"
-    target="_blank"
-    rel="noopener noreferrer"
-    className={styles.footerLink}
-  >
-    <BookOpen size={20} className={styles.footerIcon} />
-    {isOpen && <span className={styles.footerText}>Documentation</span>}
-  </a>
-);
+export const leftFooterContent = (isOpen: boolean) => {
+  return (
+    <div className={styles.menuItem}>
+      <a
+        href="https://aesgraph.github.io/unigraph/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.footerLink}
+      >
+        <BookOpen size={20} className={styles.footerIcon} />
+        {isOpen && <span className={styles.footerText}>Documentation</span>}
+      </a>
+    </div>
+  );
+};

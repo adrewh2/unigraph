@@ -1,16 +1,31 @@
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import {
   ChevronDown,
   ChevronRight,
   MinusSquare,
   PlusSquare,
+  RefreshCw,
 } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+
+import {
+  getProject,
+  listProjects,
+  toSceneGraph,
+} from "../../api/supabaseProjects";
+
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { deserializeDotToSceneGraph } from "../../core/serializers/fromDot";
 import { loadSceneGraphFromFile } from "../../core/serializers/sceneGraphLoader";
 import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
+import { addNotification } from "../../store/notificationStore";
+import { useUserStore } from "../../store/userStore"; // <-- new import for user state
 import styles from "./LoadSceneGraphDialog.module.css";
+import ProjectsList from "./ProjectsList";
+
+// Register AG Grid community modules (fixes AG Grid error #272)
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface TreeNodeProps {
   category: string;
@@ -99,15 +114,120 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   isDarkMode,
   handleLoadSceneGraph,
 }) => {
+  // Get user state from store
+  const { isSignedIn } = useUserStore();
+
+  console.log("LoadSceneGraphDialog - isSignedIn:", isSignedIn);
+
+  // Set default tab based on user sign-in state
   const [activeTab, setActiveTab] = useState<
-    "File" | "Demos" | "Text" | "SVG URL"
-  >("Demos");
+    "Server" | "File" | "Text" | "Svg Url" | "Demos"
+  >(isSignedIn ? "Server" : "Demos");
+
+  // Track if user manually selected a tab
+  const [userSelectedTab, setUserSelectedTab] = useState(false);
+
+  // Update active tab when authentication state changes (only if user hasn't manually selected)
+  useEffect(() => {
+    console.log("Auth state changed - isSignedIn:", isSignedIn);
+    if (!userSelectedTab) {
+      if (isSignedIn && activeTab !== "Server") {
+        console.log("Switching to Server tab due to authentication");
+        setActiveTab("Server");
+      } else if (!isSignedIn && activeTab === "Server") {
+        console.log("Switching to Demos tab due to no authentication");
+        setActiveTab("Demos");
+      }
+    }
+  }, [activeTab, isSignedIn, userSelectedTab]);
   const [expandedCategories, setExpandedCategories] = useState<{
     [key: string]: boolean;
   }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [textInput, setTextInput] = useState("");
   const [svgUrl, setSvgUrl] = useState("");
+
+  // Server projects state
+  const [serverProjects, setServerProjects] = useState<any[]>([]);
+  const [serverLoading, setServerLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverSearchTerm, setServerSearchTerm] = useState("");
+
+  console.log("LoadSceneGraphDialog - activeTab:", activeTab);
+  console.log("LoadSceneGraphDialog - serverProjects:", serverProjects);
+
+  const loadServerProjects = useCallback(async () => {
+    setServerLoading(true);
+    setServerError(null);
+    try {
+      const projects = await listProjects();
+      setServerProjects(projects);
+      // Add this log to verify the loaded projects
+      console.log("loadServerProjects: loaded projects", projects);
+    } catch (error) {
+      console.error("Error loading server projects:", error);
+      setServerError("Failed to load projects from server");
+      addNotification({
+        message: "Failed to load projects from server",
+        type: "error",
+        duration: 5000,
+      });
+    } finally {
+      setServerLoading(false);
+    }
+  }, []);
+
+  // Load server projects when Server tab is selected
+  useEffect(() => {
+    console.log(
+      "useEffect triggered - activeTab:",
+      activeTab,
+      "serverProjects.length:",
+      serverProjects.length,
+      "isSignedIn:",
+      isSignedIn
+    );
+    if (activeTab === "Server" && serverProjects.length === 0 && isSignedIn) {
+      console.log("Loading server projects...");
+      loadServerProjects();
+    } else {
+      console.log("Not loading server projects - conditions not met");
+    }
+  }, [activeTab, serverProjects.length, isSignedIn, loadServerProjects]);
+
+  // Refresh server projects when authentication state changes
+  useEffect(() => {
+    if (activeTab === "Server" && isSignedIn) {
+      console.log("Auth state changed, refreshing server projects...");
+      loadServerProjects();
+    }
+  }, [isSignedIn, activeTab, loadServerProjects]);
+
+  const handleServerProjectSelect = async (projectId: string) => {
+    try {
+      const project = await getProject({ id: projectId });
+      if (!project) {
+        throw new Error("Project not found");
+      }
+
+      const sceneGraph = toSceneGraph(project);
+      handleLoadSceneGraph(sceneGraph);
+      onClose();
+
+      addNotification({
+        message: `Loaded project: ${project.name}`,
+        type: "success",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error loading server project:", error);
+      addNotification({
+        message: "Failed to load project from server",
+        type: "error",
+        duration: 5000,
+      });
+    }
+  };
 
   const toggleExpand = (category: string) => {
     setExpandedCategories((prev) => ({
@@ -192,7 +312,7 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
       handleLoadSceneGraph(sceneGraph);
       onClose();
     } catch (error) {
-      console.error("Failed to load SVG URL:", error);
+      console.error("Failed to load Svg Url:", error);
     }
   };
 
@@ -200,6 +320,129 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     onSelect(key);
     onClose();
   };
+
+  // Close dialog on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  // Filtering function for server projects
+  const filterServerProjects = (projects: any[], searchTerm: string): any[] => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return projects;
+
+    return projects.filter((project) => {
+      if (!project || !project.name) return false;
+
+      // Search in name
+      if (project.name.toLowerCase().includes(term)) return true;
+
+      // Search in description
+      if (
+        project.description &&
+        project.description.toLowerCase().includes(term)
+      )
+        return true;
+
+      // Search in last updated date - multiple string representations
+      if (project.last_updated_at) {
+        try {
+          const date = new Date(project.last_updated_at);
+          const searchableStrings = [
+            date.toString(),
+            date.toLocaleString(),
+            date.toLocaleDateString(),
+            date.toISOString(),
+            date.toUTCString(),
+            date.getFullYear().toString(),
+            (date.getMonth() + 1).toString().padStart(2, "0"),
+            date.getDate().toString().padStart(2, "0"),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+          ];
+
+          if (
+            searchableStrings.some((str) => str.toLowerCase().includes(term))
+          ) {
+            return true;
+          }
+        } catch {
+          if (project.last_updated_at.toLowerCase().includes(term)) {
+            return true;
+          }
+        }
+      }
+
+      // Search in created date - multiple string representations
+      if (project.created_at) {
+        try {
+          const date = new Date(project.created_at);
+          const searchableStrings = [
+            date.toString(),
+            date.toLocaleString(),
+            date.toLocaleDateString(),
+            date.toISOString(),
+            date.toUTCString(),
+            date.getFullYear().toString(),
+            (date.getMonth() + 1).toString().padStart(2, "0"),
+            date.getDate().toString().padStart(2, "0"),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+          ];
+
+          if (
+            searchableStrings.some((str) => str.toLowerCase().includes(term))
+          ) {
+            return true;
+          }
+        } catch {
+          if (project.created_at.toLowerCase().includes(term)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+  };
+
+  // Memoize filtered projects to avoid unnecessary recalculation
+  const filteredServerProjects = React.useMemo(
+    () => filterServerProjects(serverProjects, serverSearchTerm),
+    [serverProjects, serverSearchTerm]
+  );
 
   return (
     <div className={`${styles.overlay} ${isDarkMode ? styles.dark : ""}`}>
@@ -213,9 +456,23 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
         <div className={styles.tabs}>
           <button
             className={`${styles.tabButton} ${
+              activeTab === "Server" ? styles.activeTab : ""
+            }`}
+            onClick={() => {
+              setActiveTab("Server");
+              setUserSelectedTab(true);
+            }}
+          >
+            Server
+          </button>
+          <button
+            className={`${styles.tabButton} ${
               activeTab === "File" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("File")}
+            onClick={() => {
+              setActiveTab("File");
+              setUserSelectedTab(true);
+            }}
           >
             File
           </button>
@@ -223,25 +480,23 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "Demos" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Demos")}
+            onClick={() => {
+              setActiveTab("Demos");
+              setUserSelectedTab(true);
+            }}
           >
             Demos
           </button>
           <button
             className={`${styles.tabButton} ${
-              activeTab === "Text" ? styles.activeTab : ""
+              activeTab === "Svg Url" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Text")}
+            onClick={() => {
+              setActiveTab("Svg Url");
+              setUserSelectedTab(true);
+            }}
           >
-            Text
-          </button>
-          <button
-            className={`${styles.tabButton} ${
-              activeTab === "SVG URL" ? styles.activeTab : ""
-            }`}
-            onClick={() => setActiveTab("SVG URL")}
-          >
-            SVG URL
+            Svg Url
           </button>
         </div>
         {activeTab === "File" && (
@@ -303,11 +558,11 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             </button>
           </div>
         )}
-        {activeTab === "SVG URL" && (
+        {activeTab === "Svg Url" && (
           <div className={styles.svgUrlTab}>
             <input
               type="text"
-              placeholder="Enter SVG URL..."
+              placeholder="Enter Svg Url..."
               className={styles.svgUrlInput}
               value={svgUrl}
               onChange={(e) => setSvgUrl(e.target.value)}
@@ -318,6 +573,99 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             >
               Load
             </button>
+          </div>
+        )}
+        {activeTab === "Server" && (
+          <div className={styles.serverTab}>
+            {!isSignedIn ? (
+              <div className={styles.loginPrompt}>
+                <div className={styles.loginContent}>
+                  <h3>Sign in to access your projects</h3>
+                  <p>
+                    You need to be signed in to view and load projects from the
+                    server.
+                  </p>
+                  <button
+                    className={styles.loginButton}
+                    onClick={() => {
+                      // Open signin page as popup with better dimensions and centering
+                      const width = 800;
+                      const height = 600;
+                      const left = (window.screen.width - width) / 2;
+                      const top = (window.screen.height - height) / 2;
+
+                      const popup = window.open(
+                        "/signin",
+                        "signin",
+                        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no`
+                      );
+
+                      if (popup) {
+                        // Listen for messages from popup
+                        const handleMessage = (event: MessageEvent) => {
+                          if (event.origin !== window.location.origin) return;
+
+                          if (event.data.type === "SIGNED_IN") {
+                            console.log(
+                              "User signed in via popup:",
+                              event.data.user
+                            );
+                            window.removeEventListener(
+                              "message",
+                              handleMessage
+                            );
+                          } else if (event.data.type === "SIGNIN_CANCELLED") {
+                            console.log("Sign-in was cancelled");
+                            window.removeEventListener(
+                              "message",
+                              handleMessage
+                            );
+                          }
+                        };
+
+                        window.addEventListener("message", handleMessage);
+                      } else {
+                        // Popup was blocked, fallback to redirect
+                        window.location.href = "/signin";
+                      }
+                    }}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.toolbar}>
+                  <input
+                    type="text"
+                    placeholder="Search for projects..."
+                    className={styles.searchBar}
+                    value={serverSearchTerm}
+                    onChange={(e) => setServerSearchTerm(e.target.value)}
+                  />
+                  <button
+                    className={styles.toolbarIconButton}
+                    onClick={loadServerProjects}
+                    disabled={serverLoading}
+                    title="Refresh projects"
+                  >
+                    <RefreshCw
+                      size={20}
+                      className={serverLoading ? styles.spinning : ""}
+                    />
+                  </button>
+                </div>
+                <ProjectsList
+                  projects={filteredServerProjects}
+                  loading={serverLoading}
+                  error={serverError}
+                  onProjectDoubleClick={handleServerProjectSelect}
+                  onRefresh={loadServerProjects}
+                  style={{ marginTop: 0 }}
+                />
+              </>
+            )}
           </div>
         )}
       </div>

@@ -10,7 +10,7 @@ export function serializeSceneGraphToJson(sceneGraph: SceneGraph): string {
 
 export function deserializeSceneGraphFromJson(json: JSONString): SceneGraph {
   const malformedSceneGraphData = JSON.parse(json);
-  console.log("MALFORMED", malformedSceneGraphData);
+
   const graph = new Graph();
 
   type NodeDataArgsAndId = NodeDataArgs & { id: string };
@@ -21,9 +21,6 @@ export function deserializeSceneGraphFromJson(json: JSONString): SceneGraph {
       graph.createNode(node);
     }
   );
-
-  console.log("sceneGraphData is ", malformedSceneGraphData);
-  console.log("sceneGraphData is ", malformedSceneGraphData.data);
 
   malformedSceneGraphData.data.graph.edges.forEach(
     (edge: EdgeDataArgsAndId) => {

@@ -72,9 +72,7 @@ export const createForceGraph = (
   // console.log("creating here", options, layout, positions);
   const data = exportGraphDataForReactFlow(sceneGraph);
   // console.log("data is ", data);
-
   // const controlMode = getMouseControlMode();
-
   const graph = new ForceGraph3D(dom, {
     extraRenderers: [new CSS2DRenderer()],
   })
@@ -112,7 +110,7 @@ export const createForceGraph = (
       );
     })
     .linkLabel("type")
-    .backgroundColor("#1a1a1a")
+    .backgroundColor(options.backgroundColor ?? "#1a1a1a")
     .enableNodeDrag(true)
     .onNodeClick((node) => {
       flyToNode(graph, node);
@@ -140,6 +138,10 @@ export const createForceGraph = (
       }
     })
     .onNodeDragEnd((node, _translate: any) => {
+      if (node == undefined || node.id == undefined) {
+        setIsDraggingNode(false);
+        return;
+      }
       // console.log("translate end is ", translate);
       const selectedNodeIds = getSelectedNodeIds();
       let positions: NodePositionData = {};
@@ -148,7 +150,7 @@ export const createForceGraph = (
           graph,
           selectedNodeIds
         );
-      } else {
+      } else if (node.id) {
         positions[node.id as NodeId] = {
           x: node.fx! ?? node.x ?? 0,
           y: node.fy! ?? node.y ?? 0,
@@ -166,11 +168,11 @@ export const createForceGraph = (
             z: pos.z,
           });
 
-        sceneGraph.getDisplayConfig().nodePositions![id as NodeId] = {
+        sceneGraph.setNodePosition(id as NodeId, {
           x: pos.x,
           y: -pos.y,
           z: pos.z,
-        };
+        });
       });
       setIsDraggingNode(false);
     });
@@ -302,6 +304,9 @@ export const createForceGraph = (
           getNodeLegendConfig(),
           getLegendMode()
         );
+
+        nodeEl.style.fontSize = `${options.fontSize}px`;
+
         nodeEl.className = "node-label";
         return new CSS2DObject(nodeEl);
       })

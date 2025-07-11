@@ -9,13 +9,13 @@ import {
 import {
   centerPositionsAroundPoint,
   filterNodePositionsToSelection,
+  getCenterPointOfNodePositionData,
 } from "../core/layouts/layoutHelpers";
 import { DisplayManager } from "../core/model/DisplayManager";
 import { EntityIds } from "../core/model/entity/entityIds";
 import { NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
 import { extractPositionsFromNodes } from "../data/graphs/blobMesh";
-import { getCenterPointOfNodePositionData } from "./../core/layouts/layoutHelpers";
 import { Filter } from "./activeFilterStore";
 import {
   getCurrentLayoutResult,
@@ -27,9 +27,11 @@ import {
   SetNodeAndEdgeLegendsForOnlyVisibleEntities,
 } from "./activeLegendConfigStore";
 import {
+  getActiveView,
   getCurrentSceneGraph,
   getForceGraphInstance,
   getLegendMode,
+  getReactFlowInstance,
   setActiveFilter,
 } from "./appConfigStore";
 import {
@@ -90,12 +92,19 @@ export async function computeLayoutAndTriggerAppUpdate(
         nodeSelection.toArray()
       );
 
-      const currentNodeSelectionCenterPoint =
-        getCenterPointOfNodePositionData(filteredPositions);
+      let currentNodeSelectionCenterPoint = { x: 0, y: 0, z: 0 };
+      if (Object.keys(filteredPositions).length > 0) {
+        currentNodeSelectionCenterPoint = {
+          ...currentNodeSelectionCenterPoint,
+          ...getCenterPointOfNodePositionData(filteredPositions),
+        };
+      }
       output.positions = centerPositionsAroundPoint(
         output.positions,
         currentNodeSelectionCenterPoint
       );
+
+      // console.log("Center point is ", currentNodeSelectionCenterPoint);
 
       for (const [key, position] of Object.entries(output.positions)) {
         currentNodePositions[key] = position;
@@ -191,4 +200,15 @@ export const clearFiltersOnAppInstance = () => {
   DisplayManager.setAllVisible(currentSceneGraph.getGraph());
   ResetNodeAndEdgeLegends(currentSceneGraph);
   setActiveFilter(null);
+};
+
+export const handleReactFlowFitView = (
+  padding: number = 0.1,
+  duration: number = 0
+) => {
+  if (getActiveView() === "ReactFlow" && getReactFlowInstance()) {
+    setTimeout(() => {
+      getReactFlowInstance()?.fitView({ padding, duration });
+    }, 0);
+  }
 };
