@@ -5,7 +5,13 @@ import {
   themeBalham,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReactDOM from "react-dom";
 import { useAppContext } from "../../context/AppContext";
 import { Entity } from "../../core/model/entity/abstractEntity";
@@ -319,6 +325,30 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         width: 0,
       });
       const cellRef = useRef<HTMLDivElement>(null);
+      const dropdownRef = useRef<HTMLDivElement>(null);
+
+      // Handle click outside to close dropdown
+      useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+          if (
+            isEditing &&
+            dropdownRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            cellRef.current &&
+            !cellRef.current.contains(event.target as Node)
+          ) {
+            setIsEditing(false);
+          }
+        };
+
+        if (isEditing) {
+          document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+        };
+      }, [isEditing]);
 
       const handleDoubleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -366,6 +396,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
         return ReactDOM.createPortal(
           <div
+            ref={dropdownRef}
             style={{
               position: "fixed",
               top: dropdownPosition.top,
