@@ -11,6 +11,7 @@ import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { ContextMenuItem } from "./ContextMenu";
+import EntityJsonViewer from "./EntityJsonViewer";
 import styles from "./EntityTableV2.module.css";
 
 // Register AG Grid modules
@@ -33,6 +34,8 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     mouseY: number;
     entity: Entity | null;
   } | null>(null);
+
+  const [jsonViewerEntity, setJsonViewerEntity] = useState<Entity | null>(null);
 
   const { setEditingEntity, setJsonEditEntity } = useAppContext();
 
@@ -154,68 +157,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       label: "View as JSON",
       action: () => {
         if (contextMenu?.entity) {
-          const entityData = contextMenu.entity.getData();
-          const fullEntity = {
-            id: contextMenu.entity.getId?.(),
-            type: contextMenu.entity.getType?.(),
-            data: entityData,
-            // Include any other entity properties that might be useful
-          };
-
-          // Create a new window/tab with the JSON data
-          const jsonWindow = window.open("", "_blank");
-          if (jsonWindow) {
-            jsonWindow.document.write(`
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <title>Entity JSON - ${contextMenu.entity.getId?.() || "Unknown"}</title>
-                  <style>
-                    body { 
-                      font-family: 'Courier New', monospace; 
-                      background: #1e1e1e; 
-                      color: #d4d4d4; 
-                      padding: 20px; 
-                      margin: 0;
-                      font-size: 14px;
-                      line-height: 1.5;
-                    }
-                    pre { 
-                      background: #2d2d2d; 
-                      padding: 20px; 
-                      border-radius: 8px; 
-                      overflow-x: auto;
-                      white-space: pre-wrap;
-                      word-wrap: break-word;
-                    }
-                    .header {
-                      margin-bottom: 20px;
-                      padding-bottom: 10px;
-                      border-bottom: 1px solid #404040;
-                    }
-                    .header h1 {
-                      margin: 0;
-                      color: #4ec9b0;
-                      font-size: 18px;
-                    }
-                    .header p {
-                      margin: 5px 0 0 0;
-                      color: #9cdcfe;
-                      font-size: 12px;
-                    }
-                  </style>
-                </head>
-                <body>
-                  <div class="header">
-                    <h1>Entity: ${contextMenu.entity.getId?.() || "Unknown"}</h1>
-                    <p>Type: ${contextMenu.entity.getType?.() || "Unknown"}</p>
-                  </div>
-                  <pre>${JSON.stringify(fullEntity, null, 2)}</pre>
-                </body>
-              </html>
-            `);
-            jsonWindow.document.close();
-          }
+          setJsonViewerEntity(contextMenu.entity);
         }
         handleClose();
       },
@@ -336,6 +278,10 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   // Handle context menu
   const onCellContextMenu = useCallback(
     (event: any) => {
+      // Prevent default browser context menu
+      event.event.preventDefault();
+      event.event.stopPropagation();
+
       if (event.data) {
         handleContextMenu(event.event, event.data);
       }
@@ -360,7 +306,13 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         width: "100%",
       }}
     >
-      <div className={`${styles.agGridContainer} ${styles.customScrollbar}`}>
+      <div
+        className={`${styles.agGridContainer} ${styles.customScrollbar}`}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
         <AgGridReact
           ref={gridRef}
           theme={themeBalham}
@@ -428,6 +380,14 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       {/* Click outside to close context menu */}
       {contextMenu && (
         <div className={styles.contextMenuOverlay} onClick={handleClose} />
+      )}
+
+      {/* Entity JSON Viewer */}
+      {jsonViewerEntity && (
+        <EntityJsonViewer
+          entity={jsonViewerEntity}
+          onClose={() => setJsonViewerEntity(null)}
+        />
       )}
     </div>
   );
