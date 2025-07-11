@@ -165,50 +165,53 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   ];
 
   // Actions cell renderer component
-  const ActionsCellRenderer = (props: any) => {
-    const handleGoTo = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (onEntityClick && props.data) {
-        onEntityClick(props.data);
-      }
-    };
+  const ActionsCellRenderer = useCallback(
+    (props: any) => {
+      const handleGoTo = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onEntityClick && props.data) {
+          onEntityClick(props.data);
+        }
+      };
 
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        <button
-          onClick={handleGoTo}
+      return (
+        <div
           style={{
-            background: "#007acc",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            padding: "4px 8px",
-            fontSize: "12px",
-            cursor: "pointer",
-            fontWeight: "500",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            width: "100%",
+            height: "100%",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#005a9e";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#007acc";
-          }}
-          title="Go to entity"
         >
-          Go to
-        </button>
-      </div>
-    );
-  };
+          <button
+            onClick={handleGoTo}
+            style={{
+              background: "#007acc",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              padding: "4px 8px",
+              fontSize: "12px",
+              cursor: "pointer",
+              fontWeight: "500",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#005a9e";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#007acc";
+            }}
+            title="Go to entity"
+          >
+            Go to
+          </button>
+        </div>
+      );
+    },
+    [onEntityClick]
+  );
 
   // Color cell renderer component
   const ColorCellRenderer = (props: any) => {
@@ -454,14 +457,14 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   }, []);
 
   // Handle row double click
-  const onRowDoubleClicked = useCallback(
-    (event: any) => {
-      if (onEntityClick && event.data) {
-        onEntityClick(event.data);
-      }
-    },
-    [onEntityClick]
-  );
+  // const onRowDoubleClicked = useCallback(
+  //   (event: any) => {
+  //     if (onEntityClick && event.data) {
+  //       onEntityClick(event.data);
+  //     }
+  //   },
+  //   [onEntityClick]
+  // );
 
   // Handle context menu
   const onCellContextMenu = useCallback(
@@ -530,7 +533,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
             cursor: onEntityClick ? "pointer" : "default",
           })}
           onRowClicked={onRowClicked}
-          onRowDoubleClicked={onRowDoubleClicked}
+          // onRowDoubleClicked={onRowDoubleClicked}
           onCellContextMenu={onCellContextMenu}
           onFilterChanged={onFilterChanged}
           onModelUpdated={onModelUpdated}
