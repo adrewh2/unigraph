@@ -166,7 +166,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
   // Actions cell renderer component
   const ActionsCellRenderer = useCallback(
-    (props: any) => {
+    (props: { data: Entity }) => {
       const handleGoTo = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (onEntityClick && props.data) {
@@ -213,9 +213,103 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     [onEntityClick]
   );
 
+  // Label cell renderer component with inline editing
+  const LabelCellRenderer = (props: { data: Entity; value: string }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editValue, setEditValue] = useState(props.value || "");
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const handleDoubleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsEditing(true);
+      setEditValue(props.value || "");
+      // Focus the input after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 10);
+    };
+
+    const handleSave = () => {
+      if (props.data && editValue !== props.value) {
+        // Update the entity's label using the proper setter method
+        props.data.setLabel(editValue);
+
+        // Trigger a refresh of the grid
+        if (gridRef.current?.api) {
+          gridRef.current.api.refreshCells();
+        }
+      }
+      setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+      setEditValue(props.value || "");
+      setIsEditing(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handleSave();
+      } else if (e.key === "Escape") {
+        handleCancel();
+      }
+    };
+
+    const handleBlur = () => {
+      handleSave();
+    };
+
+    if (isEditing) {
+      return (
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          style={{
+            width: "100%",
+            height: "100%",
+            border: "2px solid #007acc",
+            borderRadius: "4px",
+            padding: "4px 8px",
+            fontSize: "14px",
+            outline: "none",
+            background: "white",
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+        />
+      );
+    }
+
+    return (
+      <div
+        onDoubleClick={handleDoubleClick}
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          padding: "8px",
+          cursor: "text",
+          userSelect: "text",
+        }}
+        title="Double-click to edit"
+      >
+        {props.value || ""}
+      </div>
+    );
+  };
+
   // Color cell renderer component
-  const ColorCellRenderer = (props: any) => {
-    const colorValue = props.value || props.data?.getData?.()?.color || "";
+  const ColorCellRenderer = (props: { data: Entity; value: string }) => {
+    // For Node entities, color is in the NodeData, for other entities it might be in userData
+    const entityData = props.data.getData();
+    const colorValue = props.value || (entityData as any)?.color || "";
     const [showColorPicker, setShowColorPicker] = React.useState(false);
     const [currentColor, setCurrentColor] = React.useState(
       colorValue || "#000000"
@@ -235,7 +329,16 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       const newColor = e.target.value;
       setCurrentColor(newColor);
       console.log("Color changed to:", newColor);
-      // Here you would typically update the entity data
+
+      // Update the entity's color using the proper setter method if available
+      if (props.data && typeof (props.data as any).setColor === "function") {
+        (props.data as any).setColor(newColor);
+      } else {
+        // Fallback: update the data directly
+        const entityData = props.data.getData();
+        (entityData as any).color = newColor;
+      }
+
       setShowColorPicker(false);
     };
 
@@ -366,7 +469,12 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       maxWidth: col === "label" ? 500 : 300,
       sortable: true,
       resizable: true,
-      cellRenderer: col === "color" ? ColorCellRenderer : undefined,
+      cellRenderer:
+        col === "color"
+          ? ColorCellRenderer
+          : col === "label"
+            ? LabelCellRenderer
+            : undefined,
       valueGetter: (params: any) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
