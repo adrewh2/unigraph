@@ -308,84 +308,96 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   };
 
   // Type cell renderer component with dropdown editing
-  const TypeCellRenderer = (props: { data: Entity; value: string }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [editValue, setEditValue] = useState(props.value || "");
+  const TypeCellRendererComponent = React.memo(
+    (props: { data: Entity; value: string }) => {
+      const [isEditing, setIsEditing] = useState(false);
+      const [editValue, setEditValue] = useState(props.value || "");
 
-    const handleDoubleClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setIsEditing(true);
-      setEditValue(props.value || "");
-    };
+      const handleDoubleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditing(true);
+        setEditValue(props.value || "");
+      };
 
-    const handleSave = (newType: string) => {
-      if (props.data && newType !== props.value) {
-        // Update the entity's type using the proper setter method
-        props.data.setType(newType);
+      const handleSave = (newType: string) => {
+        if (props.data && newType !== props.value) {
+          // Update the entity's type using the proper setter method
+          props.data.setType(newType);
 
-        // Trigger a refresh of the grid
-        if (gridRef.current?.api) {
-          gridRef.current.api.refreshCells();
+          // Trigger a refresh of the grid
+          if (gridRef.current?.api) {
+            gridRef.current.api.refreshCells();
+          }
         }
+        setIsEditing(false);
+      };
+
+      const handleCancel = () => {
+        setEditValue(props.value || "");
+        setIsEditing(false);
+      };
+
+      const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Escape") {
+          handleCancel();
+        }
+      };
+
+      if (isEditing) {
+        return (
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              padding: "4px",
+            }}
+            onKeyDown={handleKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
+            <EntityTypeSelectDropdown
+              sceneGraph={sceneGraph}
+              nodeId={null}
+              value={editValue}
+              setValue={handleSave}
+              isDarkMode={false}
+            />
+          </div>
+        );
       }
-      setIsEditing(false);
-    };
 
-    const handleCancel = () => {
-      setEditValue(props.value || "");
-      setIsEditing(false);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        handleCancel();
-      }
-    };
-
-    if (isEditing) {
       return (
         <div
+          onDoubleClick={handleDoubleClick}
           style={{
             width: "100%",
             height: "100%",
             display: "flex",
             alignItems: "center",
-            padding: "4px",
+            padding: "8px",
+            cursor: "pointer",
+            userSelect: "text",
           }}
-          onKeyDown={handleKeyDown}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onMouseUp={(e) => e.stopPropagation()}
+          title="Double-click to edit"
         >
-          <EntityTypeSelectDropdown
-            sceneGraph={sceneGraph}
-            nodeId={null}
-            value={editValue}
-            setValue={handleSave}
-            isDarkMode={false}
-          />
+          {props.value || ""}
         </div>
       );
     }
+  );
 
-    return (
-      <div
-        onDoubleClick={handleDoubleClick}
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          padding: "8px",
-          cursor: "pointer",
-          userSelect: "text",
-        }}
-        title="Double-click to edit"
-      >
-        {props.value || ""}
-      </div>
-    );
-  };
+  TypeCellRendererComponent.displayName = "TypeCellRendererComponent";
+
+  // Type cell renderer callback for AG Grid
+  const TypeCellRenderer = useCallback(
+    (props: { data: Entity; value: string }) => {
+      return <TypeCellRendererComponent {...props} />;
+    },
+    [TypeCellRendererComponent]
+  );
 
   // Color cell renderer component
   const ColorCellRenderer = (props: { data: Entity; value: string }) => {
