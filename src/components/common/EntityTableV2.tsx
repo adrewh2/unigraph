@@ -164,6 +164,52 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     },
   ];
 
+  // Actions cell renderer component
+  const ActionsCellRenderer = (props: any) => {
+    const handleGoTo = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onEntityClick && props.data) {
+        onEntityClick(props.data);
+      }
+    };
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <button
+          onClick={handleGoTo}
+          style={{
+            background: "#007acc",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            padding: "4px 8px",
+            fontSize: "12px",
+            cursor: "pointer",
+            fontWeight: "500",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#005a9e";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#007acc";
+          }}
+          title="Go to entity"
+        >
+          Go to
+        </button>
+      </div>
+    );
+  };
+
   // Color cell renderer component
   const ColorCellRenderer = (props: any) => {
     const colorValue = props.value || props.data?.getData?.()?.color || "";
@@ -261,7 +307,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   };
 
   // Generate column definitions dynamically
-  const columnDefs = useMemo<ColDef<Entity>[]>(() => {
+  const columnDefs = useMemo<ColDef<any>[]>(() => {
     const COLUMN_ORDER = [
       "label",
       "type",
@@ -291,7 +337,26 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
     const finalColumns = [...orderedColumns, ...remainingColumns];
 
-    return finalColumns.map((col) => ({
+    // Create the actions column
+    const actionsColumn = {
+      headerName: "Actions",
+      field: "actions",
+      flex: 0.5,
+      minWidth: 80,
+      maxWidth: 100,
+      sortable: false,
+      resizable: false,
+      cellRenderer: ActionsCellRenderer,
+      cellStyle: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "4px",
+      },
+    };
+
+    // Create data columns
+    const dataColumns = finalColumns.map((col) => ({
       headerName: col,
       flex: col === "label" ? 2 : 1, // Expand label column
       minWidth: col === "label" ? 200 : 120,
@@ -299,7 +364,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       sortable: true,
       resizable: true,
       cellRenderer: col === "color" ? ColorCellRenderer : undefined,
-      valueGetter: (params) => {
+      valueGetter: (params: any) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
         return formatValue(value);
@@ -310,7 +375,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         closeOnApply: true,
       },
       // Custom filter function for complex search
-      filterValueGetter: (params) => {
+      filterValueGetter: (params: any) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
         return value;
@@ -334,7 +399,10 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         whiteSpace: "nowrap",
       },
     }));
-  }, [container, searchInValue, formatValue]);
+
+    // Return actions column + data columns
+    return [actionsColumn, ...dataColumns];
+  }, [container, ActionsCellRenderer, formatValue, searchInValue]);
 
   // Default column definition
   const defaultColDef = useMemo(
@@ -362,29 +430,28 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   // Grid API reference
   const gridRef = useRef<AgGridReact<Entity>>(null);
 
-  // Handle row click
-  const onRowClicked = useCallback(
-    (event: any) => {
-      // Check if the click target is part of a color picker
-      const target = event.event?.target;
-      if (target) {
-        // Check if the click is on a color picker element
-        const isColorPickerClick =
-          target.closest('input[type="color"]') ||
-          target.closest("[data-color-picker]") ||
-          target.type === "color";
+  // Handle row click - disabled to prevent window closing
+  const onRowClicked = useCallback((event: any) => {
+    // Disabled row click to prevent entity selection and window closing
+    // Check if the click target is part of a color picker
+    const target = event.event?.target;
+    if (target) {
+      // Check if the click is on a color picker element
+      const isColorPickerClick =
+        target.closest('input[type="color"]') ||
+        target.closest("[data-color-picker]") ||
+        target.type === "color";
 
-        if (isColorPickerClick) {
-          return; // Don't trigger row click for color picker interactions
-        }
+      if (isColorPickerClick) {
+        return; // Don't trigger row click for color picker interactions
       }
+    }
 
-      if (onEntityClick && event.data) {
-        onEntityClick(event.data);
-      }
-    },
-    [onEntityClick]
-  );
+    // Don't call onEntityClick to prevent window closing
+    // if (onEntityClick && event.data) {
+    //   onEntityClick(event.data);
+    // }
+  }, []);
 
   // Handle row double click
   const onRowDoubleClicked = useCallback(
