@@ -76,6 +76,8 @@ export const useUserStore = create<UserStore>((set, get) => ({
       } = supabase.auth.onAuthStateChange(async (event, session) => {
         console.log("UserStore: Auth state change:", event, session?.user?.id);
 
+        const { isSignedIn: wasSignedIn, user: prevUser } = get();
+
         if (event === "SIGNED_IN" && session?.user) {
           set({
             isSignedIn: true,
@@ -84,14 +86,16 @@ export const useUserStore = create<UserStore>((set, get) => ({
           });
           console.log("UserStore: User signed in:", session.user.id);
 
-          // Show login notification
-          const userName =
-            session.user.user_metadata?.name || session.user.email || "User";
-          addNotification({
-            message: `Logged in as: ${userName}`,
-            type: "success",
-            duration: 3000,
-          });
+          // Only show notification if this is a new login (not a session refresh)
+          if (!wasSignedIn || prevUser?.id !== session.user.id) {
+            const userName =
+              session.user.user_metadata?.name || session.user.email || "User";
+            addNotification({
+              message: `Logged in as: ${userName}`,
+              type: "success",
+              duration: 3000,
+            });
+          }
         } else if (event === "SIGNED_OUT") {
           set({
             isSignedIn: false,
@@ -111,6 +115,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
             user: session.user,
           });
           console.log("UserStore: Token refreshed for user:", session.user.id);
+          // Do not show login notification on token refresh
         }
       });
 
