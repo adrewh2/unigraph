@@ -11,7 +11,7 @@ import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { ContextMenuItem } from "./ContextMenu";
-import styles from "./EntityTable.module.css";
+import styles from "./EntityTableV2.module.css";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -295,51 +295,9 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       style={{
         height: typeof maxHeight === "string" ? maxHeight : `${maxHeight}px`,
         width: "100%",
-        overflow: "auto",
-        borderRadius: 10,
       }}
     >
-      <style>
-        {`
-        .entity-table-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: #d1d5db #f5f6fa;
-        }
-        .entity-table-scrollbar::-webkit-scrollbar {
-          width: 10px;
-          background: #f5f6fa;
-        }
-        .entity-table-scrollbar::-webkit-scrollbar-thumb {
-          background: #d1d5db;
-          border-radius: 6px;
-        }
-        .entity-table-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #bfc7d1;
-        }
-        .ag-theme-balham {
-          --ag-row-height: 48px;
-          --ag-header-height: 48px;
-          --ag-font-size: 14px;
-          --ag-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        .ag-theme-balham .ag-header-cell {
-          font-weight: 600;
-          background-color: #f8f9fa;
-          border-bottom: 1px solid #dee2e6;
-        }
-        .ag-theme-balham .ag-row {
-          border-bottom: 1px solid #f1f3f4;
-        }
-        .ag-theme-balham .ag-row:hover {
-          background-color: #f8f9fa;
-        }
-        .ag-theme-balham .ag-row-selected {
-          background-color: #e3f2fd;
-        }
-        `}
-      </style>
-
-      <div className="entity-table-scrollbar" style={{ height: "100%" }}>
+      <div className={`${styles.agGridContainer} ${styles.customScrollbar}`}>
         <AgGridReact
           ref={gridRef}
           theme={themeBalham}
@@ -354,18 +312,9 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           suppressContextMenu={false}
           allowContextMenuWithControlKey={false}
           suppressMenuHide={false}
-          pagination={false}
-          suppressPaginationPanel={true}
-          suppressHorizontalScroll={false}
+          pagination={true}
           suppressRowClickSelection={true}
           suppressRowDeselection={true}
-          suppressRowTransform={false}
-          suppressAnimationFrame={false}
-          suppressBrowserResizeObserver={false}
-          suppressColumnVirtualisation={false}
-          suppressRowVirtualisation={false}
-          rowHeight={48}
-          headerHeight={48}
           getRowStyle={() => ({
             display: "flex",
             alignItems: "center",
@@ -390,37 +339,17 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       {/* Context Menu */}
       {contextMenu && (
         <div
+          className={styles.contextMenu}
           style={{
-            position: "fixed",
             top: contextMenu.mouseY,
             left: contextMenu.mouseX,
-            backgroundColor: "white",
-            border: "1px solid #ddd",
-            borderRadius: "4px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-            zIndex: 1000,
-            minWidth: "150px",
           }}
           onClick={(e) => e.stopPropagation()}
         >
           {contextMenuItems.map((item, index) => (
             <div
               key={index}
-              style={{
-                padding: "8px 12px",
-                cursor: "pointer",
-                fontSize: "14px",
-                borderBottom:
-                  index < contextMenuItems.length - 1
-                    ? "1px solid #f0f0f0"
-                    : "none",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f5f5f5";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "white";
-              }}
+              className={styles.contextMenuItem}
               onClick={() => {
                 if (item.action) {
                   item.action();
@@ -435,17 +364,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
       {/* Click outside to close context menu */}
       {contextMenu && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 999,
-          }}
-          onClick={handleClose}
-        />
+        <div className={styles.contextMenuOverlay} onClick={handleClose} />
       )}
     </div>
   );
