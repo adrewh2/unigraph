@@ -781,6 +781,9 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       valueGetter: (params: any) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
+        if (col === "tags" && value instanceof Set) {
+          return Array.from(value);
+        }
         return formatValue(value);
       },
       filterParams: {
