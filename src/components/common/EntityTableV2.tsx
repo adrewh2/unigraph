@@ -352,19 +352,25 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
               display: "flex",
               alignItems: "center",
               padding: "4px",
+              position: "relative",
+              zIndex: 9999,
             }}
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
+            onMouseEnter={(e) => e.stopPropagation()}
+            onMouseLeave={(e) => e.stopPropagation()}
           >
-            <EntityTypeSelectDropdown
-              sceneGraph={sceneGraph}
-              nodeId={null}
-              value={editValue}
-              setValue={handleSave}
-              isDarkMode={false}
-            />
+            <div style={{ position: "relative", zIndex: 10000 }}>
+              <EntityTypeSelectDropdown
+                sceneGraph={sceneGraph}
+                nodeId={null}
+                value={editValue}
+                setValue={handleSave}
+                isDarkMode={false}
+              />
+            </div>
           </div>
         );
       }
@@ -698,12 +704,19 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   // eslint-disable-next-line unused-imports/no-unused-vars
   const onModelUpdated = useCallback((event: any) => {}, []);
 
+  // Handle column resizing to prevent stuck resize mode
+  const onColumnResized = useCallback((_e: any) => {
+    // Only refresh if there are ongoing operations
+    setTimeout(() => {
+      if (gridRef.current?.api) {
+        gridRef.current.api.refreshCells();
+      }
+    }, 0);
+  }, []);
+
   return (
     <div
       className={styles.container}
-      onClick={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-      onMouseUp={(e) => e.stopPropagation()}
       style={{
         height: typeof maxHeight === "string" ? maxHeight : `${maxHeight}px`,
         width: "100%",
@@ -715,8 +728,6 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           e.preventDefault();
           e.stopPropagation();
         }}
-        onMouseDown={(e) => e.stopPropagation()}
-        onMouseUp={(e) => e.stopPropagation()}
       >
         <AgGridReact
           ref={gridRef}
@@ -747,6 +758,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           onCellContextMenu={onCellContextMenu}
           onFilterChanged={onFilterChanged}
           onModelUpdated={onModelUpdated}
+          onColumnResized={onColumnResized}
           onGridReady={(params) => {
             console.log("AG Grid ready with params:", params);
             console.log("Grid API:", params.api);
