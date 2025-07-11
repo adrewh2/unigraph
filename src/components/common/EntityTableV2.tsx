@@ -197,9 +197,9 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
     return finalColumns.map((col) => ({
       headerName: col,
-      flex: 1,
-      minWidth: 120,
-      maxWidth: 300,
+      flex: col === "label" ? 2 : 1, // Expand label column
+      minWidth: col === "label" ? 200 : 120,
+      maxWidth: col === "label" ? 500 : 300,
       sortable: true,
       resizable: true,
       valueGetter: (params) => {
@@ -340,6 +340,8 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           pagination={true}
           suppressRowClickSelection={true}
           suppressRowDeselection={true}
+          suppressHorizontalScroll={false}
+          suppressColumnVirtualisation={false}
           getRowStyle={() => ({
             display: "flex",
             alignItems: "center",
