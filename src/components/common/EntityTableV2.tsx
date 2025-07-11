@@ -6,6 +6,7 @@ import {
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import React, { useCallback, useMemo, useRef, useState } from "react";
+import ReactDOM from "react-dom";
 import { useAppContext } from "../../context/AppContext";
 import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
@@ -307,22 +308,32 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     );
   };
 
-  // Type cell renderer component with dropdown editing
+  // Type cell renderer component with portal-based dropdown
   const TypeCellRendererComponent = React.memo(
     (props: { data: Entity; value: string }) => {
       const [isEditing, setIsEditing] = useState(false);
       const [editValue, setEditValue] = useState(props.value || "");
+      const [dropdownPosition, setDropdownPosition] = useState({
+        top: 0,
+        left: 0,
+        width: 0,
+      });
+      const cellRef = useRef<HTMLDivElement>(null);
 
       const handleDoubleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsEditing(true);
         setEditValue(props.value || "");
 
-        // Temporarily disable overflow on dialog containers
-        const dialogElements = document.querySelectorAll(".dialog, .content");
-        dialogElements.forEach((el) => {
-          (el as HTMLElement).style.overflow = "visible";
-        });
+        // Calculate position for the portal dropdown
+        if (cellRef.current) {
+          const rect = cellRef.current.getBoundingClientRect();
+          setDropdownPosition({
+            top: rect.bottom + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+          });
+        }
       };
 
       const handleSave = (newType: string) => {
@@ -336,23 +347,11 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           }
         }
         setIsEditing(false);
-
-        // Restore overflow on dialog containers
-        const dialogElements = document.querySelectorAll(".dialog, .content");
-        dialogElements.forEach((el) => {
-          (el as HTMLElement).style.overflow = "hidden";
-        });
       };
 
       const handleCancel = () => {
         setEditValue(props.value || "");
         setIsEditing(false);
-
-        // Restore overflow on dialog containers
-        const dialogElements = document.querySelectorAll(".dialog, .content");
-        dialogElements.forEach((el) => {
-          (el as HTMLElement).style.overflow = "hidden";
-        });
       };
 
       const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -361,57 +360,59 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         }
       };
 
-      if (isEditing) {
-        return (
+      // Portal dropdown component
+      const DropdownPortal = () => {
+        if (!isEditing) return null;
+
+        return ReactDOM.createPortal(
           <div
-            className={styles.typeCellRenderer}
             style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              padding: "4px",
-              position: "relative",
-              zIndex: 2147483645,
+              position: "fixed",
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+              width: Math.max(dropdownPosition.width, 200),
+              zIndex: 2147483647,
+              backgroundColor: "white",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
             }}
-            onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
-            onMouseEnter={(e) => e.stopPropagation()}
-            onMouseLeave={(e) => e.stopPropagation()}
           >
-            <div
-              className={styles.typeCellRendererDropdown}
-              style={{ position: "relative", width: "100%" }}
-            >
-              <EntityTypeSelectDropdown
-                sceneGraph={sceneGraph}
-                nodeId={null}
-                value={editValue}
-                setValue={handleSave}
-                isDarkMode={false}
-              />
-            </div>
-          </div>
+            <EntityTypeSelectDropdown
+              sceneGraph={sceneGraph}
+              nodeId={null}
+              value={editValue}
+              setValue={handleSave}
+              isDarkMode={false}
+            />
+          </div>,
+          document.body
         );
-      }
+      };
 
       return (
-        <div
-          onDoubleClick={handleDoubleClick}
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            padding: "8px",
-            cursor: "pointer",
-            userSelect: "text",
-          }}
-          title="Double-click to edit"
-        >
-          {props.value || ""}
-        </div>
+        <>
+          <div
+            ref={cellRef}
+            onDoubleClick={handleDoubleClick}
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              padding: "8px",
+              cursor: "pointer",
+              userSelect: "text",
+            }}
+            title="Double-click to edit"
+          >
+            {props.value || ""}
+          </div>
+          <DropdownPortal />
+        </>
       );
     }
   );
