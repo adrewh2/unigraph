@@ -14,6 +14,7 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom";
 import { useAppContext } from "../../context/AppContext";
+import { RenderingManager } from "../../controllers/RenderingManager";
 import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { Node as ModelNode } from "../../core/model/Node";
@@ -589,7 +590,28 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
             }}
             title="Double-click to edit"
           >
-            {Array.isArray(props.value) ? props.value.join(", ") : ""}
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {Array.isArray(props.value) &&
+                props.value.map((tag: string) => (
+                  <span
+                    key={tag}
+                    style={{
+                      background: RenderingManager.getColorByKeySimple(
+                        tag,
+                        sceneGraph.getDisplayConfig().nodeConfig.tags
+                      ),
+                      color: "#fff",
+                      borderRadius: 4,
+                      padding: "2px 8px",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      display: "inline-block",
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+            </div>
           </div>
           <DropdownPortal />
         </>
