@@ -617,9 +617,11 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     // Create data columns
     const dataColumns = finalColumns.map((col) => ({
       headerName: col,
-      flex: col === "label" ? 2 : 1, // Expand label column
-      minWidth: col === "label" ? 200 : 120,
-      maxWidth: col === "label" ? 500 : 300,
+      flex: col === "label" ? 2 : col === "type" || col === "tags" ? 1.5 : 1, // Expand label, type, and tags columns
+      minWidth:
+        col === "label" ? 200 : col === "type" || col === "tags" ? 180 : 120,
+      maxWidth:
+        col === "label" ? 500 : col === "type" || col === "tags" ? 400 : 300,
       sortable: true,
       resizable: true,
       cellRenderer:
