@@ -16,6 +16,7 @@ import ReactDOM from "react-dom";
 import { useAppContext } from "../../context/AppContext";
 import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
+import { Node as ModelNode } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { ContextMenuItem } from "./ContextMenu";
 import EntityJsonViewer from "./EntityJsonViewer";
@@ -331,12 +332,15 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       // Handle click outside to close dropdown
       useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
+          const eventTarget = event.target as Node;
+          const dropdownNode = dropdownRef.current as HTMLDivElement | null;
+          const cellNode = cellRef.current as HTMLDivElement | null;
           if (
             isEditing &&
-            dropdownRef.current &&
-            !dropdownRef.current.contains(event.target as Node) &&
-            cellRef.current &&
-            !cellRef.current.contains(event.target as Node)
+            dropdownNode &&
+            !dropdownNode.contains(eventTarget) &&
+            cellNode &&
+            !cellNode.contains(eventTarget)
           ) {
             setIsEditing(false);
           }
@@ -519,12 +523,13 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         newTags: { value: string; label: string; color: string }[]
       ) => {
         if (props.data && Array.isArray(newTags)) {
-          if (typeof (props.data as any).setTags === "function") {
-            (props.data as any).setTags(newTags.map((t) => t.value));
+          const tagSet = new Set(newTags.map((t) => t.value));
+          if (typeof (props.data as ModelNode).setTags === "function") {
+            (props.data as ModelNode).setTags(tagSet);
           } else {
             // fallback
             const entityData = props.data.getData();
-            (entityData as any).tags = newTags.map((t) => t.value);
+            (entityData as any).tags = tagSet;
           }
           if (gridRef.current?.api) {
             gridRef.current.api.refreshCells();
@@ -620,8 +625,11 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       console.log("Color changed to:", newColor);
 
       // Update the entity's color using the proper setter method if available
-      if (props.data && typeof (props.data as any).setColor === "function") {
-        (props.data as any).setColor(newColor);
+      if (
+        props.data &&
+        typeof (props.data as ModelNode).setColor === "function"
+      ) {
+        (props.data as ModelNode).setColor(newColor);
       } else {
         // Fallback: update the data directly
         const entityData = props.data.getData();
