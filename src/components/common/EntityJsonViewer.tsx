@@ -139,23 +139,57 @@ const EntityJsonViewer: React.FC<EntityJsonViewerProps> = ({
       const [showNotification, setShowNotification] = React.useState(false);
 
       const copyToClipboard = async () => {
+        const jsonText = JSON.stringify(fullEntity, null, 2);
+
         try {
-          await navigator.clipboard.writeText(
-            JSON.stringify(fullEntity, null, 2)
-          );
-          setShowNotification(true);
-          setTimeout(() => setShowNotification(false), 2000);
+          // Try modern clipboard API first
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(jsonText);
+            setShowNotification(true);
+            setTimeout(() => setShowNotification(false), 2000);
+            return;
+          }
         } catch (err) {
-          console.error("Failed to copy: ", err);
-          // Fallback for older browsers
+          console.error("Modern clipboard API failed:", err);
+        }
+
+        // Fallback method for older browsers or when clipboard API fails
+        try {
           const textArea = document.createElement("textarea");
-          textArea.value = JSON.stringify(fullEntity, null, 2);
+          textArea.value = jsonText;
+          textArea.style.position = "fixed";
+          textArea.style.left = "-999999px";
+          textArea.style.top = "-999999px";
           document.body.appendChild(textArea);
+          textArea.focus();
           textArea.select();
-          document.execCommand("copy");
+
+          const successful = document.execCommand("copy");
           document.body.removeChild(textArea);
-          setShowNotification(true);
-          setTimeout(() => setShowNotification(false), 2000);
+
+          if (successful) {
+            setShowNotification(true);
+            setTimeout(() => setShowNotification(false), 2000);
+          } else {
+            // If execCommand fails, try a different approach
+            const range = document.createRange();
+            const selection = window.getSelection();
+            const tempDiv = document.createElement("div");
+            tempDiv.textContent = jsonText;
+            document.body.appendChild(tempDiv);
+            range.selectNodeContents(tempDiv);
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+            document.execCommand("copy");
+            selection?.removeAllRanges();
+            document.body.removeChild(tempDiv);
+            setShowNotification(true);
+            setTimeout(() => setShowNotification(false), 2000);
+          }
+        } catch (err) {
+          console.error("Fallback copy method failed:", err);
+          // Last resort: show the JSON in an alert so user can manually copy
+          alert("Copy failed. Here is the JSON:\n\n" + jsonText);
         }
       };
 

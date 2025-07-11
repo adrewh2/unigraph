@@ -166,7 +166,17 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
   // Generate column definitions dynamically
   const columnDefs = useMemo<ColDef<Entity>[]>(() => {
-    const COLUMN_ORDER = ["id", "type", "tags"];
+    const COLUMN_ORDER = [
+      "label",
+      "type",
+      "tags",
+      "id",
+      "position",
+      "isvisible",
+      "color",
+      "size",
+      "opacity",
+    ];
     const EXCLUDED_COLUMNS = ["userData"]; // Exclude userData from columns
     const allColumns = new Set<string>();
 
