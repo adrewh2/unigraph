@@ -371,7 +371,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
               alignItems: "center",
               padding: "4px",
               position: "relative",
-              zIndex: 4000,
+              zIndex: 2147483645,
             }}
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}

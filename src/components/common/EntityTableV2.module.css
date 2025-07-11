@@ -85,5 +85,5 @@
   overflow: visible !important; /* Allow dropdown to overflow outside cell */
   position: relative;
   min-height: 0; /* Allow content to expand beyond cell height */
-  z-index: 999999; /* Ensure dropdown appears above AG Grid rows */
+  z-index: 2147483647; /* Ensure dropdown appears above AG Grid rows */
 }
