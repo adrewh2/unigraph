@@ -20,6 +20,7 @@ import { SceneGraph } from "../../core/model/SceneGraph";
 import { ContextMenuItem } from "./ContextMenu";
 import EntityJsonViewer from "./EntityJsonViewer";
 import styles from "./EntityTableV2.module.css";
+import EntityTagsSelectorDropdown from "./EntityTagsSelectorDropdown";
 import EntityTypeSelectDropdown from "./EntityTypeSelectDropdown";
 
 // Register AG Grid modules
@@ -458,6 +459,141 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     [TypeCellRendererComponent]
   );
 
+  // Tags cell renderer component with portal-based dropdown
+  const TagsCellRendererComponent = React.memo(
+    (props: { data: Entity; value: string[] }) => {
+      const [isEditing, setIsEditing] = useState(false);
+      const [editValue, setEditValue] = useState(
+        Array.isArray(props.value)
+          ? props.value.map((tag) => ({ value: tag, label: tag, color: "" }))
+          : []
+      );
+      const [dropdownPosition, setDropdownPosition] = useState({
+        top: 0,
+        left: 0,
+        width: 0,
+      });
+      const cellRef = useRef<HTMLDivElement>(null);
+      const dropdownRef = useRef<HTMLDivElement>(null);
+
+      // Click outside to close
+      useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+          if (
+            isEditing &&
+            dropdownRef.current &&
+            !dropdownRef.current.contains(event.target as Node) &&
+            cellRef.current &&
+            !cellRef.current.contains(event.target as Node)
+          ) {
+            setIsEditing(false);
+          }
+        };
+        if (isEditing) {
+          document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+        };
+      }, [isEditing]);
+
+      const handleDoubleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditing(true);
+        setEditValue(
+          Array.isArray(props.value)
+            ? props.value.map((tag) => ({ value: tag, label: tag, color: "" }))
+            : []
+        );
+        if (cellRef.current) {
+          const rect = cellRef.current.getBoundingClientRect();
+          setDropdownPosition({
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX,
+            width: rect.width,
+          });
+        }
+      };
+
+      const handleSave = (
+        newTags: { value: string; label: string; color: string }[]
+      ) => {
+        if (props.data && Array.isArray(newTags)) {
+          if (typeof (props.data as any).setTags === "function") {
+            (props.data as any).setTags(newTags.map((t) => t.value));
+          } else {
+            // fallback
+            const entityData = props.data.getData();
+            (entityData as any).tags = newTags.map((t) => t.value);
+          }
+          if (gridRef.current?.api) {
+            gridRef.current.api.refreshCells();
+          }
+        }
+        setIsEditing(false);
+      };
+
+      // Portal dropdown component
+      const DropdownPortal = () => {
+        if (!isEditing) return null;
+        return ReactDOM.createPortal(
+          <div
+            ref={dropdownRef}
+            style={{
+              position: "fixed",
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+              width: dropdownPosition.width,
+              zIndex: 2147483647,
+              backgroundColor: "white",
+              margin: 0,
+              padding: 0,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
+            <EntityTagsSelectorDropdown
+              sceneGraph={sceneGraph}
+              nodeId={props.data.getId?.()}
+              values={editValue}
+              setValues={handleSave}
+              isDarkMode={false}
+            />
+          </div>,
+          document.body
+        );
+      };
+
+      return (
+        <>
+          <div
+            ref={cellRef}
+            onDoubleClick={handleDoubleClick}
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              padding: "8px",
+              cursor: "pointer",
+              userSelect: "text",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title="Double-click to edit"
+          >
+            {Array.isArray(props.value) ? props.value.join(", ") : ""}
+          </div>
+          <DropdownPortal />
+        </>
+      );
+    }
+  );
+
+  TagsCellRendererComponent.displayName = "TagsCellRendererComponent";
+
   // Color cell renderer component
   const ColorCellRenderer = (props: { data: Entity; value: string }) => {
     // For Node entities, color is in the NodeData, for other entities it might be in userData
@@ -631,7 +767,9 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
             ? LabelCellRenderer
             : col === "type"
               ? TypeCellRenderer
-              : undefined,
+              : col === "tags"
+                ? TagsCellRendererComponent
+                : undefined,
       valueGetter: (params: any) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
@@ -674,6 +812,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     container,
     ActionsCellRenderer,
     TypeCellRenderer,
+    TagsCellRendererComponent,
     formatValue,
     searchInValue,
   ]);

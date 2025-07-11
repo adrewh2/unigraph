@@ -1,13 +1,14 @@
 import React, { useMemo } from "react";
 import { RenderingManager } from "../../controllers/RenderingManager";
 import { NodeId } from "../../core/model/Node";
+import { SceneGraph } from "../../core/model/SceneGraph";
 import { DisplayConfigManager } from "../../store/TagManager";
 import { setNodeKeyData } from "../../store/activeLegendConfigStore";
 import { getLegendMode } from "../../store/appConfigStore";
 import MultiSelectDropdown from "./MultiSelectDropdown";
 
 interface EntityTagsSelectorDropdownProps {
-  sceneGraph: any;
+  sceneGraph: SceneGraph;
   nodeId: string | null;
   values: { value: string; label: string; color: string }[];
   setValues: (tags: { value: string; label: string; color: string }[]) => void;
@@ -54,7 +55,12 @@ const EntityTagsSelectorDropdown: React.FC<EntityTagsSelectorDropdownProps> = ({
           sceneGraph
         );
         if (nodeId) {
-          sceneGraph.getNodeById(nodeId)?.addTag(_newTag.label);
+          console.log("tags", sceneGraph.getNodeById(nodeId as NodeId));
+          console.log(
+            "scenegraph nodes are ",
+            sceneGraph.getGraph().getNodes()
+          );
+          sceneGraph.getNodeById(nodeId as NodeId)?.addTag(_newTag.label);
         }
         if (getLegendMode() === "tag") {
           setNodeKeyData(_newTag.label as NodeId, {
