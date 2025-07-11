@@ -164,6 +164,102 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     },
   ];
 
+  // Color cell renderer component
+  const ColorCellRenderer = (props: any) => {
+    const colorValue = props.value || props.data?.getData?.()?.color || "";
+    const [showColorPicker, setShowColorPicker] = React.useState(false);
+    const [currentColor, setCurrentColor] = React.useState(
+      colorValue || "#000000"
+    );
+    const colorPickerRef = React.useRef<HTMLInputElement>(null);
+
+    const handleColorClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent table row selection
+      setShowColorPicker(true);
+      // Focus the color picker after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        colorPickerRef.current?.click();
+      }, 10);
+    };
+
+    const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newColor = e.target.value;
+      setCurrentColor(newColor);
+      console.log("Color changed to:", newColor);
+      // Here you would typically update the entity data
+      setShowColorPicker(false);
+    };
+
+    const handleColorPickerBlur = () => {
+      // Small delay to allow for color picker interaction
+      setTimeout(() => {
+        setShowColorPicker(false);
+      }, 200);
+    };
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          width: "100%",
+        }}
+      >
+        <div
+          data-color-picker="swatch"
+          style={{
+            width: "24px",
+            height: "24px",
+            backgroundColor: currentColor || "#ccc",
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "12px",
+            color: currentColor ? "#fff" : "#666",
+            textShadow: "0 0 2px rgba(0,0,0,0.5)",
+          }}
+          onClick={handleColorClick}
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
+          title="Click to change color"
+        >
+          {!currentColor && "?"}
+        </div>
+
+        {showColorPicker && (
+          <input
+            ref={colorPickerRef}
+            type="color"
+            value={currentColor}
+            onChange={handleColorChange}
+            onBlur={handleColorPickerBlur}
+            data-color-picker="input"
+            style={{
+              width: "32px",
+              height: "24px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+            onMouseEnter={(e) => e.stopPropagation()}
+            onMouseLeave={(e) => e.stopPropagation()}
+          />
+        )}
+
+        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis" }}>
+          {currentColor || "No color"}
+        </span>
+      </div>
+    );
+  };
+
   // Generate column definitions dynamically
   const columnDefs = useMemo<ColDef<Entity>[]>(() => {
     const COLUMN_ORDER = [
@@ -202,6 +298,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       maxWidth: col === "label" ? 500 : 300,
       sortable: true,
       resizable: true,
+      cellRenderer: col === "color" ? ColorCellRenderer : undefined,
       valueGetter: (params) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
@@ -268,6 +365,20 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   // Handle row click
   const onRowClicked = useCallback(
     (event: any) => {
+      // Check if the click target is part of a color picker
+      const target = event.event?.target;
+      if (target) {
+        // Check if the click is on a color picker element
+        const isColorPickerClick =
+          target.closest('input[type="color"]') ||
+          target.closest("[data-color-picker]") ||
+          target.type === "color";
+
+        if (isColorPickerClick) {
+          return; // Don't trigger row click for color picker interactions
+        }
+      }
+
       if (onEntityClick && event.data) {
         onEntityClick(event.data);
       }
@@ -311,6 +422,8 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     <div
       className={styles.container}
       onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
       style={{
         height: typeof maxHeight === "string" ? maxHeight : `${maxHeight}px`,
         width: "100%",
@@ -322,6 +435,8 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           e.preventDefault();
           e.stopPropagation();
         }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
       >
         <AgGridReact
           ref={gridRef}
