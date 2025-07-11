@@ -344,9 +344,11 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   );
 
   // Handle global search
+  // eslint-disable-next-line unused-imports/no-unused-vars
   const onFilterChanged = useCallback((event: any) => {}, []);
 
   // Handle model updated
+  // eslint-disable-next-line unused-imports/no-unused-vars
   const onModelUpdated = useCallback((event: any) => {}, []);
 
   return (
