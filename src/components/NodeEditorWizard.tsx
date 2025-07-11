@@ -4,12 +4,9 @@ import { RenderingManager } from "../controllers/RenderingManager";
 import { Edge } from "../core/model/Edge";
 import { NodeDataArgs, NodeId } from "../core/model/Node";
 import { SceneGraph } from "../core/model/SceneGraph";
-import { setNodeKeyData } from "../store/activeLegendConfigStore";
-import { getLegendMode } from "../store/appConfigStore";
-import { DisplayConfigManager } from "../store/TagManager";
 import EdgeListItem, { EdgeInfo } from "./common/EdgeListItem";
+import EntityTagsSelectorDropdown from "./common/EntityTagsSelectorDropdown";
 import EntityTypeSelectDropdown from "./common/EntityTypeSelectDropdown";
-import MultiSelectDropdown from "./common/MultiSelectDropdown";
 import "./NodeEditorWizard.css";
 
 interface NodeEditorWizardProps {
@@ -96,17 +93,6 @@ const NodeEditorWizard: React.FC<NodeEditorWizardProps> = ({
       setTags([]);
     }
   }, [nodeId, sceneGraph]);
-
-  const availableTags = Array.from(
-    sceneGraph.getGraph().getNodes().getTags()
-  ).map((tag) => ({
-    value: tag,
-    label: tag,
-    color: RenderingManager.getColorByKeySimple(
-      tag,
-      sceneGraph.getDisplayConfig().nodeConfig.tags
-    ),
-  }));
 
   const availableNodes = useMemo(
     () =>
@@ -275,39 +261,12 @@ const NodeEditorWizard: React.FC<NodeEditorWizardProps> = ({
             </div>
             <div className="form-group">
               <label>Tags:</label>
-              <MultiSelectDropdown
-                options={availableTags}
+              <EntityTagsSelectorDropdown
+                sceneGraph={sceneGraph}
+                nodeId={nodeId}
                 values={tags}
-                onChange={setTags}
-                placeholder="Select or add tags..."
+                setValues={setTags}
                 isDarkMode={isDarkMode}
-                allowNewItems={true}
-                showColorPicker={true}
-                onAddNewItem={(_newTag) => {
-                  console.log(_newTag);
-                  DisplayConfigManager.addKeyToDisplayConfig(
-                    _newTag.label,
-                    { color: _newTag.color, isVisible: true },
-                    "tag",
-                    "Node",
-                    sceneGraph
-                  );
-                  if (nodeId) {
-                    sceneGraph.getNodeById(nodeId)?.addTag(_newTag.label);
-                    console.log("added tag", sceneGraph.getNodeById(nodeId));
-                    console.log(
-                      "tags",
-                      sceneGraph.getNodeById(nodeId)?.getTags()
-                    );
-                  }
-                  if (getLegendMode() === "tag") {
-                    setNodeKeyData(_newTag.label as NodeId, {
-                      color: _newTag.color,
-                      isVisible: true,
-                    });
-                  }
-                  sceneGraph.notifyGraphChanged();
-                }}
               />
             </div>
             <div className="form-group">
