@@ -317,6 +317,12 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         e.stopPropagation();
         setIsEditing(true);
         setEditValue(props.value || "");
+
+        // Temporarily disable overflow on dialog containers
+        const dialogElements = document.querySelectorAll(".dialog, .content");
+        dialogElements.forEach((el) => {
+          (el as HTMLElement).style.overflow = "visible";
+        });
       };
 
       const handleSave = (newType: string) => {
@@ -330,11 +336,23 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           }
         }
         setIsEditing(false);
+
+        // Restore overflow on dialog containers
+        const dialogElements = document.querySelectorAll(".dialog, .content");
+        dialogElements.forEach((el) => {
+          (el as HTMLElement).style.overflow = "hidden";
+        });
       };
 
       const handleCancel = () => {
         setEditValue(props.value || "");
         setIsEditing(false);
+
+        // Restore overflow on dialog containers
+        const dialogElements = document.querySelectorAll(".dialog, .content");
+        dialogElements.forEach((el) => {
+          (el as HTMLElement).style.overflow = "hidden";
+        });
       };
 
       const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -346,14 +364,14 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       if (isEditing) {
         return (
           <div
+            className={styles.typeCellRenderer}
             style={{
               width: "100%",
-              height: "100%",
               display: "flex",
               alignItems: "center",
               padding: "4px",
               position: "relative",
-              zIndex: 9999,
+              zIndex: 4000,
             }}
             onKeyDown={handleKeyDown}
             onClick={(e) => e.stopPropagation()}
@@ -362,7 +380,10 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
             onMouseEnter={(e) => e.stopPropagation()}
             onMouseLeave={(e) => e.stopPropagation()}
           >
-            <div style={{ position: "relative", zIndex: 10000 }}>
+            <div
+              className={styles.typeCellRendererDropdown}
+              style={{ position: "relative", width: "100%" }}
+            >
               <EntityTypeSelectDropdown
                 sceneGraph={sceneGraph}
                 nodeId={null}

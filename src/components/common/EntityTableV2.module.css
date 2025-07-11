@@ -73,3 +73,17 @@
   bottom: 0;
   z-index: 999;
 }
+
+/* Specific styling for TypeCellRendererComponent to allow vertical overflow */
+.typeCellRenderer {
+  overflow: visible !important; /* Allow dropdown to overflow outside cell */
+  position: relative;
+  z-index: 1; /* Ensure proper stacking context */
+}
+
+.typeCellRendererDropdown {
+  overflow: visible !important; /* Allow dropdown to overflow outside cell */
+  position: relative;
+  min-height: 0; /* Allow content to expand beyond cell height */
+  z-index: 999999; /* Ensure dropdown appears above AG Grid rows */
+}
