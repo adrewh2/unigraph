@@ -16,6 +16,7 @@ type DialogState = {
   showSaveAsNewProjectDialog: boolean;
   showPathAnalysis: boolean;
   showEntityTables: boolean;
+  showEntityTablesV2: boolean;
   showLayoutManager: { mode: "save" | "load"; show: boolean };
   showSceneGraphDetailView: ISceneGraphDetailViewState;
   showFilterManager: ILayoutManagerState;
@@ -27,6 +28,7 @@ type DialogState = {
   setShowSaveAsNewProjectDialog: (show: boolean) => void;
   setShowPathAnalysis: (show: boolean) => void;
   setShowEntityTables: (show: boolean) => void;
+  setShowEntityTablesV2: (show: boolean) => void;
   setShowLayoutManager: (args: ILayoutManagerState) => void;
   setShowSceneGraphDetailView: (args: ISceneGraphDetailViewState) => void;
   setShowFilterManager: (mode: "save" | "load", show: boolean) => void;
@@ -40,6 +42,7 @@ const useDialogStore = create<DialogState>((set) => ({
   showSaveAsNewProjectDialog: false,
   showPathAnalysis: false,
   showEntityTables: false,
+  showEntityTablesV2: false,
   showLayoutManager: { mode: "load", show: false },
   showSceneGraphDetailView: { show: false, readOnly: true },
   showFilterManager: { mode: "load", show: false },
@@ -54,6 +57,7 @@ const useDialogStore = create<DialogState>((set) => ({
     set({ showSaveAsNewProjectDialog: show }),
   setShowPathAnalysis: (show) => set({ showPathAnalysis: show }),
   setShowEntityTables: (show) => set({ showEntityTables: show }),
+  setShowEntityTablesV2: (show) => set({ showEntityTablesV2: show }),
   setShowLayoutManager: (args: ILayoutManagerState) =>
     set({ showLayoutManager: { mode: args.mode, show: args.show } }),
   setShowSceneGraphDetailView: (args: ISceneGraphDetailViewState) =>
@@ -85,6 +89,10 @@ export function setShowPathAnalysis(show: boolean) {
 
 export function setShowEntityTables(show: boolean) {
   useDialogStore.getState().setShowEntityTables(show);
+}
+
+export function setShowEntityTablesV2(show: boolean) {
+  useDialogStore.getState().setShowEntityTablesV2(show);
 }
 
 export function setShowLayoutManager(mode: "save" | "load", show: boolean) {

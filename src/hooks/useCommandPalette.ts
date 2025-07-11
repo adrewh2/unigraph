@@ -35,6 +35,7 @@ export const useCommandPalette = (
     setShowSaveSceneGraphDialog,
     setShowSaveAsNewProjectDialog,
     setShowEntityTables,
+    setShowEntityTablesV2,
     setShowPathAnalysis,
     setShowFilterWindow,
     setShowFilterManager,
@@ -245,6 +246,12 @@ export const useCommandPalette = (
           execute: () => setShowEntityTables(true),
         },
         {
+          id: "show-node-table-v2",
+          title: "Show Node Table V2",
+          description: "Display the enhanced table of all nodes using AG Grid",
+          execute: () => setShowEntityTablesV2(true),
+        },
+        {
           id: "path-analysis",
           title: "Show Path Analysis",
           description: "Open path analysis tool",
@@ -278,6 +285,7 @@ export const useCommandPalette = (
     setShowSaveSceneGraphDialog,
     setShowSaveAsNewProjectDialog,
     setShowEntityTables,
+    setShowEntityTablesV2,
     setShowPathAnalysis,
     setShowFilterWindow,
     setShowFilterManager,

@@ -2,6 +2,7 @@ import { cmdOrCtrl, HotkeyAction } from "../hooks/useHotkeys";
 import {
   setShowCommandPalette,
   setShowEntityTables,
+  setShowEntityTablesV2,
   setShowFilterManager,
   setShowFilterWindow,
   setShowLoadSceneGraphWindow,
@@ -35,6 +36,11 @@ export const getHotkeyConfig = (
   // View actions
   cmdOrCtrl(() => setShowEntityTables(true), "e", {
     description: "Show Entity Tables",
+  }),
+
+  cmdOrCtrl(() => setShowEntityTablesV2(true), "e", {
+    shiftKey: true,
+    description: "Show Entity Tables V2",
   }),
 
   //   cmdOrCtrl(() => setShowPathAnalysis(true), "p", {

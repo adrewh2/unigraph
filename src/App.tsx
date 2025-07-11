@@ -40,6 +40,7 @@ import SolarSystem from "./components/simulations/solarSystemSimulation";
 import ChatGptImporter from "./components/tools/ChatGptImporter";
 import YasguiPanel from "./components/YasguiPanel";
 
+import EntityTableDialogV2 from "./components/common/EntityTableDialogV2";
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
@@ -251,6 +252,7 @@ const AppContent: React.FC<{
   const {
     showPathAnalysis,
     setShowEntityTables,
+    setShowEntityTablesV2,
     setShowLayoutManager,
     setShowSceneGraphDetailView,
     setShowPathAnalysis,
@@ -261,6 +263,7 @@ const AppContent: React.FC<{
     showSaveAsNewProjectDialog,
     setShowSaveAsNewProjectDialog,
     showEntityTables,
+    showEntityTablesV2,
     // showLayoutManager,
     showSceneGraphDetailView,
   } = useDialogStore();
@@ -1949,6 +1952,27 @@ const AppContent: React.FC<{
               }
             }}
             isDarkMode={isDarkMode}
+          />
+        )}
+        {showEntityTablesV2 && (
+          <EntityTableDialogV2
+            container={currentSceneGraph.getGraph().getNodes()}
+            title="Entity Table V2"
+            onClose={() => setShowEntityTablesV2(false)}
+            onNodeClick={(nodeId: NodeId) => {
+              setSelectedNodeId(nodeId as NodeId);
+              setShowEntityTablesV2(false);
+              if (activeView === "ForceGraph3d" && forceGraphInstance) {
+                const node = forceGraphInstance
+                  .graphData()
+                  .nodes.find((n) => n.id === nodeId);
+                if (node) {
+                  flyToNode(forceGraphInstance, node);
+                }
+              }
+            }}
+            isDarkMode={isDarkMode}
+            sceneGraph={currentSceneGraph}
           />
         )}
         {editingEntity && (
