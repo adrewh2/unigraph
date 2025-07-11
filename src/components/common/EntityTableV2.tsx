@@ -404,9 +404,9 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
               width: dropdownPosition.width,
               zIndex: 2147483647,
               backgroundColor: "white",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              margin: 0,
+              padding: 0, // Override SelectDropdown.module.css margin-top
+              // No border, border-radius, or box-shadow for perfect fit
             }}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
