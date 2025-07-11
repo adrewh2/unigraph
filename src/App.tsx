@@ -33,11 +33,14 @@ import NodeEditorWizard from "./components/NodeEditorWizard";
 import SceneGraphDetailView from "./components/SceneGraphDetailView";
 import SceneGraphTitle from "./components/SceneGraphTitle";
 import GravitySimulation3 from "./components/simulations/GravitySimulation3";
-import ReactFlowPanel from "./components/simulations/ReactFlowPanel";
+import ReactFlowPanel, {
+  nodeTypes,
+} from "./components/simulations/ReactFlowPanel";
 import SolarSystem from "./components/simulations/solarSystemSimulation";
 import ChatGptImporter from "./components/tools/ChatGptImporter";
 import YasguiPanel from "./components/YasguiPanel";
 
+import EntityTableDialogV2 from "./components/common/EntityTableDialogV2";
 import LoadSceneGraphDialog from "./components/common/LoadSceneGraphDialog";
 import { getMultiNodeContextMenuItems } from "./components/common/multiNodeContextMenuItems";
 import SaveSceneGraphDialog from "./components/common/SaveSceneGraphDialog";
@@ -47,9 +50,11 @@ import { getNodeContextMenuItems } from "./components/common/singleNodeContextMe
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import LexicalEditorV2 from "./components/LexicalEditor";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
+import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog";
 import StoryCardApp from "./components/StoryCardApp";
 import WikipediaArticleViewer from "./components/WikipediaArticleViewer";
 import WikipediaArticleViewer_FactorGraph from "./components/WikipediaArticleViewer_FactorGraph";
+import { getHotkeyConfig } from "./configs/hotkeyConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
   MousePositionProvider,
@@ -97,6 +102,7 @@ import {
 } from "./data/DemoSceneGraphs";
 import { extractPositionsFromNodes } from "./data/graphs/blobMesh";
 import { useCommandPalette } from "./hooks/useCommandPalette";
+import { useHotkeys } from "./hooks/useHotkeys";
 import { fetchSvgSceneGraph } from "./hooks/useSvgSceneGraph";
 import AudioAnnotator from "./mp3/AudioAnnotator";
 import { Filter, loadFiltersFromSceneGraph } from "./store/activeFilterStore";
@@ -153,6 +159,7 @@ import {
   applyActiveFilterToAppInstance,
   filterSceneGraphToOnlyVisibleNodes,
 } from "./store/sceneGraphHooks";
+import { useUserStore } from "./store/userStore";
 import useWorkspaceConfigStore, {
   getLeftSidebarConfig,
   getRightSidebarConfig,
@@ -235,9 +242,17 @@ const AppContent: React.FC<{
   defaultActiveView?: string;
   defaultActiveLayout?: string;
 }> = ({ defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout }) => {
+  // Initialize auth store
+  const { initializeAuth } = useUserStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   const {
     showPathAnalysis,
     setShowEntityTables,
+    setShowEntityTablesV2,
     setShowLayoutManager,
     setShowSceneGraphDetailView,
     setShowPathAnalysis,
@@ -245,7 +260,10 @@ const AppContent: React.FC<{
     setShowLoadSceneGraphWindow,
     showSaveSceneGraphDialog,
     setShowSaveSceneGraphDialog,
+    showSaveAsNewProjectDialog,
+    setShowSaveAsNewProjectDialog,
     showEntityTables,
+    showEntityTablesV2,
     // showLayoutManager,
     showSceneGraphDetailView,
   } = useDialogStore();
@@ -662,7 +680,11 @@ const AppContent: React.FC<{
   );
 
   const handleLoadSceneGraph = useCallback(
-    async (graph: SceneGraph, clearQueryParams: boolean = true) => {
+    async (
+      graph: SceneGraph,
+      clearQueryParams: boolean = true,
+      onLoaded?: (sceneGraph?: SceneGraph) => void
+    ) => {
       const tick = Date.now();
       console.log("Loading SceneGraph", graph.getMetadata().name, "...");
       loadDocumentsFromSceneGraph(graph); // clears existing store, and loads in new documents
@@ -725,6 +747,7 @@ const AppContent: React.FC<{
 
         const tock = Date.now();
         console.log("TOTAL TIME", tock - tick);
+        onLoaded?.(graph);
         initialSceneGraphLoaded = true;
         addNotification({
           message: `Loaded SceneGraph: ${graph.getMetadata().name}`,
@@ -747,12 +770,16 @@ const AppContent: React.FC<{
   );
 
   const handleSetSceneGraph = useCallback(
-    async (key: string, clearUrlOfQueryParams: boolean = true) => {
+    async (
+      key: string,
+      clearUrlOfQueryParams: boolean = true,
+      onLoaded?: (sceneGraph?: SceneGraph) => void
+    ) => {
       // First try to load from persistent store
       try {
         const persistedGraph = await persistentStore.loadSceneGraph(key);
         if (persistedGraph) {
-          handleLoadSceneGraph(persistedGraph, clearUrlOfQueryParams);
+          handleLoadSceneGraph(persistedGraph, clearUrlOfQueryParams, onLoaded);
           setActiveProjectId(key); // Set the active project ID
 
           // Update the URL query parameter
@@ -777,7 +804,7 @@ const AppContent: React.FC<{
         } else {
           graph = graphGenerator;
         }
-        handleLoadSceneGraph(graph, clearUrlOfQueryParams);
+        handleLoadSceneGraph(graph, clearUrlOfQueryParams, onLoaded);
         setActiveProjectId(null); // Clear project ID since this is a demo graph
         // Update the URL query parameter
         const url = new URL(window.location.href);
@@ -787,12 +814,20 @@ const AppContent: React.FC<{
       } catch (err) {
         console.error(`Graph ${key} not found: ${err}`);
         console.log(`Available graphs are: ${getAllDemoSceneGraphKeys()}`);
-        handleLoadSceneGraph(new SceneGraph(), true);
+        handleLoadSceneGraph(new SceneGraph(), true, onLoaded);
         return;
       }
     },
     [handleLoadSceneGraph]
   );
+
+  // Initialize command palette after handleSetSceneGraph is defined
+  const { isCommandPaletteOpen, setCommandPaletteOpen } = useDialogStore();
+  const { commands, executeCommand } = useCommandPalette(handleSetSceneGraph);
+
+  // Initialize hotkeys after handleSetSceneGraph is defined
+  const hotkeys = getHotkeyConfig(handleSetSceneGraph);
+  useHotkeys(hotkeys);
 
   // useEffect(() => {
   //   // Hide scrollbar
@@ -1056,6 +1091,7 @@ const AppContent: React.FC<{
 
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
+      handleSetSceneGraph,
       handleImportConfig,
       handleFitToView,
       GraphMenuActions,
@@ -1082,6 +1118,7 @@ const AppContent: React.FC<{
     forceGraphInstance,
     handleFitToView,
     handleImportConfig,
+    handleSetSceneGraph,
     setShowEntityTables,
     setShowLayoutManager,
     setShowSceneGraphDetailView,
@@ -1147,7 +1184,7 @@ const AppContent: React.FC<{
     const nodesWithPositions = data.nodes.map((node) => ({
       ...node,
       position: nodePositions[node.id] || { x: 200, y: 200 },
-      type: node.type === "annotation" ? "annotationNode" : "resizerNode", // Use the custom node type
+      type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
       data: {
         description: currentSceneGraph
           .getGraph()
@@ -1181,6 +1218,7 @@ const AppContent: React.FC<{
         },
         dimensions: node.data.dimensions,
         annotation: node.type == "annotation" ? node.data.userData : undefined,
+        webpage: node.type == "webpage" ? node.data.userData : undefined,
       },
       style: {
         background: RenderingManager.getColor(
@@ -1433,6 +1471,27 @@ const AppContent: React.FC<{
     forceGraph3dOptions.layout,
     graphvizFitToView,
   ]);
+
+  // Add window resize handler for ForceGraph3D
+  useEffect(() => {
+    const handleWindowResize = () => {
+      if (
+        forceGraphInstance &&
+        activeView === "ForceGraph3d" &&
+        forceGraphRef.current
+      ) {
+        const container = forceGraphRef.current;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        forceGraphInstance.width(width).height(height);
+      }
+    };
+
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [forceGraphInstance, activeView]);
 
   const handleSearchResult = useCallback((nodeIds: string[]) => {
     console.log("Search results:", nodeIds);
@@ -1693,6 +1752,28 @@ const AppContent: React.FC<{
     showSaveSceneGraphDialog,
   ]);
 
+  const maybeRenderSaveAsNewProjectDialog = useMemo(() => {
+    if (showSaveAsNewProjectDialog) {
+      return (
+        <SaveAsNewProjectDialog
+          sceneGraph={currentSceneGraph}
+          onSave={(projectId: string) => {
+            setShowSaveAsNewProjectDialog(false);
+            setActiveProjectId(projectId);
+          }}
+          onCancel={() => setShowSaveAsNewProjectDialog(false)}
+          isDarkMode={isDarkMode}
+        />
+      );
+    }
+    return null;
+  }, [
+    currentSceneGraph,
+    setShowSaveAsNewProjectDialog,
+    showSaveAsNewProjectDialog,
+    isDarkMode,
+  ]);
+
   const maybeRenderYasgui = useMemo(() => {
     if (activeView !== "Yasgui") {
       return null;
@@ -1749,10 +1830,10 @@ const AppContent: React.FC<{
         onMouseMove={handleMouseMove}
       >
         <CommandPalette
-          isOpen={false}
-          commands={[]}
-          onClose={() => {}}
-          onExecuteCommand={() => {}}
+          isOpen={isCommandPaletteOpen}
+          commands={commands}
+          onClose={() => setCommandPaletteOpen(false)}
+          onExecuteCommand={executeCommand}
         />
         <Workspace
           menuConfig={menuConfig}
@@ -1798,6 +1879,7 @@ const AppContent: React.FC<{
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
+        {maybeRenderSaveAsNewProjectDialog}
         {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (
           <EntityDataDisplayCard
             entityData={currentSceneGraph
@@ -1870,6 +1952,27 @@ const AppContent: React.FC<{
               }
             }}
             isDarkMode={isDarkMode}
+          />
+        )}
+        {showEntityTablesV2 && (
+          <EntityTableDialogV2
+            container={currentSceneGraph.getGraph().getNodes()}
+            title="Entity Table V2"
+            onClose={() => setShowEntityTablesV2(false)}
+            onNodeClick={(nodeId: NodeId) => {
+              setSelectedNodeId(nodeId as NodeId);
+              setShowEntityTablesV2(false);
+              if (activeView === "ForceGraph3d" && forceGraphInstance) {
+                const node = forceGraphInstance
+                  .graphData()
+                  .nodes.find((n) => n.id === nodeId);
+                if (node) {
+                  flyToNode(forceGraphInstance, node);
+                }
+              }
+            }}
+            isDarkMode={isDarkMode}
+            sceneGraph={currentSceneGraph}
           />
         )}
         {editingEntity && (
@@ -1966,18 +2069,8 @@ const App: React.FC<AppProps> = ({
   defaultActiveView,
   defaultActiveLayout,
 }) => {
-  // Initialize the command palette
-  const { isOpen, setIsOpen, commands, executeCommand } = useCommandPalette();
-
   return (
     <MousePositionProvider>
-      {/* Add the CommandPalette component */}
-      <CommandPalette
-        isOpen={isOpen}
-        commands={commands}
-        onClose={() => setIsOpen(false)}
-        onExecuteCommand={executeCommand}
-      />
       <AppContent
         defaultGraph={defaultGraph}
         svgUrl={svgUrl}
