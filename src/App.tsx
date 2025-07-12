@@ -478,6 +478,16 @@ const AppContent = ({
       layout: LayoutEngineOption | string | null
     ) => {
       console.log("Computing layout for", layout);
+
+      // Skip layout computation if we're in Physics mode for ForceGraph3D
+      if (
+        activeView === "ForceGraph3d" &&
+        forceGraph3dOptions.layout === "Physics"
+      ) {
+        console.log("Skipping layout computation for Physics mode");
+        return;
+      }
+
       // Get layout result directly from store when needed
       if (Object.keys(getSavedLayouts()).includes(layout as string)) {
         console.log("Skipping layout computation for saved layout", layout);
@@ -552,7 +562,7 @@ const AppContent = ({
       setCurrentLayoutResult(output);
       isComputing = false;
     },
-    []
+    [activeView, forceGraph3dOptions.layout]
   );
 
   // Update the context menu state to use a unified approach with nodeIds array
@@ -1451,6 +1461,7 @@ const AppContent = ({
   }, [
     activeView,
     currentLayoutResult,
+    currentSceneGraph, // Add dependency on currentSceneGraph to trigger initialization when scene graph changes
     initializeForceGraph,
     setForceGraphInstance,
   ]);
