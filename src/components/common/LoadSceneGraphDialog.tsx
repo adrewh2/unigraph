@@ -1,12 +1,6 @@
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import {
-  ChevronDown,
-  ChevronRight,
-  MinusSquare,
-  PlusSquare,
-  RefreshCw,
-} from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import { ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   getProject,
@@ -21,6 +15,7 @@ import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { addNotification } from "../../store/notificationStore";
 import { useUserStore } from "../../store/userStore"; // <-- new import for user state
+import DemosList, { DemoRow } from "./DemosList";
 import styles from "./LoadSceneGraphDialog.module.css";
 import ProjectsList from "./ProjectsList";
 
@@ -153,6 +148,34 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
 
+  // Transform demo scene graphs into table format
+  const demosList = useMemo<DemoRow[]>(() => {
+    const demos: DemoRow[] = [];
+    Object.entries(DEMO_SCENE_GRAPHS).forEach(([_, category]) => {
+      Object.keys(category.graphs).forEach((graphKey) => {
+        demos.push({
+          id: graphKey,
+          name: graphKey,
+          category: category.label,
+          description: `Demo graph from ${category.label} category`,
+        });
+      });
+    });
+    return demos;
+  }, []);
+
+  // Filter demos based on search term
+  const filteredDemos = useMemo(() => {
+    if (!searchTerm) return demosList;
+    return demosList.filter(
+      (demo) =>
+        demo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        demo.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (demo.description &&
+          demo.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [demosList, searchTerm]);
+
   console.log("LoadSceneGraphDialog - activeTab:", activeTab);
   console.log("LoadSceneGraphDialog - serverProjects:", serverProjects);
 
@@ -229,26 +252,6 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     }
   };
 
-  const toggleExpand = (category: string) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
-
-  const expandAll = () => {
-    const allCategories = Object.keys(DEMO_SCENE_GRAPHS);
-    const expandedState = allCategories.reduce(
-      (acc, category) => ({ ...acc, [category]: true }),
-      {}
-    );
-    setExpandedCategories(expandedState);
-  };
-
-  const collapseAll = () => {
-    setExpandedCategories({});
-  };
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
@@ -265,12 +268,6 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     );
     setExpandedCategories(expandedState);
   };
-
-  const filteredSceneGraphs = Object.entries(DEMO_SCENE_GRAPHS).filter(
-    ([category, { graphs }]) =>
-      category.toLowerCase().includes(searchTerm) ||
-      Object.keys(graphs).some((key) => key.toLowerCase().includes(searchTerm))
-  );
 
   const handleImportFileToSceneGraph = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -514,35 +511,17 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             <div className={styles.toolbar}>
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search demos..."
                 className={styles.searchBar}
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
-              <button className={styles.toolbarIconButton} onClick={expandAll}>
-                <PlusSquare size={20} />
-              </button>
-              <button
-                className={styles.toolbarIconButton}
-                onClick={collapseAll}
-              >
-                <MinusSquare size={20} />
-              </button>
             </div>
-            <div className={styles.content}>
-              {filteredSceneGraphs.map(([category, { graphs }]) => (
-                <TreeNode
-                  key={category}
-                  category={category}
-                  graphs={graphs}
-                  onSelect={handleSelect}
-                  isExpanded={!!expandedCategories[category]}
-                  toggleExpand={toggleExpand}
-                  isDarkMode={isDarkMode}
-                  searchTerm={searchTerm}
-                />
-              ))}
-            </div>
+            <DemosList
+              demos={filteredDemos}
+              onDemoDoubleClick={handleSelect}
+              style={{ marginTop: 0, height: "calc(100% - 60px)" }}
+            />
           </div>
         )}
         {activeTab === "Text" && (
