@@ -1,106 +1,26 @@
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
+import { RefreshCw } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
-  ChevronDown,
-  ChevronRight,
-  MinusSquare,
-  PlusSquare,
-  RefreshCw,
-} from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
-import {
-  deleteProject,
   getProject,
   listProjects,
   toSceneGraph,
-  updateProject,
 } from "../../api/supabaseProjects";
+
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { deserializeDotToSceneGraph } from "../../core/serializers/fromDot";
 import { loadSceneGraphFromFile } from "../../core/serializers/sceneGraphLoader";
-import { persistentStore } from "../../core/storage/PersistentStoreManager";
 import { DEMO_SCENE_GRAPHS } from "../../data/DemoSceneGraphs";
 import { fetchSvgSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { addNotification } from "../../store/notificationStore";
 import { useUserStore } from "../../store/userStore"; // <-- new import for user state
+import DemosList, { DemoRow } from "./DemosList";
 import styles from "./LoadSceneGraphDialog.module.css";
 import ProjectsList from "./ProjectsList";
 
 // Register AG Grid community modules (fixes AG Grid error #272)
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-interface TreeNodeProps {
-  category: string;
-  graphs: {
-    [key: string]:
-      | SceneGraph
-      | (() => SceneGraph)
-      | (() => Promise<SceneGraph>);
-  };
-  onSelect: (key: string) => void;
-  isExpanded: boolean;
-  toggleExpand: (category: string) => void;
-  isDarkMode?: boolean;
-  searchTerm: string;
-}
-
-const TreeNode: React.FC<TreeNodeProps> = ({
-  category,
-  graphs,
-  onSelect,
-  isExpanded,
-  toggleExpand,
-  isDarkMode,
-  searchTerm,
-}) => {
-  const filteredGraphs = Object.entries(graphs).filter(([key]) =>
-    key.toLowerCase().includes(searchTerm)
-  );
-
-  const highlightText = (text: string, term: string) => {
-    if (!term) return text;
-    const regex = new RegExp(`(${term})`, "gi");
-    return text.split(regex).map((part, index) =>
-      part.toLowerCase() === term.toLowerCase() ? (
-        <span key={index} className={styles.highlight}>
-          {part}
-        </span>
-      ) : (
-        part
-      )
-    );
-  };
-
-  return (
-    <div className={styles.treeNode}>
-      <div
-        className={`${styles.treeNodeHeader} ${
-          isDarkMode ? styles.dark : styles.light
-        }`}
-        onClick={() => toggleExpand(category)}
-      >
-        <button className={styles.expandButton}>
-          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        </button>
-        <span className={styles.categoryName}>
-          {highlightText(category, searchTerm)}
-        </span>
-      </div>
-      {isExpanded && (
-        <div className={styles.treeNodeChildren}>
-          {filteredGraphs.map(([key]) => (
-            <button
-              key={key}
-              className={styles.graphButton}
-              onClick={() => onSelect(key)}
-            >
-              {highlightText(key, searchTerm)}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 interface LoadSceneGraphDialogProps {
   onClose: () => void;
@@ -118,13 +38,29 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   // Get user state from store
   const { isSignedIn } = useUserStore();
 
+  console.log("LoadSceneGraphDialog - isSignedIn:", isSignedIn);
+
   // Set default tab based on user sign-in state
   const [activeTab, setActiveTab] = useState<
     "Server" | "File" | "Text" | "Svg Url" | "Demos"
   >(isSignedIn ? "Server" : "Demos");
-  const [expandedCategories, setExpandedCategories] = useState<{
-    [key: string]: boolean;
-  }>({});
+
+  // Track if user manually selected a tab
+  const [userSelectedTab, setUserSelectedTab] = useState(false);
+
+  // Update active tab when authentication state changes (only if user hasn't manually selected)
+  useEffect(() => {
+    console.log("Auth state changed - isSignedIn:", isSignedIn);
+    if (!userSelectedTab) {
+      if (isSignedIn && activeTab !== "Server") {
+        console.log("Switching to Server tab due to authentication");
+        setActiveTab("Server");
+      } else if (!isSignedIn && activeTab === "Server") {
+        console.log("Switching to Demos tab due to no authentication");
+        setActiveTab("Demos");
+      }
+    }
+  }, [activeTab, isSignedIn, userSelectedTab]);
   const [searchTerm, setSearchTerm] = useState("");
   const [textInput, setTextInput] = useState("");
   const [svgUrl, setSvgUrl] = useState("");
@@ -135,28 +71,45 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   const [serverError, setServerError] = useState<string | null>(null);
   const [serverSearchTerm, setServerSearchTerm] = useState("");
 
-  // Edit project state
-  const [editingProject, setEditingProject] = useState<{
-    id: string;
-    name: string;
-    description: string;
-  } | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  // Transform demo scene graphs into table format
+  const demosList = useMemo<DemoRow[]>(() => {
+    const demos: DemoRow[] = [];
+    Object.entries(DEMO_SCENE_GRAPHS).forEach(([_, category]) => {
+      Object.keys(category.graphs).forEach((graphKey) => {
+        demos.push({
+          id: graphKey,
+          name: graphKey,
+          category: category.label,
+          description: `Demo graph from ${category.label} category`,
+        });
+      });
+    });
+    return demos;
+  }, []);
 
-  // Load server projects when Server tab is selected
-  useEffect(() => {
-    if (activeTab === "Server" && serverProjects.length === 0) {
-      loadServerProjects();
-    }
-  }, [activeTab, serverProjects.length]);
+  // Filter demos based on search term
+  const filteredDemos = useMemo(() => {
+    if (!searchTerm) return demosList;
+    return demosList.filter(
+      (demo) =>
+        demo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        demo.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (demo.description &&
+          demo.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [demosList, searchTerm]);
 
-  const loadServerProjects = async () => {
+  console.log("LoadSceneGraphDialog - activeTab:", activeTab);
+  console.log("LoadSceneGraphDialog - serverProjects:", serverProjects);
+
+  const loadServerProjects = useCallback(async () => {
     setServerLoading(true);
     setServerError(null);
     try {
       const projects = await listProjects();
       setServerProjects(projects);
+      // Add this log to verify the loaded projects
+      console.log("loadServerProjects: loaded projects", projects);
     } catch (error) {
       console.error("Error loading server projects:", error);
       setServerError("Failed to load projects from server");
@@ -168,7 +121,33 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     } finally {
       setServerLoading(false);
     }
-  };
+  }, []);
+
+  // Load server projects when Server tab is selected
+  useEffect(() => {
+    console.log(
+      "useEffect triggered - activeTab:",
+      activeTab,
+      "serverProjects.length:",
+      serverProjects.length,
+      "isSignedIn:",
+      isSignedIn
+    );
+    if (activeTab === "Server" && serverProjects.length === 0 && isSignedIn) {
+      console.log("Loading server projects...");
+      loadServerProjects();
+    } else {
+      console.log("Not loading server projects - conditions not met");
+    }
+  }, [activeTab, serverProjects.length, isSignedIn, loadServerProjects]);
+
+  // Refresh server projects when authentication state changes
+  useEffect(() => {
+    if (activeTab === "Server" && isSignedIn) {
+      console.log("Auth state changed, refreshing server projects...");
+      loadServerProjects();
+    }
+  }, [isSignedIn, activeTab, loadServerProjects]);
 
   const handleServerProjectSelect = async (projectId: string) => {
     try {
@@ -196,180 +175,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
     }
   };
 
-  // Export a scene graph to a file
-  const handleExport = async (projectId: string) => {
-    try {
-      const blob = await persistentStore.exportSceneGraph(projectId);
-      const project = serverProjects.find((p) => p.id === projectId);
-      const fileName = `${project?.name || "scene-graph"}.json`;
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      addNotification({
-        message: `Exported "${fileName}" successfully`,
-        type: "success",
-        duration: 8000,
-      });
-    } catch (err) {
-      console.error("Error exporting project:", err);
-      addNotification({
-        message: "Failed to export project",
-        type: "error",
-        duration: 8000,
-      });
-    }
-  };
-
-  // Copy a project
-  const handleCopy = async (projectId: string) => {
-    try {
-      const sceneGraph = await persistentStore.loadSceneGraph(projectId);
-      if (sceneGraph) {
-        // Update the scene graph with a "Copy of" prefix
-        const metadata = sceneGraph.getMetadata();
-        sceneGraph.setMetadata({
-          ...metadata,
-          name: `Copy of ${metadata.name || "Untitled"}`,
-        });
-        handleLoadSceneGraph(sceneGraph);
-        onClose();
-        addNotification({
-          message: "Ready to save copy of project",
-          type: "info",
-          duration: 8000,
-        });
-      }
-    } catch (err) {
-      console.error("Error copying project:", err);
-      addNotification({
-        message: "Failed to copy project",
-        type: "error",
-        duration: 8000,
-      });
-    }
-  };
-
-  // Delete a project
-  const handleDelete = async (projectId: string) => {
-    if (window.confirm("Are you sure you want to delete this project?")) {
-      try {
-        const project = serverProjects.find((p) => p.id === projectId);
-        await deleteProject(projectId);
-        await loadServerProjects(); // Refresh the list
-        addNotification({
-          message: `Project "${project?.name || projectId}" deleted`,
-          type: "info",
-          duration: 8000,
-        });
-      } catch (err) {
-        console.error("Error deleting project:", err);
-        addNotification({
-          message: "Failed to delete project",
-          type: "error",
-          duration: 8000,
-        });
-      }
-    }
-  };
-
-  // Edit a project
-  const handleEdit = (projectId: string) => {
-    const project = serverProjects.find((p) => p.id === projectId);
-    if (project) {
-      setEditingProject({
-        id: projectId,
-        name: project.name || "",
-        description: project.description || "",
-      });
-      setEditName(project.name || "");
-      setEditDescription(project.description || "");
-    }
-  };
-
-  // Save edit changes
-  const handleSaveEdit = React.useCallback(async () => {
-    if (!editingProject) return;
-
-    try {
-      await updateProject(editingProject.id, {
-        name: editName.trim(),
-        description: editDescription.trim(),
-      });
-
-      await loadServerProjects(); // Refresh the list
-      setEditingProject(null);
-      setEditName("");
-      setEditDescription("");
-
-      addNotification({
-        message: "Project updated successfully",
-        type: "success",
-        duration: 3000,
-      });
-    } catch (err) {
-      console.error("Error updating project:", err);
-      addNotification({
-        message: "Failed to update project",
-        type: "error",
-        duration: 5000,
-      });
-    }
-  }, [editingProject, editName, editDescription]);
-
-  // Cancel edit
-  const handleCancelEdit = () => {
-    setEditingProject(null);
-    setEditName("");
-    setEditDescription("");
-  };
-
-  const toggleExpand = (category: string) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
-
-  const expandAll = () => {
-    const allCategories = Object.keys(DEMO_SCENE_GRAPHS);
-    const expandedState = allCategories.reduce(
-      (acc, category) => ({ ...acc, [category]: true }),
-      {}
-    );
-    setExpandedCategories(expandedState);
-  };
-
-  const collapseAll = () => {
-    setExpandedCategories({});
-  };
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
-
-    const expandedState = Object.entries(DEMO_SCENE_GRAPHS).reduce(
-      (acc, [category, { graphs }]) => {
-        const matchesCategory = category.toLowerCase().includes(term);
-        const matchesGraphs = Object.keys(graphs).some((key) =>
-          key.toLowerCase().includes(term)
-        );
-        return { ...acc, [category]: matchesCategory || matchesGraphs };
-      },
-      {}
-    );
-    setExpandedCategories(expandedState);
   };
-
-  const filteredSceneGraphs = Object.entries(DEMO_SCENE_GRAPHS).filter(
-    ([category, { graphs }]) =>
-      category.toLowerCase().includes(searchTerm) ||
-      Object.keys(graphs).some((key) => key.toLowerCase().includes(searchTerm))
-  );
 
   const handleImportFileToSceneGraph = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -424,19 +233,124 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (editingProject) {
-          handleCancelEdit();
-        } else {
-          onClose();
-        }
-      } else if (e.key === "Enter" && e.ctrlKey && editingProject) {
-        e.preventDefault();
-        handleSaveEdit();
+        onClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, editingProject, handleSaveEdit]);
+  }, [onClose]);
+
+  // Filtering function for server projects
+  const filterServerProjects = (projects: any[], searchTerm: string): any[] => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return projects;
+
+    return projects.filter((project) => {
+      if (!project || !project.name) return false;
+
+      // Search in name
+      if (project.name.toLowerCase().includes(term)) return true;
+
+      // Search in description
+      if (
+        project.description &&
+        project.description.toLowerCase().includes(term)
+      )
+        return true;
+
+      // Search in last updated date - multiple string representations
+      if (project.last_updated_at) {
+        try {
+          const date = new Date(project.last_updated_at);
+          const searchableStrings = [
+            date.toString(),
+            date.toLocaleString(),
+            date.toLocaleDateString(),
+            date.toISOString(),
+            date.toUTCString(),
+            date.getFullYear().toString(),
+            (date.getMonth() + 1).toString().padStart(2, "0"),
+            date.getDate().toString().padStart(2, "0"),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+          ];
+
+          if (
+            searchableStrings.some((str) => str.toLowerCase().includes(term))
+          ) {
+            return true;
+          }
+        } catch {
+          if (project.last_updated_at.toLowerCase().includes(term)) {
+            return true;
+          }
+        }
+      }
+
+      // Search in created date - multiple string representations
+      if (project.created_at) {
+        try {
+          const date = new Date(project.created_at);
+          const searchableStrings = [
+            date.toString(),
+            date.toLocaleString(),
+            date.toLocaleDateString(),
+            date.toISOString(),
+            date.toUTCString(),
+            date.getFullYear().toString(),
+            (date.getMonth() + 1).toString().padStart(2, "0"),
+            date.getDate().toString().padStart(2, "0"),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+          ];
+
+          if (
+            searchableStrings.some((str) => str.toLowerCase().includes(term))
+          ) {
+            return true;
+          }
+        } catch {
+          if (project.created_at.toLowerCase().includes(term)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+  };
+
+  // Memoize filtered projects to avoid unnecessary recalculation
+  const filteredServerProjects = React.useMemo(
+    () => filterServerProjects(serverProjects, serverSearchTerm),
+    [serverProjects, serverSearchTerm]
+  );
 
   return (
     <div className={`${styles.overlay} ${isDarkMode ? styles.dark : ""}`}>
@@ -452,7 +366,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "Server" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Server")}
+            onClick={() => {
+              setActiveTab("Server");
+              setUserSelectedTab(true);
+            }}
           >
             Server
           </button>
@@ -460,7 +377,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "File" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("File")}
+            onClick={() => {
+              setActiveTab("File");
+              setUserSelectedTab(true);
+            }}
           >
             File
           </button>
@@ -468,7 +388,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "Demos" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Demos")}
+            onClick={() => {
+              setActiveTab("Demos");
+              setUserSelectedTab(true);
+            }}
           >
             Demos
           </button>
@@ -476,7 +399,10 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             className={`${styles.tabButton} ${
               activeTab === "Svg Url" ? styles.activeTab : ""
             }`}
-            onClick={() => setActiveTab("Svg Url")}
+            onClick={() => {
+              setActiveTab("Svg Url");
+              setUserSelectedTab(true);
+            }}
           >
             Svg Url
           </button>
@@ -496,35 +422,17 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
             <div className={styles.toolbar}>
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search demos..."
                 className={styles.searchBar}
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
-              <button className={styles.toolbarIconButton} onClick={expandAll}>
-                <PlusSquare size={20} />
-              </button>
-              <button
-                className={styles.toolbarIconButton}
-                onClick={collapseAll}
-              >
-                <MinusSquare size={20} />
-              </button>
             </div>
-            <div className={styles.content}>
-              {filteredSceneGraphs.map(([category, { graphs }]) => (
-                <TreeNode
-                  key={category}
-                  category={category}
-                  graphs={graphs}
-                  onSelect={handleSelect}
-                  isExpanded={!!expandedCategories[category]}
-                  toggleExpand={toggleExpand}
-                  isDarkMode={isDarkMode}
-                  searchTerm={searchTerm}
-                />
-              ))}
-            </div>
+            <DemosList
+              demos={filteredDemos}
+              onDemoDoubleClick={handleSelect}
+              style={{ marginTop: 0, height: "calc(100% - 60px)" }}
+            />
           </div>
         )}
         {activeTab === "Text" && (
@@ -559,212 +467,98 @@ const LoadSceneGraphDialog: React.FC<LoadSceneGraphDialogProps> = ({
         )}
         {activeTab === "Server" && (
           <div className={styles.serverTab}>
-            <div className={styles.toolbar}>
-              <input
-                type="text"
-                placeholder="Search for projects..."
-                className={styles.searchBar}
-                value={serverSearchTerm}
-                onChange={(e) => setServerSearchTerm(e.target.value)}
-              />
-              <button
-                className={styles.toolbarIconButton}
-                onClick={loadServerProjects}
-                disabled={serverLoading}
-                title="Refresh projects"
-              >
-                <RefreshCw
-                  size={20}
-                  className={serverLoading ? styles.spinning : ""}
+            {!isSignedIn ? (
+              <div className={styles.loginPrompt}>
+                <div className={styles.loginContent}>
+                  <h3>Sign in to access your projects</h3>
+                  <p>
+                    You need to be signed in to view and load projects from the
+                    server.
+                  </p>
+                  <button
+                    className={styles.loginButton}
+                    onClick={() => {
+                      // Open signin page as popup with better dimensions and centering
+                      const width = 800;
+                      const height = 600;
+                      const left = (window.screen.width - width) / 2;
+                      const top = (window.screen.height - height) / 2;
+
+                      const popup = window.open(
+                        "/signin",
+                        "signin",
+                        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no`
+                      );
+
+                      if (popup) {
+                        // Listen for messages from popup
+                        const handleMessage = (event: MessageEvent) => {
+                          if (event.origin !== window.location.origin) return;
+
+                          if (event.data.type === "SIGNED_IN") {
+                            console.log(
+                              "User signed in via popup:",
+                              event.data.user
+                            );
+                            window.removeEventListener(
+                              "message",
+                              handleMessage
+                            );
+                          } else if (event.data.type === "SIGNIN_CANCELLED") {
+                            console.log("Sign-in was cancelled");
+                            window.removeEventListener(
+                              "message",
+                              handleMessage
+                            );
+                          }
+                        };
+
+                        window.addEventListener("message", handleMessage);
+                      } else {
+                        // Popup was blocked, fallback to redirect
+                        window.location.href = "/signin";
+                      }
+                    }}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.toolbar}>
+                  <input
+                    type="text"
+                    placeholder="Search for projects..."
+                    className={styles.searchBar}
+                    value={serverSearchTerm}
+                    onChange={(e) => setServerSearchTerm(e.target.value)}
+                  />
+                  <button
+                    className={styles.toolbarIconButton}
+                    onClick={loadServerProjects}
+                    disabled={serverLoading}
+                    title="Refresh projects"
+                  >
+                    <RefreshCw
+                      size={20}
+                      className={serverLoading ? styles.spinning : ""}
+                    />
+                  </button>
+                </div>
+                <ProjectsList
+                  projects={filteredServerProjects}
+                  loading={serverLoading}
+                  error={serverError}
+                  onProjectDoubleClick={handleServerProjectSelect}
+                  onRefresh={loadServerProjects}
+                  style={{ marginTop: 0 }}
                 />
-              </button>
-            </div>
-            <ProjectsList
-              projects={serverProjects.filter((project) => {
-                if (!project || !project.name) return false;
-
-                const searchTerm = serverSearchTerm.trim();
-                if (!searchTerm) return true; // Show all if no search term
-
-                const searchTermLower = searchTerm.toLowerCase();
-
-                // Search in name
-                if (project.name.toLowerCase().includes(searchTermLower)) {
-                  return true;
-                }
-
-                // Search in description
-                if (
-                  project.description &&
-                  project.description.toLowerCase().includes(searchTermLower)
-                ) {
-                  return true;
-                }
-
-                // Search in last updated date - multiple string representations
-                if (project.last_updated_at) {
-                  try {
-                    const date = new Date(project.last_updated_at);
-                    const searchableStrings = [
-                      date.toString(),
-                      date.toLocaleString(),
-                      date.toLocaleDateString(),
-                      date.toISOString(),
-                      date.toUTCString(),
-                      date.getFullYear().toString(),
-                      (date.getMonth() + 1).toString().padStart(2, "0"),
-                      date.getDate().toString().padStart(2, "0"),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }),
-                    ];
-
-                    if (
-                      searchableStrings.some((str) =>
-                        str.toLowerCase().includes(searchTermLower)
-                      )
-                    ) {
-                      return true;
-                    }
-                    // eslint-disable-next-line unused-imports/no-unused-vars
-                  } catch (_) {
-                    // If date parsing fails, try searching the raw string
-                    if (
-                      project.last_updated_at
-                        .toLowerCase()
-                        .includes(searchTermLower)
-                    ) {
-                      return true;
-                    }
-                  }
-                }
-
-                // Search in created date - multiple string representations
-                if (project.created_at) {
-                  try {
-                    const date = new Date(project.created_at);
-                    const searchableStrings = [
-                      date.toString(),
-                      date.toLocaleString(),
-                      date.toLocaleDateString(),
-                      date.toISOString(),
-                      date.toUTCString(),
-                      date.getFullYear().toString(),
-                      (date.getMonth() + 1).toString().padStart(2, "0"),
-                      date.getDate().toString().padStart(2, "0"),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }),
-                      date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      }),
-                    ];
-
-                    if (
-                      searchableStrings.some((str) =>
-                        str.toLowerCase().includes(searchTermLower)
-                      )
-                    ) {
-                      return true;
-                    }
-                    // eslint-disable-next-line unused-imports/no-unused-vars
-                  } catch (_) {
-                    // If date parsing fails, try searching the raw string
-                    if (
-                      project.created_at.toLowerCase().includes(searchTermLower)
-                    ) {
-                      return true;
-                    }
-                  }
-                }
-
-                return false;
-              })}
-              loading={serverLoading}
-              error={serverError}
-              onProjectDoubleClick={handleServerProjectSelect}
-              onExport={handleExport}
-              onCopy={handleCopy}
-              onDelete={handleDelete}
-              onEdit={handleEdit}
-              style={{ marginTop: 0 }}
-            />
+              </>
+            )}
           </div>
         )}
       </div>
-
-      {/* Edit Project Dialog */}
-      {editingProject && (
-        <div className={styles.editOverlay} onClick={handleCancelEdit}>
-          <div
-            className={styles.editDialog}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.editHeader}>
-              <h3>Edit Project</h3>
-              <button onClick={handleCancelEdit} className={styles.closeButton}>
-                ×
-              </button>
-            </div>
-            <div className={styles.editContent}>
-              <div className={styles.editField}>
-                <label htmlFor="edit-name">Name:</label>
-                <input
-                  id="edit-name"
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Project name"
-                  className={styles.editInput}
-                />
-              </div>
-              <div className={styles.editField}>
-                <label htmlFor="edit-description">Description:</label>
-                <textarea
-                  id="edit-description"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="Project description"
-                  className={styles.editTextarea}
-                  rows={3}
-                />
-              </div>
-            </div>
-            <div className={styles.editActions}>
-              <button
-                onClick={handleCancelEdit}
-                className={styles.cancelButton}
-              >
-                Cancel
-              </button>
-              <button onClick={handleSaveEdit} className={styles.saveButton}>
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

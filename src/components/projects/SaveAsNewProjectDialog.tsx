@@ -1,5 +1,8 @@
-import React, { useState } from "react";
-import { saveProjectToSupabase } from "../../api/supabaseProjects";
+import React, { useEffect, useState } from "react";
+import {
+  listProjects,
+  saveProjectToSupabase,
+} from "../../api/supabaseProjects";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import {
   deserializeSceneGraphFromJson,
@@ -26,12 +29,78 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
     sceneGraph.getMetadata()?.description || ""
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [nameExists, setNameExists] = useState(false);
+  const [existingProjects, setExistingProjects] = useState<string[]>([]);
+  const [validationOpacity, setValidationOpacity] = useState(0);
+
+  // Load existing project names on component mount
+  useEffect(() => {
+    const loadExistingProjects = async () => {
+      try {
+        const projects = await listProjects();
+        const projectNames = projects.map((project) =>
+          project.name.toLowerCase()
+        );
+        setExistingProjects(projectNames);
+      } catch (error) {
+        console.error("Error loading existing projects:", error);
+      }
+    };
+    loadExistingProjects();
+  }, []);
+
+  // Validate name when it changes
+  useEffect(() => {
+    const validateName = async () => {
+      if (!name.trim()) {
+        setNameExists(false);
+        // Fade out validation message
+        setValidationOpacity(0);
+        return;
+      }
+
+      setIsValidating(true);
+      // Fade in validation message
+      setValidationOpacity(1);
+
+      try {
+        // Check if name already exists (case-insensitive)
+        const nameExists = existingProjects.includes(name.trim().toLowerCase());
+        setNameExists(nameExists);
+
+        if (!nameExists) {
+          setValidationOpacity(0);
+        }
+      } catch (error) {
+        console.error("Error validating name:", error);
+        setNameExists(false);
+        setValidationOpacity(0);
+      } finally {
+        setIsValidating(false);
+      }
+    };
+
+    // Debounce validation to avoid too many checks
+    const timeoutId = setTimeout(validateName, 300);
+    return () => clearTimeout(timeoutId);
+  }, [name, existingProjects]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!name.trim()) {
       addNotification({
         message: "Project name is required",
+        type: "error",
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (nameExists) {
+      addNotification({
+        message: "Project name already exists. Please choose a different name.",
         type: "error",
         duration: 3000,
       });
@@ -76,6 +145,27 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Prevent form submission on Enter if there are validation errors
+    if (e.key === "Enter" && hasValidationErrors) {
+      e.preventDefault();
+      return;
+    }
+  };
+
+  const hasValidationErrors = nameExists || !name.trim();
+
+  useEffect(() => {
+    // Add Escape key handler to close dialog
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancel();
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onCancel]);
+
   return (
     <div className={`save-project-overlay ${isDarkMode ? "dark" : ""}`}>
       <div className="save-project-dialog">
@@ -85,7 +175,11 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
             ×
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="save-project-form">
+        <form
+          onSubmit={handleSubmit}
+          className="save-project-form"
+          onKeyDown={handleKeyDown}
+        >
           <div className="save-project-field">
             <label htmlFor="project-name">Project Name</label>
             <input
@@ -96,9 +190,21 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
               placeholder="Enter project name"
               required
               autoFocus
-              className="save-project-input"
+              className={`save-project-input ${nameExists ? "error" : ""}`}
               disabled={isSaving}
             />
+            <div
+              className={`validation-message ${isValidating ? "validating" : ""} ${nameExists && !isValidating ? "error" : ""}`}
+              style={{ opacity: validationOpacity }}
+            >
+              <span className="validation-text">
+                {isValidating
+                  ? "Checking name availability..."
+                  : nameExists && !isValidating
+                    ? "Project name already exists. Please choose a different name."
+                    : "\u00A0"}
+              </span>
+            </div>
           </div>
           <div className="save-project-field">
             <label htmlFor="project-description">Description (optional)</label>
@@ -124,7 +230,7 @@ const SaveAsNewProjectDialog: React.FC<SaveAsNewProjectDialogProps> = ({
             <button
               type="submit"
               className="save-project-save-button"
-              disabled={isSaving || !name.trim()}
+              disabled={isSaving || hasValidationErrors}
             >
               {isSaving ? "Saving..." : "Save As New"}
             </button>
