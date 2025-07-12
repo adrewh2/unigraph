@@ -236,13 +236,19 @@ export type RenderingView =
   | "Yasgui" // Add new view type
   | "Editor"; // Add new view type
 
-const AppContent: React.FC<{
+const AppContent = ({
+  defaultGraph,
+  svgUrl,
+  defaultActiveView,
+  defaultActiveLayout,
+  shouldShowLoadDialog = false,
+}: {
   defaultGraph?: string;
   svgUrl?: string;
   defaultActiveView?: string;
   defaultActiveLayout?: string;
-}> = ({ defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout }) => {
-  // Initialize auth store
+  shouldShowLoadDialog?: boolean;
+}) => {
   const { initializeAuth } = useUserStore();
 
   useEffect(() => {
@@ -273,7 +279,6 @@ const AppContent: React.FC<{
     activeView,
     setActiveView,
     getShowEntityDataCard,
-    activeSceneGraph,
     legendMode,
     setLegendMode,
     currentSceneGraph,
@@ -395,7 +400,10 @@ const AppContent: React.FC<{
     } else if (defaultGraph) {
       handleSetSceneGraph(defaultGraph, false);
     } else {
-      handleSetSceneGraph(activeSceneGraph);
+      // Load empty scenegraph when no graph is provided
+      handleLoadSceneGraph(
+        new SceneGraph({ metadata: { name: "Empty Graph" } })
+      );
     }
 
     if (defaultActiveView) {
@@ -407,6 +415,13 @@ const AppContent: React.FC<{
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout]);
+
+  // Auto-open LoadSceneGraphDialog when shouldShowLoadDialog is true
+  useEffect(() => {
+    if (shouldShowLoadDialog) {
+      setShowLoadSceneGraphWindow(true);
+    }
+  }, [shouldShowLoadDialog, setShowLoadSceneGraphWindow]);
 
   // useEffect(() => {
   //   if (activeView === "ReactFlow" && reactFlowInstance) {
@@ -2061,6 +2076,7 @@ interface AppProps {
   svgUrl?: string;
   defaultActiveView?: string;
   defaultActiveLayout?: string;
+  shouldShowLoadDialog?: boolean;
 }
 
 const App: React.FC<AppProps> = ({
@@ -2068,6 +2084,7 @@ const App: React.FC<AppProps> = ({
   svgUrl,
   defaultActiveView,
   defaultActiveLayout,
+  shouldShowLoadDialog = false,
 }) => {
   return (
     <MousePositionProvider>
@@ -2076,6 +2093,7 @@ const App: React.FC<AppProps> = ({
         svgUrl={svgUrl}
         defaultActiveView={defaultActiveView}
         defaultActiveLayout={defaultActiveLayout}
+        shouldShowLoadDialog={shouldShowLoadDialog}
       />
       <LayoutComputationDialog />
     </MousePositionProvider>
