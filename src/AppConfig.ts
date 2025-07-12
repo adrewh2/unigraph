@@ -29,13 +29,13 @@ export type AppConfig = {
 
 export const DEFAULT_APP_CONFIG = (): AppConfig => {
   return {
-    activeView: "ReactFlow",
+    activeView: "ForceGraph3d",
     activeSceneGraph: "AcademicsKG",
     windows: {
       showEntityDataCard: false,
     },
     forceGraph3dOptions: {
-      layout: "Layout",
+      layout: "Physics",
     },
     activeLayout: GraphvizLayoutType.Graphviz_dot,
     legendMode: "type",
