@@ -29,8 +29,8 @@ export type AppConfig = {
 
 export const DEFAULT_APP_CONFIG = (): AppConfig => {
   return {
-    activeView: "ForceGraph3d",
-    activeSceneGraph: "AcademicsKG",
+    activeView: "ReactFlow",
+    activeSceneGraph: "Empty",
     windows: {
       showEntityDataCard: false,
     },

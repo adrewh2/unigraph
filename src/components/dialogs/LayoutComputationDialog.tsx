@@ -30,11 +30,11 @@ export const LayoutComputationDialog: React.FC = () => {
   // Only show dialog if we're in ForceGraph3D view and Layout mode (not Physics mode)
   const shouldShowLayoutDialog = useMemo(
     () =>
-      (isJobRunning &&
-        activeView === "ForceGraph3d" &&
+      isJobRunning &&
+      ((activeView === "ForceGraph3d" &&
         forceGraph3dOptions.layout === "Layout") ||
-      activeView === "ReactFlow" ||
-      activeView === "Graphviz",
+        activeView === "ReactFlow" ||
+        activeView === "Graphviz"),
     [isJobRunning, activeView, forceGraph3dOptions.layout]
   );
 
