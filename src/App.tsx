@@ -720,15 +720,21 @@ const AppContent = ({
         clearGraphFromUrl();
       }
       clearSelections();
+      // Apply scene graph's default app config immediately
+      if (graph.getData().defaultAppConfig) {
+        console.log(
+          "Applying scene graph app config:",
+          graph.getData().defaultAppConfig
+        );
+        setAppConfig(graph.getData().defaultAppConfig!);
+      }
+
       const layoutToLoad =
         !initialSceneGraphLoaded && defaultActiveLayout
           ? defaultActiveLayout
           : (graph.getData().defaultAppConfig?.activeLayout ?? null);
       safeComputeLayout(graph, layoutToLoad).then(() => {
         setCurrentSceneGraph(graph);
-        if (graph.getData().defaultAppConfig) {
-          setAppConfig(graph.getData().defaultAppConfig!);
-        }
         setLegendMode(graph.getDisplayConfig().mode);
         setNodeLegendConfig(
           GetCurrentDisplayConfigOf(graph.getDisplayConfig(), "Node")
