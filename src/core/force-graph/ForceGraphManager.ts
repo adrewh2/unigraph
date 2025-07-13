@@ -392,15 +392,58 @@ export class ForceGraphManager {
       sceneGraph
     );
 
-    // Render arrows for edges with drawType: 'arrow'
+    // Configure directional arrows for edges with drawType: 'arrow'
     forceGraphInstance.linkDirectionalArrowLength((link) => {
       const edge = sceneGraph.getGraph().getEdge((link as any).id);
-      console.log("edge", edge);
-      return edge && edge.getData().drawType === "arrow" ? 6 : 0;
+      if (!edge) return 0;
+
+      const drawType = edge.getData().drawType;
+      if (drawType === "arrow") {
+        // Use custom arrow length if specified, otherwise default to 6
+        const arrowLength = (edge.getData() as any).arrowLength as number;
+        console.log("drawing arrow with length", arrowLength);
+        return arrowLength || 6;
+      }
+      return 0;
     });
+
     forceGraphInstance.linkDirectionalArrowRelPos((link) => {
       const edge = sceneGraph.getGraph().getEdge((link as any).id);
-      return edge && edge.getData().drawType === "arrow" ? 0.95 : 0.5;
+      if (!edge) return 0.5;
+
+      const drawType = edge.getData().drawType;
+      if (drawType === "arrow") {
+        // Use custom arrow position if specified, otherwise default to 0.95
+        const arrowPos = (edge.getData() as any).arrowPosition as number;
+        return arrowPos !== undefined ? arrowPos : 0.95;
+      }
+      return 0.5;
+    });
+
+    // Configure arrow color to match link color
+    forceGraphInstance.linkDirectionalArrowColor((link) => {
+      const edge = sceneGraph.getGraph().getEdge((link as any).id);
+      if (!edge || edge.getData().drawType !== "arrow") return "transparent";
+
+      // Use custom arrow color if specified, otherwise inherit from link
+      const arrowColor = (edge.getData() as any).arrowColor as string;
+      if (arrowColor) return arrowColor;
+
+      // Apply the same color logic as the link
+      if (
+        getHoveredNodeIds().has((link.source as any).id) ||
+        getHoveredNodeIds().has((link.target as any).id)
+      ) {
+        return "yellow";
+      }
+      if (getHoveredEdgeIds().has((link as any).id)) {
+        return "white";
+      }
+      return RenderingManager.getColor(
+        edge,
+        getEdgeLegendConfig(),
+        getLegendMode()
+      );
     });
 
     if (layout === "Layout" && sceneGraph.getDisplayConfig().nodePositions) {
