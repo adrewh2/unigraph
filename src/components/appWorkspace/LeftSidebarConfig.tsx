@@ -273,9 +273,8 @@ export const createDefaultLeftMenus = ({
           alignItems: "center",
           justifyContent: "center",
           marginTop: "auto",
-          marginBottom: "32px", // More space from the bottom
-          width: "100%",
-          gap: "18px", // More space between icons
+          marginBottom: "18px",
+          gap: "18px",
         }}
       >
         <ProfileIcon
@@ -289,7 +288,17 @@ export const createDefaultLeftMenus = ({
           }}
           size={30}
         />
-        <WorkspaceSettings isDarkMode={isDarkMode} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 30,
+            height: 30,
+          }}
+        >
+          <WorkspaceSettings isDarkMode={isDarkMode} />
+        </div>
       </div>
     </div>
   ) : null;
