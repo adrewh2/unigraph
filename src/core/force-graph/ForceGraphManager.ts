@@ -399,10 +399,10 @@ export class ForceGraphManager {
 
       const drawType = edge.getData().drawType;
       if (drawType === "arrow") {
-        // Use custom arrow length if specified, otherwise default to 6
+        // Use custom arrow length if specified, otherwise default to a larger size for better visibility
         const arrowLength = (edge.getData() as any).arrowLength as number;
         console.log("drawing arrow with length", arrowLength);
-        return arrowLength || 6;
+        return arrowLength || 12; // Doubled from 6 to 12 for more pronounced arrows
       }
       return 0;
     });
@@ -445,6 +445,9 @@ export class ForceGraphManager {
         getLegendMode()
       );
     });
+
+    // Configure arrow resolution for thicker, more pronounced arrows
+    forceGraphInstance.linkDirectionalArrowResolution(16); // Higher resolution for thicker arrows
 
     if (layout === "Layout" && sceneGraph.getDisplayConfig().nodePositions) {
       ForceGraphManager.applyFixedNodePositions(
