@@ -117,38 +117,45 @@ const createGraph = (): Graph => {
   g.createEdgeIfMissing(f1.getId(), x1.getId(), {
     id: "f1-X1",
     type: "factor-variable",
+    drawType: "arrow",
   });
 
   // f₂ connections
   g.createEdgeIfMissing(f2.getId(), x1.getId(), {
     id: "f2-X1",
     type: "factor-variable",
+    drawType: "arrow",
   });
   g.createEdgeIfMissing(f2.getId(), x2.getId(), {
     id: "f2-X2",
     type: "factor-variable",
+    drawType: "arrow",
   });
 
   // f₃ connections
   g.createEdgeIfMissing(f3.getId(), x1.getId(), {
     id: "f3-X1",
     type: "factor-variable",
+    drawType: "arrow",
   });
 
   // f₃ connections
   g.createEdgeIfMissing(f3.getId(), x2.getId(), {
     id: "f3-X2",
     type: "factor-variable",
+    drawType: "arrow",
   });
 
   // f₄ connections
   g.createEdgeIfMissing(f4.getId(), x3.getId(), {
     id: "f4-X3",
     type: "factor-variable",
+    drawType: "arrow",
   });
   g.createEdgeIfMissing(f4.getId(), x2.getId(), {
     id: "f4-X2",
     type: "factor-variable",
+    drawType: "arrow",
   });
 
   return g;

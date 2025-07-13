@@ -392,6 +392,17 @@ export class ForceGraphManager {
       sceneGraph
     );
 
+    // Render arrows for edges with drawType: 'arrow'
+    forceGraphInstance.linkDirectionalArrowLength((link) => {
+      const edge = sceneGraph.getGraph().getEdge((link as any).id);
+      console.log("edge", edge);
+      return edge && edge.getData().drawType === "arrow" ? 6 : 0;
+    });
+    forceGraphInstance.linkDirectionalArrowRelPos((link) => {
+      const edge = sceneGraph.getGraph().getEdge((link as any).id);
+      return edge && edge.getData().drawType === "arrow" ? 0.95 : 0.5;
+    });
+
     if (layout === "Layout" && sceneGraph.getDisplayConfig().nodePositions) {
       ForceGraphManager.applyFixedNodePositions(
         forceGraphInstance,
