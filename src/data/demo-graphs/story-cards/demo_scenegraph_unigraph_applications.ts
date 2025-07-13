@@ -1,7 +1,10 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { DEFAULT_APP_CONFIG } from "../../../AppConfig";
+import { createStoryCardsFromDocsDirectory } from "../../../components/applets/StoryCards/cards/utils";
+import { EntitiesContainer } from "../../../core/model/entity/entitiesContainer";
 import { Graph } from "../../../core/model/Graph";
 import { createEdgesTo } from "../../../core/model/GraphUtils";
+import { Node, NodeId } from "../../../core/model/Node";
 import { SceneGraph } from "../../../core/model/SceneGraph";
 
 export const demo_Unigraph_Applications = () => {
@@ -118,7 +121,7 @@ export const demo_Unigraph_Applications = () => {
     id: "Numerology Information",
     type: "storyCard",
     userData: {
-      title: "What is Numerology?",
+      title: "Reading e",
       markdownFile: "numerology.md", // This will be loaded from /public/posts/numerology.md
       tags: ["numerology", "belief systems", "markdown"],
     },
@@ -291,25 +294,13 @@ export const demo_Unigraph_Applications = () => {
     id: "Annotations",
     type: "storyCard",
     userData: {
-      title: "Annotation Trees",
+      title: "Annotations",
       description:
         "Annotation trees are a way to represent hierarchical relationships between different pieces of information, allowing for complex data structures to be easily navigated and understood. They are a key feature of Unigraph, enabling users to create and interact with rich, structured data in a unified way.",
       tags: ["unigraph", "annotation trees", "hierarchical relationships"],
       markdownFile: "unigraph/annotationTrees.md", // This will be loaded from /public/posts/annotationTrees.md
     },
   });
-
-  createEdgesTo(
-    graph,
-    aboutUnigraph.getId(),
-    [
-      unifiedDataPlatform,
-      unigraphTypeSystem,
-      modelAndSceneGraphs,
-      annotations,
-    ].map((node) => node.getId()),
-    { type: "StoryChoice", tags: ["EntryPoint"] }
-  );
 
   const imageBoxes = graph.createNode({
     id: "Image Boxes",
@@ -427,6 +418,18 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const unigraphChromeExtension = graph.createNode({
+    id: "Unigraph Chrome Extension",
+    type: "storyCard",
+    userData: {
+      title: "Unigraph Chrome Extension",
+      description:
+        "The Unigraph Chrome Extension allows users to interact with Unigraph directly from their browser, enabling seamless integration with web applications and services. It provides a powerful tool for codifying, inspecting, and navigating information in a unified way.",
+      tags: ["unigraph", "chrome extension", "browser integration"],
+      markdownFile: "unigraph/chromeExtension.md", // This will be loaded from /public/posts/unigraphChromeExtension.md
+    },
+  });
+
   const interspection = graph.createNode({
     id: "Interspection in Unigraph",
     type: "storyCard",
@@ -450,16 +453,43 @@ export const demo_Unigraph_Applications = () => {
     },
   });
 
+  const bigScienceAndOrganizationalComplexity = graph.createNode({
+    id: "Big Science and Organizational Complexity",
+    type: "storyCard",
+    userData: {
+      title: "Big Science and Organizational Complexity",
+      description:
+        "Big science projects often face challenges related to organizational complexity, requiring innovative approaches to manage and navigate large-scale collaborations. Unigraph provides tools for codifying, inspecting, and navigating complex information structures, enabling better organization and understanding of complex systems.",
+      tags: ["unigraph", "big science", "organizational complexity"],
+      markdownFile: "unigraph/bigScience.md", // This will be loaded from /public/posts/bigScienceAndOrganizationalComplexity.md
+    },
+  });
+
   createEdgesTo(
     graph,
     aboutUnigraph.getId(),
     [
-      composabilityInUnigraph,
-      unigraphIsIntermediateRepresentationLanguage,
       interspection,
+      unigraphTypeSystem,
+      composabilityInUnigraph,
+      annotations,
+      unigraphIsIntermediateRepresentationLanguage,
+      modelAndSceneGraphs,
       unigraphCopilot,
+      unigraphChromeExtension,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
+  );
+
+  createStoryCardsFromDocsDirectory(graph).then(
+    (docsNodes: EntitiesContainer<NodeId, Node>) => {
+      createEdgesTo(
+        graph,
+        storyCards.getId(),
+        [docsNodes.first()!].map((node: Node) => node.getId()),
+        { type: "StoryChoice", tags: ["EntryPoint"] }
+      );
+    }
   );
 
   const demo_stories = createEdgesTo(
@@ -475,6 +505,7 @@ export const demo_Unigraph_Applications = () => {
       conceptAlbumGallery,
       aboutUnigraph,
       test,
+      bigScienceAndOrganizationalComplexity,
     ].map((node) => node.getId()),
     { type: "StoryChoice", tags: ["EntryPoint"] }
   );
