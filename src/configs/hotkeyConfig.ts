@@ -1,5 +1,9 @@
+import { compressSceneGraphJsonForUrl } from "../core/serializers/toFromJson";
 import { cmdOrCtrl, HotkeyAction } from "../hooks/useHotkeys";
-import { getInteractivityFlags } from "../store/appConfigStore";
+import {
+  getCurrentSceneGraph,
+  getInteractivityFlags,
+} from "../store/appConfigStore";
 import {
   setShowCommandPalette,
   setShowEntityTables,
@@ -9,6 +13,7 @@ import {
   setShowLoadSceneGraphWindow,
   setShowSceneGraphDetailView,
 } from "../store/dialogStore";
+import { addNotification } from "../store/notificationStore";
 
 export const getHotkeyConfig = (
   handleSetSceneGraph?: (key: string, clearQueryParams?: boolean) => void
@@ -83,6 +88,24 @@ export const getHotkeyConfig = (
     {
       shiftKey: true,
       description: "Create new project",
+    }
+  ),
+
+  cmdOrCtrl(
+    () => {
+      const sceneGraph = getCurrentSceneGraph();
+      const compressed = compressSceneGraphJsonForUrl(sceneGraph);
+      const url = `${window.location.origin}${window.location.pathname}#scenegraph=${compressed}`;
+      navigator.clipboard.writeText(url);
+      console.log("Compressed SceneGraph URL copied to clipboard:", url);
+      addNotification({
+        message: "SceneGraph URL copied to clipboard",
+        type: "success",
+      });
+    },
+    "c",
+    {
+      description: "Copy SceneGraph URL",
     }
   ),
 
