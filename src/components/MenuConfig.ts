@@ -299,6 +299,17 @@ export class MenuConfig {
       Simulations: { submenu: this.callbacks.SimulationMenuActions() },
       Dev: {
         submenu: {
+          "Copy SceneGraph as URL": {
+            action: () => {
+              const sceneGraph = getCurrentSceneGraph();
+              const serialized = encodeURIComponent(
+                JSON.stringify(sceneGraph.toSerialized())
+              );
+              const url = `${window.location.origin}${window.location.pathname}?scenegraph=${serialized}`;
+              navigator.clipboard.writeText(url);
+              console.log("SceneGraph URL copied to clipboard:", url);
+            },
+          },
           "Load annotations": {
             action: () => {
               supabase.auth.getUser().then(({ data, error }) => {
