@@ -8,6 +8,34 @@ import { ISidebarConfig } from "./store/workspaceConfigStore";
 export type ForceGraph3dLayoutMode = "Physics" | "Layout";
 export type ActiveView = "ForceGraph3d" | "ReactFlow" | "Graphviz" | string;
 
+export type WorkspaceConfig = {
+  hideAll?: boolean;
+  showToolbar?: boolean;
+  leftSidebarConfig?: ISidebarConfig;
+  rightSidebarConfig?: ISidebarConfig;
+};
+
+export const DEFAULT_WORKSPACE_CONFIG = (): WorkspaceConfig => {
+  return {
+    hideAll: false,
+    showToolbar: true,
+    leftSidebarConfig: {
+      isVisible: true,
+      mode: "collapsed",
+      minimal: false,
+      activeSectionId: null,
+      panelWidth: 300,
+    },
+    rightSidebarConfig: {
+      isVisible: true,
+      mode: "collapsed",
+      minimal: false,
+      activeSectionId: null,
+      panelWidth: 300,
+    },
+  };
+};
+
 export type AppConfig = {
   activeView: ActiveView;
 
@@ -21,10 +49,7 @@ export type AppConfig = {
   activeLayout: LayoutEngineOption | string;
   activeFilter: Filter | null;
   legendMode: RenderingManager__DisplayMode;
-  workspaceConfig?: {
-    leftSidebarConfig: ISidebarConfig;
-    rightSidebarConfig: ISidebarConfig;
-  };
+  workspaceConfig?: WorkspaceConfig;
 };
 
 export const DEFAULT_APP_CONFIG = (): AppConfig => {

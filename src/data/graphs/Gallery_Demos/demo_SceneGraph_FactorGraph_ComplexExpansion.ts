@@ -1,3 +1,4 @@
+import { DEFAULT_WORKSPACE_CONFIG } from "../../../AppConfig";
 import { PresetLayoutType } from "../../../core/layouts/layoutEngineTypes";
 import { Graph } from "../../../core/model/Graph";
 import { SceneGraph } from "../../../core/model/SceneGraph";
@@ -195,6 +196,10 @@ export const createFactorGraphSceneGraph = async (): Promise<SceneGraph> => {
       activeLayout: PresetLayoutType.NodePositions, // Use the positions we defined
       legendMode: "type",
       activeFilter: null,
+      workspaceConfig: {
+        ...DEFAULT_WORKSPACE_CONFIG(),
+        hideAll: true,
+      },
     },
     forceGraphDisplayConfig: {
       nodeTextLabels: true,

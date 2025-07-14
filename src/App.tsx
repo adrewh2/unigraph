@@ -170,6 +170,7 @@ import useWorkspaceConfigStore, {
   setLeftSidebarConfig,
   setRightActiveSection,
   setRightSidebarConfig,
+  setShowToolbar,
 } from "./store/workspaceConfigStore";
 
 // Import the persistent store
@@ -872,17 +873,34 @@ const AppContent = ({
 
         setActiveFilter(graph.getData().defaultAppConfig?.activeFilter ?? null);
 
-        if (graph.getData()?.defaultAppConfig?.workspaceConfig) {
-          setLeftSidebarConfig(
-            graph.getData()!.defaultAppConfig!.workspaceConfig!
-              .leftSidebarConfig
-          );
-          setLeftActiveSection(getLeftSidebarConfig().activeSectionId);
-          setRightSidebarConfig(
-            graph.getData()!.defaultAppConfig!.workspaceConfig!
-              .rightSidebarConfig
-          );
-          setRightActiveSection(getRightSidebarConfig().activeSectionId);
+        const workspaceConfig =
+          graph.getData()?.defaultAppConfig?.workspaceConfig;
+        if (workspaceConfig) {
+          const leftToSet = workspaceConfig?.leftSidebarConfig;
+          if (leftToSet !== undefined) {
+            setLeftSidebarConfig(leftToSet);
+            setLeftActiveSection(leftToSet.activeSectionId ?? "default");
+          }
+          const rightToSet = workspaceConfig?.rightSidebarConfig;
+          if (rightToSet !== undefined) {
+            setRightSidebarConfig(rightToSet);
+            setRightActiveSection(rightToSet.activeSectionId ?? "default");
+          }
+
+          setShowToolbar(workspaceConfig?.showToolbar ?? true);
+          if (workspaceConfig?.hideAll) {
+            setShowToolbar(false);
+            setLeftSidebarConfig({
+              ...getLeftSidebarConfig(),
+              ...leftToSet,
+              isVisible: false,
+            });
+            setRightSidebarConfig({
+              ...getRightSidebarConfig(),
+              ...rightToSet,
+              isVisible: false,
+            });
+          }
         }
 
         const tock = Date.now();

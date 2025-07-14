@@ -225,13 +225,13 @@ export const getActiveLayout = () => {
 
 export const setAppConfig = (appConfig: AppConfig) => {
   useAppConfigStore.setState(() => appConfig);
-  if (appConfig.workspaceConfig?.leftSidebarConfig.activeSectionId) {
+  if (appConfig.workspaceConfig?.leftSidebarConfig?.activeSectionId) {
     updateSectionWidth(
       appConfig.workspaceConfig.leftSidebarConfig.activeSectionId,
       appConfig.workspaceConfig.leftSidebarConfig.panelWidth
     );
   }
-  if (appConfig.workspaceConfig?.rightSidebarConfig.activeSectionId) {
+  if (appConfig.workspaceConfig?.rightSidebarConfig?.activeSectionId) {
     updateSectionWidth(
       appConfig.workspaceConfig.rightSidebarConfig.activeSectionId,
       appConfig.workspaceConfig.rightSidebarConfig.panelWidth
