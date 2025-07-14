@@ -210,7 +210,9 @@ export const createFactorGraphSceneGraph = async (): Promise<SceneGraph> => {
       linkOpacity: 1,
       chargeStrength: -30,
       backgroundColor: "rgba(211, 211, 211, 1)",
-      fontSize: 25, // Default font size for labels
+      fontSize: 25, // Default font size for labels,
+      cameraPosition: { x: 250, y: -200, z: 450 },
+      cameraTarget: { x: 250, y: -200, z: 0 },
     },
     displayConfig: {
       mode: "type",
