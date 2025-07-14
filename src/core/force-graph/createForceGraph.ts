@@ -331,11 +331,30 @@ export const createForceGraph = (
       options.cameraPosition,
       options.cameraTarget
     );
+    console.log("Camera target Z value:", options.cameraTarget.z);
+
     graph.cameraPosition(
       options.cameraPosition,
       options.cameraTarget,
       0 // Immediate transition for initial setup
     );
+
+    // Debug: Check what the camera target actually is after setting
+    const controls = graph.controls() as any;
+    if (controls && controls.target) {
+      console.log("Camera target after setting:", controls.target);
+
+      // Manually set the controls target to ensure Z coordinate is applied
+      if (controls.target.set) {
+        controls.target.set(
+          options.cameraTarget.x,
+          options.cameraTarget.y,
+          options.cameraTarget.z
+        );
+        controls.update();
+        console.log("Manually set camera target to:", controls.target);
+      }
+    }
   }
 
   // Apply initial zoom if provided

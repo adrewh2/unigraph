@@ -593,11 +593,30 @@ export class ForceGraphManager {
         config.cameraPosition,
         config.cameraTarget
       );
+      console.log("Camera target Z value:", config.cameraTarget.z);
+
       instance.cameraPosition(
         config.cameraPosition,
         config.cameraTarget,
         0 // Immediate transition for config application
       );
+
+      // Debug: Check what the camera target actually is after setting
+      const controls = instance.controls() as any;
+      if (controls && controls.target) {
+        console.log("Camera target after setting:", controls.target);
+
+        // Manually set the controls target to ensure Z coordinate is applied
+        if (controls.target.set) {
+          controls.target.set(
+            config.cameraTarget.x,
+            config.cameraTarget.y,
+            config.cameraTarget.z
+          );
+          controls.update();
+          console.log("Manually set camera target to:", controls.target);
+        }
+      }
     }
 
     // Apply initial zoom if configured

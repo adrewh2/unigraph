@@ -1,7 +1,56 @@
 import React, { useEffect, useState } from "react";
+import { getForceGraph3dInstance } from "../../../store/appConfigStore";
 import { IForceGraphRenderConfig } from "../../../store/forceGraphConfigStore";
 import { FormFieldProps, FormSchema } from "../../shared/FormSchemaTypes";
 import "./ForceGraphRenderConfigEditor.css";
+
+// Function to get current camera state from ForceGraph3D instance
+const getCurrentCameraState = (): IForceGraphRenderConfig => {
+  const forceGraphInstance = getForceGraph3dInstance();
+  const config: IForceGraphRenderConfig = {
+    nodeTextLabels: false,
+    linkWidth: 2,
+    nodeSize: 6,
+    linkTextLabels: true,
+    nodeOpacity: 1,
+    linkOpacity: 1,
+    chargeStrength: -30,
+    backgroundColor: "#1a1a1a",
+    fontSize: 12,
+  };
+
+  if (forceGraphInstance) {
+    const camera = forceGraphInstance.camera();
+    const controls = forceGraphInstance.controls() as any;
+
+    // Get current camera position and target
+    config.cameraPosition = {
+      x: camera.position.x,
+      y: camera.position.y,
+      z: camera.position.z,
+    };
+
+    if (controls && controls.target) {
+      config.cameraTarget = {
+        x: controls.target.x,
+        y: controls.target.y,
+        z: controls.target.z,
+      };
+    } else {
+      config.cameraTarget = { x: 0, y: 0, z: 0 };
+    }
+
+    // Get current zoom
+    config.initialZoom = controls?.object?.zoom || 1;
+  } else {
+    // Fallback to defaults if no instance
+    config.cameraPosition = { x: 0, y: 0, z: 500 };
+    config.cameraTarget = { x: 0, y: 0, z: 0 };
+    config.initialZoom = 1;
+  }
+
+  return config;
+};
 
 const formSchema: FormSchema = {
   nodeTextLabels: {
@@ -252,24 +301,43 @@ interface ForceGraphRenderConfigEditorProps {
 const ForceGraphRenderConfigEditor: React.FC<
   ForceGraphRenderConfigEditorProps
 > = ({ onApply, isDarkMode, initialConfig }) => {
+  // Get current camera state from ForceGraph3D instance
+  const currentCameraState = getCurrentCameraState();
+
   const [formData, setFormData] = useState<IForceGraphRenderConfig>({
     ...initialConfig,
-    // Initialize camera fields if not present
-    cameraPosition: initialConfig.cameraPosition ?? { x: 0, y: 0, z: 500 },
-    cameraTarget: initialConfig.cameraTarget ?? { x: 0, y: 0, z: 0 },
-    initialZoom: initialConfig.initialZoom ?? 1,
-  });
+    // Use current camera state from ForceGraph3D instance
+    cameraPosition: currentCameraState.cameraPosition,
+    cameraTarget: currentCameraState.cameraTarget,
+    initialZoom: currentCameraState.initialZoom,
+    // Map camera object properties to individual form fields
+    cameraPositionX: currentCameraState.cameraPosition?.x ?? 0,
+    cameraPositionY: currentCameraState.cameraPosition?.y ?? 0,
+    cameraPositionZ: currentCameraState.cameraPosition?.z ?? 500,
+    cameraTargetX: currentCameraState.cameraTarget?.x ?? 0,
+    cameraTargetY: currentCameraState.cameraTarget?.y ?? 0,
+    cameraTargetZ: currentCameraState.cameraTarget?.z ?? 0,
+  } as any);
   const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
 
-  // Update initialConfig when it changes from parent
+  // Update form data when ForceGraph3D instance changes
   useEffect(() => {
+    const currentCameraState = getCurrentCameraState();
     setFormData({
       ...initialConfig,
-      cameraPosition: initialConfig.cameraPosition ?? { x: 0, y: 0, z: 500 },
-      cameraTarget: initialConfig.cameraTarget ?? { x: 0, y: 0, z: 0 },
-      initialZoom: initialConfig.initialZoom ?? 1,
-    });
-  }, [initialConfig]);
+      // Use current camera state from ForceGraph3D instance
+      cameraPosition: currentCameraState.cameraPosition,
+      cameraTarget: currentCameraState.cameraTarget,
+      initialZoom: currentCameraState.initialZoom,
+      // Map camera object properties to individual form fields
+      cameraPositionX: currentCameraState.cameraPosition?.x ?? 0,
+      cameraPositionY: currentCameraState.cameraPosition?.y ?? 0,
+      cameraPositionZ: currentCameraState.cameraPosition?.z ?? 500,
+      cameraTargetX: currentCameraState.cameraTarget?.x ?? 0,
+      cameraTargetY: currentCameraState.cameraTarget?.y ?? 0,
+      cameraTargetZ: currentCameraState.cameraTarget?.z ?? 0,
+    } as any);
+  }, [initialConfig]); // Keep initialConfig dependency for non-camera settings
 
   const validateField = (
     name: string,

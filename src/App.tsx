@@ -753,9 +753,8 @@ const AppContent = ({
       handleBackgroundRightClick
     );
 
-    newInstance?.onEngineTick(() => {
-      zoomToFit(newInstance!, 0);
-    });
+    // Remove the automatic zoomToFit that overrides camera settings
+    // Camera settings are now handled in createForceGraph and ForceGraphManager
 
     setTimeout(() => {
       newInstance?.onEngineTick(() => {});
@@ -1541,7 +1540,12 @@ const AppContent = ({
         forceGraphInstance,
         sceneGraph.getDisplayConfig().nodePositions!
       );
-      zoomToFit(forceGraphInstance);
+
+      // Only zoom to fit if no custom camera settings are configured
+      const config = sceneGraph.getForceGraphRenderConfig();
+      if (!config.cameraPosition || !config.cameraTarget) {
+        zoomToFit(forceGraphInstance);
+      }
     },
     [forceGraphInstance]
   );
@@ -1609,7 +1613,13 @@ const AppContent = ({
         forceGraphInstance,
         currentLayoutResult.positions
       );
-      zoomToFit(forceGraphInstance);
+
+      // Only zoom to fit if no custom camera settings are configured
+      const config = currentSceneGraph.getForceGraphRenderConfig();
+      if (!config.cameraPosition || !config.cameraTarget) {
+        zoomToFit(forceGraphInstance);
+      }
+
       console.log(
         "triggered",
         currentLayoutResult.layoutType,
@@ -1628,6 +1638,7 @@ const AppContent = ({
     currentLayoutResult, // Use this to trigger the effect when the layout result changes
     forceGraph3dOptions.layout,
     graphvizFitToView,
+    currentSceneGraph, // Add dependency to access scene graph config
   ]);
 
   // Add window resize handler for ForceGraph3D
