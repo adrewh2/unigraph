@@ -59,10 +59,7 @@ import { clearDocuments, getAllDocuments } from "../store/documentStore";
 
 import { demoSongAnnotations } from "../_experimental/mp3/data";
 import { demoSongAnnotations2 } from "../_experimental/mp3/demoSongAnnotations247";
-import {
-  compressSceneGraphJsonForUrl,
-  serializeSceneGraphToJson,
-} from "../core/serializers/toFromJson";
+import { compressSceneGraphJsonForUrl } from "../core/serializers/toFromJson";
 import {
   applyLayoutAndTriggerAppUpdate,
   computeLayoutAndTriggerUpdateForCurrentSceneGraph,
@@ -306,14 +303,13 @@ export class MenuConfig {
           "Copy SceneGraph as URL": {
             action: () => {
               const sceneGraph = getCurrentSceneGraph();
-              const serialized = encodeURIComponent(
-                serializeSceneGraphToJson(sceneGraph)
-              );
-              const url = `${window.location.origin}${window.location.pathname}?scenegraph=${serialized}`;
-              navigator.clipboard.writeText(url);
-              console.log("SceneGraph URL copied to clipboard:", url);
               const compressed = compressSceneGraphJsonForUrl(sceneGraph);
-              console.log("Compressed SceneGraph URL:", compressed);
+              const url = `${window.location.origin}${window.location.pathname}#scenegraph=${compressed}`;
+              navigator.clipboard.writeText(url);
+              console.log(
+                "Compressed SceneGraph URL copied to clipboard:",
+                url
+              );
             },
           },
           "Load annotations": {
