@@ -1892,8 +1892,13 @@ const AppContent = ({
 
   // Hide/show ForceGraph3D help text based on cameraControls flag
   useEffect(() => {
-    forceGraphInstance?.showNavInfo(controlMode === "orbital");
-  }, [forceGraphInstance, currentSceneGraph, controlMode]);
+    if (forceGraphInstance) {
+      setTimeout(() => {
+        forceGraphInstance.showNavInfo(controlMode === "orbital");
+        window.dispatchEvent(new Event("resize"));
+      }, 100);
+    }
+  }, [forceGraphInstance, controlMode]);
 
   const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
   const [jsonEditEntity, setJsonEditEntity] = useState<Entity | null>(null);
