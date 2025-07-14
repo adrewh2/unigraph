@@ -9,6 +9,7 @@ import useAppConfigStore, {
 } from "../store/appConfigStore";
 import useDialogStore from "../store/dialogStore";
 import { computeLayoutAndTriggerUpdateForCurrentSceneGraph } from "../store/sceneGraphHooks";
+import useWorkspaceConfigStore from "../store/workspaceConfigStore";
 
 export interface Command {
   id: string;
@@ -275,6 +276,30 @@ export const useCommandPalette = (
           description: "Show details of the current scene graph",
           execute: () =>
             setShowSceneGraphDetailView({ show: true, readOnly: true }),
+        },
+        {
+          id: "workspace-toggle-visibility",
+          title: "Workspace: Toggle Visibility",
+          description: "Toggle toolbar and sidebar visibility",
+          execute: () => {
+            const {
+              showToolbar,
+              leftSidebarConfig,
+              rightSidebarConfig,
+              setShowToolbar,
+              setLeftSidebarConfig,
+              setRightSidebarConfig,
+            } = useWorkspaceConfigStore.getState();
+
+            // Toggle all workspace elements
+            setShowToolbar(!showToolbar);
+            setLeftSidebarConfig({
+              isVisible: !leftSidebarConfig.isVisible,
+            });
+            setRightSidebarConfig({
+              isVisible: !rightSidebarConfig.isVisible,
+            });
+          },
         },
       ];
       setCommands(defaultCommands);
