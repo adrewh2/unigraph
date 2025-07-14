@@ -606,14 +606,27 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
                     }
                   }
                   const replacementDiv = document.createElement("div");
+                  // Determine alignment of the original container
+                  let floatStyle = "";
+                  let marginStyle = "";
+                  if (targetContainer instanceof HTMLElement) {
+                    const parentStyle =
+                      window.getComputedStyle(targetContainer);
+                    if (parentStyle.float === "right") {
+                      floatStyle = "float: right;";
+                      marginStyle = "margin: 0 0 1em 1em;";
+                    } else if (parentStyle.float === "left") {
+                      floatStyle = "float: left;";
+                      marginStyle = "margin: 0 1em 1em 0;";
+                    }
+                  }
                   replacementDiv.innerHTML = `
-                    <div style="margin: 0; display: block; width: ${width}px;">
-                      <h4 style="margin-bottom: 8px;">Interactive Unigraph Visualization (Factor Graph Example)</h4>
+                    <div style="margin: 0; display: block; width: ${width}px; ${floatStyle} ${marginStyle}">
                       <iframe
                         src="${unigraphBaseUrl}/${FACTOR_GRAPH_DATA_URL}"
                         width="${width}"
                         height="${height}"
-                        style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff; width: ${width}px; height: ${height}px;"
+                        style="border: 1px solid #ccc; display: block; background: #fff; width: ${width}px; height: ${height}px;"
                         title="Unigraph Factor Graph Example"
                         allowfullscreen>
                       </iframe>
