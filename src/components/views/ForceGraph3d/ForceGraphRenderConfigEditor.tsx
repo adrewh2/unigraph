@@ -382,7 +382,7 @@ const ForceGraphRenderConfigEditor: React.FC<
       return updated;
     });
 
-    // Create the config to apply immediately
+    // Create the config to apply immediately, but clean it up to remove individual field properties
     const configToApply = { ...formData, [name]: newValue };
 
     // Handle camera position fields
@@ -405,7 +405,23 @@ const ForceGraphRenderConfigEditor: React.FC<
       };
     }
 
-    onApply(configToApply);
+    // Clean up the config to remove individual field properties and only keep the object format
+    const cleanConfig: IForceGraphRenderConfig = {
+      nodeTextLabels: configToApply.nodeTextLabels as boolean,
+      nodeSize: configToApply.nodeSize as number,
+      nodeOpacity: configToApply.nodeOpacity as number,
+      linkTextLabels: configToApply.linkTextLabels as boolean,
+      linkWidth: configToApply.linkWidth as number,
+      linkOpacity: configToApply.linkOpacity as number,
+      chargeStrength: configToApply.chargeStrength as number,
+      backgroundColor: configToApply.backgroundColor,
+      fontSize: configToApply.fontSize,
+      cameraPosition: configToApply.cameraPosition,
+      cameraTarget: configToApply.cameraTarget,
+      initialZoom: configToApply.initialZoom,
+    };
+
+    onApply(cleanConfig);
 
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
@@ -422,7 +438,8 @@ const ForceGraphRenderConfigEditor: React.FC<
     });
 
     if (Object.keys(newErrors).length === 0) {
-      const config: IForceGraphRenderConfig = {
+      // Clean up the config to remove individual field properties and only keep the object format
+      const cleanConfig: IForceGraphRenderConfig = {
         nodeTextLabels: formData.nodeTextLabels as boolean,
         nodeSize: formData.nodeSize as number,
         nodeOpacity: formData.nodeOpacity as number,
@@ -430,11 +447,13 @@ const ForceGraphRenderConfigEditor: React.FC<
         linkWidth: formData.linkWidth as number,
         linkOpacity: formData.linkOpacity as number,
         chargeStrength: formData.chargeStrength as number,
+        backgroundColor: formData.backgroundColor,
+        fontSize: formData.fontSize,
         cameraPosition: formData.cameraPosition,
         cameraTarget: formData.cameraTarget,
         initialZoom: formData.initialZoom,
       };
-      onApply(config);
+      onApply(cleanConfig);
     } else {
       setErrors(newErrors);
     }
