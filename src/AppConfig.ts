@@ -2,6 +2,7 @@ import { RenderingManager__DisplayMode } from "./controllers/RenderingManager";
 import { GraphvizLayoutType } from "./core/layouts/GraphvizLayoutType";
 import { LayoutEngineOption } from "./core/layouts/layoutEngineTypes";
 import { Filter } from "./store/activeFilterStore";
+import { MouseControlMode } from "./store/mouseControlsStore";
 import { ISidebarConfig } from "./store/workspaceConfigStore";
 // import { SceneGraph } from "./core/model/SceneGraph";
 
@@ -39,13 +40,13 @@ export const DEFAULT_WORKSPACE_CONFIG = (): WorkspaceConfig => {
 export type InteractivityFlags = {
   commandPalette?: boolean;
   cameraControls?: boolean;
-  mouseClickMode?: "select" | "drag";
+  mouseClickMode?: MouseControlMode;
 };
 
 export const DEFAULT_INTERACTIVITY_FLAGS: InteractivityFlags = {
   commandPalette: true,
   cameraControls: true,
-  mouseClickMode: "select",
+  mouseClickMode: "orbital",
 };
 
 export type AppConfig = {

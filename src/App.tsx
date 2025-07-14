@@ -156,7 +156,10 @@ import {
   setHoveredNodeIds,
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
-import { useMouseControlsStore } from "./store/mouseControlsStore";
+import {
+  applyMouseClickModeFromInteractivityFlags,
+  useMouseControlsStore,
+} from "./store/mouseControlsStore";
 import { addNotification } from "./store/notificationStore";
 import {
   applyActiveFilterToAppInstance,
@@ -752,6 +755,19 @@ const AppContent = ({
       handleNodesRightClick,
       handleBackgroundRightClick
     );
+
+    // Apply mouse click mode from interactivityFlags if specified
+    const interactivityFlags =
+      currentSceneGraph.getData().defaultAppConfig?.interactivityFlags;
+    if (interactivityFlags?.mouseClickMode) {
+      // console.log(
+      //   "Applying mouse click mode to new ForceGraph3D instance:",
+      //   interactivityFlags.mouseClickMode
+      // );
+      applyMouseClickModeFromInteractivityFlags(
+        interactivityFlags.mouseClickMode
+      );
+    }
 
     // Remove the automatic zoomToFit that overrides camera settings
     // Camera settings are now handled in createForceGraph and ForceGraphManager
