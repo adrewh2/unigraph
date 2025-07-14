@@ -97,6 +97,7 @@ import {
   SetCurrentDisplayConfigOf,
 } from "./core/model/utils";
 import { exportGraphDataForReactFlow } from "./core/react-flow/exportGraphDataForReactFlow";
+import { deserializeSceneGraphFromJson } from "./core/serializers/toFromJson";
 import { persistentStore } from "./core/storage/PersistentStoreManager";
 import { flyToNode } from "./core/webgl/webglHelpers";
 import {
@@ -243,12 +244,14 @@ const AppContent = ({
   defaultActiveView,
   defaultActiveLayout,
   shouldShowLoadDialog = false,
+  defaultSerializedSceneGraph,
 }: {
   defaultGraph?: string;
   svgUrl?: string;
   defaultActiveView?: string;
   defaultActiveLayout?: string;
   shouldShowLoadDialog?: boolean;
+  defaultSerializedSceneGraph?: any;
 }) => {
   const { initializeAuth } = useUserStore();
 
@@ -452,6 +455,16 @@ const AppContent = ({
   }, [currentSceneGraph]);
 
   useEffect(() => {
+    if (defaultSerializedSceneGraph) {
+      // Load from serialized scenegraph param
+      console.log("Loading serialized scenegraph", defaultSerializedSceneGraph);
+      const sg = deserializeSceneGraphFromJson(
+        JSON.stringify(defaultSerializedSceneGraph)
+      );
+      console.log("Loaded serialized scenegraph", sg);
+      handleLoadSceneGraph(sg, false);
+      return;
+    }
     if (svgUrl) {
       fetchSvgSceneGraph(svgUrl).then(({ sceneGraph, error }) => {
         if (error) {
@@ -477,7 +490,13 @@ const AppContent = ({
       setActiveLayout(defaultActiveLayout as LayoutEngineOption);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultGraph, svgUrl, defaultActiveView, defaultActiveLayout]);
+  }, [
+    defaultSerializedSceneGraph,
+    defaultGraph,
+    svgUrl,
+    defaultActiveView,
+    defaultActiveLayout,
+  ]);
 
   // Auto-open LoadSceneGraphDialog when shouldShowLoadDialog is true
   useEffect(() => {
@@ -2237,6 +2256,7 @@ interface AppProps {
   defaultActiveView?: string;
   defaultActiveLayout?: string;
   shouldShowLoadDialog?: boolean;
+  defaultSerializedSceneGraph?: any;
 }
 
 const App: React.FC<AppProps> = ({
@@ -2245,6 +2265,7 @@ const App: React.FC<AppProps> = ({
   defaultActiveView,
   defaultActiveLayout,
   shouldShowLoadDialog = false,
+  defaultSerializedSceneGraph,
 }) => {
   return (
     <MousePositionProvider>
@@ -2254,6 +2275,7 @@ const App: React.FC<AppProps> = ({
         defaultActiveView={defaultActiveView}
         defaultActiveLayout={defaultActiveLayout}
         shouldShowLoadDialog={shouldShowLoadDialog}
+        defaultSerializedSceneGraph={defaultSerializedSceneGraph}
       />
       <LayoutComputationDialog />
     </MousePositionProvider>

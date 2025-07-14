@@ -49,6 +49,19 @@ const initializeApp = async () => {
   const activeView = urlParams.get("view") ?? undefined;
   const activeLayout = urlParams.get("layout") ?? undefined;
 
+  // Support loading a scenegraph from the ?scenegraph= param
+  const sceneGraphParam = urlParams.get("scenegraph");
+  let defaultSerializedSceneGraph = undefined;
+  if (sceneGraphParam) {
+    try {
+      defaultSerializedSceneGraph = JSON.parse(
+        decodeURIComponent(sceneGraphParam)
+      );
+    } catch (e) {
+      console.error("Failed to parse scenegraph param", e);
+    }
+  }
+
   const showToolbar = getToggleOptionValue(urlParams, "showToolbar");
   setShowToolbar(showToolbar);
 
@@ -97,7 +110,8 @@ const initializeApp = async () => {
       svgUrl={svgUrl}
       defaultActiveView={activeView}
       defaultActiveLayout={activeLayout}
-      shouldShowLoadDialog={!graphId && !svgUrl} // Show dialog when no graph or SVG URL is provided
+      shouldShowLoadDialog={!graphId && !svgUrl && !defaultSerializedSceneGraph}
+      defaultSerializedSceneGraph={defaultSerializedSceneGraph}
     />
   );
 };
