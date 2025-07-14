@@ -67,6 +67,72 @@ const formSchema: FormSchema = {
     label: "Charge Strength",
     type: "number",
   },
+  // Camera controls
+  cameraPositionX: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Camera X is required";
+      if (isNaN(Number(value))) return "Camera X must be a number";
+      return null;
+    },
+    label: "Camera Position X",
+    type: "number",
+  },
+  cameraPositionY: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Camera Y is required";
+      if (isNaN(Number(value))) return "Camera Y must be a number";
+      return null;
+    },
+    label: "Camera Position Y",
+    type: "number",
+  },
+  cameraPositionZ: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Camera Z is required";
+      if (isNaN(Number(value))) return "Camera Z must be a number";
+      return null;
+    },
+    label: "Camera Position Z",
+    type: "number",
+  },
+  cameraTargetX: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Target X is required";
+      if (isNaN(Number(value))) return "Target X must be a number";
+      return null;
+    },
+    label: "Camera Target X",
+    type: "number",
+  },
+  cameraTargetY: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Target Y is required";
+      if (isNaN(Number(value))) return "Target Y must be a number";
+      return null;
+    },
+    label: "Camera Target Y",
+    type: "number",
+  },
+  cameraTargetZ: {
+    validate: (value) => {
+      if (value === null || value === undefined) return "Target Z is required";
+      if (isNaN(Number(value))) return "Target Z must be a number";
+      return null;
+    },
+    label: "Camera Target Z",
+    type: "number",
+  },
+  initialZoom: {
+    validate: (value) => {
+      if (value === null || value === undefined)
+        return "Initial zoom is required";
+      if (isNaN(Number(value)) || Number(value) <= 0)
+        return "Initial zoom must be a positive number";
+      return null;
+    },
+    label: "Initial Zoom",
+    type: "number",
+  },
 };
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -188,12 +254,21 @@ const ForceGraphRenderConfigEditor: React.FC<
 > = ({ onApply, isDarkMode, initialConfig }) => {
   const [formData, setFormData] = useState<IForceGraphRenderConfig>({
     ...initialConfig,
+    // Initialize camera fields if not present
+    cameraPosition: initialConfig.cameraPosition ?? { x: 0, y: 0, z: 500 },
+    cameraTarget: initialConfig.cameraTarget ?? { x: 0, y: 0, z: 0 },
+    initialZoom: initialConfig.initialZoom ?? 1,
   });
   const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
 
   // Update initialConfig when it changes from parent
   useEffect(() => {
-    setFormData(initialConfig);
+    setFormData({
+      ...initialConfig,
+      cameraPosition: initialConfig.cameraPosition ?? { x: 0, y: 0, z: 500 },
+      cameraTarget: initialConfig.cameraTarget ?? { x: 0, y: 0, z: 0 },
+      initialZoom: initialConfig.initialZoom ?? 1,
+    });
   }, [initialConfig]);
 
   const validateField = (
@@ -212,8 +287,57 @@ const ForceGraphRenderConfigEditor: React.FC<
       type === "checkbox"
         ? (e.target as HTMLInputElement).checked
         : parseFloat(value);
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
-    onApply({ ...formData, [name]: newValue });
+
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: newValue };
+
+      // Handle camera position fields
+      if (name.startsWith("cameraPosition")) {
+        const currentPos = prev.cameraPosition ?? { x: 0, y: 0, z: 500 };
+        updated.cameraPosition = {
+          x: name === "cameraPositionX" ? (newValue as number) : currentPos.x,
+          y: name === "cameraPositionY" ? (newValue as number) : currentPos.y,
+          z: name === "cameraPositionZ" ? (newValue as number) : currentPos.z,
+        };
+      }
+
+      // Handle camera target fields
+      if (name.startsWith("cameraTarget")) {
+        const currentTarget = prev.cameraTarget ?? { x: 0, y: 0, z: 0 };
+        updated.cameraTarget = {
+          x: name === "cameraTargetX" ? (newValue as number) : currentTarget.x,
+          y: name === "cameraTargetY" ? (newValue as number) : currentTarget.y,
+          z: name === "cameraTargetZ" ? (newValue as number) : currentTarget.z,
+        };
+      }
+
+      return updated;
+    });
+
+    // Create the config to apply immediately
+    const configToApply = { ...formData, [name]: newValue };
+
+    // Handle camera position fields
+    if (name.startsWith("cameraPosition")) {
+      const currentPos = formData.cameraPosition ?? { x: 0, y: 0, z: 500 };
+      configToApply.cameraPosition = {
+        x: name === "cameraPositionX" ? (newValue as number) : currentPos.x,
+        y: name === "cameraPositionY" ? (newValue as number) : currentPos.y,
+        z: name === "cameraPositionZ" ? (newValue as number) : currentPos.z,
+      };
+    }
+
+    // Handle camera target fields
+    if (name.startsWith("cameraTarget")) {
+      const currentTarget = formData.cameraTarget ?? { x: 0, y: 0, z: 0 };
+      configToApply.cameraTarget = {
+        x: name === "cameraTargetX" ? (newValue as number) : currentTarget.x,
+        y: name === "cameraTargetY" ? (newValue as number) : currentTarget.y,
+        z: name === "cameraTargetZ" ? (newValue as number) : currentTarget.z,
+      };
+    }
+
+    onApply(configToApply);
 
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
@@ -238,6 +362,9 @@ const ForceGraphRenderConfigEditor: React.FC<
         linkWidth: formData.linkWidth as number,
         linkOpacity: formData.linkOpacity as number,
         chargeStrength: formData.chargeStrength as number,
+        cameraPosition: formData.cameraPosition,
+        cameraTarget: formData.cameraTarget,
+        initialZoom: formData.initialZoom,
       };
       onApply(config);
     } else {

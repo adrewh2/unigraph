@@ -392,6 +392,31 @@ export class ForceGraphManager {
       sceneGraph
     );
 
+    // Apply camera settings if configured
+    const config = sceneGraph.getForceGraphRenderConfig();
+    if (config.cameraPosition && config.cameraTarget) {
+      console.log(
+        "refreshing camera position",
+        config.cameraPosition,
+        config.cameraTarget
+      );
+      forceGraphInstance.cameraPosition(
+        config.cameraPosition,
+        config.cameraTarget,
+        0 // Immediate transition for refresh
+      );
+    }
+
+    // Apply initial zoom if configured
+    if (config.initialZoom && config.initialZoom !== 1) {
+      console.log("refreshing initial zoom", config.initialZoom);
+      const controls = forceGraphInstance.controls() as any;
+      if (controls && controls.object) {
+        controls.object.zoom = config.initialZoom;
+        controls.update();
+      }
+    }
+
     // Configure directional arrows for edges with drawType: 'arrow'
     forceGraphInstance.linkDirectionalArrowLength((link) => {
       const edge = sceneGraph.getGraph().getEdge((link as any).id);
@@ -559,6 +584,30 @@ export class ForceGraphManager {
     ) {
       instance.d3Force("charge")?.strength(config.chargeStrength);
       instance.d3ReheatSimulation();
+    }
+
+    // Apply camera settings if configured
+    if (config.cameraPosition && config.cameraTarget) {
+      console.log(
+        "applying camera position from config",
+        config.cameraPosition,
+        config.cameraTarget
+      );
+      instance.cameraPosition(
+        config.cameraPosition,
+        config.cameraTarget,
+        0 // Immediate transition for config application
+      );
+    }
+
+    // Apply initial zoom if configured
+    if (config.initialZoom && config.initialZoom !== 1) {
+      console.log("applying initial zoom from config", config.initialZoom);
+      const controls = instance.controls() as any;
+      if (controls && controls.object) {
+        controls.object.zoom = config.initialZoom;
+        controls.update();
+      }
     }
 
     sceneGraph.setForceGraphRenderConfig(config);

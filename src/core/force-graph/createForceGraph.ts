@@ -324,6 +324,30 @@ export const createForceGraph = (
     true
   );
 
+  // Apply initial camera settings if provided
+  if (options.cameraPosition && options.cameraTarget) {
+    console.log(
+      "setting camera position",
+      options.cameraPosition,
+      options.cameraTarget
+    );
+    graph.cameraPosition(
+      options.cameraPosition,
+      options.cameraTarget,
+      0 // Immediate transition for initial setup
+    );
+  }
+
+  // Apply initial zoom if provided
+  if (options.initialZoom && options.initialZoom !== 1) {
+    console.log("setting initial zoom", options.initialZoom);
+    const controls = graph.controls() as any;
+    if (controls && controls.object) {
+      controls.object.zoom = options.initialZoom;
+      controls.update();
+    }
+  }
+
   return graph;
 };
 
