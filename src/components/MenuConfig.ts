@@ -47,6 +47,7 @@ import {
   getActiveView,
   getCurrentSceneGraph,
   getForceGraph3dInstance,
+  getInteractivityFlags,
   getShowEntityDataCard,
   setShowEntityDataCard,
 } from "../store/appConfigStore";
@@ -237,6 +238,14 @@ export class MenuConfig {
           },
           "Command Palette": {
             action: () => {
+              // Check if command palette is disabled via interactivityFlags
+              const interactivityFlags = getInteractivityFlags();
+              if (interactivityFlags?.commandPalette === false) {
+                console.log(
+                  "Command palette is disabled via interactivityFlags"
+                );
+                return;
+              }
               setShowCommandPalette(true);
             },
             tooltip: "cmd+shift+p",

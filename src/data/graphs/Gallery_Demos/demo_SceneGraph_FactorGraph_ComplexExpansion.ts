@@ -2,6 +2,7 @@ import { DEFAULT_WORKSPACE_CONFIG } from "../../../AppConfig";
 import { PresetLayoutType } from "../../../core/layouts/layoutEngineTypes";
 import { Graph } from "../../../core/model/Graph";
 import { SceneGraph } from "../../../core/model/SceneGraph";
+import { DEFAULT_INTERACTIVITY_FLAGS } from "./../../../AppConfig";
 
 /**
  * Creates a Graph representing a factor graph
@@ -199,6 +200,12 @@ export const createFactorGraphSceneGraph = async (): Promise<SceneGraph> => {
       workspaceConfig: {
         ...DEFAULT_WORKSPACE_CONFIG(),
         hideAll: true,
+      },
+      interactivityFlags: {
+        ...DEFAULT_INTERACTIVITY_FLAGS,
+        commandPalette: false,
+        cameraControls: false,
+        mouseClickMode: "drag",
       },
     },
     forceGraphDisplayConfig: {

@@ -110,6 +110,7 @@ const useAppConfigStore = create<AppState>((set) => ({
   selectedSimulation: "Lumina",
   legendMode: DEFAULTS.legendMode,
   autoFitView: true,
+  interactivityFlags: DEFAULTS.interactivityFlags,
 
   setActiveView: (activeView: ActiveView) =>
     set({ previousView: useAppConfigStore.getState().activeView, activeView }),
@@ -249,6 +250,7 @@ export const getAppConfig = (): AppConfig => {
     activeLayout: state.activeLayout,
     legendMode: state.legendMode,
     activeFilter: state.activeFilter,
+    interactivityFlags: state.interactivityFlags,
     workspaceConfig: {
       leftSidebarConfig: getLeftSidebarConfig(),
       rightSidebarConfig: getRightSidebarConfig(),
@@ -342,6 +344,10 @@ export const setAutoFitView = (autoFitView: boolean) => {
 
 export const getAutoFitView = () => {
   return useAppConfigStore.getState().autoFitView;
+};
+
+export const getInteractivityFlags = () => {
+  return useAppConfigStore.getState().interactivityFlags;
 };
 
 export default useAppConfigStore;

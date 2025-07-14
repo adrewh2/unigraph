@@ -16,7 +16,10 @@ import {
   getEdgeLegendConfig,
   getNodeLegendConfig,
 } from "../../store/activeLegendConfigStore";
-import { getLegendMode } from "../../store/appConfigStore";
+import {
+  getInteractivityFlags,
+  getLegendMode,
+} from "../../store/appConfigStore";
 import {
   DEFAULT_FORCE_GRAPH_RENDER_CONFIG,
   IForceGraphRenderConfig,
@@ -311,6 +314,19 @@ export const createForceGraph = (
         return new CSS2DObject(nodeEl);
       })
       .nodeThreeObjectExtend(true);
+  }
+
+  // Check if camera controls are disabled via interactivityFlags
+  const interactivityFlags = getInteractivityFlags();
+  if (interactivityFlags?.cameraControls === false) {
+    console.log("Camera controls are disabled via interactivityFlags");
+    const controls = graph.controls() as any;
+    if (controls) {
+      controls.enableRotate = false;
+      controls.enableZoom = false;
+      controls.enablePan = false;
+      controls.update();
+    }
   }
 
   if (layout === "Layout" && positions) {

@@ -1,4 +1,5 @@
 import { cmdOrCtrl, HotkeyAction } from "../hooks/useHotkeys";
+import { getInteractivityFlags } from "../store/appConfigStore";
 import {
   setShowCommandPalette,
   setShowEntityTables,
@@ -13,10 +14,22 @@ export const getHotkeyConfig = (
   handleSetSceneGraph?: (key: string, clearQueryParams?: boolean) => void
 ): HotkeyAction[] => [
   // Command Palette
-  cmdOrCtrl(() => setShowCommandPalette(true), "p", {
-    shiftKey: true,
-    description: "Open Command Palette",
-  }),
+  cmdOrCtrl(
+    () => {
+      // Check if command palette is disabled via interactivityFlags
+      const interactivityFlags = getInteractivityFlags();
+      if (interactivityFlags?.commandPalette === false) {
+        console.log("Command palette is disabled via interactivityFlags");
+        return;
+      }
+      setShowCommandPalette(true);
+    },
+    "p",
+    {
+      shiftKey: true,
+      description: "Open Command Palette",
+    }
+  ),
 
   // Project actions
   //   cmdOrCtrl(() => setShowSaveSceneGraphDialog(true), "s", {

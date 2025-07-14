@@ -36,6 +36,18 @@ export const DEFAULT_WORKSPACE_CONFIG = (): WorkspaceConfig => {
   };
 };
 
+export type InteractivityFlags = {
+  commandPalette?: boolean;
+  cameraControls?: boolean;
+  mouseClickMode?: "select" | "drag";
+};
+
+export const DEFAULT_INTERACTIVITY_FLAGS: InteractivityFlags = {
+  commandPalette: true,
+  cameraControls: true,
+  mouseClickMode: "select",
+};
+
 export type AppConfig = {
   activeView: ActiveView;
 
@@ -50,6 +62,7 @@ export type AppConfig = {
   activeFilter: Filter | null;
   legendMode: RenderingManager__DisplayMode;
   workspaceConfig?: WorkspaceConfig;
+  interactivityFlags?: InteractivityFlags;
 };
 
 export const DEFAULT_APP_CONFIG = (): AppConfig => {
@@ -65,5 +78,6 @@ export const DEFAULT_APP_CONFIG = (): AppConfig => {
     activeLayout: GraphvizLayoutType.Graphviz_dot,
     legendMode: "type",
     activeFilter: null,
+    interactivityFlags: DEFAULT_INTERACTIVITY_FLAGS,
   };
 };

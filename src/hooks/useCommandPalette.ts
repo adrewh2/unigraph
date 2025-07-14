@@ -6,6 +6,7 @@ import { SceneGraph } from "../core/model/SceneGraph";
 import { getAllDemoSceneGraphKeys } from "../data/DemoSceneGraphs";
 import useAppConfigStore, {
   getCurrentSceneGraph,
+  getInteractivityFlags,
 } from "../store/appConfigStore";
 import useDialogStore from "../store/dialogStore";
 import { computeLayoutAndTriggerUpdateForCurrentSceneGraph } from "../store/sceneGraphHooks";
@@ -331,6 +332,14 @@ export const useCommandPalette = (
         (!isMac && e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "p")
       ) {
         e.preventDefault();
+
+        // Check if command palette is disabled via interactivityFlags
+        const interactivityFlags = getInteractivityFlags();
+        if (interactivityFlags?.commandPalette === false) {
+          console.log("Command palette is disabled via interactivityFlags");
+          return;
+        }
+
         setCommandPaletteOpen(true); // <-- open the app's command palette
         setIsOpen(true); // keep for legacy, but not used for actual open state
         setDemoStep(false);
