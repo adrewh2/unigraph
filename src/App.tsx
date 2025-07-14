@@ -1574,8 +1574,7 @@ const AppContent = ({
         forceGraphInstance,
         currentSceneGraph,
         forceGraph3dOptions.layout,
-        currentLayoutResult?.positions,
-        controlMode
+        currentLayoutResult?.positions
       );
     }
   }, [
@@ -1588,7 +1587,6 @@ const AppContent = ({
     forceGraphInstance,
     currentLayoutResult,
     graphModelUpdateTime,
-    controlMode,
     // selectedNodeIds, //not sure why I had these here to begin with. can prob remove now
     // selectedEdgeIds,
   ]);
@@ -1894,7 +1892,6 @@ const AppContent = ({
 
   // Hide/show ForceGraph3D help text based on cameraControls flag
   useEffect(() => {
-    console.log("not triggered");
     forceGraphInstance?.showNavInfo(controlMode === "orbital");
   }, [forceGraphInstance, currentSceneGraph, controlMode]);
 
