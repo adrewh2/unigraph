@@ -9,6 +9,7 @@ import {
   DefinitionPopup,
   DefinitionPopupData,
 } from "../../common/DefinitionPopup";
+import { FACTOR_GRAPH_DATA_URL } from "./factorGraphDataUrl";
 
 // Add a utility function to extract article title from Wikipedia URLs
 const extractWikipediaTitle = (url: string): string | null => {
@@ -157,13 +158,18 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
           // Force insert the iframe without relying on heading detection
           const unigraphBaseUrl = getUnigraphBaseUrl();
 
+          console.log(
+            "loading unigraph from url",
+            `${unigraphBaseUrl}/${FACTOR_GRAPH_DATA_URL}`
+          );
+
           // Only add Unigraph visualization for Factor graph article
           if (articleTitle.toLowerCase() === "factor graph") {
             const unigraphIframe = `
               <div style="margin: 20px 0; display: block; width: 100%;">
                 <h4>Interactive Unigraph Visualization</h4>
                 <iframe 
-                  src="${unigraphBaseUrl}/?graph=unigraph&view=ForceGraph3d" 
+                  src="${unigraphBaseUrl}/${FACTOR_GRAPH_DATA_URL}" 
                   width="100%" 
                   height="500" 
                   style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;" 
@@ -596,7 +602,7 @@ export const WikipediaArticleViewer_FactorGraph: React.FC<
                     <div style="margin: 20px 0; display: block; width: 100%;">
                       <h4>Interactive Unigraph Visualization (Factor Graph Example)</h4>
                       <iframe
-                        src="${unigraphBaseUrl}/?graph=unigraph&view=ForceGraph3d"
+                        src="${unigraphBaseUrl}/${FACTOR_GRAPH_DATA_URL}"
                         width="100%"
                         height="450"
                         style="border: 1px solid #ccc; display: block; margin: 0 auto; background: #fff;"
