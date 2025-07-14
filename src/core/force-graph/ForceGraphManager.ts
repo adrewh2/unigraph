@@ -16,7 +16,10 @@ import {
   getSelectedNodeId,
   getSelectedNodeIds,
 } from "../../store/graphInteractionStore";
-import { getMouseControlMode } from "../../store/mouseControlsStore";
+import {
+  getMouseControlMode,
+  MouseControlMode,
+} from "../../store/mouseControlsStore";
 import { NodePositionData } from "../layouts/layoutHelpers";
 import { EntityIds } from "../model/entity/entityIds";
 import { Node, NodeId } from "../model/Node";
@@ -336,7 +339,8 @@ export class ForceGraphManager {
     forceGraphInstance: ForceGraph3DInstance,
     sceneGraph: SceneGraph,
     layout: ForceGraph3dLayoutMode = "Physics",
-    layoutPositions?: NodePositionData
+    layoutPositions?: NodePositionData,
+    controlMode: MouseControlMode = "multiselection"
   ) => {
     console.log("Refreshing existing force graph instance...");
 
@@ -349,8 +353,10 @@ export class ForceGraphManager {
     );
 
     // Apply current mouse control mode
-    const controlMode = getMouseControlMode();
     ForceGraphManager.updateMouseControlMode(forceGraphInstance, controlMode);
+
+    // Hide/show ForceGraph3D help text based on cameraControls flag {
+    forceGraphInstance?.showNavInfo(getMouseControlMode() === "orbital");
 
     forceGraphInstance.nodeColor((node) => {
       if (getHoveredNodeIds().has(node.id as NodeId)) {

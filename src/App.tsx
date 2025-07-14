@@ -1566,13 +1566,16 @@ const AppContent = ({
     [forceGraphInstance]
   );
 
+  const { controlMode } = useMouseControlsStore();
+
   useEffect(() => {
     if (activeView === "ForceGraph3d" && forceGraphInstance) {
       ForceGraphManager.refreshForceGraphInstance(
         forceGraphInstance,
         currentSceneGraph,
         forceGraph3dOptions.layout,
-        currentLayoutResult?.positions
+        currentLayoutResult?.positions,
+        controlMode
       );
     }
   }, [
@@ -1585,6 +1588,7 @@ const AppContent = ({
     forceGraphInstance,
     currentLayoutResult,
     graphModelUpdateTime,
+    controlMode,
     // selectedNodeIds, //not sure why I had these here to begin with. can prob remove now
     // selectedEdgeIds,
   ]);
@@ -1888,6 +1892,12 @@ const AppContent = ({
     setShowPathAnalysis,
   ]);
 
+  // Hide/show ForceGraph3D help text based on cameraControls flag
+  useEffect(() => {
+    console.log("not triggered");
+    forceGraphInstance?.showNavInfo(controlMode === "orbital");
+  }, [forceGraphInstance, currentSceneGraph, controlMode]);
+
   const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
   const [jsonEditEntity, setJsonEditEntity] = useState<Entity | null>(null);
 
@@ -2017,8 +2027,6 @@ const AppContent = ({
       </div>
     );
   };
-
-  const controlMode = useMouseControlsStore((state) => state.controlMode);
 
   return (
     <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>

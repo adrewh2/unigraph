@@ -205,7 +205,7 @@ export const createFactorGraphSceneGraph = async (): Promise<SceneGraph> => {
         ...DEFAULT_INTERACTIVITY_FLAGS,
         commandPalette: true,
         cameraControls: false,
-        mouseClickMode: "multiselection",
+        mouseClickMode: "orbital",
       },
     },
     forceGraphDisplayConfig: {

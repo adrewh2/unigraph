@@ -80,6 +80,7 @@ export const createForceGraph = (
     extraRenderers: [new CSS2DRenderer()],
   })
     .graphData({ nodes: data.nodes, links: data.edges })
+    .showNavInfo(getMouseControlMode() === "orbital")
     .nodeLabel("label")
     .nodeColor((node) => {
       if (getHoveredNodeIds().has(node.id as NodeId)) {
