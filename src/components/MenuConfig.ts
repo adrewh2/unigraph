@@ -59,7 +59,10 @@ import { clearDocuments, getAllDocuments } from "../store/documentStore";
 
 import { demoSongAnnotations } from "../_experimental/mp3/data";
 import { demoSongAnnotations2 } from "../_experimental/mp3/demoSongAnnotations247";
-import { serializeSceneGraphToJson } from "../core/serializers/toFromJson";
+import {
+  compressSceneGraphJsonForUrl,
+  serializeSceneGraphToJson,
+} from "../core/serializers/toFromJson";
 import {
   applyLayoutAndTriggerAppUpdate,
   computeLayoutAndTriggerUpdateForCurrentSceneGraph,
@@ -309,6 +312,8 @@ export class MenuConfig {
               const url = `${window.location.origin}${window.location.pathname}?scenegraph=${serialized}`;
               navigator.clipboard.writeText(url);
               console.log("SceneGraph URL copied to clipboard:", url);
+              const compressed = compressSceneGraphJsonForUrl(sceneGraph);
+              console.log("Compressed SceneGraph URL:", compressed);
             },
           },
           "Load annotations": {
