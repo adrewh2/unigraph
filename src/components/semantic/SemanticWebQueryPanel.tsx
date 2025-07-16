@@ -2,6 +2,12 @@ import { StreamLanguage } from "@codemirror/language";
 import { sparql } from "@codemirror/legacy-modes/mode/sparql";
 import { oneDark } from "@codemirror/theme-one-dark";
 import CodeMirror from "@uiw/react-codemirror";
+import {
+  AllCommunityModule,
+  ModuleRegistry,
+  themeBalham,
+} from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
 import React, { useEffect, useState } from "react";
 import { Parser as SparqlParser } from "sparqljs";
 import SelectDropdown from "../common/SelectDropdown";
@@ -29,7 +35,7 @@ SELECT ?character ?characterLabel ?genderLabel ?birthDate ?homeworldLabel ?speci
   OPTIONAL { ?character wdt:P18 ?image. }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }
-LIMIT 30`,
+LIMIT 300`,
     endpoint: "https://query.wikidata.org/sparql",
   },
   {
@@ -47,7 +53,7 @@ SELECT ?person ?name ?birthDate ?deathDate ?birthPlace ?nationality ?occupation 
   OPTIONAL { ?person dbo:occupation ?occupation. }
   OPTIONAL { ?person dbo:abstract ?abstract. FILTER (lang(?abstract) = 'en') }
 }
-LIMIT 30`,
+LIMIT 300`,
     endpoint: "https://dbpedia.org/sparql",
   },
   {
@@ -71,6 +77,9 @@ const DEFAULT_QUERY = `SELECT ?subject ?predicate ?object WHERE {
 } LIMIT 10`;
 
 const parser = new SparqlParser();
+
+// Register AG Grid modules (only needs to be done once)
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
   onResultsToSceneGraph,
@@ -143,6 +152,29 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
       setSelectedExample(idx);
     }
   };
+
+  // Build AgGrid columnDefs from columns
+  const agGridColumnDefs = columns.map((col) => ({
+    headerName: col,
+    field: col,
+    sortable: true,
+    filter: true,
+    resizable: true,
+    minWidth: 120,
+    maxWidth: 400,
+    cellStyle: isDarkMode
+      ? { color: "#fff", background: "#23232a", fontFamily: "monospace" }
+      : { color: "#222", background: "#fff", fontFamily: "monospace" },
+    valueGetter: (params: any) => params.data[col]?.value || "",
+  }));
+
+  // Build AgGrid rowData from results
+  const agGridRowData =
+    results?.map((row) => {
+      // Each row is an object: { col1: { value, ... }, col2: { value, ... }, ... }
+      // We'll keep as-is, and use valueGetter above
+      return row;
+    }) || [];
 
   return (
     <div
@@ -306,56 +338,34 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
           </div>
         )}
         {results && results.length > 0 && (
-          <table
+          <div
+            className={isDarkMode ? "ag-theme-balham-dark" : "ag-theme-balham"}
             style={{
               width: "100%",
-              borderCollapse: "collapse",
-              background: isDarkMode ? "#23232a" : "#fff",
-              color: isDarkMode ? "#fff" : undefined,
+              height: 480,
+              background: isDarkMode ? "#23232a" : undefined,
             }}
           >
-            <thead>
-              <tr>
-                {columns.map((col) => (
-                  <th
-                    key={col}
-                    style={{
-                      borderBottom: "2px solid #e5e7eb",
-                      textAlign: "left",
-                      padding: "6px 10px",
-                      fontWeight: 600,
-                      background: isDarkMode ? "#18181b" : "#f3f4f6",
-                    }}
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {results.map((row, i) => (
-                <tr key={i}>
-                  {columns.map((col) => (
-                    <td
-                      key={col}
-                      style={{
-                        borderBottom: "1px solid #e5e7eb",
-                        padding: "6px 10px",
-                        fontFamily: "monospace",
-                        fontSize: 14,
-                        maxWidth: 320,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {row[col]?.value || ""}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <AgGridReact
+              theme={themeBalham}
+              rowData={agGridRowData}
+              columnDefs={agGridColumnDefs}
+              rowHeight={24}
+              defaultColDef={{
+                sortable: true,
+                resizable: true,
+                filter: true,
+                minWidth: 120,
+                maxWidth: 400,
+                floatingFilter: true,
+              }}
+              domLayout="autoHeight"
+              suppressMenuHide={false}
+              animateRows={true}
+              overlayNoRowsTemplate={`<span style='color:#888;'>No results</span>`}
+              overlayLoadingTemplate={`<span style='color:#1976d2;'>Loading...</span>`}
+            />
+          </div>
         )}
         {results && results.length === 0 && (
           <div style={{ color: "#888" }}>No results.</div>
