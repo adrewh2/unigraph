@@ -10,7 +10,6 @@ import React, {
 import ImageGallery from "./_experimental/lumina/galleryTestbed/ImageGallery";
 import ImageBoxCreator from "./_experimental/lumina/ImageBoxCreator";
 import Lumina from "./_experimental/lumina/Lumina";
-import YasguiPanel from "./_experimental/yasgui/YasguiPanel";
 import "./App.css";
 import { AppConfig, DEFAULT_APP_CONFIG } from "./AppConfig";
 import PathAnalysisWizard, {
@@ -57,6 +56,7 @@ import { getNodeContextMenuItems } from "./components/common/singleNodeContextMe
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog";
+import SemanticWebQueryPanel from "./components/semantic/SemanticWebQueryPanel";
 import { enableZoomAndPanOnSvg } from "./components/svg/appHelpers";
 import { getHotkeyConfig } from "./configs/hotkeyConfig";
 import { AppContextProvider } from "./context/AppContext";
@@ -1997,21 +1997,23 @@ const AppContent = ({
       return null;
     }
 
-    return (
-      <div
-        id="yasgui"
-        style={{
-          position: "absolute",
-          top: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 10,
-        }}
-      >
-        <YasguiPanel sceneGraph={currentSceneGraph} />
-      </div>
-    );
-  }, [activeView, currentSceneGraph]);
+    return <SemanticWebQueryPanel />;
+
+    // return (
+    //   <div
+    //     id="yasgui"
+    //     style={{
+    //       position: "absolute",
+    //       top: 0,
+    //       width: "100%",
+    //       height: "100%",
+    //       zIndex: 10,
+    //     }}
+    //   >
+    //     <YasguiPanel sceneGraph={currentSceneGraph} />
+    //   </div>
+    // );
+  }, [activeView]);
 
   const maybeRenderNodeDocumentEditor = () => {
     // Return nothing if not in Editor view or no active document
