@@ -14,6 +14,39 @@ const ENDPOINTS = [
   { label: "Custom...", value: "custom" },
 ];
 
+// Example queries for the dropdown
+const EXAMPLE_QUERIES = [
+  {
+    label: "Wikidata: Star Wars Characters",
+    query: `# Star Wars characters (Wikidata)
+SELECT ?character ?characterLabel ?speciesLabel WHERE {
+  ?character wdt:P31 wd:Q95074. # instance of Star Wars character
+  OPTIONAL { ?character wdt:P31 ?species. }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+LIMIT 20`,
+    endpoint: "https://query.wikidata.org/sparql",
+  },
+  {
+    label: "DBpedia: Nobel Prize Winners",
+    query: `# Nobel Prize winners (DBpedia)
+PREFIX dbo: <http://dbpedia.org/ontology/>
+SELECT ?person ?award WHERE {
+  ?person dbo:award <http://dbpedia.org/resource/Nobel_Prize> .
+  ?person dbo:award ?award .
+}
+LIMIT 20`,
+    endpoint: "https://dbpedia.org/sparql",
+  },
+  {
+    label: "Simple SELECT",
+    query: `SELECT ?subject ?predicate ?object WHERE {
+  ?subject ?predicate ?object
+} LIMIT 10`,
+    endpoint: "https://dbpedia.org/sparql",
+  },
+];
+
 interface SemanticWebQueryPanelProps {
   onResultsToSceneGraph?: (bindings: any[]) => void;
   defaultEndpoint?: string;
@@ -43,6 +76,7 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lintError, setLintError] = useState<string | null>(null);
+  const [selectedExample, setSelectedExample] = useState<number | null>(null);
 
   const effectiveEndpoint =
     endpoint.value === "custom" ? customEndpoint : endpoint.value;
@@ -83,6 +117,21 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
     if (opt.value !== "custom") setCustomEndpoint("");
   };
 
+  // Handler for example query selection
+  const handleExampleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const idx = parseInt(e.target.value, 10);
+    if (!isNaN(idx)) {
+      const example = EXAMPLE_QUERIES[idx];
+      setQuery(example.query);
+      // Optionally set endpoint if different
+      const endpointOption = ENDPOINTS.find(
+        (ep) => ep.value === example.endpoint
+      );
+      if (endpointOption) setEndpoint(endpointOption);
+      setSelectedExample(idx);
+    }
+  };
+
   return (
     <div
       style={{
@@ -121,6 +170,39 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             }}
           />
         )}
+      </div>
+      {/* Example queries dropdown */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 4,
+        }}
+      >
+        <span style={{ fontWeight: 500 }}>Examples:</span>
+        <select
+          value={selectedExample !== null ? selectedExample : ""}
+          onChange={handleExampleChange}
+          style={{
+            minWidth: 260,
+            padding: "6px 10px",
+            borderRadius: 4,
+            border: "1px solid #ccc",
+            background: isDarkMode ? "#23232a" : undefined,
+            color: isDarkMode ? "#fff" : undefined,
+            fontSize: 15,
+          }}
+        >
+          <option value="" disabled>
+            Select an example query...
+          </option>
+          {EXAMPLE_QUERIES.map((ex, i) => (
+            <option key={i} value={i}>
+              {ex.label}
+            </option>
+          ))}
+        </select>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <span style={{ fontWeight: 500 }}>SPARQL Query:</span>
