@@ -2,7 +2,8 @@ import { StreamLanguage } from "@codemirror/language";
 import { sparql } from "@codemirror/legacy-modes/mode/sparql";
 import { oneDark } from "@codemirror/theme-one-dark";
 import CodeMirror from "@uiw/react-codemirror";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Parser as SparqlParser } from "sparqljs";
 import SelectDropdown from "../common/SelectDropdown";
 
 // Predefined SPARQL endpoints
@@ -24,6 +25,8 @@ const DEFAULT_QUERY = `SELECT ?subject ?predicate ?object WHERE {
   ?subject ?predicate ?object
 } LIMIT 10`;
 
+const parser = new SparqlParser();
+
 const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
   onResultsToSceneGraph,
   defaultEndpoint,
@@ -39,9 +42,20 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lintError, setLintError] = useState<string | null>(null);
 
   const effectiveEndpoint =
     endpoint.value === "custom" ? customEndpoint : endpoint.value;
+
+  // Lint the query on every change
+  useEffect(() => {
+    try {
+      parser.parse(query);
+      setLintError(null);
+    } catch (e: any) {
+      setLintError(e.message || String(e));
+    }
+  }, [query]);
 
   const handleRunQuery = async () => {
     setLoading(true);
@@ -138,6 +152,22 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             }}
           />
         </div>
+        {lintError && (
+          <div
+            style={{
+              color: "#dc2626",
+              marginTop: 6,
+              fontSize: 14,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-word",
+              overflowX: "auto",
+              maxWidth: "100%",
+              padding: "4px 0",
+            }}
+          >
+            SPARQL Syntax Error: {lintError}
+          </div>
+        )}
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button
             onClick={handleRunQuery}
