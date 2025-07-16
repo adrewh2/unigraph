@@ -331,7 +331,16 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
           )}
         </div>
       </div>
-      <div style={{ flex: 1, overflow: "auto", marginTop: 8 }}>
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          marginTop: 8,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
         {error && (
           <div style={{ color: "#dc2626", marginBottom: 8 }}>
             Error: {error}
@@ -342,8 +351,12 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             className={isDarkMode ? "ag-theme-balham-dark" : "ag-theme-balham"}
             style={{
               width: "100%",
-              height: 480,
+              flex: 1,
+              minHeight: 0,
               background: isDarkMode ? "#23232a" : undefined,
+              overflow: "auto",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <AgGridReact
@@ -359,7 +372,7 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
                 maxWidth: 400,
                 floatingFilter: true,
               }}
-              domLayout="autoHeight"
+              domLayout="normal"
               suppressMenuHide={false}
               animateRows={true}
               overlayNoRowsTemplate={`<span style='color:#888;'>No results</span>`}
@@ -369,6 +382,22 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
         )}
         {results && results.length === 0 && (
           <div style={{ color: "#888" }}>No results.</div>
+        )}
+        {/* Footer with number of results */}
+        {results && (
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 14,
+              color: isDarkMode ? "#aaa" : "#444",
+              textAlign: "right",
+              padding: "4px 0 0 0",
+              borderTop: "1px solid #eee",
+              minHeight: 24,
+            }}
+          >
+            {results.length} result{results.length === 1 ? "" : "s"}
+          </div>
         )}
       </div>
     </div>
