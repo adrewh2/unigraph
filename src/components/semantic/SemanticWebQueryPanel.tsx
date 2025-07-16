@@ -1,3 +1,7 @@
+import { StreamLanguage } from "@codemirror/language";
+import { sparql } from "@codemirror/legacy-modes/mode/sparql";
+import { oneDark } from "@codemirror/theme-one-dark";
+import CodeMirror from "@uiw/react-codemirror";
 import React, { useState } from "react";
 import SelectDropdown from "../common/SelectDropdown";
 
@@ -106,21 +110,34 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <span style={{ fontWeight: 500 }}>SPARQL Query:</span>
-        <textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          rows={8}
+        <div
           style={{
-            fontFamily: "monospace",
-            fontSize: 15,
             borderRadius: 6,
             border: "1px solid #ccc",
-            padding: 10,
+            overflow: "hidden",
             background: isDarkMode ? "#23232a" : undefined,
-            color: isDarkMode ? "#fff" : undefined,
-            resize: "vertical",
           }}
-        />
+        >
+          <CodeMirror
+            value={query}
+            height="180px"
+            theme={isDarkMode ? oneDark : undefined}
+            extensions={[StreamLanguage.define(sparql)]}
+            onChange={(value) => setQuery(value)}
+            basicSetup={{
+              lineNumbers: true,
+              highlightActiveLine: true,
+              foldGutter: true,
+              autocompletion: true,
+            }}
+            style={{
+              fontSize: 15,
+              fontFamily: "monospace",
+              background: isDarkMode ? "#23232a" : undefined,
+              color: isDarkMode ? "#fff" : undefined,
+            }}
+          />
+        </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <button
             onClick={handleRunQuery}
