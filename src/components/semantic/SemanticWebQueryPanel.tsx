@@ -17,25 +17,37 @@ const ENDPOINTS = [
 // Example queries for the dropdown
 const EXAMPLE_QUERIES = [
   {
-    label: "Wikidata: Star Wars Characters",
-    query: `# Star Wars characters (Wikidata)
-SELECT ?character ?characterLabel ?speciesLabel WHERE {
+    label: "Wikidata: Star Wars Characters (Detailed)",
+    query: `# Star Wars characters with many attributes (Wikidata)
+SELECT ?character ?characterLabel ?genderLabel ?birthDate ?homeworldLabel ?speciesLabel ?occupationLabel ?image WHERE {
   ?character wdt:P31 wd:Q95074. # instance of Star Wars character
+  OPTIONAL { ?character wdt:P21 ?gender. }
+  OPTIONAL { ?character wdt:P569 ?birthDate. }
+  OPTIONAL { ?character wdt:P19 ?homeworld. }
   OPTIONAL { ?character wdt:P31 ?species. }
+  OPTIONAL { ?character wdt:P106 ?occupation. }
+  OPTIONAL { ?character wdt:P18 ?image. }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 }
-LIMIT 20`,
+LIMIT 30`,
     endpoint: "https://query.wikidata.org/sparql",
   },
   {
-    label: "DBpedia: Nobel Prize Winners",
-    query: `# Nobel Prize winners (DBpedia)
+    label: "DBpedia: Nobel Prize Winners (Detailed)",
+    query: `# Nobel Prize winners with many attributes (DBpedia)
 PREFIX dbo: <http://dbpedia.org/ontology/>
-SELECT ?person ?award WHERE {
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+SELECT ?person ?name ?birthDate ?deathDate ?birthPlace ?nationality ?occupation ?abstract WHERE {
   ?person dbo:award <http://dbpedia.org/resource/Nobel_Prize> .
-  ?person dbo:award ?award .
+  OPTIONAL { ?person foaf:name ?name. }
+  OPTIONAL { ?person dbo:birthDate ?birthDate. }
+  OPTIONAL { ?person dbo:deathDate ?deathDate. }
+  OPTIONAL { ?person dbo:birthPlace ?birthPlace. }
+  OPTIONAL { ?person dbo:nationality ?nationality. }
+  OPTIONAL { ?person dbo:occupation ?occupation. }
+  OPTIONAL { ?person dbo:abstract ?abstract. FILTER (lang(?abstract) = 'en') }
 }
-LIMIT 20`,
+LIMIT 30`,
     endpoint: "https://dbpedia.org/sparql",
   },
   {
