@@ -25,6 +25,11 @@ const EXAMPLE_QUERIES = [
   {
     label: "Wikidata: Star Wars Characters (Detailed)",
     query: `# Star Wars characters with many attributes (Wikidata)
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+PREFIX bd: <http://www.bigdata.com/rdf#>
+
 SELECT ?character ?characterLabel ?genderLabel ?birthDate ?homeworldLabel ?speciesLabel ?occupationLabel ?image WHERE {
   ?character wdt:P31 wd:Q95074. # instance of Star Wars character
   OPTIONAL { ?character wdt:P21 ?gender. }
@@ -162,9 +167,12 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
     resizable: true,
     minWidth: 120,
     maxWidth: 400,
-    cellStyle: isDarkMode
-      ? { color: "#fff", background: "#23232a", fontFamily: "monospace" }
-      : { color: "#222", background: "#fff", fontFamily: "monospace" },
+    cellStyle: {
+      userSelect: "text", // Allow text selection for copying
+      color: isDarkMode ? "#fff" : "#222",
+      background: isDarkMode ? "#23232a" : "#fff",
+      fontFamily: "monospace",
+    },
     valueGetter: (params: any) => params.data[col]?.value || "",
   }));
 
