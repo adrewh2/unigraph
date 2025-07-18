@@ -85,6 +85,18 @@
   background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* API provider icon styles */
+.api-provider-icon {
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.7;
+}
+
+.dark .api-provider-icon {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .settings-api-info {
   font-size: 13px;
   color: #666;
