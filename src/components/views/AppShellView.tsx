@@ -396,6 +396,161 @@ const ThemeInheritanceDemo: React.FC = () => {
         </div>
       </div>
 
+      {/* Workspace Colors Demo */}
+      <div
+        style={{
+          backgroundColor: getColor(theme.colors, "surface"),
+          padding: theme.sizes.spacing.md,
+          borderRadius: theme.sizes.borderRadius.md,
+          border: `1px solid ${getColor(theme.colors, "border")}`,
+          marginBottom: theme.sizes.spacing.lg,
+        }}
+      >
+        <h4
+          style={{
+            color: getColor(theme.colors, "primary"),
+            fontSize: theme.sizes.fontSize.md,
+            marginBottom: theme.sizes.spacing.sm,
+          }}
+        >
+          Workspace-Specific Colors (Migrated from CSS)
+        </h4>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: theme.sizes.spacing.sm,
+          }}
+        >
+          {/* Workspace Background */}
+          <div
+            style={{
+              padding: theme.sizes.spacing.sm,
+              backgroundColor: getColor(theme.colors, "workspaceBackground"),
+              border: `1px solid ${getColor(theme.colors, "border")}`,
+              borderRadius: theme.sizes.borderRadius.sm,
+            }}
+          >
+            <div
+              style={{
+                color: getColor(theme.colors, "text"),
+                fontSize: theme.sizes.fontSize.xs,
+                marginBottom: theme.sizes.spacing.xs,
+              }}
+            >
+              Workspace Background
+            </div>
+            <div
+              style={{
+                color: getColor(theme.colors, "textMuted"),
+                fontSize: theme.sizes.fontSize.xs,
+              }}
+            >
+              {getColor(theme.colors, "workspaceBackground")}
+            </div>
+          </div>
+
+          {/* Workspace Panel */}
+          <div
+            style={{
+              padding: theme.sizes.spacing.sm,
+              backgroundColor: getColor(theme.colors, "workspacePanel"),
+              border: `1px solid ${getColor(theme.colors, "border")}`,
+              borderRadius: theme.sizes.borderRadius.sm,
+            }}
+          >
+            <div
+              style={{
+                color: getColor(theme.colors, "text"),
+                fontSize: theme.sizes.fontSize.xs,
+                marginBottom: theme.sizes.spacing.xs,
+              }}
+            >
+              Workspace Panel
+            </div>
+            <div
+              style={{
+                color: getColor(theme.colors, "textMuted"),
+                fontSize: theme.sizes.fontSize.xs,
+              }}
+            >
+              {getColor(theme.colors, "workspacePanel")}
+            </div>
+          </div>
+
+          {/* Title Bar */}
+          <div
+            style={{
+              padding: theme.sizes.spacing.sm,
+              backgroundColor: getColor(theme.colors, "workspaceTitleBackground"),
+              border: `1px solid ${getColor(theme.colors, "border")}`,
+              borderRadius: theme.sizes.borderRadius.sm,
+            }}
+          >
+            <div
+              style={{
+                color: getColor(theme.colors, "workspaceTitleText"),
+                fontSize: theme.sizes.fontSize.xs,
+                marginBottom: theme.sizes.spacing.xs,
+              }}
+            >
+              Title Bar
+            </div>
+            <div
+              style={{
+                color: getColor(theme.colors, "textMuted"),
+                fontSize: theme.sizes.fontSize.xs,
+              }}
+            >
+              BG: {getColor(theme.colors, "workspaceTitleBackground")}
+            </div>
+            <div
+              style={{
+                color: getColor(theme.colors, "textMuted"),
+                fontSize: theme.sizes.fontSize.xs,
+              }}
+            >
+              Text: {getColor(theme.colors, "workspaceTitleText")}
+            </div>
+          </div>
+
+          {/* Resizer */}
+          <div
+            style={{
+              padding: theme.sizes.spacing.sm,
+              backgroundColor: getColor(theme.colors, "workspaceResizer"),
+              border: `1px solid ${getColor(theme.colors, "border")}`,
+              borderRadius: theme.sizes.borderRadius.sm,
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = getColor(theme.colors, "workspaceResizerHover");
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = getColor(theme.colors, "workspaceResizer");
+            }}
+          >
+            <div
+              style={{
+                color: getColor(theme.colors, "text"),
+                fontSize: theme.sizes.fontSize.xs,
+                marginBottom: theme.sizes.spacing.xs,
+              }}
+            >
+              Resizer (hover me)
+            </div>
+            <div
+              style={{
+                color: getColor(theme.colors, "textMuted"),
+                fontSize: theme.sizes.fontSize.xs,
+              }}
+            >
+              {getColor(theme.colors, "workspaceResizer")}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Available Themes List */}
       <div
         style={{
@@ -491,6 +646,16 @@ const customUnigraphTheme: Theme = {
     info: "#06b6d4",
     link: "#06b6d4",
     linkHover: "#0891b2",
+    
+    // Workspace-specific colors for custom theme
+    workspaceBackground: "#0f172a",      // --color-bg
+    workspacePanel: "#1e293b",           // --color-panel
+    workspaceTitleBackground: "#334155", // --color-title-bg
+    workspaceTitleText: "#4f46e5",       // --color-title-text
+    workspaceResizer: "#475569",         // --color-resizer
+    workspaceResizerHover: "#4f46e5",    // --color-resizer-hover
+    workspaceScrollbar: "#64748b",       // --color-scrollbar
+    workspaceScrollbarHover: "#06b6d4",  // --color-scrollbar-hover
   },
   sizes: commonSizes, // Use the shared size definitions
 };
