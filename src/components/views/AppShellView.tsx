@@ -9,8 +9,9 @@ import {
 import "app-shell/dist/app-shell.css";
 import React from "react";
 import AIChatPanel from "../ai/AIChatPanel";
+import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 
-// Create custom views that include our AIChatPanel
+// Create custom views that include our AIChatPanel and SemanticWebQueryPanel
 const aiChatView = {
   id: "ai-chat",
   title: "AI Chat",
@@ -18,8 +19,15 @@ const aiChatView = {
   component: (props: any) => <AIChatPanel isDarkMode={true} {...props} />,
 };
 
+const semanticWebQueryView = {
+  id: "semantic-web-query",
+  title: "SPARQL Query",
+  icon: "🔍",
+  component: (props: any) => <SemanticWebQueryPanel {...props} />,
+};
+
 // Register all views as a single array
-registerViews([...defaultViews, aiChatView]);
+registerViews([...defaultViews, aiChatView, semanticWebQueryView]);
 
 const AppShellView: React.FC = () => {
   // Create a sample workspace configuration
