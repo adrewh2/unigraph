@@ -3,112 +3,114 @@ import { Theme, ThemeId, commonSizes } from "app-shell";
 /**
  * Custom Unigraph theme with a modern, vibrant color palette
  * Inspired by cyberpunk aesthetics with excellent readability
+ * Uses rgba() for better transparency control and layering
  */
 export const customUnigraphTheme: Theme = {
   id: "unigraph-custom" as ThemeId,
   name: "Unigraph Neon",
   colors: {
-    // Core brand colors - vibrant and modern
-    primary: "#00d4ff",        // Electric cyan
-    secondary: "#8b5cf6",      // Purple
-    accent: "#ff6b35",         // Orange-red accent
+    // Core brand colors - vibrant and modern with alpha support
+    primary: "rgba(0, 212, 255, 1)", // Electric cyan
+    secondary: "rgba(139, 92, 246, 1)", // Purple
+    accent: "rgba(255, 107, 53, 1)", // Orange-red accent
 
-    // Background layers - deep dark with subtle variations
-    background: "#0a0a0f",           // Very dark blue-black
-    backgroundSecondary: "#131318",  // Slightly lighter dark
-    backgroundTertiary: "#1a1a24",   // Medium dark with blue tint
+    // Background layers - deep dark with subtle variations and transparency
+    background: "rgba(10, 10, 15, 1)", // Very dark blue-black
+    backgroundSecondary: "rgba(19, 19, 24, 0.95)", // Slightly lighter dark with slight transparency
+    backgroundTertiary: "rgba(26, 26, 36, 0.9)", // Medium dark with blue tint and transparency
 
-    // Interactive surfaces
-    surface: "#1e1e2e",              // Card/panel background
-    surfaceHover: "#262640",         // Hover state
-    surfaceActive: "#2d2d4a",        // Active/pressed state
+    // Interactive surfaces with subtle transparency for layering
+    surface: "rgba(30, 30, 46, 0.9)", // Card/panel background
+    surfaceHover: "rgba(38, 38, 64, 0.95)", // Hover state with more opacity
+    surfaceActive: "rgba(45, 45, 74, 1)", // Active/pressed state - fully opaque
 
     // Text hierarchy - high contrast for readability
-    text: "#f0f0f5",                 // Primary text - very light
-    textSecondary: "#c9c9d6",        // Secondary text
-    textMuted: "#8b8b9c",            // Muted/disabled text
-    textInverse: "#0a0a0f",          // Text on light backgrounds
+    text: "rgba(240, 240, 245, 1)", // Primary text - very light
+    textSecondary: "rgba(201, 201, 214, 0.9)", // Secondary text with slight transparency
+    textMuted: "rgba(139, 139, 156, 0.7)", // Muted/disabled text with transparency
+    textInverse: "rgba(10, 10, 15, 1)", // Text on light backgrounds
 
-    // Border system
-    border: "#2a2a3a",               // Subtle borders
-    borderFocus: "#00d4ff",          // Focus ring color (matches primary)
-    borderHover: "#404055",          // Hover border
+    // Border system with transparency for subtle layering
+    border: "rgba(42, 42, 58, 0.6)", // Subtle borders with transparency
+    borderFocus: "rgba(0, 212, 255, 1)", // Focus ring color (matches primary)
+    borderHover: "rgba(64, 64, 85, 0.8)", // Hover border with transparency
 
-    // Status colors - modern and accessible
-    success: "#00ff88",              // Bright green
-    warning: "#ffb84d",              // Warm orange
-    error: "#ff4757",                // Bright red
-    info: "#00d4ff",                 // Matches primary
+    // Status colors - modern and accessible with full opacity
+    success: "rgba(0, 255, 136, 1)", // Bright green
+    warning: "rgba(255, 184, 77, 1)", // Warm orange
+    error: "rgba(255, 71, 87, 1)", // Bright red
+    info: "rgba(0, 212, 255, 1)", // Matches primary
 
-    // Links
-    link: "#00d4ff",                 // Matches primary
-    linkHover: "#33ddff",            // Lighter on hover
+    // Links with hover transparency effect
+    link: "rgba(0, 212, 255, 1)", // Matches primary
+    linkHover: "rgba(51, 221, 255, 0.9)", // Lighter on hover with slight transparency
 
-    // Workspace-specific colors with the new palette
-    workspaceBackground: "#0a0a0f",      // Deep background
-    workspacePanel: "#131318",           // Panel background
-    workspaceTitleBackground: "#1a1a24", // Title bar background
-    workspaceTitleText: "#00d4ff",       // Bright cyan title text
-    workspaceResizer: "#2a2a3a",         // Resizer handle
-    workspaceResizerHover: "#00d4ff",    // Bright hover state
-    workspaceScrollbar: "#404055",       // Scrollbar
-    workspaceScrollbarHover: "#8b5cf6",  // Purple scrollbar hover
+    // Workspace-specific colors with enhanced transparency and layering
+    workspaceBackground: "rgba(10, 10, 15, 1)", // Deep background - fully opaque
+    workspacePanel: "rgba(19, 19, 24, 0.95)", // Panel background with slight transparency
+    workspaceTitleBackground: "rgba(26, 26, 36, 0.9)", // Title bar background with transparency
+    workspaceTitleText: "rgba(0, 212, 255, 1)", // Bright cyan title text
+    workspaceResizer: "rgba(42, 42, 58, 0.8)", // Resizer handle with transparency
+    workspaceResizerHover: "rgba(0, 212, 255, 0.9)", // Bright hover state with slight transparency
+    workspaceScrollbar: "rgba(64, 64, 85, 0.7)", // Scrollbar with transparency
+    workspaceScrollbarHover: "rgba(139, 92, 246, 0.9)", // Purple scrollbar hover with transparency
   },
   sizes: commonSizes, // Use the shared size definitions from app-shell
 };
 
 /**
  * Alternative warm-themed variant with earth tones and gold accents
+ * Uses rgba() for sophisticated transparency and color layering effects
  */
 export const unigraphWarmTheme: Theme = {
   id: "unigraph-warm" as ThemeId,
   name: "Unigraph Warm",
   colors: {
-    // Warm, sophisticated color palette
-    primary: "#f59e0b",        // Golden yellow
-    secondary: "#dc2626",      // Warm red
-    accent: "#059669",         // Forest green
+    // Warm, sophisticated color palette with alpha support
+    primary: "rgba(245, 158, 11, 1)", // Golden yellow
+    secondary: "rgba(220, 38, 38, 1)", // Warm red
+    accent: "rgba(5, 150, 105, 1)", // Forest green
 
-    // Rich dark backgrounds with warm undertones
-    background: "#1c1917",           // Warm black
-    backgroundSecondary: "#292524",  // Dark brown
-    backgroundTertiary: "#44403c",   // Medium brown
+    // Rich dark backgrounds with warm undertones and transparency
+    background: "rgba(28, 25, 23, 1)", // Warm black - fully opaque
+    backgroundSecondary: "rgba(41, 37, 36, 0.96)", // Dark brown with slight transparency
+    backgroundTertiary: "rgba(68, 64, 60, 0.92)", // Medium brown with more transparency
 
-    // Interactive surfaces with warmth
-    surface: "#44403c",              // Card/panel background
-    surfaceHover: "#57534e",         // Hover state
-    surfaceActive: "#6b7280",        // Active/pressed state
+    // Interactive surfaces with warmth and subtle transparency
+    surface: "rgba(68, 64, 60, 0.9)", // Card/panel background with transparency
+    surfaceHover: "rgba(87, 83, 78, 0.94)", // Hover state with more opacity
+    surfaceActive: "rgba(107, 114, 128, 1)", // Active/pressed state - fully opaque
 
-    // Text with warm undertones
-    text: "#fbbf24",                 // Warm white/gold
-    textSecondary: "#d6d3d1",        // Light warm gray
-    textMuted: "#a8a29e",            // Muted warm gray
-    textInverse: "#1c1917",          // Dark text on light backgrounds
+    // Text with warm undertones and transparency control
+    text: "rgba(251, 191, 36, 1)", // Warm gold - fully opaque for readability
+    textSecondary: "rgba(214, 211, 209, 0.92)", // Light warm gray with slight transparency
+    textMuted: "rgba(168, 162, 158, 0.75)", // Muted warm gray with more transparency
+    textInverse: "rgba(28, 25, 23, 1)", // Dark text on light backgrounds
 
-    // Warm border system
-    border: "#57534e",               // Subtle warm borders
-    borderFocus: "#f59e0b",          // Golden focus ring
-    borderHover: "#78716c",          // Hover border
+    // Warm border system with transparency
+    border: "rgba(87, 83, 78, 0.65)", // Subtle warm borders with transparency
+    borderFocus: "rgba(245, 158, 11, 1)", // Golden focus ring - fully opaque
+    borderHover: "rgba(120, 113, 108, 0.85)", // Hover border with transparency
 
-    // Status colors with warm variants
-    success: "#10b981",              // Green (unchanged)
-    warning: "#f97316",              // Warm orange
-    error: "#dc2626",                // Warm red
-    info: "#0ea5e9",                 // Sky blue
+    // Status colors with warm variants and full opacity
+    success: "rgba(16, 185, 129, 1)", // Green
+    warning: "rgba(249, 115, 22, 1)", // Warm orange
+    error: "rgba(220, 38, 38, 1)", // Warm red
+    info: "rgba(14, 165, 233, 1)", // Sky blue
 
-    // Warm links
-    link: "#fbbf24",                 // Golden link
-    linkHover: "#f59e0b",            // Darker gold on hover
+    // Warm links with transparency effects
+    link: "rgba(251, 191, 36, 1)", // Golden link
+    linkHover: "rgba(245, 158, 11, 0.9)", // Darker gold on hover with transparency
 
-    // Workspace-specific colors with warm palette
-    workspaceBackground: "#1c1917",      // Warm dark background
-    workspacePanel: "#292524",           // Warm panel
-    workspaceTitleBackground: "#44403c", // Warm title bar
-    workspaceTitleText: "#fbbf24",       // Golden title text
-    workspaceResizer: "#57534e",         // Warm resizer
-    workspaceResizerHover: "#f59e0b",    // Golden hover
-    workspaceScrollbar: "#78716c",       // Warm scrollbar
-    workspaceScrollbarHover: "#dc2626",  // Red scrollbar hover
+    // Workspace-specific colors with warm palette and transparency
+    workspaceBackground: "rgba(28, 25, 23, 1)", // Warm dark background - fully opaque
+    workspacePanel: "rgba(41, 37, 36, 0.96)", // Warm panel with slight transparency
+    workspaceTitleBackground: "rgba(68, 64, 60, 0.92)", // Warm title bar with transparency
+    workspaceTitleText: "rgba(251, 191, 36, 1)", // Golden title text - fully opaque
+    workspaceResizer: "rgba(87, 83, 78, 0.8)", // Warm resizer with transparency
+    workspaceResizerHover: "rgba(245, 158, 11, 0.95)", // Golden hover with slight transparency
+    workspaceScrollbar: "rgba(120, 113, 108, 0.75)", // Warm scrollbar with transparency
+    workspaceScrollbarHover: "rgba(220, 38, 38, 0.9)", // Red scrollbar hover with transparency
   },
   sizes: commonSizes,
 };
