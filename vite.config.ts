@@ -28,7 +28,9 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true,
-    host: true
+    host: true,
+    // Ensure proper MIME types for all image formats
+    middlewareMode: false,
   },
 
   // Build configuration
@@ -80,5 +82,8 @@ export default defineConfig({
       'cytoscape',
       'graphology'
     ]
-  }
+  },
+
+  // Asset handling
+  assetsInclude: ['**/*.jpg', '**/*.jpeg', '**/*.png', '**/*.svg', '**/*.gif', '**/*.webp']
 })
