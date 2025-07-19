@@ -31,7 +31,7 @@ const semanticWebQueryView = {
   title: "SPARQL Query",
   icon: "🔍",
   component: (props: any) => (
-    <SemanticWebQueryPanel theme={props.theme} {...props} />
+    <SemanticWebQueryPanel {...props} />
   ),
 };
 

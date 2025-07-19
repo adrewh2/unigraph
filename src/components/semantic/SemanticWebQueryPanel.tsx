@@ -10,6 +10,7 @@ import {
 import { AgGridReact } from "ag-grid-react";
 import React, { useEffect, useState } from "react";
 import { Parser as SparqlParser } from "sparqljs";
+import { useTheme, getColor } from "app-shell";
 import SelectDropdown from "../common/SelectDropdown";
 import styles from "./SemanticWebQueryPanel.module.css";
 
@@ -93,10 +94,16 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
   defaultEndpoint,
   defaultQuery,
   isDarkMode = false,
-  theme,
+  theme: legacyTheme, // Renamed to avoid conflict
 }) => {
-  // Determine if dark mode based on theme or isDarkMode prop
-  const isThemeDark = theme === "dark" || isDarkMode;
+  // Use app-shell theme if available, fallback to legacy theme detection
+  const appShellTheme = useTheme();
+  const hasAppShellTheme = appShellTheme && appShellTheme.theme;
+  
+  // Determine if dark mode based on app-shell theme or legacy props
+  const isThemeDark = hasAppShellTheme 
+    ? appShellTheme.theme.colors.background.includes('0,') || appShellTheme.theme.colors.background.includes('#0') || appShellTheme.theme.colors.background.includes('#1') || appShellTheme.theme.colors.background.includes('#2')
+    : legacyTheme === "dark" || isDarkMode;
   const [endpoint, setEndpoint] = useState(
     ENDPOINTS.find((e) => e.value === defaultEndpoint) || ENDPOINTS[0]
   );
@@ -184,10 +191,24 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
       return row;
     }) || [];
 
+  // Generate dynamic styles from app-shell theme
+  const themeStyles = hasAppShellTheme ? {
+    backgroundColor: getColor(appShellTheme.theme.colors, "background"),
+    color: getColor(appShellTheme.theme.colors, "text"),
+    '--panel-bg': getColor(appShellTheme.theme.colors, "surface"),
+    '--panel-border': getColor(appShellTheme.theme.colors, "border"),
+    '--text-color': getColor(appShellTheme.theme.colors, "text"),
+    '--text-secondary': getColor(appShellTheme.theme.colors, "textSecondary"),
+    '--primary-color': getColor(appShellTheme.theme.colors, "primary"),
+    '--error-color': getColor(appShellTheme.theme.colors, "error"),
+    '--success-color': getColor(appShellTheme.theme.colors, "success"),
+  } as React.CSSProperties : {};
+
   return (
     <div
       className={styles.container}
       data-theme={isThemeDark ? 'dark' : 'light'}
+      style={themeStyles}
     >
       <div className={styles.endpointRow}>
         <span className={styles.endpointLabel}>Endpoint:</span>
@@ -206,6 +227,11 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             value={customEndpoint}
             onChange={(e) => setCustomEndpoint(e.target.value)}
             className={styles.customEndpointInput}
+            style={hasAppShellTheme ? {
+              backgroundColor: getColor(appShellTheme.theme.colors, "surface"),
+              color: getColor(appShellTheme.theme.colors, "text"),
+              borderColor: getColor(appShellTheme.theme.colors, "border"),
+            } : {}}
           />
         )}
       </div>
@@ -216,6 +242,11 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
           value={selectedExample !== null ? selectedExample : ""}
           onChange={handleExampleChange}
           className={styles.examplesSelect}
+          style={hasAppShellTheme ? {
+            backgroundColor: getColor(appShellTheme.theme.colors, "surface"),
+            color: getColor(appShellTheme.theme.colors, "text"),
+            borderColor: getColor(appShellTheme.theme.colors, "border"),
+          } : {}}
         >
           <option value="" disabled>
             Select an example query...
@@ -249,7 +280,14 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
           />
         </div>
         {lintError && (
-          <div className={styles.lintError}>
+          <div 
+            className={styles.lintError}
+            style={hasAppShellTheme ? {
+              color: getColor(appShellTheme.theme.colors, "error"),
+              backgroundColor: `${getColor(appShellTheme.theme.colors, "error")}15`, // 15% opacity
+              borderColor: getColor(appShellTheme.theme.colors, "error"),
+            } : {}}
+          >
             SPARQL Syntax Error: {lintError}
           </div>
         )}
@@ -258,6 +296,11 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             onClick={handleRunQuery}
             disabled={loading || !effectiveEndpoint}
             className={styles.runButton}
+            style={hasAppShellTheme ? {
+              backgroundColor: getColor(appShellTheme.theme.colors, "primary"),
+              color: getColor(appShellTheme.theme.colors, "textInverse"),
+              borderColor: getColor(appShellTheme.theme.colors, "primary"),
+            } : {}}
           >
             {loading ? "Running..." : "Run Query"}
           </button>
@@ -265,6 +308,11 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             <button
               onClick={() => onResultsToSceneGraph(results)}
               className={styles.addToSceneGraphButton}
+              style={hasAppShellTheme ? {
+                backgroundColor: getColor(appShellTheme.theme.colors, "success"),
+                color: getColor(appShellTheme.theme.colors, "textInverse"),
+                borderColor: getColor(appShellTheme.theme.colors, "success"),
+              } : {}}
             >
               Add Results to SceneGraph
             </button>
@@ -273,7 +321,14 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
       </div>
       <div className={styles.resultsSection}>
         {error && (
-          <div className={styles.error}>
+          <div 
+            className={styles.error}
+            style={hasAppShellTheme ? {
+              color: getColor(appShellTheme.theme.colors, "error"),
+              backgroundColor: `${getColor(appShellTheme.theme.colors, "error")}20`, // 20% opacity
+              borderColor: getColor(appShellTheme.theme.colors, "error"),
+            } : {}}
+          >
             Error: {error}
           </div>
         )}
@@ -303,11 +358,24 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
           </div>
         )}
         {results && results.length === 0 && (
-          <div className={styles.noResults}>No results.</div>
+          <div 
+            className={styles.noResults}
+            style={hasAppShellTheme ? {
+              color: getColor(appShellTheme.theme.colors, "textMuted"),
+            } : {}}
+          >
+            No results.
+          </div>
         )}
         {/* Footer with number of results */}
         {results && (
-          <div className={styles.footer}>
+          <div 
+            className={styles.footer}
+            style={hasAppShellTheme ? {
+              color: getColor(appShellTheme.theme.colors, "textSecondary"),
+              borderColor: getColor(appShellTheme.theme.colors, "border"),
+            } : {}}
+          >
             {results.length} result{results.length === 1 ? "" : "s"}
           </div>
         )}
