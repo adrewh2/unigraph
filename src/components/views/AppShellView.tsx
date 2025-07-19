@@ -3,9 +3,6 @@ import {
   ThemeId,
   Theme,
   WorkspaceConfig,
-  WorkspaceProvider,
-  ThemeProvider,
-  ThemeVariables,
   defaultViews,
   registerViews,
   ExampleThemedComponent,
@@ -18,6 +15,7 @@ import "app-shell/dist/app-shell.css";
 import React from "react";
 import AIChatPanel from "../ai/AIChatPanel";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
+import { ThemeWorkspaceProvider } from "../providers/ThemeWorkspaceProvider";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
 const aiChatView = {
@@ -703,14 +701,10 @@ const AppShellView: React.FC = () => {
 
   return (
     <div style={{ height: "100%", width: "100%" }}>
-      {/* Wrap with ThemeProvider to use our custom theme */}
-      <ThemeProvider themeId="unigraph-custom">
-        <ThemeVariables>
-          <WorkspaceProvider initialConfig={workspaceConfig}>
-            <AppShellWorkspace />
-          </WorkspaceProvider>
-        </ThemeVariables>
-      </ThemeProvider>
+      {/* Use combined provider that syncs ThemeProvider with workspace theme */}
+      <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
+        <AppShellWorkspace />
+      </ThemeWorkspaceProvider>
     </div>
   );
 };
