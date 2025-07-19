@@ -11,6 +11,7 @@ import { AgGridReact } from "ag-grid-react";
 import React, { useEffect, useState } from "react";
 import { Parser as SparqlParser } from "sparqljs";
 import SelectDropdown from "../common/SelectDropdown";
+import styles from "./SemanticWebQueryPanel.module.css";
 
 // Predefined SPARQL endpoints
 const ENDPOINTS = [
@@ -75,6 +76,7 @@ interface SemanticWebQueryPanelProps {
   defaultEndpoint?: string;
   defaultQuery?: string;
   isDarkMode?: boolean;
+  theme?: string; // Theme from AppShell workspace
 }
 
 const DEFAULT_QUERY = `SELECT ?subject ?predicate ?object WHERE {
@@ -91,7 +93,10 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
   defaultEndpoint,
   defaultQuery,
   isDarkMode = false,
+  theme,
 }) => {
+  // Determine if dark mode based on theme or isDarkMode prop
+  const isThemeDark = theme === "dark" || isDarkMode;
   const [endpoint, setEndpoint] = useState(
     ENDPOINTS.find((e) => e.value === defaultEndpoint) || ENDPOINTS[0]
   );
@@ -167,12 +172,7 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
     resizable: true,
     minWidth: 120,
     maxWidth: 400,
-    cellStyle: {
-      userSelect: "text", // Allow text selection for copying
-      color: isDarkMode ? "#fff" : "#222",
-      background: isDarkMode ? "#23232a" : "#fff",
-      fontFamily: "monospace",
-    },
+    cellClass: styles.gridCell,
     valueGetter: (params: any) => params.data[col]?.value || "",
   }));
 
@@ -186,24 +186,17 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
 
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-        height: "100%",
-        background: isDarkMode ? "#18181b" : "#fff",
-        color: isDarkMode ? "#fff" : undefined,
-        padding: 24,
-      }}
+      className={styles.container}
+      data-theme={isThemeDark ? 'dark' : 'light'}
     >
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <span style={{ fontWeight: 500 }}>Endpoint:</span>
-        <div style={{ minWidth: 220 }}>
+      <div className={styles.endpointRow}>
+        <span className={styles.endpointLabel}>Endpoint:</span>
+        <div className={styles.endpointSelect}>
           <SelectDropdown
             options={ENDPOINTS}
             value={endpoint}
             onChange={handleEndpointChange}
-            isDarkMode={isDarkMode}
+            isDarkMode={isThemeDark}
           />
         </div>
         {endpoint.value === "custom" && (
@@ -212,39 +205,17 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             placeholder="Enter custom endpoint URL"
             value={customEndpoint}
             onChange={(e) => setCustomEndpoint(e.target.value)}
-            style={{
-              minWidth: 320,
-              padding: 6,
-              borderRadius: 4,
-              border: "1px solid #ccc",
-              background: isDarkMode ? "#23232a" : undefined,
-              color: isDarkMode ? "#fff" : undefined,
-            }}
+            className={styles.customEndpointInput}
           />
         )}
       </div>
       {/* Example queries dropdown */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 4,
-        }}
-      >
-        <span style={{ fontWeight: 500 }}>Examples:</span>
+      <div className={styles.examplesRow}>
+        <span className={styles.examplesLabel}>Examples:</span>
         <select
           value={selectedExample !== null ? selectedExample : ""}
           onChange={handleExampleChange}
-          style={{
-            minWidth: 260,
-            padding: "6px 10px",
-            borderRadius: 4,
-            border: "1px solid #ccc",
-            background: isDarkMode ? "#23232a" : undefined,
-            color: isDarkMode ? "#fff" : undefined,
-            fontSize: 15,
-          }}
+          className={styles.examplesSelect}
         >
           <option value="" disabled>
             Select an example query...
@@ -256,20 +227,13 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
           ))}
         </select>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <span style={{ fontWeight: 500 }}>SPARQL Query:</span>
-        <div
-          style={{
-            borderRadius: 6,
-            border: "1px solid #ccc",
-            overflow: "hidden",
-            background: isDarkMode ? "#23232a" : undefined,
-          }}
-        >
+      <div className={styles.querySection}>
+        <span className={styles.queryLabel}>SPARQL Query:</span>
+        <div className={styles.queryEditor}>
           <CodeMirror
             value={query}
             height="180px"
-            theme={isDarkMode ? oneDark : undefined}
+            theme={isThemeDark ? oneDark : undefined}
             extensions={[StreamLanguage.define(sparql)]}
             onChange={(value) => setQuery(value)}
             basicSetup={{
@@ -281,91 +245,41 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
             style={{
               fontSize: 15,
               fontFamily: "monospace",
-              background: isDarkMode ? "#23232a" : undefined,
-              color: isDarkMode ? "#fff" : undefined,
             }}
           />
         </div>
         {lintError && (
-          <div
-            style={{
-              color: "#dc2626",
-              marginTop: 6,
-              fontSize: 14,
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-              overflowX: "auto",
-              maxWidth: "100%",
-              padding: "4px 0",
-            }}
-          >
+          <div className={styles.lintError}>
             SPARQL Syntax Error: {lintError}
           </div>
         )}
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div className={styles.actionRow}>
           <button
             onClick={handleRunQuery}
             disabled={loading || !effectiveEndpoint}
-            style={{
-              background: "#2563eb",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              padding: "8px 18px",
-              fontWeight: 600,
-              fontSize: 15,
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.7 : 1,
-            }}
+            className={styles.runButton}
           >
             {loading ? "Running..." : "Run Query"}
           </button>
           {onResultsToSceneGraph && results && results.length > 0 && (
             <button
               onClick={() => onResultsToSceneGraph(results)}
-              style={{
-                background: "#059669",
-                color: "#fff",
-                border: "none",
-                borderRadius: 4,
-                padding: "8px 18px",
-                fontWeight: 600,
-                fontSize: 15,
-                cursor: "pointer",
-              }}
+              className={styles.addToSceneGraphButton}
             >
               Add Results to SceneGraph
             </button>
           )}
         </div>
       </div>
-      <div
-        style={{
-          flex: 1,
-          overflow: "auto",
-          marginTop: 8,
-          minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+      <div className={styles.resultsSection}>
         {error && (
-          <div style={{ color: "#dc2626", marginBottom: 8 }}>
+          <div className={styles.error}>
             Error: {error}
           </div>
         )}
         {results && results.length > 0 && (
           <div
-            className={isDarkMode ? "ag-theme-balham-dark" : "ag-theme-balham"}
-            style={{
-              width: "100%",
-              flex: 1,
-              minHeight: 0,
-              background: isDarkMode ? "#23232a" : undefined,
-              overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
-            }}
+            className={`${isThemeDark ? "ag-theme-balham-dark" : "ag-theme-balham"} ${styles.gridContainer}`}
           >
             <AgGridReact
               theme={themeBalham}
@@ -389,21 +303,11 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
           </div>
         )}
         {results && results.length === 0 && (
-          <div style={{ color: "#888" }}>No results.</div>
+          <div className={styles.noResults}>No results.</div>
         )}
         {/* Footer with number of results */}
         {results && (
-          <div
-            style={{
-              marginTop: 6,
-              fontSize: 14,
-              color: isDarkMode ? "#aaa" : "#444",
-              textAlign: "right",
-              padding: "4px 0 0 0",
-              borderTop: "1px solid #eee",
-              minHeight: 24,
-            }}
-          >
+          <div className={styles.footer}>
             {results.length} result{results.length === 1 ? "" : "s"}
           </div>
         )}
