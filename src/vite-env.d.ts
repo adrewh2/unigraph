@@ -4,6 +4,8 @@
 // Environment variables interface
 interface ImportMetaEnv {
   readonly VITE_OPENAI_API_KEY: string;
+  readonly VITE_SUPABASE_URL: string;
+  readonly VITE_SUPABASE_ANON_KEY: string;
   // Add other environment variables here
 }
 
@@ -17,6 +19,12 @@ declare module '*.svg' {
   export const ReactComponent: React.FunctionComponent<React.SVGProps<SVGSVGElement> & { title?: string }>;
   const src: string;
   export default src;
+}
+
+// Raw SVG imports
+declare module '*.svg?raw' {
+  const content: string;
+  export default content;
 }
 
 // CSS Modules

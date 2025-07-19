@@ -1,15 +1,12 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
+import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import eslint from 'vite-plugin-eslint'
 
 export default defineConfig({
   plugins: [
-    react({
-      // Use SWC for faster compilation
-      jsxImportSource: '@emotion/react',
-    }),
+    react(),
     eslint({
       include: ['src/**/*.{js,jsx,ts,tsx}']
     }),
@@ -51,10 +48,13 @@ export default defineConfig({
     extensions: ['.tsx', '.ts', '.js', '.jsx']
   },
 
-  // Define environment variables
+  // Define environment variables and polyfills
   define: {
-    // Make environment variables available
-    'process.env': process.env
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    // Add global polyfill for Node.js packages used in browser
+    global: 'globalThis',
+    // Add process polyfill
+    'process.env': {},
   },
 
   // CSS configuration

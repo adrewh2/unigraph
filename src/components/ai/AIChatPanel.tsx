@@ -35,8 +35,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = ({ isDarkMode = false }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Get OpenAI API key from environment
-  const openaiApiKey =
-    process.env.REACT_APP_OPENAI_API_KEY || process.env.OPENAI_API_KEY || "";
+  const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
 
   // Check API availability and determine provider
   useEffect(() => {
