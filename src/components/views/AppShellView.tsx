@@ -1,6 +1,7 @@
 import {
   Workspace as AppShellWorkspace,
   ThemeId,
+  Theme,
   WorkspaceConfig,
   WorkspaceProvider,
   ThemeProvider,
@@ -10,20 +11,20 @@ import {
   ExampleThemedComponent,
   useTheme,
   themes,
+  commonSizes,
   getColor,
 } from "app-shell";
 import "app-shell/dist/app-shell.css";
 import React from "react";
 import AIChatPanel from "../ai/AIChatPanel";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
-import { customUnigraphTheme, unigraphWarmTheme } from "../../themes/customUnigraphTheme";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
 const aiChatView = {
   id: "ai-chat",
   title: "AI Chat",
   icon: "💬",
-  component: (props: any) => <AIChatPanel isDarkMode={true} {...props} />,
+  component: (props: any) => <AIChatPanel {...props} />,
 };
 
 const semanticWebQueryView = {
@@ -31,7 +32,7 @@ const semanticWebQueryView = {
   title: "SPARQL Query",
   icon: "🔍",
   component: (props: any) => (
-    <SemanticWebQueryPanel {...props} />
+    <SemanticWebQueryPanel theme={props.theme} {...props} />
   ),
 };
 
@@ -627,18 +628,56 @@ registerViews([
   themeInheritanceDemoView,
 ]);
 
-// Register our custom themes (this demonstrates how external projects can add themes)
+// Example: Create a custom theme for demonstration
+const customUnigraphTheme: Theme = {
+  id: "unigraph-custom" as ThemeId,
+  name: "Unigraph Custom",
+  colors: {
+    primary: "#4f46e5",
+    secondary: "#06b6d4",
+    accent: "#f59e0b",
+    background: "#0f172a",
+    backgroundSecondary: "#1e293b",
+    backgroundTertiary: "#334155",
+    surface: "#475569",
+    surfaceHover: "#64748b",
+    surfaceActive: "#94a3b8",
+    text: "#f8fafc",
+    textSecondary: "#cbd5e1",
+    textMuted: "#94a3b8",
+    textInverse: "#0f172a",
+    border: "#475569",
+    borderFocus: "#4f46e5",
+    borderHover: "#64748b",
+    success: "#10b981",
+    warning: "#f59e0b",
+    error: "#ef4444",
+    info: "#06b6d4",
+    link: "#06b6d4",
+    linkHover: "#0891b2",
+
+    // Workspace-specific colors for custom theme
+    workspaceBackground: "#0f172a", // --color-bg
+    workspacePanel: "#1e293b", // --color-panel
+    workspaceTitleBackground: "#334155", // --color-title-bg
+    workspaceTitleText: "#4f46e5", // --color-title-text
+    workspaceResizer: "#475569", // --color-resizer
+    workspaceResizerHover: "#4f46e5", // --color-resizer-hover
+    workspaceScrollbar: "#64748b", // --color-scrollbar
+    workspaceScrollbarHover: "#06b6d4", // --color-scrollbar-hover
+  },
+  sizes: commonSizes, // Use the shared size definitions
+};
+
+// Register our custom theme (this demonstrates how external projects can add themes)
 // Note: In a real implementation, this could be done via a theme registration API
-Object.assign(themes, { 
-  "unigraph-custom": customUnigraphTheme,
-  "unigraph-warm": unigraphWarmTheme // eslint-disable-line unused-imports/no-unused-imports
-});
+Object.assign(themes, { "unigraph-custom": customUnigraphTheme });
 
 const AppShellView: React.FC = () => {
   // Create a sample workspace configuration
 
   const workspaceConfig: Partial<WorkspaceConfig> = {
-    theme: "unigraph-custom" as ThemeId,
+    theme: "dark" as ThemeId,
     leftPane: {
       defaultSize: 250,
       maxSize: 500,
