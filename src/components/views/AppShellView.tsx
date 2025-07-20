@@ -13,10 +13,12 @@ import {
 } from "app-shell";
 import "app-shell/dist/app-shell.css";
 import React from "react";
+import EntityTableV2 from "../common/EntityTableV2";
 import AIChatPanel from "../ai/AIChatPanel";
 import { ThemeWorkspaceProvider } from "../providers/ThemeWorkspaceProvider";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
+import { getCurrentSceneGraph } from "../../store/appConfigStore";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
 const aiChatView = {
@@ -48,6 +50,40 @@ const forceGraph3DViewV2 = {
   icon: "🚀",
   component: (props: any) => <ForceGraph3DViewV2 {...props} />,
   category: "visualization",
+};
+
+// EntityTableV2 wrapper component
+const EntityTableV2Wrapper: React.FC = () => {
+  const sceneGraph = getCurrentSceneGraph();
+  
+  if (!sceneGraph) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <p>No scene graph available. Please load a graph first.</p>
+      </div>
+    );
+  }
+
+  // Get all entities from the scene graph
+  const allNodes = sceneGraph.getGraph().getNodes();
+  
+  return (
+    <div style={{ height: '100%', width: '100%', padding: '10px' }}>
+      <EntityTableV2 
+        container={allNodes} 
+        sceneGraph={sceneGraph}
+        maxHeight="100%"
+      />
+    </div>
+  );
+};
+
+const entityTableV2View = {
+  id: "entity-table-v2",
+  title: "Entity Table V2",
+  icon: "📋",
+  component: (props: any) => <EntityTableV2Wrapper {...props} />,
+  category: "data",
 };
 
 // Create a themed component using the useTheme hook
@@ -640,6 +676,7 @@ registerViews([
   semanticWebQueryView,
   forceGraph3DView,
   forceGraph3DViewV2,
+  entityTableV2View,
   customThemedPanelView,
   themeInheritanceDemoView,
 ]);

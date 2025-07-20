@@ -1,5 +1,5 @@
 import ForceGraph3D from "3d-force-graph";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { exportGraphDataForReactFlow } from "../../core/react-flow/exportGraphDataForReactFlow";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
 
@@ -11,6 +11,19 @@ const ForceGraph3DViewV2: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
   const [sceneGraphVersion, setSceneGraphVersion] = useState(0);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
+  // Handle resize events
+  const handleResize = useCallback(() => {
+    if (graphRef.current && containerRef.current) {
+      const container = containerRef.current;
+      const rect = container.getBoundingClientRect();
+      
+      if (rect.width > 0 && rect.height > 0) {
+        graphRef.current.width(rect.width).height(rect.height);
+      }
+    }
+  }, []);
 
   // Watch for scene graph changes
   useEffect(() => {
@@ -35,6 +48,25 @@ const ForceGraph3DViewV2: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Set up resize observer
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+
+    resizeObserver.observe(containerRef.current);
+    resizeObserverRef.current = resizeObserver;
+
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
+    };
+  }, [handleResize]);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -95,15 +127,26 @@ const ForceGraph3DViewV2: React.FC = () => {
         .height(rect.height || 600)
         .backgroundColor("#1a1a1a");
 
-      // Store reference for cleanup
+      // Store reference for cleanup and resize handling
       graphRef.current = Graph;
+
+      // Set up immediate resize handling
+      const resizeTimeout = setTimeout(() => {
+        handleResize();
+      }, 100);
 
       // Zoom to fit after a short delay to ensure everything is rendered
       setTimeout(() => {
         if (typeof Graph.zoomToFit === "function") {
           Graph.zoomToFit(400, 50);
         }
+        // Ensure proper sizing after zoom
+        handleResize();
       }, 200);
+
+      return () => {
+        clearTimeout(resizeTimeout);
+      };
     } catch (error) {
       console.error("Error initializing ForceGraph3D:", error);
     }
@@ -114,7 +157,7 @@ const ForceGraph3DViewV2: React.FC = () => {
         graphRef.current._destructor();
       }
     };
-  }, [sceneGraphVersion]);
+  }, [sceneGraphVersion, handleResize]);
 
   return (
     <div
