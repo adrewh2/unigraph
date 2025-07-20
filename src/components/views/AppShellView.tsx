@@ -1,25 +1,23 @@
 import {
   Workspace as AppShellWorkspace,
-  ThemeId,
-  Theme,
-  WorkspaceConfig,
-  defaultViews,
-  registerViews,
   ExampleThemedComponent,
-  useTheme,
-  themes,
+  Theme,
+  ThemeId,
+  WorkspaceConfig,
   commonSizes,
+  defaultViews,
   getColor,
+  registerViews,
+  themes,
+  useTheme,
 } from "app-shell";
 import "app-shell/dist/app-shell.css";
 import React from "react";
 import AIChatPanel from "../ai/AIChatPanel";
+import { ThemeWorkspaceProvider } from "../providers/ThemeWorkspaceProvider";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import ForceGraph3DView from "./ForceGraph3DView";
-import ForceGraph3DViewSimple from "./ForceGraph3DViewSimple";
-import ForceGraphDebugInfo from "../debug/ForceGraphDebugInfo";
-import ForceGraphTestSuite from "./ForceGraphTestSuite";
-import { ThemeWorkspaceProvider } from "../providers/ThemeWorkspaceProvider";
+import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
 const aiChatView = {
@@ -45,28 +43,12 @@ const forceGraph3DView = {
   component: (props: any) => <ForceGraph3DView {...props} />,
 };
 
-const forceGraph3DViewSimple = {
-  id: "force-graph-3d-simple",
-  title: "ForceGraph 3D (Simple)",
-  icon: "🔍",
-  component: (props: any) => <ForceGraph3DViewSimple {...props} />,
-  category: "debug",
-};
-
-const forceGraphDebugInfoView = {
-  id: "force-graph-debug-info",
-  title: "ForceGraph Debug Info",
-  icon: "🐛",
-  component: (props: any) => <ForceGraphDebugInfo {...props} />,
-  category: "debug",
-};
-
-const forceGraphTestSuiteView = {
-  id: "force-graph-test-suite",
-  title: "ForceGraph Test Suite",
-  icon: "🧪",
-  component: (props: any) => <ForceGraphTestSuite {...props} />,
-  category: "debug",
+const forceGraph3DViewV2 = {
+  id: "force-graph-3d-v2",
+  title: "ForceGraph 3D V2",
+  icon: "🚀",
+  component: (props: any) => <ForceGraph3DViewV2 {...props} />,
+  category: "visualization",
 };
 
 // Create a themed component using the useTheme hook
@@ -658,9 +640,7 @@ registerViews([
   aiChatView,
   semanticWebQueryView,
   forceGraph3DView,
-  forceGraph3DViewSimple,
-  forceGraphDebugInfoView,
-  forceGraphTestSuiteView,
+  forceGraph3DViewV2,
   customThemedPanelView,
   themeInheritanceDemoView,
 ]);
