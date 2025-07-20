@@ -16,6 +16,9 @@ import React from "react";
 import AIChatPanel from "../ai/AIChatPanel";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import ForceGraph3DView from "./ForceGraph3DView";
+import ForceGraph3DViewSimple from "./ForceGraph3DViewSimple";
+import ForceGraphDebugInfo from "../debug/ForceGraphDebugInfo";
+import ForceGraphTestSuite from "./ForceGraphTestSuite";
 import { ThemeWorkspaceProvider } from "../providers/ThemeWorkspaceProvider";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
@@ -40,6 +43,30 @@ const forceGraph3DView = {
   title: "ForceGraph 3D",
   icon: "🌐",
   component: (props: any) => <ForceGraph3DView {...props} />,
+};
+
+const forceGraph3DViewSimple = {
+  id: "force-graph-3d-simple",
+  title: "ForceGraph 3D (Simple)",
+  icon: "🔍",
+  component: (props: any) => <ForceGraph3DViewSimple {...props} />,
+  category: "debug",
+};
+
+const forceGraphDebugInfoView = {
+  id: "force-graph-debug-info",
+  title: "ForceGraph Debug Info",
+  icon: "🐛",
+  component: (props: any) => <ForceGraphDebugInfo {...props} />,
+  category: "debug",
+};
+
+const forceGraphTestSuiteView = {
+  id: "force-graph-test-suite",
+  title: "ForceGraph Test Suite",
+  icon: "🧪",
+  component: (props: any) => <ForceGraphTestSuite {...props} />,
+  category: "debug",
 };
 
 // Create a themed component using the useTheme hook
@@ -631,6 +658,9 @@ registerViews([
   aiChatView,
   semanticWebQueryView,
   forceGraph3DView,
+  forceGraph3DViewSimple,
+  forceGraphDebugInfoView,
+  forceGraphTestSuiteView,
   customThemedPanelView,
   themeInheritanceDemoView,
 ]);

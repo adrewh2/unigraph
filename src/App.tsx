@@ -71,8 +71,6 @@ import {
   RenderingManager__DisplayMode,
 } from "./controllers/RenderingManager";
 import {
-  bindEventsToGraphInstance,
-  createForceGraph,
   updateNodePositions,
   zoomToFit,
 } from "./core/force-graph/createForceGraph";
@@ -158,7 +156,6 @@ import {
   setSelectedNodeId,
 } from "./store/graphInteractionStore";
 import {
-  applyMouseClickModeFromInteractivityFlags,
   useMouseControlsStore,
 } from "./store/mouseControlsStore";
 import { addNotification } from "./store/notificationStore";
@@ -176,6 +173,7 @@ import useWorkspaceConfigStore, {
   setRightSidebarConfig,
   setShowToolbar,
 } from "./store/workspaceConfigStore";
+import { initializeMainForceGraph } from "./utils/forceGraphInitializer";
 
 // Import the persistent store
 
@@ -735,52 +733,20 @@ const AppContent = ({
   );
 
   const initializeForceGraph = useCallback(() => {
-    console.log(
-      "Creating new force graph instance...",
-      currentSceneGraph.getDisplayConfig(),
-      getActiveLayoutResult()?.positions,
-      currentSceneGraph.getDisplayConfig().nodePositions ??
-        getActiveLayoutResult()?.positions,
-      forceGraph3dOptions.layout
-    );
-    const newInstance = createForceGraph(
-      currentSceneGraph,
-      forceGraphRef.current!,
-      currentSceneGraph.getDisplayConfig().nodePositions,
-      currentSceneGraph.getForceGraphRenderConfig(),
-      forceGraph3dOptions.layout
-    );
-    setForceGraphInstance(newInstance);
-    bindEventsToGraphInstance(
-      newInstance,
-      currentSceneGraph,
+    if (!forceGraphRef.current) return;
+    
+    const newInstance = initializeMainForceGraph(
+      forceGraphRef.current,
       handleNodesRightClick,
-      handleBackgroundRightClick
+      handleBackgroundRightClick,
+      forceGraph3dOptions.layout
     );
-
-    // Apply mouse click mode from interactivityFlags if specified
-    const interactivityFlags =
-      currentSceneGraph.getData().defaultAppConfig?.interactivityFlags;
-    if (interactivityFlags?.mouseClickMode) {
-      // console.log(
-      //   "Applying mouse click mode to new ForceGraph3D instance:",
-      //   interactivityFlags.mouseClickMode
-      // );
-      applyMouseClickModeFromInteractivityFlags(
-        interactivityFlags.mouseClickMode
-      );
-    }
-
-    // Remove the automatic zoomToFit that overrides camera settings
-    // Camera settings are now handled in createForceGraph and ForceGraphManager
-
-    setTimeout(() => {
-      newInstance?.onEngineTick(() => {});
-    }, 800);
+    
+    // The instance is already set as the main instance by initializeMainForceGraph
+    // but we need to return it for any additional setup if needed
+    return newInstance;
   }, [
-    currentSceneGraph,
     forceGraph3dOptions.layout,
-    setForceGraphInstance,
     handleNodesRightClick,
     handleBackgroundRightClick,
   ]);

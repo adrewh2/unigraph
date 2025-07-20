@@ -1,0 +1,98 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: var(--background-primary, #1a1a1a);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #333);
+  width: 90vw;
+  height: 80vh;
+  max-width: 900px;
+  max-height: 700px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.header {
+  padding: 20px;
+  background: var(--background-secondary, #2a2a2a);
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.header h2 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.header p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary, #ccc);
+  line-height: 1.4;
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px;
+  background: var(--background-secondary, #2a2a2a);
+  border-top: 1px solid var(--border-color, #333);
+}
+
+.createButton {
+  padding: 10px 20px;
+  background: var(--primary-color, #007acc);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.createButton:hover:not(:disabled) {
+  background: var(--primary-hover, #005a9e);
+}
+
+.createButton:disabled {
+  background: var(--background-disabled, #555);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cancelButton {
+  padding: 10px 20px;
+  background: var(--background-tertiary, #444);
+  color: var(--text-primary, #fff);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.cancelButton:hover {
+  background: var(--background-hover, #555);
+}
