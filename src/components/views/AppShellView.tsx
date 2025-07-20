@@ -16,7 +16,6 @@ import React from "react";
 import AIChatPanel from "../ai/AIChatPanel";
 import { ThemeWorkspaceProvider } from "../providers/ThemeWorkspaceProvider";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
-import ForceGraph3DView from "./ForceGraph3DView";
 import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
@@ -40,7 +39,7 @@ const forceGraph3DView = {
   id: "force-graph-3d",
   title: "ForceGraph 3D",
   icon: "🌐",
-  component: (props: any) => <ForceGraph3DView {...props} />,
+  component: (props: any) => <ForceGraph3DViewV2 {...props} />,
 };
 
 const forceGraph3DViewV2 = {
