@@ -791,20 +791,22 @@ const AppShellView: React.FC = () => {
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "column",
         height: "100%",
         width: "100%",
+        display: "flex",
+        flexDirection: "column",
         position: "relative",
         margin: 0,
         padding: 0,
       }}
     >
+      {/* Main Content Area with Workspace */}
       <div
         style={{
           flex: 1,
           display: "flex",
           minHeight: 0, // Important for flex child to shrink
+          overflow: "hidden", // Prevent overflow issues
         }}
       >
         {/* Use combined provider that syncs ThemeProvider with workspace theme */}
@@ -813,6 +815,8 @@ const AppShellView: React.FC = () => {
             fullViewport={false}
             style={{
               flex: 1, // Make sure workspace fills available space
+              minWidth: 0, // Allow workspace to shrink if needed
+              minHeight: 0, // Allow workspace to shrink if needed
             }}
           />
         </ThemeWorkspaceProvider>

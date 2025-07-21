@@ -1,3 +1,4 @@
+/* eslint-disable unused-imports/no-unused-imports */
 import { Position } from "@xyflow/react";
 import React, {
   JSX,
@@ -32,7 +33,8 @@ import { IMenuConfigCallbacks, MenuConfig } from "./components/MenuConfig";
 import NodeEditorWizard from "./components/NodeEditorWizard";
 import SceneGraphDetailView from "./components/sceneGraph/SceneGraphDetailView";
 import SceneGraphTitle from "./components/sceneGraph/SceneGraphTitle";
-import AppShellView from "./components/views/AppShellView";
+// import { Workspace as AppShellWorkspace } from "@aesgraph/app-shell";
+// import AppShellView from "./components/views/AppShellView";
 import ReactFlowPanel, {
   nodeTypes,
 } from "./components/views/ReactFlow/ReactFlowPanel";
@@ -173,6 +175,10 @@ import useWorkspaceConfigStore, {
   setShowToolbar,
 } from "./store/workspaceConfigStore";
 import { initializeMainForceGraph } from "./utils/forceGraphInitializer";
+import { ThemeWorkspaceProvider } from "./components/providers/ThemeWorkspaceProvider";
+import AppShellView from "./components/views/AppShellView";
+// import { ThemeWorkspaceProvider } from "./components/providers/ThemeWorkspaceProvider";
+// import { Workspace as AppShellWorkspace } from "@aesgraph/app-shell";
 
 // Debug environment variables in development
 if (process.env.NODE_ENV === "development") {
@@ -2062,6 +2068,22 @@ const AppContent = ({
               overflow: "hidden",
             }}
           >
+            {/* /* {activeView === "AppShell" && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                }}
+              >
+                <ThemeWorkspaceProvider>
+                  <AppShellWorkspace fullViewport={false} />
+                </ThemeWorkspaceProvider>
+              </div>
+            )} */}
+
             {maybeRenderGraphviz}
             {maybeRenderForceGraph3D}
             {maybeRenderReactFlow}

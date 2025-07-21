@@ -348,11 +348,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       <NotificationManager />
       <div className={styles.content}>
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
-        <main className={styles.main}>
-          <div className={styles.mainContent}>
-            <div className={styles.graphContainer}>{children}</div>
-          </div>
-        </main>
+        <div className={styles.mainContent}>{children}</div>
         <div className={styles.sidebarLayer}>{renderRightSideBar}</div>
       </div>
     </div>

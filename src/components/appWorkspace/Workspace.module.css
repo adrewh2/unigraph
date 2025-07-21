@@ -40,14 +40,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.graphContainer {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-}
-
 .sidebarLayer {
   flex-shrink: 0;
   display: flex;
