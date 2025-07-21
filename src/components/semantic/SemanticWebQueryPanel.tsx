@@ -1,3 +1,4 @@
+import { getColor, useTheme } from "@aesgraph/app-shell";
 import { StreamLanguage } from "@codemirror/language";
 import { sparql } from "@codemirror/legacy-modes/mode/sparql";
 import { oneDark } from "@codemirror/theme-one-dark";
@@ -10,7 +11,6 @@ import {
 import { AgGridReact } from "ag-grid-react";
 import React, { useEffect, useState } from "react";
 import { Parser as SparqlParser } from "sparqljs";
-import { useTheme, getColor } from "@aesgraph/app-shell";
 import SelectDropdown from "../common/SelectDropdown";
 import styles from "./SemanticWebQueryPanel.module.css";
 

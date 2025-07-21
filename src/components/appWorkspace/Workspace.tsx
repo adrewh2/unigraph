@@ -349,8 +349,9 @@ const Workspace: React.FC<WorkspaceProps> = ({
       <div className={styles.content}>
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
         <main className={styles.main}>
-          {/* Remove the NodeDocumentEditor rendering logic and just show the graph */}
-          <div className={styles.graphContainer}>{children}</div>
+          <div className={styles.mainContent}>
+            <div className={styles.graphContainer}>{children}</div>
+          </div>
         </main>
         <div className={styles.sidebarLayer}>{renderRightSideBar}</div>
       </div>

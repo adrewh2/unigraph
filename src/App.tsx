@@ -1487,11 +1487,12 @@ const AppContent = ({
       <div
         style={{
           position: "absolute",
+          top: 0,
           left: 0,
           right: 0,
           bottom: 0,
           width: "100%",
-          height: "calc(100vh)",
+          height: "100%",
           overflow: "hidden",
           backgroundColor: "#ffffff",
         }}
@@ -1508,20 +1509,21 @@ const AppContent = ({
           id="force-graph"
           ref={forceGraphRef}
           style={{
-            position: "fixed",
-            top: showToolbar ? "var(--toolbar-height, 40px)" : 0,
+            position: "absolute",
+            top: 0,
             left: 0,
             right: 0,
             bottom: 0,
             background: "black",
             zIndex: 1,
+            borderRadius: "8px", // Match the mainContent border radius
             visibility: activeView === "Editor" ? "hidden" : "visible", // Hide but keep in DOM when in Editor view
           }}
         />
       );
     }
     return null;
-  }, [activeView, showToolbar]);
+  }, [activeView]);
 
   const _handleUpdateForceGraphScene = useCallback(
     (sceneGraph: SceneGraph) => {
@@ -2052,21 +2054,50 @@ const AppContent = ({
           handleLoadSceneGraph={handleLoadSceneGraph}
         >
           {/* Main content */}
-          <div style={{ height: "100%", position: "relative" }}>
+          <div
+            style={{
+              height: "100%",
+              width: "100%",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
             {maybeRenderGraphviz}
             {maybeRenderForceGraph3D}
             {maybeRenderReactFlow}
             {maybeRenderYasgui}
             {maybeRenderNodeDocumentEditor()}
             {activeView === "Gallery" && (
-              <ImageGalleryV3
-                sceneGraph={currentSceneGraph}
-                addRandomImageBoxes={false}
-                defaultLinksEnabled={false}
-              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                }}
+              >
+                <ImageGalleryV3
+                  sceneGraph={currentSceneGraph}
+                  addRandomImageBoxes={false}
+                  defaultLinksEnabled={false}
+                />
+              </div>
             )}
             {activeView === "AppShell" && <AppShellView />}
-            {activeView in simulations && getSimulation(activeView)}
+            {activeView in simulations && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                }}
+              >
+                {getSimulation(activeView)}
+              </div>
+            )}
           </div>
         </Workspace>
         {maybeRenderSaveSceneGraphWindow}
