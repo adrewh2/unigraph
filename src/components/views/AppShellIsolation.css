@@ -16,6 +16,7 @@
 /* Much lighter touch - only prevent obvious conflicts */
 .aesgraph-app-shell-isolated {
   /* Ensure the container itself doesn't inherit problematic styles */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.4;
 }

@@ -89,7 +89,10 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
             {children}
             {getActiveView() === "AppShell" && (
               <WorkspaceProvider>
-                <div style={{ height: "2000px", border: "1px solid yellow" }}>
+                <div
+                  className={styles.mainContent}
+                  style={{ border: "1px solid red" }}
+                >
                   <AppShellView />
                 </div>
 
