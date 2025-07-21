@@ -24,7 +24,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #f8f9fa;
   min-width: 0;
   z-index: 1;
 }
@@ -33,11 +32,6 @@
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   min-height: 0; /* Important: Allow flex child to shrink */
   display: flex;  /* Make it a flex container for AppShellWorkspace */
   flex-direction: column; /* Stack children vertically */

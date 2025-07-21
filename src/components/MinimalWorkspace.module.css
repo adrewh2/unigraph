@@ -9,7 +9,6 @@
   left: 0;
   margin: 0;
   padding: 0;
-  background-color: #f0f0f0;
 }
 
 .topBar {
@@ -37,7 +36,7 @@
   background: transparent;
   border: 1px solid #4a5568;
   color: white;
-  padding: 8px 16px;
+  /* padding: 8px 16px; */
   border-radius: 4px;
   cursor: pointer;
 }

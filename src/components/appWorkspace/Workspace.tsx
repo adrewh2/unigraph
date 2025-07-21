@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import React, { useMemo } from "react";
+import { useTheme, getColor } from "@aesgraph/app-shell";
 import { findNodeInForceGraph } from "../../core/force-graph/forceGraphHelpers";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { flyToNode } from "../../core/webgl/webglHelpers";
@@ -89,6 +90,8 @@ const Workspace: React.FC<WorkspaceProps> = ({
   handleShowEntityTables,
   handleLoadSceneGraph,
 }) => {
+  const { theme } = useTheme();
+  
   const { showToolbar, leftSidebarConfig, rightSidebarConfig } =
     useWorkspaceConfigStore();
 
@@ -346,9 +349,21 @@ const Workspace: React.FC<WorkspaceProps> = ({
     <div className={styles.workspace}>
       {renderUniappToolbar}
       <NotificationManager />
-      <div className={styles.content}>
+      <div 
+        className={styles.content}
+        style={{
+          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+        }}
+      >
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
-        <div className={styles.mainContent}>{children}</div>
+        <div 
+          className={styles.mainContent}
+          style={{
+            margin: theme.sizes.spacing.sm, // Add small margin using theme spacing
+          }}
+        >
+          {children}
+        </div>
         <div className={styles.sidebarLayer}>{renderRightSideBar}</div>
       </div>
     </div>

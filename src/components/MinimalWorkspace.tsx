@@ -11,16 +11,6 @@ import styles from "./MinimalWorkspace.module.css";
 const MinimalWorkspace: React.FC = () => {
   return (
     <div className={styles.appContainer}>
-      {/* Top Navigation Bar */}
-      <div className={styles.topBar}>
-        <h1 className={styles.topBarTitle}>Unigraph Workspace</h1>
-        <nav className={styles.topBarNav}>
-          <button className={styles.topBarButton}>File</button>
-          <button className={styles.topBarButton}>View</button>
-          <button className={styles.topBarButton}>Tools</button>
-        </nav>
-      </div>
-
       {/* Main Content Area with Workspace */}
       <div className={styles.mainContent}>
         <ThemeProvider>
