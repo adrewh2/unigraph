@@ -1,5 +1,5 @@
 import {
-  Workspace as AppShellWorkspace,
+  WorkspaceGrid as AppShellWorkspace,
   ExampleThemedComponent,
   Theme,
   ThemeId,
@@ -760,16 +760,7 @@ const AppShellView: React.FC = () => {
   return (
     // <div className={styles.appContainer}>
     <ThemeWorkspaceProvider>
-      <AppShellWorkspace
-        fullViewport={false}
-        style={{
-          height: "100%",
-          width: "100%",
-          maxHeight: "100%",
-          overflow: "hidden",
-          border: "1px solid yellow",
-        }}
-      />
+      <AppShellWorkspace fullViewport={false} />
     </ThemeWorkspaceProvider>
     // </div>
   );

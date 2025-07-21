@@ -49,7 +49,6 @@
   flex: 1;
   display: flex;
   min-height: 0;
-  /* flex-direction: column; */
 }
 
 .statusBar {

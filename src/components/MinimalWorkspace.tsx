@@ -1,18 +1,19 @@
 import { getCurrentSceneGraph } from "@/store/appConfigStore";
 import {
-  Workspace as AppShellWorkspace,
+  WorkspaceGrid as AppShellWorkspace,
   ThemeProvider,
   WorkspaceProvider,
 } from "@aesgraph/app-shell";
+import "@aesgraph/app-shell/dist/app-shell.css";
 import React from "react";
 import Workspace from "./appWorkspace/Workspace";
 import styles from "./MinimalWorkspace.module.css";
 
 const MinimalWorkspace: React.FC = () => {
   return (
-    <div className={styles.appContainer}>
+    <div className={styles.unigraphAppContainer}>
       {/* Main Content Area with Workspace */}
-      <div className={styles.mainContent}>
+      <div className={styles.unigraphMainContent}>
         <ThemeProvider>
           <Workspace
             menuConfig={{}}
@@ -46,7 +47,7 @@ const MinimalWorkspace: React.FC = () => {
       </div>
 
       {/* Status Bar */}
-      <div className={styles.statusBar}>
+      <div className={styles.unigraphStatusBar}>
         Ready • Unigraph • Scene Graph Loaded •{" "}
         {getCurrentSceneGraph() ? "Graph Active" : "No Graph"}
       </div>
