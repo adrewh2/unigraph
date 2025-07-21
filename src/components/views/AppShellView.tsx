@@ -786,10 +786,25 @@ const AppShellView: React.FC = () => {
   };
 
   return (
-    <div style={{ height: "100%", width: "100%" }}>
+    <div
+      style={{
+        flex: 1,
+        display: "flex",
+        minHeight: 0, // Important for flex child to shrink
+        height: "100%", // Add explicit height
+        width: "100%", // Ensure it fills the container
+      }}
+    >
       {/* Use combined provider that syncs ThemeProvider with workspace theme */}
       <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
-        <AppShellWorkspace />
+        <AppShellWorkspace
+          fullViewport={false}
+          style={{
+            flex: 1, // Make sure workspace fills available space
+            height: "100%", // Ensure workspace takes full height
+            width: "100%", // Ensure workspace takes full width
+          }}
+        />
       </ThemeWorkspaceProvider>
     </div>
   );
