@@ -171,6 +171,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         style={{
           height: "100%",
           top: 0,
+          backgroundColor: getColor(theme.colors, "workspacePanel"),
         }}
         menuItems={config.mainMenus}
         bottomElements={config.bottomElements}
@@ -198,6 +199,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     activeFilter,
     handleLoadSceneGraph,
     showLayoutManager,
+    theme.colors,
   ]);
 
   // Monitor for selected node to show dynamic section
@@ -281,6 +283,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         style={{
           height: "100%",
           top: 0,
+          backgroundColor: getColor(theme.colors, "workspacePanel"),
         }}
         title="Controls"
         menuItems={menuItems}
@@ -321,6 +324,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
     controlMode,
     handleFitToView,
     handleShowEntityTables,
+    theme.colors,
   ]);
 
   const _renderSidebarPanel = (menu: MenuItem, isActive: boolean) => {
@@ -346,13 +350,18 @@ const Workspace: React.FC<WorkspaceProps> = ({
   };
 
   return (
-    <div className={styles.workspace}>
+    <div 
+      className={styles.workspace}
+      style={{
+        backgroundColor: getColor(theme.colors, "workspaceBackground"),
+      }}
+    >
       {renderUniappToolbar}
       <NotificationManager />
       <div 
         className={styles.content}
         style={{
-          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+          backgroundColor: getColor(theme.colors, "workspaceBackground"),
         }}
       >
         <div className={styles.sidebarLayer}>{renderLeftSideBar}</div>
@@ -360,6 +369,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
           className={styles.mainContent}
           style={{
             margin: theme.sizes.spacing.sm, // Add small margin using theme spacing
+            backgroundColor: getColor(theme.colors, "workspacePanel"), // Use workspace panel color for the main content area
           }}
         >
           {children}
