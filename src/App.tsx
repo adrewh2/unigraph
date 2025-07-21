@@ -2068,6 +2068,7 @@ const AppContent = ({
                   width: "100%",
                   position: "relative",
                   overflow: "hidden",
+                  border: "1px solid red",
                 }}
               >
                 {/* /* {activeView === "AppShell" && (
@@ -2116,6 +2117,7 @@ const AppContent = ({
                       left: 0,
                       right: 0,
                       bottom: 0,
+                      border: "1px solid green",
                     }}
                   >
                     <AppShellView />
