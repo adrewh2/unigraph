@@ -3,7 +3,6 @@ import {
   ExampleThemedComponent,
   Theme,
   ThemeId,
-  WorkspaceConfig,
   commonSizes,
   defaultViews,
   getColor,
@@ -758,46 +757,9 @@ const customUnigraphTheme: Theme = {
 Object.assign(themes, { "unigraph-custom": customUnigraphTheme });
 
 const AppShellView: React.FC = () => {
-  // Create a sample workspace configuration
-  const PANE_COLLAPSE_THRESHOLD = 80;
-  const PANE_MIN_SIZE = PANE_COLLAPSE_THRESHOLD - 10; // 70
-  const PANE_MAX_SIZE = 1000;
-
-  const workspaceConfig: Partial<WorkspaceConfig> = {
-    theme: "dark" as ThemeId,
-    leftPane: {
-      defaultSize: 400,
-      maxSize: PANE_MAX_SIZE,
-      minSize: PANE_MIN_SIZE,
-      collapseThreshold: PANE_COLLAPSE_THRESHOLD,
-      collapsedSize: 16,
-    },
-    rightPane: {
-      defaultSize: 300,
-      maxSize: PANE_MAX_SIZE,
-      minSize: PANE_MIN_SIZE,
-      collapseThreshold: PANE_COLLAPSE_THRESHOLD,
-      collapsedSize: 16,
-    },
-    bottomPane: {
-      defaultSize: 200,
-      maxSize: PANE_MAX_SIZE,
-      minSize: PANE_MIN_SIZE,
-      collapseThreshold: PANE_COLLAPSE_THRESHOLD,
-      collapsedSize: 16,
-    },
-  };
-
   return (
-    <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
-      <AppShellWorkspace
-        fullViewport={false}
-        style={{
-          flex: 1, // Make sure workspace fills available space
-          minWidth: 0, // Allow workspace to shrink if needed
-          minHeight: 0, // Allow workspace to shrink if needed
-        }}
-      />
+    <ThemeWorkspaceProvider>
+      <AppShellWorkspace fullViewport={false} />
     </ThemeWorkspaceProvider>
   );
 };
