@@ -1,8 +1,8 @@
 .workspace {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Changed from 100vh to 100% to inherit parent height */
-  width: 100%;  /* Changed from 100vw to 100% to inherit parent width */
+  height: 100%; /* Full viewport minus status bar height */
+  width: 100%; /* Changed from 100vw to 100% to inherit parent width */
   overflow: hidden;
 }
 
@@ -33,7 +33,7 @@
   position: relative;
   overflow: hidden;
   min-height: 0; /* Important: Allow flex child to shrink */
-  display: flex;  /* Make it a flex container for AppShellWorkspace */
+  display: flex; /* Make it a flex container for AppShellWorkspace */
   flex-direction: column; /* Stack children vertically */
 }
 

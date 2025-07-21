@@ -8,6 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { ThemeProvider } from "@aesgraph/app-shell";
 import ImageGallery from "./_experimental/lumina/galleryTestbed/ImageGallery";
 import ImageBoxCreator from "./_experimental/lumina/ImageBoxCreator";
 import Lumina from "./_experimental/lumina/Lumina";
@@ -2371,17 +2372,19 @@ const App: React.FC<AppProps> = ({
   defaultSerializedSceneGraph,
 }) => {
   return (
-    <MousePositionProvider>
-      <AppContent
-        defaultGraph={defaultGraph}
-        svgUrl={svgUrl}
-        defaultActiveView={defaultActiveView}
-        defaultActiveLayout={defaultActiveLayout}
-        shouldShowLoadDialog={shouldShowLoadDialog}
-        defaultSerializedSceneGraph={defaultSerializedSceneGraph}
-      />
-      <LayoutComputationDialog />
-    </MousePositionProvider>
+    <ThemeProvider>
+      <MousePositionProvider>
+        <AppContent
+          defaultGraph={defaultGraph}
+          svgUrl={svgUrl}
+          defaultActiveView={defaultActiveView}
+          defaultActiveLayout={defaultActiveLayout}
+          shouldShowLoadDialog={shouldShowLoadDialog}
+          defaultSerializedSceneGraph={defaultSerializedSceneGraph}
+        />
+        <LayoutComputationDialog />
+      </MousePositionProvider>
+    </ThemeProvider>
   );
 };
 
