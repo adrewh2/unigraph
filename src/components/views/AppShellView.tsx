@@ -759,54 +759,64 @@ Object.assign(themes, { "unigraph-custom": customUnigraphTheme });
 
 const AppShellView: React.FC = () => {
   // Create a sample workspace configuration
+  const PANE_COLLAPSE_THRESHOLD = 80;
+  const PANE_MIN_SIZE = PANE_COLLAPSE_THRESHOLD - 10; // 70
+  const PANE_MAX_SIZE = 1000;
 
   const workspaceConfig: Partial<WorkspaceConfig> = {
     theme: "dark" as ThemeId,
     leftPane: {
       defaultSize: 400,
-      maxSize: 1000,
-      minSize: 100,
-      collapseThreshold: 80,
-      collapsedSize: 8,
+      maxSize: PANE_MAX_SIZE,
+      minSize: PANE_MIN_SIZE,
+      collapseThreshold: PANE_COLLAPSE_THRESHOLD,
+      collapsedSize: 16,
     },
     rightPane: {
       defaultSize: 300,
-      maxSize: 1000,
-      minSize: 150,
-      collapseThreshold: 80,
-      collapsedSize: 8,
+      maxSize: PANE_MAX_SIZE,
+      minSize: PANE_MIN_SIZE,
+      collapseThreshold: PANE_COLLAPSE_THRESHOLD,
+      collapsedSize: 16,
     },
     bottomPane: {
       defaultSize: 200,
-      maxSize: 1000,
-      minSize: 100,
-      collapseThreshold: 80,
-      collapsedSize: 8,
+      maxSize: PANE_MAX_SIZE,
+      minSize: PANE_MIN_SIZE,
+      collapseThreshold: PANE_COLLAPSE_THRESHOLD,
+      collapsedSize: 16,
     },
   };
 
   return (
     <div
       style={{
-        flex: 1,
         display: "flex",
-        minWidth: 0,
-        minHeight: 0, // Important for flex child to shrink
-        height: "100%", // Add explicit height
+        flexDirection: "column",
+        height: "100%",
         width: "100%",
+        position: "relative",
+        margin: 0,
+        padding: 0,
       }}
     >
-      {/* Use combined provider that syncs ThemeProvider with workspace theme */}
-      <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
-        <AppShellWorkspace
-          fullViewport={false}
-          style={{
-            flex: 1, // Make sure workspace fills available space
-            height: "100%", // Ensure workspace takes full height
-            width: "100%",
-          }}
-        />
-      </ThemeWorkspaceProvider>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          minHeight: 0, // Important for flex child to shrink
+        }}
+      >
+        {/* Use combined provider that syncs ThemeProvider with workspace theme */}
+        <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
+          <AppShellWorkspace
+            fullViewport={false}
+            style={{
+              flex: 1, // Make sure workspace fills available space
+            }}
+          />
+        </ThemeWorkspaceProvider>
+      </div>
     </div>
   );
 };
