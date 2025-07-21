@@ -763,22 +763,22 @@ const AppShellView: React.FC = () => {
   const workspaceConfig: Partial<WorkspaceConfig> = {
     theme: "dark" as ThemeId,
     leftPane: {
-      defaultSize: 250,
-      maxSize: 500,
+      defaultSize: 400,
+      maxSize: 1000,
       minSize: 100,
       collapseThreshold: 80,
       collapsedSize: 8,
     },
     rightPane: {
       defaultSize: 300,
-      maxSize: 400,
+      maxSize: 1000,
       minSize: 150,
       collapseThreshold: 80,
       collapsedSize: 8,
     },
     bottomPane: {
       defaultSize: 200,
-      maxSize: 300,
+      maxSize: 1000,
       minSize: 100,
       collapseThreshold: 80,
       collapsedSize: 8,
@@ -790,9 +790,10 @@ const AppShellView: React.FC = () => {
       style={{
         flex: 1,
         display: "flex",
+        minWidth: 0,
         minHeight: 0, // Important for flex child to shrink
         height: "100%", // Add explicit height
-        width: "100%", // Ensure it fills the container
+        width: "100%",
       }}
     >
       {/* Use combined provider that syncs ThemeProvider with workspace theme */}
@@ -802,7 +803,7 @@ const AppShellView: React.FC = () => {
           style={{
             flex: 1, // Make sure workspace fills available space
             height: "100%", // Ensure workspace takes full height
-            width: "100%", // Ensure workspace takes full width
+            width: "100%",
           }}
         />
       </ThemeWorkspaceProvider>
