@@ -1,4 +1,4 @@
-/* eslint-disable unused-imports/no-unused-imports */
+import { ThemeProvider } from "@aesgraph/app-shell";
 import { Position } from "@xyflow/react";
 import React, {
   JSX,
@@ -8,7 +8,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { ThemeProvider } from "@aesgraph/app-shell";
 import ImageGallery from "./_experimental/lumina/galleryTestbed/ImageGallery";
 import ImageBoxCreator from "./_experimental/lumina/ImageBoxCreator";
 import Lumina from "./_experimental/lumina/Lumina";
@@ -59,10 +58,12 @@ import SelectionBox from "./components/common/SelectionBox";
 import { getSaveAsNewFilterMenuItem } from "./components/common/sharedContextMenuItems";
 import { getNodeContextMenuItems } from "./components/common/singleNodeContextMenuItems";
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
+import styles from "./components/MinimalWorkspace.module.css";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog";
 import SemanticWebQueryPanel from "./components/semantic/SemanticWebQueryPanel";
 import { enableZoomAndPanOnSvg } from "./components/svg/appHelpers";
+import AppShellView from "./components/views/AppShellView";
 import { getHotkeyConfig } from "./configs/hotkeyConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
@@ -176,8 +177,6 @@ import useWorkspaceConfigStore, {
   setShowToolbar,
 } from "./store/workspaceConfigStore";
 import { initializeMainForceGraph } from "./utils/forceGraphInitializer";
-import { ThemeWorkspaceProvider } from "./components/providers/ThemeWorkspaceProvider";
-import AppShellView from "./components/views/AppShellView";
 // import { ThemeWorkspaceProvider } from "./components/providers/ThemeWorkspaceProvider";
 // import { Workspace as AppShellWorkspace } from "@aesgraph/app-shell";
 
@@ -2034,42 +2033,44 @@ const AppContent = ({
           onClose={() => setCommandPaletteOpen(false)}
           onExecuteCommand={executeCommand}
         />
-        <Workspace
-          menuConfig={menuConfig}
-          currentSceneGraph={currentSceneGraph}
-          isDarkMode={isDarkMode}
-          selectedSimulation={selectedSimulation}
-          simulations={simulations}
-          onViewChange={handleSetActiveView}
-          onSelectResult={handleSelectResult}
-          onSearchResult={handleSearchResult}
-          onHighlight={handleHighlight}
-          onApplyForceGraphConfig={handleApplyForceGraphConfig}
-          renderLayoutModeRadio={renderLayoutModeRadio}
-          showFilterWindow={() => setShowFilter(true)}
-          showFilterManager={() => setShowFilterManager(true)}
-          showPathAnalysis={() => setShowPathAnalysis(true)}
-          renderNodeLegend={renderNodeLegend}
-          renderEdgeLegend={renderEdgeLegend}
-          showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
-          showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)}
-          showLayoutManager={(mode: "save" | "load") =>
-            setShowLayoutManager({ mode, show: true })
-          }
-          handleFitToView={handleFitToView}
-          handleShowEntityTables={() => setShowEntityTables(true)}
-          handleLoadSceneGraph={handleLoadSceneGraph}
-        >
-          {/* Main content */}
-          <div
-            style={{
-              height: "100%",
-              width: "100%",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* /* {activeView === "AppShell" && (
+        <div className={styles.appContainer}>
+          <div className={styles.mainContent}>
+            <Workspace
+              menuConfig={menuConfig}
+              currentSceneGraph={currentSceneGraph}
+              isDarkMode={isDarkMode}
+              selectedSimulation={selectedSimulation}
+              simulations={simulations}
+              onViewChange={handleSetActiveView}
+              onSelectResult={handleSelectResult}
+              onSearchResult={handleSearchResult}
+              onHighlight={handleHighlight}
+              onApplyForceGraphConfig={handleApplyForceGraphConfig}
+              renderLayoutModeRadio={renderLayoutModeRadio}
+              showFilterWindow={() => setShowFilter(true)}
+              showFilterManager={() => setShowFilterManager(true)}
+              showPathAnalysis={() => setShowPathAnalysis(true)}
+              renderNodeLegend={renderNodeLegend}
+              renderEdgeLegend={renderEdgeLegend}
+              showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
+              showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)}
+              showLayoutManager={(mode: "save" | "load") =>
+                setShowLayoutManager({ mode, show: true })
+              }
+              handleFitToView={handleFitToView}
+              handleShowEntityTables={() => setShowEntityTables(true)}
+              handleLoadSceneGraph={handleLoadSceneGraph}
+            >
+              {/* Main content */}
+              <div
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {/* /* {activeView === "AppShell" && (
               <div
                 style={{
                   position: "absolute",
@@ -2085,56 +2086,63 @@ const AppContent = ({
               </div>
             )} */}
 
-            {maybeRenderGraphviz}
-            {maybeRenderForceGraph3D}
-            {maybeRenderReactFlow}
-            {maybeRenderYasgui}
-            {maybeRenderNodeDocumentEditor()}
-            {activeView === "Gallery" && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                }}
-              >
-                <ImageGalleryV3
-                  sceneGraph={currentSceneGraph}
-                  addRandomImageBoxes={false}
-                  defaultLinksEnabled={false}
-                />
+                {maybeRenderGraphviz}
+                {maybeRenderForceGraph3D}
+                {maybeRenderReactFlow}
+                {maybeRenderYasgui}
+                {maybeRenderNodeDocumentEditor()}
+                {activeView === "Gallery" && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    <ImageGalleryV3
+                      sceneGraph={currentSceneGraph}
+                      addRandomImageBoxes={false}
+                      defaultLinksEnabled={false}
+                    />
+                  </div>
+                )}
+                {activeView === "AppShell" && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    <AppShellView />
+                  </div>
+                )}
+                {activeView in simulations && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    {getSimulation(activeView)}
+                  </div>
+                )}
               </div>
-            )}
-            {activeView === "AppShell" && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                }}
-              >
-                <AppShellView />
-              </div>
-            )}
-            {activeView in simulations && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                }}
-              >
-                {getSimulation(activeView)}
-              </div>
-            )}
+            </Workspace>
           </div>
-        </Workspace>
+          {/* Status Bar */}
+          <div className={styles.statusBar}>
+            Ready • Unigraph • Scene Graph Loaded •{" "}
+            {getCurrentSceneGraph() ? "Graph Active" : "No Graph"}
+          </div>
+        </div>
         {maybeRenderSaveSceneGraphWindow}
         {maybeRenderSaveAsNewProjectDialog}
         {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (

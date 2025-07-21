@@ -789,39 +789,16 @@ const AppShellView: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        position: "relative",
-        margin: 0,
-        padding: 0,
-      }}
-    >
-      {/* Main Content Area with Workspace */}
-      <div
+    <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
+      <AppShellWorkspace
+        fullViewport={false}
         style={{
-          flex: 1,
-          display: "flex",
-          minHeight: 0, // Important for flex child to shrink
-          overflow: "hidden", // Prevent overflow issues
+          flex: 1, // Make sure workspace fills available space
+          minWidth: 0, // Allow workspace to shrink if needed
+          minHeight: 0, // Allow workspace to shrink if needed
         }}
-      >
-        {/* Use combined provider that syncs ThemeProvider with workspace theme */}
-        <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
-          <AppShellWorkspace
-            fullViewport={false}
-            style={{
-              flex: 1, // Make sure workspace fills available space
-              minWidth: 0, // Allow workspace to shrink if needed
-              minHeight: 0, // Allow workspace to shrink if needed
-            }}
-          />
-        </ThemeWorkspaceProvider>
-      </div>
-    </div>
+      />
+    </ThemeWorkspaceProvider>
   );
 };
 
