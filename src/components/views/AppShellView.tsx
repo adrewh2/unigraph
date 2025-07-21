@@ -758,9 +758,11 @@ Object.assign(themes, { "unigraph-custom": customUnigraphTheme });
 
 const AppShellView: React.FC = () => {
   return (
-    <ThemeWorkspaceProvider>
-      <AppShellWorkspace fullViewport={false} />
-    </ThemeWorkspaceProvider>
+    <div style={{ height: "200px", width: "100%", border: "1px solid red" }}>
+      <ThemeWorkspaceProvider>
+        <AppShellWorkspace fullViewport={false} />
+      </ThemeWorkspaceProvider>
+    </div>
   );
 };
 

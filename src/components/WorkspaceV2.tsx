@@ -1,12 +1,9 @@
 import { getActiveView, getCurrentSceneGraph } from "@/store/appConfigStore";
-import {
-  Workspace as AppShellWorkspace,
-  ThemeProvider,
-  WorkspaceProvider,
-} from "@aesgraph/app-shell";
+import { ThemeProvider, WorkspaceProvider } from "@aesgraph/app-shell";
 import React from "react";
 import Workspace from "./appWorkspace/Workspace";
 import styles from "./MinimalWorkspace.module.css";
+import AppShellView from "./views/AppShellView";
 
 // Props interface that matches what Workspace needs
 interface WorkspaceV2Props {
@@ -92,8 +89,11 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
             {children}
             {getActiveView() === "AppShell" && (
               <WorkspaceProvider>
-                {/* <AppShellView /> */}
-                <AppShellWorkspace fullViewport={false} />
+                <div style={{ height: "2000px", border: "1px solid yellow" }}>
+                  <AppShellView />
+                </div>
+
+                {/* <AppShellWorkspace fullViewport={false} /> */}
               </WorkspaceProvider>
             )}
           </Workspace>
