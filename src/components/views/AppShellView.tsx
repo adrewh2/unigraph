@@ -13,7 +13,7 @@ import {
 import "@aesgraph/app-shell/dist/app-shell.css";
 import React from "react";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
-import AIChatPanel from "../ai/AIChatPanel";
+import CopilotPanelV2 from "../ai/CopilotPanelV2";
 import EntityTableV2 from "../common/EntityTableV2";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import EdgeLegendView from "./EdgeLegendView";
@@ -21,12 +21,12 @@ import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
 import NodeLegendView from "./NodeLegendView";
 import SystemMonitorView from "./SystemMonitorView";
 
-// Create custom views that include our AIChatPanel and SemanticWebQueryPanel
+// Create custom views that include our CopilotPanelV2 and SemanticWebQueryPanel
 const aiChatView = {
   id: "ai-chat",
   title: "AI Chat",
   icon: "💬",
-  component: (props: any) => <AIChatPanel {...props} />,
+  component: (props: any) => <CopilotPanelV2 {...props} />,
 };
 
 const semanticWebQueryView = {
