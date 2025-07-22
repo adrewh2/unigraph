@@ -42,7 +42,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = () => {
   const [temperature, setTemperature] = useState(0.7);
   const [apiAvailable, setApiAvailable] = useState<boolean | null>(null);
   const [apiProvider, setApiProvider] = useState<ApiProvider>("llm-studio");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Get OpenAI API key from environment (optional)
   const openaiApiKey = getEnvVar("VITE_OPENAI_API_KEY") || "";
@@ -90,9 +90,15 @@ const AIChatPanel: React.FC<AIChatPanelProps> = () => {
     checkApi();
   }, [openaiApiKey, liveChatUrl]);
 
-  // Auto-scroll to bottom when new messages are added
+  // Safe auto-scroll using scrollTop instead of scrollIntoView
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      // Use scrollTop instead of scrollIntoView to avoid layout issues
+      setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+      }, 0);
+    }
   }, [messages]);
 
   // Call OpenAI API
@@ -497,7 +503,7 @@ const AIChatPanel: React.FC<AIChatPanelProps> = () => {
       )}
 
       {/* Message history */}
-      <div className="ai-chat-messages">
+      <div className="ai-chat-messages" ref={messagesContainerRef}>
         {messages.map((message) => (
           <div key={message.id} className={`ai-chat-message ${message.role}`}>
             <div className="message-content">
@@ -522,7 +528,6 @@ const AIChatPanel: React.FC<AIChatPanelProps> = () => {
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input area */}
