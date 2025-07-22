@@ -1,3 +1,4 @@
+import GravitySimulation3 from "@/_experimental/webgl/simulations/GravitySimulation3";
 import {
   ExampleThemedComponent,
   LayoutManager,
@@ -14,6 +15,7 @@ import "@aesgraph/app-shell/dist/app-shell.css";
 import React from "react";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
 import AIChatPanel from "../ai/AIChatPanel";
+import WikipediaArticleViewer_FactorGraph from "../applets/WikipediaViewer/WikipediaArticleViewer_FactorGraph";
 import EntityTableV2 from "../common/EntityTableV2";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import EdgeLegendView from "./EdgeLegendView";
@@ -695,9 +697,37 @@ const themeInheritanceDemoView = {
   component: (props: any) => <ThemeInheritanceDemo {...props} />,
 };
 
+// Wikipedia Factor Graph viewer
+const wikipediaFactorGraphView = {
+  id: "wikipedia-factor-graph",
+  title: "Wikipedia Factor Graph",
+  icon: "📖",
+  component: (props: any) => (
+    <WikipediaArticleViewer_FactorGraph
+      initialArticle="Factor graph"
+      highlightKeywords={[]}
+      customTerms={{
+        "sum-product": "A message-passing algorithm used in factor graphs",
+        enabling: "Making something possible or easier",
+      }}
+      {...props}
+    />
+  ),
+  category: "tools",
+};
+
+const gravitySimulationView = {
+  id: "gravity-simulation",
+  title: "Gravity Simulation",
+  icon: "🌌",
+  component: (props: any) => <GravitySimulation3 />,
+  category: "tools",
+};
+
 // Register all views as a single array
 registerViews([
   ...defaultViews,
+  gravitySimulationView,
   aiChatView,
   semanticWebQueryView,
   forceGraph3DView,
@@ -708,6 +738,7 @@ registerViews([
   systemMonitorView,
   nodeLegendView,
   edgeLegendView,
+  wikipediaFactorGraphView,
 ]);
 
 // Example: Create a custom theme for demonstration
