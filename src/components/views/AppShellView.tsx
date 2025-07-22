@@ -1,9 +1,8 @@
 import {
-  Workspace as AppShellWorkspace,
   ExampleThemedComponent,
+  LayoutManager,
   Theme,
   ThemeId,
-  WorkspaceConfig,
   commonSizes,
   defaultViews,
   getColor,
@@ -16,9 +15,10 @@ import React from "react";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
 import AIChatPanel from "../ai/AIChatPanel";
 import EntityTableV2 from "../common/EntityTableV2";
-import { ThemeWorkspaceProvider } from "../providers/ThemeWorkspaceProvider";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
+import EdgeLegendView from "./EdgeLegendView";
 import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
+import NodeLegendView from "./NodeLegendView";
 import SystemMonitorView from "./SystemMonitorView";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
@@ -58,7 +58,24 @@ const systemMonitorView = {
   title: "System Monitor",
   icon: "📊",
   component: (props: any) => <SystemMonitorView {...props} />,
-  category: "system",
+  category: "tools",
+};
+
+// Create legend views
+const nodeLegendView = {
+  id: "node-legend",
+  title: "Node Legend",
+  icon: "🔵",
+  component: (props: any) => <NodeLegendView {...props} />,
+  category: "data",
+};
+
+const edgeLegendView = {
+  id: "edge-legend",
+  title: "Edge Legend",
+  icon: "🔗",
+  component: (props: any) => <EdgeLegendView {...props} />,
+  category: "data",
 };
 
 // EntityTableV2 wrapper component
@@ -689,6 +706,8 @@ registerViews([
   customThemedPanelView,
   themeInheritanceDemoView,
   systemMonitorView,
+  nodeLegendView,
+  edgeLegendView,
 ]);
 
 // Example: Create a custom theme for demonstration
@@ -737,40 +756,10 @@ const customUnigraphTheme: Theme = {
 Object.assign(themes, { "unigraph-custom": customUnigraphTheme });
 
 const AppShellView: React.FC = () => {
-  // Create a sample workspace configuration
-
-  const workspaceConfig: Partial<WorkspaceConfig> = {
-    theme: "dark" as ThemeId,
-    leftPane: {
-      defaultSize: 250,
-      maxSize: 500,
-      minSize: 100,
-      collapseThreshold: 80,
-      collapsedSize: 8,
-    },
-    rightPane: {
-      defaultSize: 300,
-      maxSize: 400,
-      minSize: 150,
-      collapseThreshold: 80,
-      collapsedSize: 8,
-    },
-    bottomPane: {
-      defaultSize: 200,
-      maxSize: 300,
-      minSize: 100,
-      collapseThreshold: 80,
-      collapsedSize: 8,
-    },
-  };
-
   return (
-    <div style={{ height: "100%", width: "100%" }}>
-      {/* Use combined provider that syncs ThemeProvider with workspace theme */}
-      <ThemeWorkspaceProvider initialConfig={workspaceConfig}>
-        <AppShellWorkspace />
-      </ThemeWorkspaceProvider>
-    </div>
+    // <div className={styles.appContainer}>
+    <LayoutManager />
+    // </div>
   );
 };
 
