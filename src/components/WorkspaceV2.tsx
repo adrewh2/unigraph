@@ -1,9 +1,9 @@
 import { SceneGraph } from "@/core/model/SceneGraph";
 import { getActiveView, getCurrentSceneGraph } from "@/store/appConfigStore";
-import {
+import useGraphInteractionStore, {
   getSelectedNodeId,
-  getSelectedNodeIds,
 } from "@/store/graphInteractionStore";
+import useWorkspaceConfigStore from "@/store/workspaceConfigStore";
 import { useWorkspace } from "@aesgraph/app-shell";
 import "@aesgraph/app-shell/app-shell.css";
 import React, { useState } from "react";
@@ -71,12 +71,13 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
   } = useDialogStore();
 
   // Get workspace context
-  const { savedWorkspaces, currentWorkspace, applyWorkspaceLayout } =
+  const { currentWorkspace, savedWorkspaces, applyWorkspaceLayout } =
     useWorkspace();
+  const { setRightActiveSection } = useWorkspaceConfigStore();
+  const { selectedNodeIds } = useGraphInteractionStore();
 
-  // Get current scene graph name
   const currentGraphName =
-    getCurrentSceneGraph()?.getMetadata()?.name || "No Graph";
+    currentSceneGraph?.getMetadata()?.name || "No Project Loaded";
 
   // State for hover panel
   const [showHoverPanel, setShowHoverPanel] = useState(false);
@@ -275,7 +276,6 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
             <span className={styles.selectionName}>
               {(() => {
                 const selectedNodeId = getSelectedNodeId();
-                const selectedNodeIds = getSelectedNodeIds();
 
                 if (selectedNodeIds.size === 0) {
                   return "None";
