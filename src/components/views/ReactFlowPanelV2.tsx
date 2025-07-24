@@ -54,11 +54,11 @@ import ResizerNode from "./ReactFlow/nodes/resizerNode";
 import "@xyflow/react/dist/style.css";
 import { EdgeId } from "../../core/model/Edge";
 
-// Node types mapping - simplified to avoid type conflicts
+// Node types mapping - using the exact same as ReactFlowPanel
 const nodeTypes = {
-  default: CustomNode,
+  customNode: CustomNode,
+  resizerNode: ResizerNode,
   webpage: WebpageNode,
-  resizer: ResizerNode,
 };
 
 // CSS styles for node selection and container constraints
@@ -66,9 +66,37 @@ const nodeStyles = document.createElement("style");
 nodeStyles.textContent = `
   .react-flow__node.selected {
     box-shadow: 0 0 0 2px ${SELECTED_NODE_COLOR} !important;
+    border: 2px solid ${SELECTED_NODE_COLOR} !important;
+    border-radius: 4px !important;
   }
-  .react-flow__node.hovered {
+
+  .react-flow__node-customNode.selected, .react-flow__node-resizerNode.selected {
+    outline: 2px solid ${SELECTED_NODE_COLOR} !important;
+    outline-offset: 2px;
+  }
+  
+  /* Add hover styles */
+  .react-flow__node:hover {
     box-shadow: 0 0 0 2px ${MOUSE_HOVERED_NODE_COLOR} !important;
+    border: 2px solid ${MOUSE_HOVERED_NODE_COLOR} !important;
+    border-radius: 4px !important;
+  }
+  
+  .react-flow__node-customNode:hover:not(.selected), .react-flow__node-resizerNode:hover:not(.selected) {
+    outline: 2px solid ${MOUSE_HOVERED_NODE_COLOR} !important;
+    outline-offset: 2px;
+  }
+  
+  /* Make the selection rectangle not capture mouse events */
+  .react-flow__nodesselection-rect {
+    pointer-events: none !important;
+    z-index: 0 !important;
+  }
+  
+  /* Ensure nodes remain clickable even when inside selection */
+  .react-flow__node {
+    pointer-events: all !important;
+    z-index: 10 !important;
   }
   
   /* Ensure ReactFlow stays within its container */
@@ -205,6 +233,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     // Apply the same styling as ReactFlow v1
     const nodesWithPositions = data.nodes.map((node) => ({
       ...node,
+      type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode", // Match main ReactFlow logic
       style: {
         background: RenderingManager.getColor(
           sceneGraph.getGraph().getNode(node.id as NodeId),
