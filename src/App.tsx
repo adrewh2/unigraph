@@ -1830,127 +1830,141 @@ const AppContentInner = ({
             }}
           />
 
-          {/* Display Config Button - only show when ForceGraph3d is active and visible */}
+          {/* Display Config Button/Panel - transforms from button to panel */}
           {activeView === "ForceGraph3d" && (
-            <button
-              onClick={() => setShowDisplayConfig(!showDisplayConfig)}
+            <div
               style={{
                 position: "absolute",
                 top: "20px",
                 right: "20px",
                 zIndex: 999999999,
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                border: "none",
-                backgroundColor: isDarkMode
-                  ? "rgba(255, 255, 255, 0.1)"
-                  : "rgba(0, 0, 0, 0.1)",
-                color: isDarkMode ? "#e2e8f0" : "#1f2937",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.2s ease",
-                backdropFilter: "blur(10px)",
-              }}
-              title="Display Configuration"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isDarkMode
-                  ? "rgba(255, 255, 255, 0.2)"
-                  : "rgba(0, 0, 0, 0.2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = isDarkMode
-                  ? "rgba(255, 255, 255, 0.1)"
-                  : "rgba(0, 0, 0, 0.1)";
+                transition: "all 0.3s ease",
+                transform: showDisplayConfig ? "scale(1)" : "scale(1)",
               }}
             >
-              <Settings2 size={20} />
-            </button>
-          )}
-
-          {/* Display Config Editor Overlay */}
-          {showDisplayConfig && activeView === "ForceGraph3d" && (
-            <div
-              ref={displayConfigEditorRef}
-              style={{
-                position: "absolute",
-                top: "70px",
-                right: "20px",
-                zIndex: 1000000000,
-                width: "320px",
-                maxWidth: "calc(100vw - 40px)",
-                maxHeight: "calc(100vh - 90px)",
-                backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
-                border: `1px solid ${isDarkMode ? "#374151" : "#d1d5db"}`,
-                borderRadius: "12px",
-                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "12px 16px",
-                  borderBottom: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
-                  backgroundColor: isDarkMode ? "#111827" : "#f9fafb",
-                }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: isDarkMode ? "#e2e8f0" : "#1f2937",
-                  }}
-                >
-                  Display Configuration
-                </h3>
+              {!showDisplayConfig ? (
+                // Button state
                 <button
-                  onClick={() => setShowDisplayConfig(false)}
+                  onClick={() => setShowDisplayConfig(true)}
                   style={{
-                    background: "none",
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
                     border: "none",
-                    color: isDarkMode ? "#9ca3af" : "#6b7280",
+                    backgroundColor: isDarkMode
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "rgba(0, 0, 0, 0.1)",
+                    color: isDarkMode ? "#e2e8f0" : "#1f2937",
                     cursor: "pointer",
-                    padding: "4px",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    lineHeight: "1",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease",
+                    backdropFilter: "blur(10px)",
                   }}
-                  title="Close"
+                  title="Display Configuration"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDarkMode
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(0, 0, 0, 0.2)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = isDarkMode
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "rgba(0, 0, 0, 0.1)";
+                  }}
                 >
-                  ×
+                  <Settings2 size={20} />
                 </button>
-              </div>
-              <div
-                style={{
-                  maxHeight: "calc(100vh - 150px)",
-                  overflowY: "auto",
-                  padding: "16px",
-                }}
-              >
-                <ForceGraphRenderConfigEditor
-                  onApply={handleApplyForceGraphConfig}
-                  isDarkMode={isDarkMode}
-                  initialConfig={
-                    currentSceneGraph?.getForceGraphRenderConfig() || {
-                      nodeTextLabels: false,
-                      linkWidth: 2,
-                      nodeSize: 6,
-                      linkTextLabels: true,
-                      nodeOpacity: 1,
-                      linkOpacity: 1,
-                      chargeStrength: -30,
-                      backgroundColor: "#1a1a1a",
-                      fontSize: 12,
-                    }
-                  }
-                />
-              </div>
+              ) : (
+                // Panel state
+                <div
+                  ref={displayConfigEditorRef}
+                  style={{
+                    width: "320px",
+                    maxWidth: "calc(100vw - 40px)",
+                    maxHeight: "calc(100vh - 40px)",
+                    backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
+                    border: `1px solid ${isDarkMode ? "#374151" : "#d1d5db"}`,
+                    borderRadius: "12px",
+                    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "12px 16px",
+                      borderBottom: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
+                      backgroundColor: isDarkMode ? "#111827" : "#f9fafb",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: isDarkMode ? "#e2e8f0" : "#1f2937",
+                      }}
+                    >
+                      Display Configuration
+                    </h3>
+                    <button
+                      onClick={() => setShowDisplayConfig(false)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: isDarkMode ? "#9ca3af" : "#6b7280",
+                        cursor: "pointer",
+                        padding: "4px",
+                        borderRadius: "4px",
+                        fontSize: "16px",
+                        lineHeight: "1",
+                        transition: "color 0.2s ease",
+                      }}
+                      title="Close"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = isDarkMode
+                          ? "#e2e8f0"
+                          : "#1f2937";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = isDarkMode
+                          ? "#9ca3af"
+                          : "#6b7280";
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      maxHeight: "calc(100vh - 100px)",
+                      overflowY: "auto",
+                      padding: "16px",
+                    }}
+                  >
+                    <ForceGraphRenderConfigEditor
+                      onApply={handleApplyForceGraphConfig}
+                      isDarkMode={isDarkMode}
+                      initialConfig={
+                        currentSceneGraph?.getForceGraphRenderConfig() || {
+                          nodeTextLabels: false,
+                          linkWidth: 2,
+                          nodeSize: 6,
+                          linkTextLabels: true,
+                          nodeOpacity: 1,
+                          linkOpacity: 1,
+                          backgroundColor: "#1a1a1a",
+                          fontSize: 12,
+                        }
+                      }
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
