@@ -9,6 +9,7 @@ import {
   Node,
   OnInit,
   OnSelectionChangeParams,
+  Position,
   ReactFlow,
   ReactFlowInstance,
   ReactFlowProvider,
@@ -17,6 +18,7 @@ import {
 } from "@xyflow/react";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { SelectionMode } from "reactflow";
+import { RenderingManager } from "../../controllers/RenderingManager";
 import {
   MOUSE_HOVERED_NODE_COLOR,
   SELECTED_NODE_COLOR,
@@ -24,8 +26,13 @@ import {
 import { NodeId, createNodeId } from "../../core/model/Node";
 import { EntityIds } from "../../core/model/entity/entityIds";
 import { exportGraphDataForReactFlow } from "../../core/react-flow/exportGraphDataForReactFlow";
+import {
+  getEdgeLegendConfig,
+  getNodeLegendConfig,
+} from "../../store/activeLegendConfigStore";
 import useAppConfigStore, {
   getCurrentSceneGraph,
+  getLegendMode,
 } from "../../store/appConfigStore";
 import { useDocumentStore } from "../../store/documentStore";
 import useGraphInteractionStore, {
@@ -179,16 +186,61 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   // Get current scene graph
   const sceneGraph = getCurrentSceneGraph();
 
+  // Get legend configurations for reactivity
+  const nodeLegendConfig = getNodeLegendConfig();
+  const edgeLegendConfig = getEdgeLegendConfig();
+  const legendMode = getLegendMode();
+
   // Get configuration from the store
   const reactFlowConfig = getReactFlowConfig();
 
-  // Export graph data for ReactFlow
+  // Export graph data for ReactFlow - using same approach as ReactFlow v1
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
     if (!sceneGraph) {
       return { nodes: [], edges: [] };
     }
-    return exportGraphDataForReactFlow(sceneGraph);
-  }, [sceneGraph]);
+
+    const data = exportGraphDataForReactFlow(sceneGraph);
+
+    // Apply the same styling as ReactFlow v1
+    const nodesWithPositions = data.nodes.map((node) => ({
+      ...node,
+      style: {
+        background: RenderingManager.getColor(
+          sceneGraph.getGraph().getNode(node.id as NodeId),
+          nodeLegendConfig,
+          legendMode
+        ),
+      },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
+    }));
+
+    const edgesWithStyling = data.edges.map((edge) => ({
+      ...edge,
+      type: "default",
+      style: {
+        stroke: RenderingManager.getColor(
+          sceneGraph.getGraph().getEdge(edge.id as EdgeId),
+          edgeLegendConfig,
+          legendMode
+        ),
+      },
+      labelStyle: {
+        fill: RenderingManager.getColor(
+          sceneGraph.getGraph().getEdge(edge.id as EdgeId),
+          edgeLegendConfig,
+          legendMode
+        ),
+        fontWeight: 700,
+      },
+    }));
+
+    return {
+      nodes: nodesWithPositions,
+      edges: edgesWithStyling,
+    };
+  }, [sceneGraph, nodeLegendConfig, edgeLegendConfig, legendMode]);
 
   // PRE-PROCESS nodes to include selection state from global store
   const processedNodes = useMemo(() => {
