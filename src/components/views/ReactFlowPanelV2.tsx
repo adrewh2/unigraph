@@ -370,7 +370,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   // Handle node interactions
   const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     event.stopPropagation();
-    console.log('Node clicked:', node.id);
+    console.log("Node clicked:", node.id);
     selectionChangeRef.current = true;
 
     const nodeId = createNodeId(node.id);
@@ -378,7 +378,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     setSelectedNodeIds(new EntityIds([nodeId]));
 
     // Open the node details panel
-    setRightActiveSection("node-details");
+    // setRightActiveSection("node-details");
 
     // Don't manually update ReactFlow nodes - let ReactFlow handle selection state
     // The manual update was causing conflicts with the selection change handler
@@ -406,17 +406,17 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
 
   const handleSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
-      console.log('handleSelectionChange called with:', params);
-      
+      console.log("handleSelectionChange called with:", params);
+
       // Skip if this selection change was triggered by our node click handler
       if (selectionChangeRef.current) {
         selectionChangeRef.current = false;
-        console.log('Skipping selection change - triggered by node click');
+        console.log("Skipping selection change - triggered by node click");
         return;
       }
 
       if (!params.nodes || params.nodes.length === 0) {
-        console.log('Clearing selection in handleSelectionChange');
+        console.log("Clearing selection in handleSelectionChange");
         setSelectedNodeIds(new EntityIds([]));
         setSelectedNodeId(null);
         return;
@@ -425,24 +425,27 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       const newSelectedNodeIds = new EntityIds(
         params.nodes.map((node) => createNodeId(node.id))
       );
-      console.log('Setting selection from handleSelectionChange:', newSelectedNodeIds);
+      console.log(
+        "Setting selection from handleSelectionChange:",
+        newSelectedNodeIds
+      );
       setSelectedNodeIds(newSelectedNodeIds);
 
       if (params.nodes.length === 1) {
         // Single node selection
-        console.log('Single node selection - setting selected node ID');
+        console.log("Single node selection - setting selected node ID");
         setSelectedNodeId(createNodeId(params.nodes[0].id));
       }
       // For multi-node selection, don't touch the single node ID at all
-      
+
       // Always open the node details panel for any selection
-      setRightActiveSection("node-details");
+      // setRightActiveSection("node-details");
     },
     []
   );
 
   const handlePaneClick = useCallback(() => {
-    console.log('Pane clicked - clearing selection');
+    console.log("Pane clicked - clearing selection");
     // Clear selection in global store for both single and multi-select
     setSelectedNodeId(null);
     setSelectedNodeIds(new EntityIds([]));

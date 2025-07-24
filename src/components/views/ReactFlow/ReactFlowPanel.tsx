@@ -233,7 +233,7 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
     setSelectedNodeId(node.id as NodeId);
 
     // Open the node details panel
-    setRightActiveSection("node-details");
+    // setRightActiveSection("node-details");
 
     // Update the ReactFlow nodes directly to show selection immediately
     if (reactFlowInstance.current) {
@@ -289,12 +289,12 @@ const ReactFlowPanel: React.FC<ReactFlowPanelProps> = ({
       if (selectedNodes.length === 1) {
         // Single node selection
         setSelectedNodeId(selectedNodes[0].id as NodeId);
-        setRightActiveSection("node-details");
+        // setRightActiveSection("node-details");
       } else {
         // Multi-node selection
         const nodeIds = selectedNodes.map((node) => node.id as NodeId);
         setSelectedNodeIds(new EntityIds(nodeIds));
-        setRightActiveSection("node-details");
+        // setRightActiveSection("node-details");
       }
     },
     []
