@@ -1,4 +1,9 @@
+import { SceneGraph } from "@/core/model/SceneGraph";
 import { getActiveView, getCurrentSceneGraph } from "@/store/appConfigStore";
+import {
+  getSelectedNodeId,
+  getSelectedNodeIds,
+} from "@/store/graphInteractionStore";
 import { useWorkspace } from "@aesgraph/app-shell";
 import "@aesgraph/app-shell/app-shell.css";
 import React, { useState } from "react";
@@ -11,7 +16,7 @@ import AppShellView from "./views/AppShellView";
 // Props interface that matches what Workspace needs
 interface WorkspaceV2Props {
   menuConfig: any;
-  currentSceneGraph: any;
+  currentSceneGraph: SceneGraph;
   isDarkMode: boolean;
   selectedSimulation: string;
   simulations: any;
@@ -261,6 +266,30 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
             <span className={styles.workspaceLabel}>Workspace:</span>
             <span className={styles.workspaceName}>
               {currentWorkspace?.name || "Default"}
+            </span>
+          </div>
+
+          {/* Selection Status */}
+          <div className={styles.selectionButton}>
+            <span className={styles.selectionLabel}>Selection:</span>
+            <span className={styles.selectionName}>
+              {(() => {
+                const selectedNodeId = getSelectedNodeId();
+                const selectedNodeIds = getSelectedNodeIds();
+
+                if (selectedNodeIds.size === 0) {
+                  return "None";
+                } else if (selectedNodeIds.size === 1) {
+                  // Show the node name if available, otherwise the ID
+                  const nodeId =
+                    selectedNodeId || Array.from(selectedNodeIds)[0];
+                  const node = currentSceneGraph?.getGraph()?.getNode(nodeId);
+                  return node?.getLabel() || nodeId;
+                } else {
+                  // Show count for multiple selections
+                  return `${selectedNodeIds.size} nodes`;
+                }
+              })()}
             </span>
           </div>
 
