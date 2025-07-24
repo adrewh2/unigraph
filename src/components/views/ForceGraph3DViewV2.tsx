@@ -39,16 +39,23 @@ const ForceGraph3DViewV2: React.FC = () => {
     }
   }, []);
 
-  // Efficient refresh using ForceGraphManager.refreshForceGraphInstance
+  // Efficient color-only refresh that doesn't reset camera position
   const refreshColors = useCallback(() => {
     if (graphRef.current) {
-      const sceneGraph = getCurrentSceneGraph();
-      if (sceneGraph) {
-        ForceGraphManager.refreshForceGraphInstance(
-          graphRef.current,
-          sceneGraph
-        );
-      }
+      // Force complete refresh of all node and link appearances without resetting camera
+      graphRef.current.nodeColor(graphRef.current.nodeColor());
+      graphRef.current.linkColor(graphRef.current.linkColor());
+      graphRef.current.linkWidth(graphRef.current.linkWidth());
+
+      // Add explicit refresh to ensure immediate visual update
+      requestAnimationFrame(() => {
+        if (
+          graphRef.current &&
+          typeof graphRef.current.refresh === "function"
+        ) {
+          graphRef.current.refresh();
+        }
+      });
     }
   }, []); // No dependencies needed - color functions access global store directly
 
