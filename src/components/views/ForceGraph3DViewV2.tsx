@@ -1,30 +1,13 @@
-import ForceGraph3D from "3d-force-graph";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
-import { RenderingManager } from "../../controllers/RenderingManager";
 import { ForceGraphManager } from "../../core/force-graph/ForceGraphManager";
-import { NodeId } from "../../core/model/Node";
-import { EntityIds } from "../../core/model/entity/entityIds";
-import { exportGraphDataForReactFlow } from "../../core/react-flow/exportGraphDataForReactFlow";
-import {
-  getEdgeLegendConfig,
-  getNodeLegendConfig,
-} from "../../store/activeLegendConfigStore";
-import {
-  getCurrentSceneGraph,
-  getLegendMode,
-} from "../../store/appConfigStore";
-import useGraphInteractionStore, {
-  setHoveredNodeId,
-} from "../../store/graphInteractionStore";
-
-// Constants for hover and selection colors
-const MOUSE_HOVERED_NODE_COLOR = "rgb(243, 255, 16)";
-const SELECTED_NODE_COLOR = "rgb(255, 255, 255)";
+import { getCurrentSceneGraph } from "../../store/appConfigStore";
+import useGraphInteractionStore from "../../store/graphInteractionStore";
+import { initializeForceGraphInstance } from "../../utils/forceGraphInitializer";
 
 /**
  * ForceGraph3DViewV2 - A clean, production-ready 3D force-directed graph component
- * Uses AppContext for consistent event handling
+ * Uses existing utilities to avoid code duplication
  */
 const ForceGraph3DViewV2: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,11 +18,6 @@ const ForceGraph3DViewV2: React.FC = () => {
   // Get reactive selection state from the store
   const { selectedNodeIds, hoveredNodeIds, hoveredEdgeIds } =
     useGraphInteractionStore();
-
-  // Get current legend configurations for reactivity
-  const nodeLegendConfig = getNodeLegendConfig();
-  const edgeLegendConfig = getEdgeLegendConfig();
-  const legendMode = getLegendMode();
 
   // Get event handlers from AppContext
   const {
@@ -133,107 +111,22 @@ const ForceGraph3DViewV2: React.FC = () => {
     }
 
     try {
-      // Get scene graph data
-      const { nodes: sceneNodes, edges: sceneEdges } =
-        exportGraphDataForReactFlow(sceneGraph);
-
-      if (sceneNodes.length === 0) {
-        return;
-      }
-
-      // Convert to ForceGraph3D format
-      const forceGraphNodes = sceneNodes.map((node) => {
-        const sceneNode = sceneGraph.getGraph().getNode(node.id as any);
-        const position = sceneNode.getPosition();
-        return {
-          id: node.id,
-          x: position.x || 0,
-          y: position.y || 0,
-          z: position.z || 0,
-        };
+      // Use initializeForceGraphInstance to create the graph
+      const forceGraphInstance = initializeForceGraphInstance({
+        container: containerRef.current,
+        sceneGraph,
+        layout: "Physics",
+        onNodesRightClick: handleNodesRightClick,
+        onBackgroundRightClick: handleBackgroundRightClick,
+        setAsMainInstance: false,
       });
-
-      const forceGraphLinks = sceneEdges.map((edge) => ({
-        source: edge.source,
-        target: edge.target,
-        id: edge.id,
-      }));
-
-      const graphData = { nodes: forceGraphNodes, links: forceGraphLinks };
-
-      // Ensure container has proper dimensions
-      const container = containerRef.current;
-      const rect = container.getBoundingClientRect();
-
-      if (rect.width === 0 || rect.height === 0) {
-        container.style.width = "100%";
-        container.style.height = "100%";
-        container.style.minHeight = "400px";
-        container.style.position = "relative";
-      }
-
-      // Create ForceGraph3D instance with proper color handling
-      const Graph = new ForceGraph3D(container)
-        .graphData(graphData)
-        .nodeColor((node) => {
-          if (hoveredNodeIds.has(node.id as NodeId)) {
-            return MOUSE_HOVERED_NODE_COLOR;
-          } else if (selectedNodeIds.has(node.id as NodeId)) {
-            return SELECTED_NODE_COLOR;
-          }
-          return RenderingManager.getColor(
-            sceneGraph.getGraph().getNode(node.id as NodeId),
-            getNodeLegendConfig(),
-            getLegendMode()
-          );
-        })
-        .linkColor((link) => {
-          if (
-            hoveredNodeIds.has((link.source as any).id) ||
-            hoveredNodeIds.has((link.target as any).id)
-          ) {
-            return "yellow";
-          }
-          if (hoveredEdgeIds.has((link as any).id)) {
-            return "white";
-          }
-          return RenderingManager.getColor(
-            sceneGraph.getGraph().getEdge((link as any).id),
-            getEdgeLegendConfig(),
-            getLegendMode()
-          );
-        })
-        .nodeLabel((node) => (node as any).id)
-        .onNodeClick((node, event) => {
-          if (node) {
-            handleNodeClick(node.id as NodeId, event);
-          }
-        })
-        .onNodeRightClick((node, event) => {
-          if (node) {
-            const nodeIds = new EntityIds([node.id as NodeId]);
-            handleNodesRightClick(event, nodeIds);
-          }
-        })
-        .onBackgroundClick((event) => {
-          handleBackgroundClick(event);
-        })
-        .onBackgroundRightClick((event) => {
-          handleBackgroundRightClick(event);
-        })
-        .onNodeHover((node) => {
-          if (node) {
-            setHoveredNodeId(node.id as NodeId);
-          } else {
-            setHoveredNodeId(null);
-          }
-        })
-        .width(rect.width || 800)
-        .height(rect.height || 600)
-        .backgroundColor("#1a1a1a");
+      ForceGraphManager.refreshForceGraphInstance(
+        forceGraphInstance,
+        sceneGraph
+      );
 
       // Store reference for cleanup and resize handling
-      graphRef.current = Graph;
+      graphRef.current = forceGraphInstance;
 
       // Set up immediate resize handling
       const resizeTimeout = setTimeout(() => {
@@ -242,8 +135,8 @@ const ForceGraph3DViewV2: React.FC = () => {
 
       // Zoom to fit after a short delay to ensure everything is rendered
       setTimeout(() => {
-        if (typeof Graph.zoomToFit === "function") {
-          Graph.zoomToFit(400, 50);
+        if (typeof forceGraphInstance.zoomToFit === "function") {
+          forceGraphInstance.zoomToFit(400, 50);
         }
         // Ensure proper sizing after zoom
         handleResize();
