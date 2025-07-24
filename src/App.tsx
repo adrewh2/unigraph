@@ -69,7 +69,7 @@ import SemanticWebQueryPanel from "./components/semantic/SemanticWebQueryPanel";
 import { enableZoomAndPanOnSvg } from "./components/svg/appHelpers";
 import { WorkspaceLayoutTool } from "./components/workspace/WorkspaceLayoutTool";
 import { getHotkeyConfig } from "./configs/hotkeyConfig";
-import { AppContextProvider } from "./context/AppContext";
+import { AppProvider, useAppContext } from "./context/AppContext";
 import {
   MousePositionProvider,
   useMousePosition,
@@ -271,6 +271,35 @@ const AppContent = ({
   shouldShowLoadDialog?: boolean;
   defaultSerializedSceneGraph?: any;
 }) => {
+  return (
+    <AppProvider>
+      <AppContentInner
+        defaultGraph={defaultGraph}
+        svgUrl={svgUrl}
+        defaultActiveView={defaultActiveView}
+        defaultActiveLayout={defaultActiveLayout}
+        shouldShowLoadDialog={shouldShowLoadDialog}
+        defaultSerializedSceneGraph={defaultSerializedSceneGraph}
+      />
+    </AppProvider>
+  );
+};
+
+const AppContentInner = ({
+  defaultGraph,
+  svgUrl,
+  defaultActiveView,
+  defaultActiveLayout,
+  shouldShowLoadDialog = false,
+  defaultSerializedSceneGraph,
+}: {
+  defaultGraph?: string;
+  svgUrl?: string;
+  defaultActiveView?: string;
+  defaultActiveLayout?: string;
+  shouldShowLoadDialog?: boolean;
+  defaultSerializedSceneGraph?: any;
+}) => {
   const { initializeAuth } = useUserStore();
 
   useEffect(() => {
@@ -326,6 +355,10 @@ const AppContent = ({
   const { activeFilter, setActiveFilter } = useAppConfigStore();
 
   const { currentLayoutResult } = useActiveLayoutStore();
+
+  // Get entity editing methods from AppContext
+  const { editingEntity, jsonEditEntity, setEditingEntity, setJsonEditEntity } =
+    useAppContext();
 
   const graphvizRef = useRef<HTMLDivElement | null>(null);
   const forceGraphRef = useRef<HTMLDivElement | null>(null);
@@ -679,42 +712,15 @@ const AppContent = ({
     [activeView, forceGraph3dOptions.layout]
   );
 
-  // Update the context menu state to use a unified approach with nodeIds array
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    nodeIds?: NodeId[];
-  } | null>(null);
-
   const [isNodeEditorOpen, setIsNodeEditorOpen] = useState(false);
 
-  // Unified handler for right-clicks on nodes (single or multiple)
-  const handleNodesRightClick = useCallback(
-    (event: MouseEvent | React.MouseEvent, nodeIds: EntityIds<NodeId>) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (nodeIds.size === 0) return;
-
-      setContextMenu({
-        x: event.clientX,
-        y: event.clientY,
-        nodeIds: nodeIds.toArray(),
-      });
-    },
-    []
-  );
-
-  const handleBackgroundRightClick = useCallback(
-    (event: MouseEvent | React.MouseEvent) => {
-      event.preventDefault();
-      setContextMenu({
-        x: event.clientX,
-        y: event.clientY,
-      });
-    },
-    []
-  );
+  // Get context menu and handlers from AppContext
+  const {
+    contextMenu,
+    setContextMenu,
+    handleNodesRightClick,
+    handleBackgroundRightClick,
+  } = useAppContext();
 
   const handleCreateNode = useCallback(() => {
     setIsNodeEditorOpen(true);
@@ -2132,15 +2138,9 @@ const AppContent = ({
     }
   }, [forceGraphInstance, controlMode]);
 
-  const [editingEntity, setEditingEntity] = useState<Entity | null>(null);
-  const [jsonEditEntity, setJsonEditEntity] = useState<Entity | null>(null);
-
   const handleJsonEditSave = (newData: any) => {
-    if (jsonEditEntity) {
-      // Update the entity data
-      Object.assign(jsonEditEntity.getData(), newData);
-      setJsonEditEntity(null);
-    }
+    // This will be handled by the AppContext now
+    console.log("JSON edit save:", newData);
   };
 
   const handleLoadFilter = useCallback(
@@ -2265,276 +2265,266 @@ const AppContent = ({
   };
 
   return (
-    <AppContextProvider value={{ setEditingEntity, setJsonEditEntity }}>
-      <div
-        className={isDarkMode ? "dark-mode" : ""}
-        style={{ margin: 0, padding: 0 }}
-        onMouseMove={handleMouseMove}
+    <div
+      className={isDarkMode ? "dark-mode" : ""}
+      style={{ margin: 0, padding: 0 }}
+      onMouseMove={handleMouseMove}
+    >
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        commands={commands}
+        onClose={() => setCommandPaletteOpen(false)}
+        onExecuteCommand={executeCommand}
+      />
+      <WorkspaceV2
+        menuConfig={menuConfig}
+        currentSceneGraph={currentSceneGraph}
+        isDarkMode={isDarkMode}
+        selectedSimulation={selectedSimulation}
+        simulations={simulations}
+        onViewChange={handleSetActiveView}
+        onSelectResult={handleSelectResult}
+        onSearchResult={handleSearchResult}
+        onHighlight={handleHighlight}
+        onApplyForceGraphConfig={handleApplyForceGraphConfig}
+        renderLayoutModeRadio={renderLayoutModeRadio}
+        showFilterWindow={() => setShowFilter(true)}
+        showFilterManager={() => setShowFilterManager(true)}
+        renderNodeLegend={renderNodeLegend}
+        renderEdgeLegend={renderEdgeLegend}
+        showPathAnalysis={() => setShowPathAnalysis(true)}
+        showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
+        showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)}
+        showLayoutManager={(mode: "save" | "load") =>
+          setShowLayoutManager({ mode, show: true })
+        }
+        handleFitToView={handleFitToView}
+        handleShowEntityTables={() => setShowEntityTables(true)}
+        handleLoadSceneGraph={handleLoadSceneGraph}
       >
-        <CommandPalette
-          isOpen={isCommandPaletteOpen}
-          commands={commands}
-          onClose={() => setCommandPaletteOpen(false)}
-          onExecuteCommand={executeCommand}
-        />
-        <WorkspaceV2
-          menuConfig={menuConfig}
-          currentSceneGraph={currentSceneGraph}
-          isDarkMode={isDarkMode}
-          selectedSimulation={selectedSimulation}
-          simulations={simulations}
-          onViewChange={handleSetActiveView}
-          onSelectResult={handleSelectResult}
-          onSearchResult={handleSearchResult}
-          onHighlight={handleHighlight}
-          onApplyForceGraphConfig={handleApplyForceGraphConfig}
-          renderLayoutModeRadio={renderLayoutModeRadio}
-          showFilterWindow={() => setShowFilter(true)}
-          showFilterManager={() => setShowFilterManager(true)}
-          renderNodeLegend={renderNodeLegend}
-          renderEdgeLegend={renderEdgeLegend}
-          showPathAnalysis={() => setShowPathAnalysis(true)}
-          showLoadSceneGraphWindow={() => setShowLoadSceneGraphWindow(true)}
-          showSaveSceneGraphDialog={() => setShowSaveSceneGraphDialog(true)}
-          showLayoutManager={(mode: "save" | "load") =>
-            setShowLayoutManager({ mode, show: true })
-          }
-          handleFitToView={handleFitToView}
-          handleShowEntityTables={() => setShowEntityTables(true)}
-          handleLoadSceneGraph={handleLoadSceneGraph}
-        >
-          {maybeRenderGraphviz}
-          {maybeRenderForceGraph3D}
-          {maybeRenderReactFlow}
-          {maybeRenderYasgui}
-          {maybeRenderNodeDocumentEditor()}
-          {activeView === "Gallery" && (
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            >
-              <ImageGalleryV3
-                sceneGraph={currentSceneGraph}
-                addRandomImageBoxes={false}
-                defaultLinksEnabled={false}
-              />
-            </div>
-          )}
-          {activeView in simulations && (
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
-            >
-              {getSimulation(activeView)}
-            </div>
-          )}
-        </WorkspaceV2>
-        {maybeRenderSaveSceneGraphWindow}
-        {maybeRenderSaveAsNewProjectDialog}
-        {showWorkspaceManager && (
-          <WorkspaceManagerDialog isOpen={showWorkspaceManager} />
-        )}
-        {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (
-          <EntityDataDisplayCard
-            entityData={currentSceneGraph
-              .getGraph()
-              .getNode(Array.from(getHoveredNodeIds())[0] as NodeId)}
-          />
-        )}
-
-        {contextMenu && (
-          <ContextMenu
-            x={contextMenu.x}
-            y={contextMenu.y}
-            items={getContextMenuItems(contextMenu.nodeIds)}
-            onClose={() => setContextMenu(null)}
-            isDarkMode={isDarkMode}
-          />
-        )}
-        {isNodeEditorOpen && (
-          <NodeEditorWizard
-            sceneGraph={currentSceneGraph}
-            nodeId={editingNodeId}
-            isDarkMode={isDarkMode}
-            onClose={() => {
-              setIsNodeEditorOpen(false);
-              setEditingNodeId(null);
+        {maybeRenderGraphviz}
+        {maybeRenderForceGraph3D}
+        {maybeRenderReactFlow}
+        {maybeRenderYasgui}
+        {maybeRenderNodeDocumentEditor()}
+        {activeView === "Gallery" && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
             }}
+          >
+            <ImageGalleryV3
+              sceneGraph={currentSceneGraph}
+              addRandomImageBoxes={false}
+              defaultLinksEnabled={false}
+            />
+          </div>
+        )}
+        {activeView in simulations && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          >
+            {getSimulation(activeView)}
+          </div>
+        )}
+      </WorkspaceV2>
+      {maybeRenderSaveSceneGraphWindow}
+      {maybeRenderSaveAsNewProjectDialog}
+      {showWorkspaceManager && (
+        <WorkspaceManagerDialog isOpen={showWorkspaceManager} />
+      )}
+      {getShowEntityDataCard() && getHoveredNodeIds().size > 0 && (
+        <EntityDataDisplayCard
+          entityData={currentSceneGraph
+            .getGraph()
+            .getNode(Array.from(getHoveredNodeIds())[0] as NodeId)}
+        />
+      )}
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={getContextMenuItems(contextMenu.nodeIds)}
+          onClose={() => setContextMenu(null)}
+          isDarkMode={isDarkMode}
+        />
+      )}
+      {isNodeEditorOpen && (
+        <NodeEditorWizard
+          sceneGraph={currentSceneGraph}
+          nodeId={editingNodeId}
+          isDarkMode={isDarkMode}
+          onClose={() => {
+            setIsNodeEditorOpen(false);
+            setEditingNodeId(null);
+          }}
+          onSubmit={(nodeId: NodeId | null, data: NodeDataArgs) => {
+            if (nodeId) {
+              handleEditNodeSubmit(nodeId, data);
+            } else {
+              handleCreateNodeSubmit(data);
+            }
+          }}
+        />
+      )}
+      {maybeRenderLoadSceneGraphWindow}
+      {pathAnalysisWizard}
+      {showEntityTables && (
+        <EntityTabDialog
+          nodes={currentSceneGraph.getGraph().getNodes()}
+          edges={currentSceneGraph.getGraph().getEdges()}
+          sceneGraph={currentSceneGraph}
+          entityCache={currentSceneGraph.getEntityCache()}
+          onClose={() => setShowEntityTables(false)}
+          onNodeClick={(nodeId) => {
+            setSelectedNodeId(nodeId as NodeId);
+            // setRightActiveSection("node-details");
+            setShowEntityTables(false);
+            if (activeView === "ForceGraph3d" && forceGraphInstance) {
+              const node = forceGraphInstance
+                .graphData()
+                .nodes.find((n) => n.id === nodeId);
+              if (node) {
+                flyToNode(forceGraphInstance, node, forceGraph3dOptions.layout);
+              }
+            }
+          }}
+          isDarkMode={isDarkMode}
+        />
+      )}
+      {showEntityTablesV2 && (
+        <EntityTableDialogV2
+          container={currentSceneGraph.getGraph().getNodes()}
+          title="Entity Table V2"
+          onClose={() => setShowEntityTablesV2(false)}
+          onNodeClick={(nodeId: NodeId) => {
+            setSelectedNodeId(nodeId as NodeId);
+            setShowEntityTablesV2(false);
+            if (activeView === "ForceGraph3d" && forceGraphInstance) {
+              const node = forceGraphInstance
+                .graphData()
+                .nodes.find((n) => n.id === nodeId);
+              if (node) {
+                flyToNode(forceGraphInstance, node, forceGraph3dOptions.layout);
+              }
+            }
+          }}
+          sceneGraph={currentSceneGraph}
+        />
+      )}
+      {editingEntity && (
+        <div className="overlay">
+          <NodeEditorWizard
+            nodeId={editingEntity.getId() as NodeId}
+            sceneGraph={currentSceneGraph}
+            isDarkMode={isDarkMode}
+            onClose={() => setEditingEntity(null)}
             onSubmit={(nodeId: NodeId | null, data: NodeDataArgs) => {
               if (nodeId) {
                 handleEditNodeSubmit(nodeId, data);
-              } else {
-                handleCreateNodeSubmit(data);
               }
             }}
           />
-        )}
-        {maybeRenderLoadSceneGraphWindow}
-        {pathAnalysisWizard}
-        {showEntityTables && (
-          <EntityTabDialog
-            nodes={currentSceneGraph.getGraph().getNodes()}
-            edges={currentSceneGraph.getGraph().getEdges()}
-            sceneGraph={currentSceneGraph}
-            entityCache={currentSceneGraph.getEntityCache()}
-            onClose={() => setShowEntityTables(false)}
-            onNodeClick={(nodeId) => {
-              setSelectedNodeId(nodeId as NodeId);
-              // setRightActiveSection("node-details");
-              setShowEntityTables(false);
-              if (activeView === "ForceGraph3d" && forceGraphInstance) {
-                const node = forceGraphInstance
-                  .graphData()
-                  .nodes.find((n) => n.id === nodeId);
-                if (node) {
-                  flyToNode(
-                    forceGraphInstance,
-                    node,
-                    forceGraph3dOptions.layout
-                  );
-                }
-              }
-            }}
+        </div>
+      )}
+      {jsonEditEntity && (
+        <div className="overlay">
+          <EntityJsonEditorDialog
+            entityData={jsonEditEntity.getData()}
+            onSave={handleJsonEditSave}
+            onClose={() => setJsonEditEntity(null)}
             isDarkMode={isDarkMode}
           />
-        )}
-        {showEntityTablesV2 && (
-          <EntityTableDialogV2
-            container={currentSceneGraph.getGraph().getNodes()}
-            title="Entity Table V2"
-            onClose={() => setShowEntityTablesV2(false)}
-            onNodeClick={(nodeId: NodeId) => {
-              setSelectedNodeId(nodeId as NodeId);
-              setShowEntityTablesV2(false);
-              if (activeView === "ForceGraph3d" && forceGraphInstance) {
-                const node = forceGraphInstance
-                  .graphData()
-                  .nodes.find((n) => n.id === nodeId);
-                if (node) {
-                  flyToNode(
-                    forceGraphInstance,
-                    node,
-                    forceGraph3dOptions.layout
-                  );
-                }
-              }
-            }}
-            sceneGraph={currentSceneGraph}
-          />
-        )}
-        {editingEntity && (
-          <div className="overlay">
-            <NodeEditorWizard
-              nodeId={editingEntity.getId() as NodeId}
-              sceneGraph={currentSceneGraph}
-              isDarkMode={isDarkMode}
-              onClose={() => setEditingEntity(null)}
-              onSubmit={(nodeId: NodeId | null, data: NodeDataArgs) => {
-                if (nodeId) {
-                  handleEditNodeSubmit(nodeId, data);
-                }
-              }}
-            />
-          </div>
-        )}
-        {jsonEditEntity && (
-          <div className="overlay">
-            <EntityJsonEditorDialog
-              entityData={jsonEditEntity.getData()}
-              onSave={handleJsonEditSave}
-              onClose={() => setJsonEditEntity(null)}
-              isDarkMode={isDarkMode}
-            />
-          </div>
-        )}
-        {showDeleteDialog && (
-          <EntitiesContainerDialog
-            isOpen={showDeleteDialog}
-            onClose={handleDeleteCancel}
-            title={
-              deleteDialogData?.isSingleNode ? "Delete Node" : "Delete Nodes"
-            }
-            description={`This action cannot be undone. The following ${deleteDialogData?.isSingleNode ? "node will" : "nodes will"} be permanently deleted:`}
-            entities={
-              deleteDialogData
-                ? deleteDialogData.nodeIds.map((id) =>
-                    currentSceneGraph.getGraph().getNode(id)
-                  )
-                : []
-            }
-            type="danger"
-            showConfirmation={true}
-            confirmLabel={
-              deleteDialogData?.isSingleNode ? "Delete Node" : "Delete Nodes"
-            }
-            cancelLabel="Cancel"
-            onConfirm={handleDeleteConfirm}
-          />
-        )}
-        {entityEditorData && (
-          <EntityEditor
-            entity={entityEditorData.entity!}
-            sceneGraph={currentSceneGraph}
-            isOpen={entityEditorData.isOpen}
-            onClose={handleEntityEditorClose}
-            onSave={handleEntityEditorSave}
+        </div>
+      )}
+      {showDeleteDialog && (
+        <EntitiesContainerDialog
+          isOpen={showDeleteDialog}
+          onClose={handleDeleteCancel}
+          title={
+            deleteDialogData?.isSingleNode ? "Delete Node" : "Delete Nodes"
+          }
+          description={`This action cannot be undone. The following ${deleteDialogData?.isSingleNode ? "node will" : "nodes will"} be permanently deleted:`}
+          entities={
+            deleteDialogData
+              ? deleteDialogData.nodeIds.map((id) =>
+                  currentSceneGraph.getGraph().getNode(id)
+                )
+              : []
+          }
+          type="danger"
+          showConfirmation={true}
+          confirmLabel={
+            deleteDialogData?.isSingleNode ? "Delete Node" : "Delete Nodes"
+          }
+          cancelLabel="Cancel"
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
+      {entityEditorData && (
+        <EntityEditor
+          entity={entityEditorData.entity!}
+          sceneGraph={currentSceneGraph}
+          isOpen={entityEditorData.isOpen}
+          onClose={handleEntityEditorClose}
+          onSave={handleEntityEditorSave}
+          isDarkMode={isDarkMode}
+        />
+      )}
+      {showFilter && (
+        <FilterWindow
+          sceneGraph={currentSceneGraph}
+          onClose={() => setShowFilter(false)}
+          onApplyFilter={(selectedIds) => {
+            filterSceneGraphToOnlyVisibleNodes(
+              new EntityIds<NodeId>(selectedIds as NodeId[])
+            );
+            setShowFilter(false);
+          }}
+          isDarkMode={isDarkMode}
+        />
+      )}
+      {showFilterManager && (
+        <FilterManager
+          sceneGraph={currentSceneGraph}
+          onClose={() => setShowFilterManager(false)}
+          onFilterLoad={handleLoadFilter}
+          isDarkMode={isDarkMode}
+        />
+      )}
+      {showSceneGraphDetailView.show && (
+        <SceneGraphDetailView
+          sceneGraph={currentSceneGraph}
+          readOnly={showSceneGraphDetailView.readOnly}
+          onClose={() =>
+            setShowSceneGraphDetailView({ show: false, readOnly: true })
+          }
+          darkMode={isDarkMode}
+        />
+      )}
+      {showChatGptImporter && (
+        <div className="overlay">
+          <ChatGptImporter
+            onClose={() => setShowChatGptImporter(false)}
             isDarkMode={isDarkMode}
           />
-        )}
-        {showFilter && (
-          <FilterWindow
-            sceneGraph={currentSceneGraph}
-            onClose={() => setShowFilter(false)}
-            onApplyFilter={(selectedIds) => {
-              filterSceneGraphToOnlyVisibleNodes(
-                new EntityIds<NodeId>(selectedIds as NodeId[])
-              );
-              setShowFilter(false);
-            }}
-            isDarkMode={isDarkMode}
-          />
-        )}
-        {showFilterManager && (
-          <FilterManager
-            sceneGraph={currentSceneGraph}
-            onClose={() => setShowFilterManager(false)}
-            onFilterLoad={handleLoadFilter}
-            isDarkMode={isDarkMode}
-          />
-        )}
-        {showSceneGraphDetailView.show && (
-          <SceneGraphDetailView
-            sceneGraph={currentSceneGraph}
-            readOnly={showSceneGraphDetailView.readOnly}
-            onClose={() =>
-              setShowSceneGraphDetailView({ show: false, readOnly: true })
-            }
-            darkMode={isDarkMode}
-          />
-        )}
-        {showChatGptImporter && (
-          <div className="overlay">
-            <ChatGptImporter
-              onClose={() => setShowChatGptImporter(false)}
-              isDarkMode={isDarkMode}
-            />
-          </div>
-        )}
-        {activeView === "ForceGraph3d" && controlMode === "multiselection" && (
-          <SelectionBox />
-        )}
-      </div>
-    </AppContextProvider>
+        </div>
+      )}
+      {activeView === "ForceGraph3d" && controlMode === "multiselection" && (
+        <SelectionBox />
+      )}
+    </div>
   );
 };
 

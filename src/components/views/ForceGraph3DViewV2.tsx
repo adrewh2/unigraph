@@ -1,7 +1,9 @@
 import ForceGraph3D from "3d-force-graph";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useAppContext } from "../../context/AppContext";
 import { RenderingManager } from "../../controllers/RenderingManager";
 import { NodeId } from "../../core/model/Node";
+import { EntityIds } from "../../core/model/entity/entityIds";
 import { exportGraphDataForReactFlow } from "../../core/react-flow/exportGraphDataForReactFlow";
 import {
   getEdgeLegendConfig,
@@ -16,6 +18,7 @@ import {
   getHoveredNodeIds,
   getSelectedNodeId,
   getSelectedNodeIds,
+  setHoveredNodeId,
 } from "../../store/graphInteractionStore";
 
 // Constants for hover and selection colors
@@ -24,13 +27,21 @@ const SELECTED_NODE_COLOR = "rgb(255, 255, 255)";
 
 /**
  * ForceGraph3DViewV2 - A clean, production-ready 3D force-directed graph component
- * Based on the working solution from our debugging process
+ * Uses AppContext for consistent event handling
  */
 const ForceGraph3DViewV2: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
   const [sceneGraphVersion, setSceneGraphVersion] = useState(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
+  // Get event handlers from AppContext
+  const {
+    handleNodesRightClick,
+    handleBackgroundRightClick,
+    handleNodeClick,
+    handleBackgroundClick,
+  } = useAppContext();
 
   // Get current legend configurations for reactivity
   const nodeLegendConfig = getNodeLegendConfig();
@@ -218,6 +229,30 @@ const ForceGraph3DViewV2: React.FC = () => {
           );
         })
         .nodeLabel((node) => (node as any).id)
+        .onNodeClick((node, event) => {
+          if (node) {
+            handleNodeClick(node.id as NodeId, event);
+          }
+        })
+        .onNodeRightClick((node, event) => {
+          if (node) {
+            const nodeIds = new EntityIds([node.id as NodeId]);
+            handleNodesRightClick(event, nodeIds);
+          }
+        })
+        .onBackgroundClick((event) => {
+          handleBackgroundClick(event);
+        })
+        .onBackgroundRightClick((event) => {
+          handleBackgroundRightClick(event);
+        })
+        .onNodeHover((node) => {
+          if (node) {
+            setHoveredNodeId(node.id as NodeId);
+          } else {
+            setHoveredNodeId(null);
+          }
+        })
         .width(rect.width || 800)
         .height(rect.height || 600)
         .backgroundColor("#1a1a1a");
@@ -255,6 +290,14 @@ const ForceGraph3DViewV2: React.FC = () => {
   }, [
     sceneGraphVersion,
     handleResize,
+    hoveredNodeIds,
+    hoveredEdgeIds,
+    selectedNodeId,
+    selectedNodeIds,
+    handleNodeClick,
+    handleNodesRightClick,
+    handleBackgroundClick,
+    handleBackgroundRightClick,
     hoveredNodeIds,
     hoveredEdgeIds,
     selectedNodeId,
