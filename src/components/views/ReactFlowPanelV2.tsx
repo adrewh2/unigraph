@@ -46,7 +46,9 @@ import {
   getReactFlowConfig,
   subscribeToReactFlowConfigChanges,
 } from "../../store/reactFlowConfigStore";
-import useWorkspaceConfigStore from "../../store/workspaceConfigStore";
+import useWorkspaceConfigStore, {
+  setRightActiveSection,
+} from "../../store/workspaceConfigStore";
 import CustomNode from "./ReactFlow/nodes/CustomNode";
 import WebpageNode from "./ReactFlow/nodes/WebpageNode";
 import ResizerNode from "./ReactFlow/nodes/resizerNode";
@@ -382,11 +384,46 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     };
   }, [selectedNodeIds, selectedEdgeIds]);
 
+  // Sync selection state from global store to ReactFlow nodes
+  useEffect(() => {
+    // Update the ReactFlow nodes directly to show selection immediately
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
+          ...n,
+          selected: selectedNodeIds.has(n.id as NodeId),
+        }))
+      );
+      reactFlowInstance.current.setEdges((currentEdges) =>
+        currentEdges.map((e) => ({
+          ...e,
+          selected: selectedEdgeIds.has(e.id as EdgeId),
+        }))
+      );
+    }
+  }, [selectedNodeIds, selectedEdgeIds]);
+
   // Handle node interactions
   const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    event.stopPropagation();
+    selectionChangeRef.current = true;
+
     const nodeId = createNodeId(node.id);
     setSelectedNodeId(nodeId);
     setSelectedNodeIds(new EntityIds([nodeId]));
+
+    // Open the node details panel
+    setRightActiveSection("node-details");
+
+    // Update the ReactFlow nodes directly to show selection immediately
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
+          ...n,
+          selected: n.id === node.id,
+        }))
+      );
+    }
   }, []);
 
   const handleNodeMouseEnter = useCallback(
@@ -411,8 +448,16 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
 
   const handleSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
+      // Skip if this selection change was triggered by our node click handler
       if (selectionChangeRef.current) {
         selectionChangeRef.current = false;
+        return;
+      }
+
+      if (!params.nodes || params.nodes.length === 0) {
+        // Clear selection in global store
+        setSelectedNodeIds(new EntityIds([]));
+        setSelectedNodeId(null);
         return;
       }
 
@@ -422,17 +467,35 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       setSelectedNodeIds(selectedNodeIds);
 
       if (params.nodes.length === 1) {
+        // Single node selection
         setSelectedNodeId(createNodeId(params.nodes[0].id));
+        setRightActiveSection("node-details");
       } else {
+        // Multi-node selection
         setSelectedNodeId(null);
+        setRightActiveSection("node-details");
       }
     },
     []
   );
 
   const handlePaneClick = useCallback(() => {
+    // Clear selection in global store for both single and multi-select
     setSelectedNodeId(null);
     setSelectedNodeIds(new EntityIds([]));
+
+    // Update the ReactFlow nodes directly to clear selection state
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
+          ...n,
+          selected: false,
+        }))
+      );
+    }
+
+    // Close the node details panel if it's open
+    setRightActiveSection(null);
   }, []);
 
   const handleNodeContextMenu = useCallback(
