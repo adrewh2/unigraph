@@ -240,6 +240,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
           nodeLegendConfig,
           legendMode
         ),
+        color: "#000000",
       },
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
