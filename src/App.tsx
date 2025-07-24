@@ -1,3 +1,4 @@
+import { useAppShell } from "@aesgraph/app-shell";
 import { Position } from "@xyflow/react";
 import React, {
   JSX,
@@ -25,12 +26,11 @@ import EntityTabDialog from "./components/common/EntityTabDialog";
 import { GraphEntityType } from "./components/common/GraphSearch";
 import Legend from "./components/common/Legend";
 import LegendModeRadio from "./components/common/LegendModeRadio";
+import WorkspaceManagerDialog from "./components/dialogs/WorkspaceManagerDialog";
 import FilterManager from "./components/filters/FilterManager";
 import FilterWindow from "./components/filters/FilterWindow";
 import { IMenuConfigCallbacks, MenuConfig } from "./components/MenuConfig";
-import { useAppShell } from "@aesgraph/app-shell";
 import NodeEditorWizard from "./components/NodeEditorWizard";
-import WorkspaceManagerDialog from "./components/dialogs/WorkspaceManagerDialog";
 import SceneGraphDetailView from "./components/sceneGraph/SceneGraphDetailView";
 import SceneGraphTitle from "./components/sceneGraph/SceneGraphTitle";
 import WorkspaceV2 from "./components/WorkspaceV2";
@@ -42,7 +42,6 @@ import ReactFlowPanel, {
 import { debugEnvVars } from "./utils/envUtils";
 
 import { AppShellProvider } from "@aesgraph/app-shell";
-import InitialWorkspaceLoader from "./components/InitialWorkspaceLoader";
 import AudioAnnotator from "./_experimental/mp3/AudioAnnotator";
 import GravitySimulation3 from "./_experimental/webgl/simulations/GravitySimulation3";
 import SolarSystem from "./_experimental/webgl/simulations/solarSystemSimulation";
@@ -51,6 +50,7 @@ import LexicalEditorV2 from "./components/applets/Lexical/LexicalEditor";
 import StoryCardApp from "./components/applets/StoryCards/StoryCardApp";
 import WikipediaArticleViewer from "./components/applets/WikipediaViewer/WikipediaArticleViewer";
 import WikipediaArticleViewer_FactorGraph from "./components/applets/WikipediaViewer/WikipediaArticleViewer_FactorGraph";
+import { CommandProcessorProvider } from "./components/commandPalette/CommandProcessor";
 import EntitiesContainerDialog from "./components/common/EntitiesContainerDialog";
 import EntityEditor from "./components/common/EntityEditor";
 import EntityTableDialogV2 from "./components/common/EntityTableDialogV2";
@@ -61,11 +61,13 @@ import SelectionBox from "./components/common/SelectionBox";
 import { getSaveAsNewFilterMenuItem } from "./components/common/sharedContextMenuItems";
 import { getNodeContextMenuItems } from "./components/common/singleNodeContextMenuItems";
 import { LayoutComputationDialog } from "./components/dialogs/LayoutComputationDialog";
+import InitialWorkspaceLoader from "./components/InitialWorkspaceLoader";
 import NodeDocumentEditor from "./components/NodeDocumentEditor";
 import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog";
 import { SemanticWebQueryProvider } from "./components/semantic/SemanticWebQueryContext";
 import SemanticWebQueryPanel from "./components/semantic/SemanticWebQueryPanel";
 import { enableZoomAndPanOnSvg } from "./components/svg/appHelpers";
+import { WorkspaceLayoutTool } from "./components/workspace/WorkspaceLayoutTool";
 import { getHotkeyConfig } from "./configs/hotkeyConfig";
 import { AppContextProvider } from "./context/AppContext";
 import {
@@ -179,8 +181,6 @@ import useWorkspaceConfigStore, {
   setShowToolbar,
 } from "./store/workspaceConfigStore";
 import { initializeMainForceGraph } from "./utils/forceGraphInitializer";
-import { CommandProcessorProvider } from "./components/commandPalette/CommandProcessor";
-import { WorkspaceLayoutTool } from "./components/workspace/WorkspaceLayoutTool";
 // import { ThemeWorkspaceProvider } from "./components/providers/ThemeWorkspaceProvider";
 // import { Workspace as AppShellWorkspace } from "@aesgraph/app-shell";
 
@@ -1150,9 +1150,233 @@ const AppContent = ({
     currentSceneGraph,
   ]);
 
+  const { saveCurrentLayout, applyWorkspaceLayout, getAllWorkspaces } =
+    useAppShell();
+
+  // Add state to track the last saved workspace layout
+  const [lastWorkspaceLayout, setLastWorkspaceLayout] = useState<string | null>(
+    null
+  );
+
+  // Initialize lastWorkspaceLayout from localStorage on mount
+  useEffect(() => {
+    const savedLayoutId = localStorage.getItem(
+      "unigraph-last-workspace-layout"
+    );
+    if (savedLayoutId) {
+      console.log(
+        "Restored workspace layout ID from localStorage:",
+        savedLayoutId
+      );
+      setLastWorkspaceLayout(savedLayoutId);
+    }
+  }, []);
+
+  // Save workspace layout ID to localStorage whenever it changes
+  useEffect(() => {
+    if (lastWorkspaceLayout) {
+      localStorage.setItem(
+        "unigraph-last-workspace-layout",
+        lastWorkspaceLayout
+      );
+      console.log(
+        "Saved workspace layout ID to localStorage:",
+        lastWorkspaceLayout
+      );
+    } else {
+      localStorage.removeItem("unigraph-last-workspace-layout");
+      console.log("Removed workspace layout ID from localStorage");
+    }
+  }, [lastWorkspaceLayout]);
+
+  // Clean up old auto-saved layouts on component mount
+  useEffect(() => {
+    const cleanupOldAutoSaves = async () => {
+      try {
+        const workspaces = getAllWorkspaces();
+        const autoSaveWorkspaces = workspaces.filter((w) =>
+          w.name.startsWith("auto-save-")
+        );
+
+        // Keep only the most recent auto-save and remove older ones
+        if (autoSaveWorkspaces.length > 1) {
+          const sortedWorkspaces = autoSaveWorkspaces.sort((a, b) => {
+            const aTime = parseInt(a.name.split("-")[2]);
+            const bTime = parseInt(b.name.split("-")[2]);
+            return bTime - aTime; // Most recent first
+          });
+
+          // Remove all but the most recent
+          for (let i = 1; i < sortedWorkspaces.length; i++) {
+            // Note: We don't have a delete function in the current API
+            // This would need to be implemented in the app-shell
+            console.log(
+              "Would remove old auto-save:",
+              sortedWorkspaces[i].name
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error cleaning up old auto-saves:", error);
+      }
+    };
+
+    cleanupOldAutoSaves();
+  }, [getAllWorkspaces]);
+
   const handleSetActiveView = useCallback(
     (key: string, fitToView: boolean = false) => {
       console.log("Setting active view", key);
+      const currentView = getActiveView();
+
+      // If we're currently in AppShell view and switching to a different view,
+      // save the current workspace layout
+      if (currentView === "AppShell" && key !== "AppShell") {
+        const workspaceName = `auto-save-${Date.now()}`;
+        console.log("Saving workspace layout with name:", workspaceName);
+        saveCurrentLayout(workspaceName)
+          .then((result) => {
+            console.log("Save result:", result);
+            // Store the workspace ID if available, otherwise use the name
+            const workspaceId = result?.id || workspaceName;
+            setLastWorkspaceLayout(workspaceId);
+            console.log(
+              "Saved workspace layout before switching to:",
+              key,
+              "ID:",
+              workspaceId
+            );
+            addNotification({
+              message: "Workspace layout saved",
+              type: "info",
+              duration: 2000,
+            });
+          })
+          .catch((error) => {
+            console.error("Failed to save workspace layout:", error);
+            addNotification({
+              message: "Failed to save workspace layout",
+              type: "error",
+              duration: 3000,
+            });
+          });
+      }
+
+      // If we're switching to AppShell view and we have a saved layout, restore it
+      if (key === "AppShell" && lastWorkspaceLayout) {
+        console.log(
+          "Attempting to restore workspace layout:",
+          lastWorkspaceLayout
+        );
+
+        // First, let's check if the workspace exists
+        const workspaces = getAllWorkspaces();
+        console.log("Available workspaces:", workspaces);
+
+        const targetWorkspace = workspaces.find(
+          (w) => w.id === lastWorkspaceLayout || w.name === lastWorkspaceLayout
+        );
+
+        if (!targetWorkspace) {
+          console.warn("Target workspace not found:", lastWorkspaceLayout);
+          addNotification({
+            message: "Workspace layout not found",
+            type: "warning",
+            duration: 3000,
+          });
+          // Clear the invalid layout reference
+          setLastWorkspaceLayout(null);
+          return;
+        }
+
+        console.log("Found target workspace:", targetWorkspace);
+
+        // Small delay to ensure the AppShell view is mounted
+        setTimeout(() => {
+          applyWorkspaceLayout(targetWorkspace.id)
+            .then((success) => {
+              if (success) {
+                console.log("Restored workspace layout:", targetWorkspace.name);
+                addNotification({
+                  message: "Workspace layout restored",
+                  type: "success",
+                  duration: 2000,
+                });
+              } else {
+                console.warn(
+                  "Failed to restore workspace layout:",
+                  targetWorkspace.name
+                );
+                addNotification({
+                  message: "Failed to restore workspace layout",
+                  type: "warning",
+                  duration: 3000,
+                });
+
+                // Try to load a default workspace as fallback
+                console.log("Attempting to load default workspace as fallback");
+                applyWorkspaceLayout("clean-workspace")
+                  .then((fallbackSuccess) => {
+                    if (fallbackSuccess) {
+                      console.log("Loaded default workspace as fallback");
+                      addNotification({
+                        message: "Loaded default workspace layout",
+                        type: "info",
+                        duration: 2000,
+                      });
+                    } else {
+                      console.warn(
+                        "Failed to load default workspace as fallback"
+                      );
+                    }
+                  })
+                  .catch((fallbackError) => {
+                    console.error(
+                      "Error loading default workspace:",
+                      fallbackError
+                    );
+                  });
+              }
+            })
+            .catch((error) => {
+              console.error("Error restoring workspace layout:", error);
+              addNotification({
+                message: `Error restoring workspace layout: ${error.message || "Unknown error"}`,
+                type: "error",
+                duration: 3000,
+              });
+
+              // Try to load a default workspace as fallback
+              console.log(
+                "Attempting to load default workspace as fallback after error"
+              );
+              applyWorkspaceLayout("clean-workspace")
+                .then((fallbackSuccess) => {
+                  if (fallbackSuccess) {
+                    console.log(
+                      "Loaded default workspace as fallback after error"
+                    );
+                    addNotification({
+                      message: "Loaded default workspace layout",
+                      type: "info",
+                      duration: 2000,
+                    });
+                  } else {
+                    console.warn(
+                      "Failed to load default workspace as fallback after error"
+                    );
+                  }
+                })
+                .catch((fallbackError) => {
+                  console.error(
+                    "Error loading default workspace after error:",
+                    fallbackError
+                  );
+                });
+            });
+        }, 100);
+      }
+
       setActiveView(key);
       if (fitToView) {
         handleFitToView(key);
@@ -1161,7 +1385,13 @@ const AppContent = ({
       url.searchParams.set("view", key);
       window.history.pushState({}, "", url.toString());
     },
-    [handleFitToView, setActiveView]
+    [
+      handleFitToView,
+      setActiveView,
+      saveCurrentLayout,
+      applyWorkspaceLayout,
+      lastWorkspaceLayout,
+    ]
   );
 
   const GraphMenuActions = useCallback(() => {
@@ -1244,9 +1474,6 @@ const AppContent = ({
   //   },
   //   [currentSceneGraph, forceGraphInstance, activeView]
   // );
-
-  const { saveCurrentLayout, applyWorkspaceLayout, getAllWorkspaces } =
-    useAppShell();
 
   const menuConfigInstance = useMemo(() => {
     const menuConfigCallbacks: IMenuConfigCallbacks = {
