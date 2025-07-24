@@ -36,8 +36,6 @@ import useAppConfigStore, {
 } from "../../store/appConfigStore";
 import { useDocumentStore } from "../../store/documentStore";
 import useGraphInteractionStore, {
-  getSelectedNodeId,
-  getSelectedNodeIds,
   setHoveredNodeId,
   setSelectedNodeId,
   setSelectedNodeIds,
@@ -100,21 +98,6 @@ nodeStyles.textContent = `
     pointer-events: all !important;
     z-index: 10 !important;
   }
-  
-  /* Ensure ReactFlow stays within its container */
-  .react-flow-panel-v2-container .react-flow {
-    position: relative !important;
-    width: 100% !important;
-    height: 100% !important;
-  }
-  
-  .react-flow-panel-v2-container .react-flow__viewport {
-    position: relative !important;
-  }
-  
-  .react-flow-panel-v2-container .react-flow__pane {
-    position: relative !important;
-  }
 `;
 
 // ReactFlow styles component
@@ -130,20 +113,13 @@ const ReactFlowStyles: React.FC<{ theme: any }> = ({ theme }) => {
         box-shadow: 0 0 0 2px ${MOUSE_HOVERED_NODE_COLOR} !important;
       }
       
-      /* Ensure ReactFlow stays within its container */
+      /* Ensure ReactFlow stays within its container - but don't override positioning */
       .react-flow-panel-v2-container .react-flow {
-        position: relative !important;
         width: 100% !important;
         height: 100% !important;
       }
       
-      .react-flow-panel-v2-container .react-flow__viewport {
-        position: relative !important;
-      }
-      
-      .react-flow-panel-v2-container .react-flow__pane {
-        position: relative !important;
-      }
+      /* Don't override viewport and pane positioning as it breaks drag selection */
       
       /* Theme the ReactFlow controls */
       .react-flow-panel-v2-container .react-flow__controls {
@@ -274,15 +250,11 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     };
   }, [sceneGraph, nodeLegendConfig, edgeLegendConfig, legendMode]);
 
-  // PRE-PROCESS nodes to include selection state from global store
+  // PRE-PROCESS nodes without selection state - let ReactFlow handle selection internally
   const processedNodes = useMemo(() => {
-    const selectedNodeId = getSelectedNodeId();
-    const selectedNodeIds = getSelectedNodeIds();
-
     return initialNodes.map((node) => ({
       ...node,
-      selected:
-        node.id === selectedNodeId || selectedNodeIds.has(node.id as NodeId),
+      selected: false, // Let ReactFlow manage selection state
     }));
   }, [initialNodes]);
 
@@ -308,6 +280,14 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     },
     [originalOnEdgesChange]
   );
+
+  // Add the selection styles to the document head
+  useEffect(() => {
+    document.head.appendChild(nodeStyles);
+    return () => {
+      document.head.removeChild(nodeStyles);
+    };
+  }, []);
 
   // Update nodes when processedNodes change
   useEffect(() => {
@@ -384,28 +364,13 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     };
   }, [selectedNodeIds, selectedEdgeIds]);
 
-  // Sync selection state from global store to ReactFlow nodes
-  useEffect(() => {
-    // Update the ReactFlow nodes directly to show selection immediately
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.setNodes((currentNodes) =>
-        currentNodes.map((n) => ({
-          ...n,
-          selected: selectedNodeIds.has(n.id as NodeId),
-        }))
-      );
-      reactFlowInstance.current.setEdges((currentEdges) =>
-        currentEdges.map((e) => ({
-          ...e,
-          selected: selectedEdgeIds.has(e.id as EdgeId),
-        }))
-      );
-    }
-  }, [selectedNodeIds, selectedEdgeIds]);
+  // Don't sync selection state automatically - let ReactFlow and our handlers manage it
+  // The sync effect was causing conflicts with ReactFlow's internal selection management
 
   // Handle node interactions
   const handleNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     event.stopPropagation();
+    console.log('Node clicked:', node.id);
     selectionChangeRef.current = true;
 
     const nodeId = createNodeId(node.id);
@@ -415,15 +380,8 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     // Open the node details panel
     setRightActiveSection("node-details");
 
-    // Update the ReactFlow nodes directly to show selection immediately
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.setNodes((currentNodes) =>
-        currentNodes.map((n) => ({
-          ...n,
-          selected: n.id === node.id,
-        }))
-      );
-    }
+    // Don't manually update ReactFlow nodes - let ReactFlow handle selection state
+    // The manual update was causing conflicts with the selection change handler
   }, []);
 
   const handleNodeMouseEnter = useCallback(
@@ -448,51 +406,49 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
 
   const handleSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
+      console.log('handleSelectionChange called with:', params);
+      
       // Skip if this selection change was triggered by our node click handler
       if (selectionChangeRef.current) {
         selectionChangeRef.current = false;
+        console.log('Skipping selection change - triggered by node click');
         return;
       }
 
       if (!params.nodes || params.nodes.length === 0) {
-        // Clear selection in global store
+        console.log('Clearing selection in handleSelectionChange');
         setSelectedNodeIds(new EntityIds([]));
         setSelectedNodeId(null);
         return;
       }
 
-      const selectedNodeIds = new EntityIds(
+      const newSelectedNodeIds = new EntityIds(
         params.nodes.map((node) => createNodeId(node.id))
       );
-      setSelectedNodeIds(selectedNodeIds);
+      console.log('Setting selection from handleSelectionChange:', newSelectedNodeIds);
+      setSelectedNodeIds(newSelectedNodeIds);
 
       if (params.nodes.length === 1) {
         // Single node selection
+        console.log('Single node selection - setting selected node ID');
         setSelectedNodeId(createNodeId(params.nodes[0].id));
-        setRightActiveSection("node-details");
-      } else {
-        // Multi-node selection
-        setSelectedNodeId(null);
-        setRightActiveSection("node-details");
       }
+      // For multi-node selection, don't touch the single node ID at all
+      
+      // Always open the node details panel for any selection
+      setRightActiveSection("node-details");
     },
     []
   );
 
   const handlePaneClick = useCallback(() => {
+    console.log('Pane clicked - clearing selection');
     // Clear selection in global store for both single and multi-select
     setSelectedNodeId(null);
     setSelectedNodeIds(new EntityIds([]));
 
-    // Update the ReactFlow nodes directly to clear selection state
-    if (reactFlowInstance.current) {
-      reactFlowInstance.current.setNodes((currentNodes) =>
-        currentNodes.map((n) => ({
-          ...n,
-          selected: false,
-        }))
-      );
-    }
+    // Don't manually update ReactFlow nodes - let ReactFlow handle selection clearing
+    // The manual update was causing conflicts
 
     // Close the node details panel if it's open
     setRightActiveSection(null);
