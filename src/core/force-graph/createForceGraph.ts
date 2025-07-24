@@ -84,6 +84,7 @@ export const createForceGraph = (
     .nodeLabel("label")
     .nodeColor((node) => {
       if (getHoveredNodeIds().has(node.id as NodeId)) {
+        console.log("hovered node is ", node.id);
         return MOUSE_HOVERED_NODE_COLOR;
       } else if (
         getSelectedNodeId() === node.id ||

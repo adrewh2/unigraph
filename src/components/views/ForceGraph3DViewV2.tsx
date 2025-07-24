@@ -52,6 +52,13 @@ const ForceGraph3DViewV2: React.FC = () => {
     }
   }, []); // No dependencies needed - color functions access global store directly
 
+  // React to selection state changes from other views
+  useEffect(() => {
+    if (graphRef.current) {
+      refreshColors();
+    }
+  }, [selectedNodeIds, hoveredNodeIds, hoveredEdgeIds, refreshColors]);
+
   // Watch for scene graph changes
   useEffect(() => {
     let lastSceneGraphId: string | null = null;
