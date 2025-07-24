@@ -183,22 +183,17 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const selectionChangeRef = useRef(false);
 
+  const sceneGraph = getCurrentSceneGraph();
+  const reactFlowConfig = getReactFlowConfig();
+  const { setActiveDocument } = useDocumentStore();
   const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
   const { getActiveSection } = useWorkspaceConfigStore();
-  const { setActiveDocument } = useDocumentStore();
-  const { setActiveView, activeView, setReactFlowInstance } =
-    useAppConfigStore();
-
-  // Get current scene graph
-  const sceneGraph = getCurrentSceneGraph();
+  const { setActiveView: setAppActiveView, activeView } = useAppConfigStore();
 
   // Get legend configurations for reactivity
   const nodeLegendConfig = getNodeLegendConfig();
   const edgeLegendConfig = getEdgeLegendConfig();
   const legendMode = getLegendMode();
-
-  // Get configuration from the store
-  const reactFlowConfig = getReactFlowConfig();
 
   // Export graph data for ReactFlow - using same approach as ReactFlow v1
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
@@ -303,7 +298,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const handleInit: OnInit = useCallback(
     (instance: ReactFlowInstance) => {
       reactFlowInstance.current = instance;
-      setReactFlowInstance(instance);
+      // setReactFlowInstance(instance); // This line was removed as per the edit hint
 
       // Custom fit view for large graphs
       setTimeout(() => {
@@ -324,7 +319,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
         }
       }, 100);
     },
-    [setReactFlowInstance, nodes.length]
+    [nodes.length]
   );
 
   // Subscribe to ReactFlowConfig changes
@@ -364,6 +359,25 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     };
   }, [selectedNodeIds, selectedEdgeIds]);
 
+  // Critical effect: Update ReactFlow nodes when global selection state changes
+  // This ensures selections from other views (like ForceGraph3D) are reflected here
+  useEffect(() => {
+    if (reactFlowInstance.current) {
+      reactFlowInstance.current.setNodes((currentNodes) =>
+        currentNodes.map((n) => ({
+          ...n,
+          selected: selectedNodeIds.has(n.id as NodeId),
+        }))
+      );
+      reactFlowInstance.current.setEdges((currentEdges) =>
+        currentEdges.map((e) => ({
+          ...e,
+          selected: selectedEdgeIds.has(e.id as EdgeId),
+        }))
+      );
+    }
+  }, [selectedNodeIds, selectedEdgeIds]);
+
   // Don't sync selection state automatically - let ReactFlow and our handlers manage it
   // The sync effect was causing conflicts with ReactFlow's internal selection management
 
@@ -398,10 +412,10 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const handleNodeDoubleClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
       // Open document editor for the node
-      setActiveDocument(createNodeId(node.id));
-      setActiveView("document-editor");
+      setActiveDocument(node.id as NodeId);
+      setAppActiveView("document-editor");
     },
-    [setActiveDocument, setActiveView]
+    [setActiveDocument, setAppActiveView]
   );
 
   const handleSelectionChange = useCallback(

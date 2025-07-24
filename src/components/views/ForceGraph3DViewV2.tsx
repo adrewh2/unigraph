@@ -2,6 +2,7 @@ import ForceGraph3D from "3d-force-graph";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { RenderingManager } from "../../controllers/RenderingManager";
+import { ForceGraphManager } from "../../core/force-graph/ForceGraphManager";
 import { NodeId } from "../../core/model/Node";
 import { EntityIds } from "../../core/model/entity/entityIds";
 import { exportGraphDataForReactFlow } from "../../core/react-flow/exportGraphDataForReactFlow";
@@ -13,11 +14,7 @@ import {
   getCurrentSceneGraph,
   getLegendMode,
 } from "../../store/appConfigStore";
-import {
-  getHoveredEdgeIds,
-  getHoveredNodeIds,
-  getSelectedNodeId,
-  getSelectedNodeIds,
+import useGraphInteractionStore, {
   setHoveredNodeId,
 } from "../../store/graphInteractionStore";
 
@@ -35,6 +32,15 @@ const ForceGraph3DViewV2: React.FC = () => {
   const [sceneGraphVersion, setSceneGraphVersion] = useState(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
+  // Get reactive selection state from the store
+  const { selectedNodeIds, hoveredNodeIds, hoveredEdgeIds } =
+    useGraphInteractionStore();
+
+  // Get current legend configurations for reactivity
+  const nodeLegendConfig = getNodeLegendConfig();
+  const edgeLegendConfig = getEdgeLegendConfig();
+  const legendMode = getLegendMode();
+
   // Get event handlers from AppContext
   const {
     handleNodesRightClick,
@@ -42,17 +48,6 @@ const ForceGraph3DViewV2: React.FC = () => {
     handleNodeClick,
     handleBackgroundClick,
   } = useAppContext();
-
-  // Get current legend configurations for reactivity
-  const nodeLegendConfig = getNodeLegendConfig();
-  const edgeLegendConfig = getEdgeLegendConfig();
-  const legendMode = getLegendMode();
-
-  // Get current interaction states for reactivity
-  const hoveredNodeIds = getHoveredNodeIds();
-  const hoveredEdgeIds = getHoveredEdgeIds();
-  const selectedNodeId = getSelectedNodeId();
-  const selectedNodeIds = getSelectedNodeIds();
 
   // Handle resize events
   const handleResize = useCallback(() => {
@@ -66,35 +61,18 @@ const ForceGraph3DViewV2: React.FC = () => {
     }
   }, []);
 
-  // Refresh colors when legend configuration changes
+  // Efficient refresh using ForceGraphManager.refreshForceGraphInstance
   const refreshColors = useCallback(() => {
     if (graphRef.current) {
       const sceneGraph = getCurrentSceneGraph();
-      if (!sceneGraph) return;
-
-      // Force refresh of colors by calling the color functions again
-      graphRef.current.nodeColor(graphRef.current.nodeColor());
-      graphRef.current.linkColor(graphRef.current.linkColor());
-
-      // Force a refresh of the graph
-      requestAnimationFrame(() => {
-        if (
-          graphRef.current &&
-          typeof graphRef.current.refresh === "function"
-        ) {
-          graphRef.current.refresh();
-        }
-      });
+      if (sceneGraph) {
+        ForceGraphManager.refreshForceGraphInstance(
+          graphRef.current,
+          sceneGraph
+        );
+      }
     }
-  }, [
-    nodeLegendConfig,
-    edgeLegendConfig,
-    legendMode,
-    hoveredNodeIds,
-    hoveredEdgeIds,
-    selectedNodeId,
-    selectedNodeIds,
-  ]);
+  }, []); // No dependencies needed - color functions access global store directly
 
   // Watch for scene graph changes
   useEffect(() => {
@@ -200,10 +178,7 @@ const ForceGraph3DViewV2: React.FC = () => {
         .nodeColor((node) => {
           if (hoveredNodeIds.has(node.id as NodeId)) {
             return MOUSE_HOVERED_NODE_COLOR;
-          } else if (
-            selectedNodeId === node.id ||
-            selectedNodeIds.has(node.id as NodeId)
-          ) {
+          } else if (selectedNodeIds.has(node.id as NodeId)) {
             return SELECTED_NODE_COLOR;
           }
           return RenderingManager.getColor(
@@ -290,18 +265,10 @@ const ForceGraph3DViewV2: React.FC = () => {
   }, [
     sceneGraphVersion,
     handleResize,
-    hoveredNodeIds,
-    hoveredEdgeIds,
-    selectedNodeId,
-    selectedNodeIds,
     handleNodeClick,
     handleNodesRightClick,
     handleBackgroundClick,
     handleBackgroundRightClick,
-    hoveredNodeIds,
-    hoveredEdgeIds,
-    selectedNodeId,
-    selectedNodeIds,
   ]);
 
   return (
