@@ -1,5 +1,6 @@
 import { useAppShell } from "@aesgraph/app-shell";
 import { Position } from "@xyflow/react";
+import { Settings2 } from "lucide-react";
 import React, {
   JSX,
   useCallback,
@@ -67,6 +68,7 @@ import SaveAsNewProjectDialog from "./components/projects/SaveAsNewProjectDialog
 import { SemanticWebQueryProvider } from "./components/semantic/SemanticWebQueryContext";
 import SemanticWebQueryPanel from "./components/semantic/SemanticWebQueryPanel";
 import { enableZoomAndPanOnSvg } from "./components/svg/appHelpers";
+import ForceGraphRenderConfigEditor from "./components/views/ForceGraph3d/ForceGraphRenderConfigEditor";
 import { WorkspaceLayoutTool } from "./components/workspace/WorkspaceLayoutTool";
 import { getHotkeyConfig } from "./configs/hotkeyConfig";
 import { AppProvider, useAppContext } from "./context/AppContext";
@@ -1449,6 +1451,48 @@ const AppContentInner = ({
     IPathArgs | undefined
   >(undefined);
   const [editingNodeId, setEditingNodeId] = useState<NodeId | null>(null);
+  const [showDisplayConfig, setShowDisplayConfig] = useState(false);
+  const displayConfigEditorRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside to close display config editor
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showDisplayConfig &&
+        displayConfigEditorRef.current &&
+        !displayConfigEditorRef.current.contains(event.target as Node) &&
+        !(event.target as Element).closest(
+          'button[title="Display Configuration"]'
+        )
+      ) {
+        setShowDisplayConfig(false);
+      }
+    };
+
+    if (showDisplayConfig) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDisplayConfig]);
+
+  // Handle ForceGraph display config changes
+  const handleApplyForceGraphConfig = useCallback(
+    (config: IForceGraphRenderConfig) => {
+      console.log("Applying ForceGraph config:", config);
+      currentSceneGraph.setForceGraphRenderConfig(config);
+      if (forceGraphInstance) {
+        ForceGraphManager.applyForceGraphRenderConfig(
+          forceGraphInstance,
+          config,
+          currentSceneGraph
+        );
+      }
+    },
+    [currentSceneGraph, forceGraphInstance]
+  );
 
   // const handleLoadLayout = useCallback(
   //   (layout: Layout) => {
@@ -1762,24 +1806,158 @@ const AppContentInner = ({
     if (activeView === "ForceGraph3d" || activeView === "Editor") {
       return (
         <div
-          id="force-graph"
-          ref={forceGraphRef}
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            background: "black",
             zIndex: 1,
-            borderRadius: "8px", // Match the mainContent border radius
-            visibility: activeView === "Editor" ? "hidden" : "visible", // Hide but keep in DOM when in Editor view
           }}
-        />
+        >
+          <div
+            id="force-graph"
+            ref={forceGraphRef}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "black",
+              borderRadius: "8px", // Match the mainContent border radius
+              visibility: activeView === "Editor" ? "hidden" : "visible", // Hide but keep in DOM when in Editor view
+            }}
+          />
+
+          {/* Display Config Button - only show when ForceGraph3d is active and visible */}
+          {activeView === "ForceGraph3d" && (
+            <button
+              onClick={() => setShowDisplayConfig(!showDisplayConfig)}
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                zIndex: 999999999,
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                border: "none",
+                backgroundColor: isDarkMode
+                  ? "rgba(255, 255, 255, 0.1)"
+                  : "rgba(0, 0, 0, 0.1)",
+                color: isDarkMode ? "#e2e8f0" : "#1f2937",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s ease",
+                backdropFilter: "blur(10px)",
+              }}
+              title="Display Configuration"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isDarkMode
+                  ? "rgba(255, 255, 255, 0.2)"
+                  : "rgba(0, 0, 0, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = isDarkMode
+                  ? "rgba(255, 255, 255, 0.1)"
+                  : "rgba(0, 0, 0, 0.1)";
+              }}
+            >
+              <Settings2 size={20} />
+            </button>
+          )}
+
+          {/* Display Config Editor Overlay */}
+          {showDisplayConfig && activeView === "ForceGraph3d" && (
+            <div
+              ref={displayConfigEditorRef}
+              style={{
+                position: "absolute",
+                top: "70px",
+                right: "20px",
+                zIndex: 1000000000,
+                width: "320px",
+                maxWidth: "calc(100vw - 40px)",
+                maxHeight: "calc(100vh - 90px)",
+                backgroundColor: isDarkMode ? "#1f2937" : "#ffffff",
+                border: `1px solid ${isDarkMode ? "#374151" : "#d1d5db"}`,
+                borderRadius: "12px",
+                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.15)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "12px 16px",
+                  borderBottom: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
+                  backgroundColor: isDarkMode ? "#111827" : "#f9fafb",
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: isDarkMode ? "#e2e8f0" : "#1f2937",
+                  }}
+                >
+                  Display Configuration
+                </h3>
+                <button
+                  onClick={() => setShowDisplayConfig(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: isDarkMode ? "#9ca3af" : "#6b7280",
+                    cursor: "pointer",
+                    padding: "4px",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                    lineHeight: "1",
+                  }}
+                  title="Close"
+                >
+                  ×
+                </button>
+              </div>
+              <div
+                style={{
+                  maxHeight: "calc(100vh - 150px)",
+                  overflowY: "auto",
+                  padding: "16px",
+                }}
+              >
+                <ForceGraphRenderConfigEditor
+                  onApply={handleApplyForceGraphConfig}
+                  isDarkMode={isDarkMode}
+                  initialConfig={
+                    currentSceneGraph?.getForceGraphRenderConfig() || {
+                      nodeTextLabels: false,
+                      linkWidth: 2,
+                      nodeSize: 6,
+                      linkTextLabels: true,
+                      nodeOpacity: 1,
+                      linkOpacity: 1,
+                      chargeStrength: -30,
+                      backgroundColor: "#1a1a1a",
+                      fontSize: 12,
+                    }
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </div>
       );
     }
     return null;
-  }, [activeView]);
+  }, [activeView, showDisplayConfig, isDarkMode]);
 
   const _handleUpdateForceGraphScene = useCallback(
     (sceneGraph: SceneGraph) => {
@@ -2003,20 +2181,6 @@ const AppContentInner = ({
   const _handleNodeMouseLeave = useCallback(() => {
     setHoveredNodeId(null);
   }, []);
-
-  const handleApplyForceGraphConfig = useCallback(
-    (config: IForceGraphRenderConfig) => {
-      currentSceneGraph.setForceGraphRenderConfig(config);
-      if (forceGraphInstance) {
-        ForceGraphManager.applyForceGraphRenderConfig(
-          forceGraphInstance,
-          config,
-          currentSceneGraph
-        );
-      }
-    },
-    [currentSceneGraph, forceGraphInstance]
-  );
 
   const _handleApplyPositionsToForceGraph = useCallback(
     (positions: NodePositionData) => {
