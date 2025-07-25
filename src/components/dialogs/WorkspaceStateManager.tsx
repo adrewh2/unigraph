@@ -87,7 +87,7 @@ const WorkspaceStateManager: React.FC<WorkspaceStateManagerProps> = ({
 
   // Filter out autosave workspaces
   const visibleWorkspaces = savedWorkspaces.filter(
-    (w) => !w.name.startsWith("auto-save-")
+    (w) => w.name !== "Autosaved"
   );
 
   return (

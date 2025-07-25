@@ -75,7 +75,7 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
     useWorkspace();
   // Filter out autosave workspaces
   const visibleWorkspaces = savedWorkspaces.filter(
-    (w) => !w.name.startsWith("auto-save-")
+    (w) => w.name !== "Autosaved"
   );
   const { setRightActiveSection } = useWorkspaceConfigStore();
   const { selectedNodeIds } = useGraphInteractionStore();

@@ -1202,30 +1202,18 @@ const AppContentInner = ({
     const cleanupOldAutoSaves = async () => {
       try {
         const workspaces = getAllWorkspaces();
-        const autoSaveWorkspaces = workspaces.filter((w) =>
-          w.name.startsWith("auto-save-")
+        const autoSaveWorkspaces = workspaces.filter(
+          (w) => w.name === "Autosaved"
         );
 
-        // Keep only the most recent auto-save and remove older ones
-        if (autoSaveWorkspaces.length > 1) {
-          const sortedWorkspaces = autoSaveWorkspaces.sort((a, b) => {
-            const aTime = parseInt(a.name.split("-")[2]);
-            const bTime = parseInt(b.name.split("-")[2]);
-            return bTime - aTime; // Most recent first
-          });
-
-          // Remove all but the most recent
-          for (let i = 1; i < sortedWorkspaces.length; i++) {
-            // Note: We don't have a delete function in the current API
-            // This would need to be implemented in the app-shell
-            console.log(
-              "Would remove old auto-save:",
-              sortedWorkspaces[i].name
-            );
-          }
-        }
+        // Since we now use a fixed name "Autosaved", we don't need to clean up multiple versions
+        // The workspace will simply be overwritten when a new autosave is created
+        console.log(
+          "Found autosaved workspace:",
+          autoSaveWorkspaces.length > 0 ? "yes" : "no"
+        );
       } catch (error) {
-        console.error("Error cleaning up old auto-saves:", error);
+        console.error("Error checking autosaved workspace:", error);
       }
     };
 
