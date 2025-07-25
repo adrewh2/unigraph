@@ -231,6 +231,13 @@ const ForceGraph3DViewV2: React.FC = () => {
     handleBackgroundRightClick,
   ]);
 
+  // Update orbital controls when control mode changes
+  useEffect(() => {
+    if (graphRef.current) {
+      ForceGraphManager.updateMouseControlMode(graphRef.current, controlMode);
+    }
+  }, [controlMode]);
+
   return (
     <div
       style={{
