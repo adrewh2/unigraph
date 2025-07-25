@@ -572,13 +572,17 @@ const ForceGraphRenderConfigEditor: React.FC<
 
         {/* Camera Controls */}
         <div className="section-header">Camera</div>
-
-        {/* Camera Position */}
-        <div className="camera-group">
-          <div className="camera-label">Position</div>
-          <div className="camera-inputs">
-            <div className="camera-input">
-              <label>X</label>
+        <div className="camera-table">
+          <div className="table-row camera-header-row">
+            <div className="table-cell header-cell"></div>
+            <div className="table-cell header-cell">X</div>
+            <div className="table-cell header-cell">Y</div>
+            <div className="table-cell header-cell">Z</div>
+          </div>
+          {/* Camera Position Row */}
+          <div className="table-row">
+            <div className="table-cell label-cell">Camera Position</div>
+            <div className="table-cell">
               <FormField
                 name="cameraPositionX"
                 value={(formData as any).cameraPositionX}
@@ -588,8 +592,7 @@ const ForceGraphRenderConfigEditor: React.FC<
                 isDarkMode={isDarkMode}
               />
             </div>
-            <div className="camera-input">
-              <label>Y</label>
+            <div className="table-cell">
               <FormField
                 name="cameraPositionY"
                 value={(formData as any).cameraPositionY}
@@ -599,8 +602,7 @@ const ForceGraphRenderConfigEditor: React.FC<
                 isDarkMode={isDarkMode}
               />
             </div>
-            <div className="camera-input">
-              <label>Z</label>
+            <div className="table-cell">
               <FormField
                 name="cameraPositionZ"
                 value={(formData as any).cameraPositionZ}
@@ -611,14 +613,10 @@ const ForceGraphRenderConfigEditor: React.FC<
               />
             </div>
           </div>
-        </div>
-
-        {/* Camera Target */}
-        <div className="camera-group">
-          <div className="camera-label">Target</div>
-          <div className="camera-inputs">
-            <div className="camera-input">
-              <label>X</label>
+          {/* Camera Target Row */}
+          <div className="table-row">
+            <div className="table-cell label-cell">Camera Target</div>
+            <div className="table-cell">
               <FormField
                 name="cameraTargetX"
                 value={(formData as any).cameraTargetX}
@@ -628,8 +626,7 @@ const ForceGraphRenderConfigEditor: React.FC<
                 isDarkMode={isDarkMode}
               />
             </div>
-            <div className="camera-input">
-              <label>Y</label>
+            <div className="table-cell">
               <FormField
                 name="cameraTargetY"
                 value={(formData as any).cameraTargetY}
@@ -639,8 +636,7 @@ const ForceGraphRenderConfigEditor: React.FC<
                 isDarkMode={isDarkMode}
               />
             </div>
-            <div className="camera-input">
-              <label>Z</label>
+            <div className="table-cell">
               <FormField
                 name="cameraTargetZ"
                 value={(formData as any).cameraTargetZ}

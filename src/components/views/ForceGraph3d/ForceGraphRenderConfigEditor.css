@@ -391,3 +391,43 @@
 .dark-mode .apply-button:hover {
   background-color: #1e40af;
 }
+
+/* Camera Table Layout */
+.camera-table {
+  display: grid;
+  grid-auto-rows: minmax(32px, auto);
+  row-gap: 2px;
+  margin-bottom: 1rem;
+}
+.camera-header-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  background-color: #374151;
+  color: white;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.camera-table .table-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.camera-table .table-cell {
+  padding: 0.2rem 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.camera-table .label-cell {
+  justify-content: flex-start;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  background-color: #1f2937;
+  border-right: 1px solid #374151;
+}
+.dark-mode .camera-table .label-cell {
+  color: #6b7280;
+  background-color: #111827;
+  border-right-color: #4b5563;
+}
