@@ -241,7 +241,6 @@ const ForceGraph3DViewV2: React.FC = () => {
         style={{
           width: "100%",
           height: "100%",
-          backgroundColor: "#000",
         }}
       />
       {/* Display Config Button/Panel */}

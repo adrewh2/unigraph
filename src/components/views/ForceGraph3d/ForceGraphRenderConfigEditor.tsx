@@ -385,10 +385,14 @@ const ForceGraphRenderConfigEditor: React.FC<
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target;
-    const newValue =
-      type === "checkbox"
-        ? (e.target as HTMLInputElement).checked
-        : parseFloat(value);
+    let newValue: any;
+    if (type === "checkbox") {
+      newValue = (e.target as HTMLInputElement).checked;
+    } else if (type === "color") {
+      newValue = value;
+    } else {
+      newValue = parseFloat(value);
+    }
 
     setFormData((prev) => {
       const updated = { ...prev, [name]: newValue };
