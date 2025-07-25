@@ -61,6 +61,7 @@
 .form-field-compact .form-input {
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .form-label {
@@ -187,6 +188,9 @@
 }
 
 .form-input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -421,13 +425,56 @@
 }
 .camera-table .label-cell {
   justify-content: flex-start;
+  align-items: center;
   font-size: 0.8rem;
   color: #9ca3af;
   background-color: #1f2937;
   border-right: 1px solid #374151;
+  text-align: left;
 }
 .dark-mode .camera-table .label-cell {
   color: #6b7280;
   background-color: #111827;
   border-right-color: #4b5563;
+}
+.camera-table .table-cell {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+.camera-header-row .header-cell {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  text-align: center;
+}
+
+.config-table .label-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  background-color: #1f2937;
+  border-right: 1px solid #374151;
+  text-align: left;
+}
+.config-table .table-cell {
+  display: block;
+  padding: 0.5rem;
+}
+.config-table .table-cell input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+.form-field-compact {
+  width: 100%;
+}
+.config-table .header-cell {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  text-align: center;
 }
