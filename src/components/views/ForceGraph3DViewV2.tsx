@@ -1,9 +1,12 @@
+import { Settings2 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { ForceGraphManager } from "../../core/force-graph/ForceGraphManager";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
+import { IForceGraphRenderConfig } from "../../store/forceGraphConfigStore";
 import useGraphInteractionStore from "../../store/graphInteractionStore";
 import { initializeForceGraphInstance } from "../../utils/forceGraphInitializer";
+import ForceGraphRenderConfigEditor from "./ForceGraph3d/ForceGraphRenderConfigEditor";
 
 /**
  * ForceGraph3DViewV2 - A clean, production-ready 3D force-directed graph component
@@ -14,6 +17,9 @@ const ForceGraph3DViewV2: React.FC = () => {
   const graphRef = useRef<any>(null);
   const [sceneGraphVersion, setSceneGraphVersion] = useState(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [showDisplayConfig, setShowDisplayConfig] = useState(false);
+  const displayConfigEditorRef = useRef<HTMLDivElement>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Get reactive selection state from the store
   const { selectedNodeIds, hoveredNodeIds, hoveredEdgeIds } =
@@ -114,6 +120,48 @@ const ForceGraph3DViewV2: React.FC = () => {
     refreshColors();
   }, [refreshColors]);
 
+  // Detect dark mode
+  useEffect(() => {
+    const match = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDarkMode(match.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+    match.addEventListener("change", handler);
+    return () => match.removeEventListener("change", handler);
+  }, []);
+
+  // Click outside to close config panel
+  useEffect(() => {
+    if (!showDisplayConfig) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        displayConfigEditorRef.current &&
+        !displayConfigEditorRef.current.contains(event.target as Node)
+      ) {
+        setShowDisplayConfig(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showDisplayConfig]);
+
+  // Handle config apply
+  const handleApplyForceGraphConfig = useCallback(
+    (config: IForceGraphRenderConfig) => {
+      const sceneGraph = getCurrentSceneGraph();
+      if (sceneGraph) {
+        sceneGraph.setForceGraphRenderConfig(config);
+        if (graphRef.current) {
+          ForceGraphManager.applyForceGraphRenderConfig(
+            graphRef.current,
+            config,
+            sceneGraph
+          );
+        }
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     if (!containerRef.current) {
       return;
@@ -180,14 +228,142 @@ const ForceGraph3DViewV2: React.FC = () => {
 
   return (
     <div
-      ref={containerRef}
       style={{
+        position: "relative",
         width: "100%",
         height: "100%",
-        backgroundColor: "#000",
-        position: "relative",
+        minHeight: 0,
+        minWidth: 0,
+        flex: 1,
+        display: "flex",
       }}
-    />
+    >
+      <div
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#000",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }}
+      />
+      {/* Display Config Button/Panel */}
+      <div
+        style={{
+          position: "absolute",
+          top: 20,
+          right: 20,
+          zIndex: 999999999,
+        }}
+      >
+        {!showDisplayConfig ? (
+          <button
+            onClick={() => setShowDisplayConfig(true)}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              border: "none",
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.1)"
+                : "rgba(0,0,0,0.1)",
+              color: isDarkMode ? "#e2e8f0" : "#1f2937",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s ease",
+              backdropFilter: "blur(10px)",
+            }}
+            title="Display Configuration"
+          >
+            <Settings2 size={20} />
+          </button>
+        ) : (
+          <div
+            ref={displayConfigEditorRef}
+            style={{
+              width: 320,
+              maxWidth: "calc(100vw - 40px)",
+              maxHeight: "calc(100vh - 40px)",
+              backgroundColor: isDarkMode ? "#1f2937" : "#fff",
+              border: `1px solid ${isDarkMode ? "#374151" : "#d1d5db"}`,
+              borderRadius: 12,
+              boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                borderBottom: `1px solid ${isDarkMode ? "#374151" : "#e5e7eb"}`,
+                backgroundColor: isDarkMode ? "#111827" : "#f9fafb",
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: isDarkMode ? "#e2e8f0" : "#1f2937",
+                }}
+              >
+                Display Configuration
+              </h3>
+              <button
+                onClick={() => setShowDisplayConfig(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: isDarkMode ? "#9ca3af" : "#6b7280",
+                  cursor: "pointer",
+                  padding: 4,
+                  borderRadius: 4,
+                  fontSize: 16,
+                  lineHeight: 1,
+                  transition: "color 0.2s ease",
+                }}
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              style={{
+                maxHeight: "calc(100vh - 100px)",
+                overflowY: "auto",
+                padding: 16,
+              }}
+            >
+              <ForceGraphRenderConfigEditor
+                onApply={handleApplyForceGraphConfig}
+                isDarkMode={isDarkMode}
+                initialConfig={
+                  getCurrentSceneGraph()?.getForceGraphRenderConfig() || {
+                    nodeTextLabels: false,
+                    linkWidth: 2,
+                    nodeSize: 6,
+                    linkTextLabels: true,
+                    nodeOpacity: 1,
+                    linkOpacity: 1,
+                    chargeStrength: -30,
+                    backgroundColor: "#1a1a1a",
+                    fontSize: 12,
+                  }
+                }
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
