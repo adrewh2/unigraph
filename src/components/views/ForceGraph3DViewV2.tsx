@@ -1,4 +1,4 @@
-import { MousePointer2, Settings2 } from "lucide-react";
+import { Settings2, Square } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { ForceGraphManager } from "../../core/force-graph/ForceGraphManager";
@@ -399,7 +399,7 @@ const ForceGraph3DViewV2: React.FC = () => {
               : "Switch to Orbital Mode"
           }
         >
-          <MousePointer2 size={20} />
+          <Square size={20} />
         </button>
       </div>
 
