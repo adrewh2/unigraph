@@ -183,6 +183,20 @@ const formSchema: FormSchema = {
     label: "Initial Zoom",
     type: "number",
   },
+  backgroundColor: {
+    validate: (value) => {
+      if (
+        !value ||
+        typeof value !== "string" ||
+        !/^#[0-9A-Fa-f]{6}$/.test(value)
+      ) {
+        return "Background color must be a valid hex color (e.g. #1a1a1a)";
+      }
+      return null;
+    },
+    label: "Background Color",
+    type: "color",
+  },
 };
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -253,6 +267,24 @@ const FormField: React.FC<FormFieldProps> = ({
           className={`form-input ${isDarkMode ? "dark-mode" : ""} ${
             error ? "form-input-error" : ""
           }`}
+        />
+      ) : schema[name].type === "color" ? (
+        <input
+          id={name}
+          name={name}
+          type="color"
+          value={value as string}
+          onChange={onChange}
+          className={`form-input ${isDarkMode ? "dark-mode" : ""} ${
+            error ? "form-input-error" : ""
+          }`}
+          style={{
+            width: "100%",
+            height: "2rem",
+            padding: 0,
+            border: "none",
+            background: "none",
+          }}
         />
       ) : (
         <div className="number-input-container">
@@ -568,6 +600,20 @@ const ForceGraphRenderConfigEditor: React.FC<
               <div className="empty-cell"></div>
             </div>
           </div>
+        </div>
+
+        {/* Background Color Row */}
+        <div className="section-header">Display</div>
+        <div className="form-field-group-2">
+          <div className="form-label">Background Color</div>
+          <FormField
+            name="backgroundColor"
+            value={(formData as any).backgroundColor}
+            error={errors.backgroundColor}
+            onChange={handleChange}
+            schema={formSchema}
+            isDarkMode={isDarkMode}
+          />
         </div>
 
         {/* Camera Controls */}
