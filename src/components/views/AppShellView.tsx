@@ -15,17 +15,18 @@ import "@aesgraph/app-shell/app-shell.css";
 import React from "react";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
 import AIChatPanel from "../ai/AIChatPanel";
+import LexicalEditorV2 from "../applets/Lexical/LexicalEditor";
 import WikipediaArticleViewer_FactorGraph from "../applets/WikipediaViewer/WikipediaArticleViewer_FactorGraph";
 import EntityTableV2 from "../common/EntityTableV2";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
-import EdgeLegendView from "./EdgeLegendView";
-import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
-import NodeLegendView from "./NodeLegendView";
-import SystemMonitorView from "./SystemMonitorView";
-import ReactFlowPanelV2 from "./ReactFlowPanelV2";
 import AboutView from "./AboutView";
 import DevToolsView from "./DevToolsView";
-import LexicalEditorV2 from "../applets/Lexical/LexicalEditor";
+import EdgeLegendView from "./EdgeLegendView";
+import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
+import ForceGraph3DViewV2WithBloom from "./ForceGraph3DViewV2WithBloom";
+import NodeLegendView from "./NodeLegendView";
+import ReactFlowPanelV2 from "./ReactFlowPanelV2";
+import SystemMonitorView from "./SystemMonitorView";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
 const aiChatView = {
@@ -62,6 +63,14 @@ const forceGraph3DViewV2 = {
   title: "ForceGraph 3D V2",
   icon: "🚀",
   component: (props: any) => <ForceGraph3DViewV2 {...props} />,
+  category: "visualization",
+};
+
+const forceGraph3DViewV2WithBloom = {
+  id: "force-graph-3d-v2-bloom",
+  title: "ForceGraph 3D V2 (Bloom)",
+  icon: "✨",
+  component: (props: any) => <ForceGraph3DViewV2WithBloom {...props} />,
   category: "visualization",
 };
 
@@ -775,6 +784,7 @@ const allViews = [
   semanticWebQueryView,
   forceGraph3DView,
   forceGraph3DViewV2,
+  forceGraph3DViewV2WithBloom,
   entityTableV2View,
   customThemedPanelView,
   themeInheritanceDemoView,

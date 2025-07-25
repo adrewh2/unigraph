@@ -1,5 +1,9 @@
 import { Settings2, Square } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import * as THREE from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { useAppContext } from "../../context/AppContext";
 import { ForceGraphManager } from "../../core/force-graph/ForceGraphManager";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
@@ -9,12 +13,44 @@ import { useMouseControlsStore } from "../../store/mouseControlsStore";
 import { initializeForceGraphInstance } from "../../utils/forceGraphInitializer";
 import SelectionBox from "../common/SelectionBox";
 import ForceGraphRenderConfigEditor from "./ForceGraph3d/ForceGraphRenderConfigEditor";
+// Custom shader for bloom compositing
+const BloomCompositorShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    tBloom: { value: null },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform sampler2D tBloom;
+    varying vec2 vUv;
+    void main() {
+      vec4 diffuse = texture2D(tDiffuse, vUv);
+      vec4 bloom = texture2D(tBloom, vUv);
+      gl_FragColor = diffuse + bloom;
+    }
+  `,
+};
+
+// Bloom effect configuration
+const BLOOM_LAYER = 1;
+const BLOOM_PARAMS = {
+  strength: 1.5,
+  radius: 0.4,
+  threshold: 0.85,
+};
 
 /**
- * ForceGraph3DViewV2 - A clean, production-ready 3D force-directed graph component
- * Uses existing utilities to avoid code duplication
+ * ForceGraph3DViewV2WithBloom - Enhanced 3D force-directed graph component
+ * with selective bloom post-processing effects for selected nodes
  */
-const ForceGraph3DViewV2: React.FC = () => {
+const ForceGraph3DViewV2WithBloom: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<any>(null);
   const [sceneGraphVersion, setSceneGraphVersion] = useState(0);
@@ -22,6 +58,11 @@ const ForceGraph3DViewV2: React.FC = () => {
   const [showDisplayConfig, setShowDisplayConfig] = useState(false);
   const displayConfigEditorRef = useRef<HTMLDivElement>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Bloom effect refs
+  const bloomComposerRef = useRef<EffectComposer | null>(null);
+  const materialsRef = useRef<{ [key: string]: THREE.Material }>({});
+  const originalRenderRef = useRef<any>(null);
 
   // Get reactive selection state from the store
   const { selectedNodeIds, hoveredNodeIds, hoveredEdgeIds } =
@@ -38,6 +79,99 @@ const ForceGraph3DViewV2: React.FC = () => {
     handleBackgroundClick,
   } = useAppContext();
 
+  // Initialize bloom effect system
+  const initializeBloomEffect = useCallback((graphInstance: any) => {
+    console.log("Initializing bloom effect system...");
+
+    if (!graphInstance || !graphInstance.renderer) {
+      console.warn("Graph instance or renderer not available for bloom effect");
+      return;
+    }
+
+    const renderer = graphInstance.renderer;
+    const scene = graphInstance.scene();
+    const camera = graphInstance.camera();
+
+    console.log("Bloom effect components:", { renderer, scene, camera });
+
+    // Create bloom composer
+    bloomComposerRef.current = new EffectComposer(renderer);
+    const renderScene = new RenderPass(scene, camera);
+    const bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      BLOOM_PARAMS.strength,
+      BLOOM_PARAMS.radius,
+      BLOOM_PARAMS.threshold
+    );
+    bloomComposerRef.current.addPass(renderScene);
+    bloomComposerRef.current.addPass(bloomPass);
+
+    // Store original render method
+    originalRenderRef.current = graphInstance.render;
+
+    // Override the render method to use our custom rendering
+    graphInstance.render = () => {
+      // First render the normal scene
+      renderer.render(scene, camera);
+
+      // Then render the bloom effect on top
+      bloomComposerRef.current?.render();
+    };
+
+    console.log("Bloom effect system initialized successfully");
+  }, []);
+
+  // Update bloom effect for selected nodes
+  const updateBloomEffect = useCallback(() => {
+    if (!graphRef.current || !graphRef.current.scene) return;
+
+    const scene = graphRef.current.scene();
+
+    console.log(
+      "Updating bloom effect for selected nodes:",
+      selectedNodeIds.size
+    );
+
+    // Clear all bloom layers and restore original materials
+    scene.traverse((obj: any) => {
+      if (obj.isMesh) {
+        obj.layers.disable(BLOOM_LAYER);
+        // Restore original material if we have it stored
+        if (materialsRef.current[obj.uuid]) {
+          obj.material = materialsRef.current[obj.uuid];
+          delete materialsRef.current[obj.uuid];
+        }
+      }
+    });
+
+    // Enable bloom for selected nodes
+    selectedNodeIds.forEach((nodeId) => {
+      const nodeObj = graphRef.current.getNodeObjById(nodeId);
+      if (nodeObj && nodeObj.__threeObj) {
+        console.log("Enabling bloom for node:", nodeId);
+        nodeObj.__threeObj.layers.enable(BLOOM_LAYER);
+
+        // Store original material and create glow material
+        if (nodeObj.__threeObj.material) {
+          const originalMaterial = nodeObj.__threeObj.material;
+          materialsRef.current[nodeObj.__threeObj.uuid] = originalMaterial;
+
+          const glowMaterial = originalMaterial.clone();
+          glowMaterial.emissive = new THREE.Color(0xffff00);
+          glowMaterial.emissiveIntensity = 0.5;
+          nodeObj.__threeObj.material = glowMaterial;
+        }
+      } else {
+        console.warn("Could not find node object for:", nodeId);
+      }
+    });
+
+    // Force a render update
+    if (graphRef.current.render) {
+      graphRef.current.render();
+    }
+  }, [selectedNodeIds]);
+
   // Handle resize events
   const handleResize = useCallback(() => {
     if (graphRef.current && containerRef.current) {
@@ -46,6 +180,11 @@ const ForceGraph3DViewV2: React.FC = () => {
 
       if (rect.width > 0 && rect.height > 0) {
         graphRef.current.width(rect.width).height(rect.height);
+
+        // Update bloom effect composer
+        if (bloomComposerRef.current) {
+          bloomComposerRef.current.setSize(rect.width, rect.height);
+        }
       }
     }
   }, []);
@@ -58,6 +197,9 @@ const ForceGraph3DViewV2: React.FC = () => {
       graphRef.current.linkColor(graphRef.current.linkColor());
       graphRef.current.linkWidth(graphRef.current.linkWidth());
 
+      // Update bloom effect
+      updateBloomEffect();
+
       // Add explicit refresh to ensure immediate visual update
       requestAnimationFrame(() => {
         if (
@@ -68,7 +210,7 @@ const ForceGraph3DViewV2: React.FC = () => {
         }
       });
     }
-  }, []);
+  }, [updateBloomEffect]);
 
   // React to selection state changes from other views
   useEffect(() => {
@@ -209,6 +351,11 @@ const ForceGraph3DViewV2: React.FC = () => {
         handleResize();
       }, 200);
 
+      // Initialize bloom effect after graph is ready
+      setTimeout(() => {
+        initializeBloomEffect(forceGraphInstance);
+      }, 500);
+
       return () => {
         clearTimeout(resizeTimeout);
       };
@@ -219,6 +366,10 @@ const ForceGraph3DViewV2: React.FC = () => {
     // Cleanup
     return () => {
       if (graphRef.current) {
+        // Restore original render method
+        if (originalRenderRef.current) {
+          graphRef.current.render = originalRenderRef.current;
+        }
         graphRef.current._destructor();
       }
     };
@@ -229,6 +380,7 @@ const ForceGraph3DViewV2: React.FC = () => {
     handleNodesRightClick,
     handleBackgroundClick,
     handleBackgroundRightClick,
+    initializeBloomEffect,
   ]);
 
   // Update orbital controls when control mode changes
@@ -416,4 +568,4 @@ const ForceGraph3DViewV2: React.FC = () => {
   );
 };
 
-export default ForceGraph3DViewV2;
+export default ForceGraph3DViewV2WithBloom;
