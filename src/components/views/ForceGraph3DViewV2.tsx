@@ -1,11 +1,13 @@
-import { Settings2 } from "lucide-react";
+import { MousePointer2, Settings2 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAppContext } from "../../context/AppContext";
 import { ForceGraphManager } from "../../core/force-graph/ForceGraphManager";
 import { getCurrentSceneGraph } from "../../store/appConfigStore";
 import { IForceGraphRenderConfig } from "../../store/forceGraphConfigStore";
 import useGraphInteractionStore from "../../store/graphInteractionStore";
+import { useMouseControlsStore } from "../../store/mouseControlsStore";
 import { initializeForceGraphInstance } from "../../utils/forceGraphInitializer";
+import SelectionBox from "../common/SelectionBox";
 import ForceGraphRenderConfigEditor from "./ForceGraph3d/ForceGraphRenderConfigEditor";
 
 /**
@@ -24,6 +26,9 @@ const ForceGraph3DViewV2: React.FC = () => {
   // Get reactive selection state from the store
   const { selectedNodeIds, hoveredNodeIds, hoveredEdgeIds } =
     useGraphInteractionStore();
+
+  // Get mouse controls state
+  const { controlMode, toggleControlMode } = useMouseControlsStore();
 
   // Get event handlers from AppContext
   const {
@@ -355,6 +360,51 @@ const ForceGraph3DViewV2: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Area Selection Toggle Button */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 20,
+          right: 20,
+          zIndex: 999999999,
+        }}
+      >
+        <button
+          onClick={toggleControlMode}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "none",
+            backgroundColor: isDarkMode
+              ? "rgba(255,255,255,0.1)"
+              : "rgba(0,0,0,0.1)",
+            color:
+              controlMode === "multiselection"
+                ? "#3b82f6"
+                : isDarkMode
+                  ? "#e2e8f0"
+                  : "#1f2937",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.2s ease",
+            backdropFilter: "blur(10px)",
+          }}
+          title={
+            controlMode === "orbital"
+              ? "Switch to Area Selection"
+              : "Switch to Orbital Mode"
+          }
+        >
+          <MousePointer2 size={20} />
+        </button>
+      </div>
+
+      {/* Selection Box */}
+      {controlMode === "multiselection" && <SelectionBox />}
     </div>
   );
 };
