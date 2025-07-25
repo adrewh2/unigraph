@@ -234,8 +234,6 @@ const ForceGraph3DViewV2: React.FC = () => {
         height: "100%",
         minHeight: 0,
         minWidth: 0,
-        flex: 1,
-        display: "flex",
       }}
     >
       <div
@@ -244,11 +242,6 @@ const ForceGraph3DViewV2: React.FC = () => {
           width: "100%",
           height: "100%",
           backgroundColor: "#000",
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
         }}
       />
       {/* Display Config Button/Panel */}
