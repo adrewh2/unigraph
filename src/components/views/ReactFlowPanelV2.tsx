@@ -507,8 +507,6 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
         height: "100%",
         position: "relative",
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
       <ReactFlowStyles theme={theme} />
@@ -520,7 +518,6 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
           padding: 0,
           overflow: "hidden",
           position: "relative",
-          flex: 1,
         }}
         ref={reactFlowWrapper}
       >
