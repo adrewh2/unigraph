@@ -1240,7 +1240,7 @@ const AppContentInner = ({
       // If we're currently in AppShell view and switching to a different view,
       // save the current workspace layout
       if (currentView === "AppShell" && key !== "AppShell") {
-        const workspaceName = `auto-save-${Date.now()}`;
+        const workspaceName = `Autosaved`;
         console.log("Saving workspace layout with name:", workspaceName);
         saveCurrentLayout(workspaceName)
           .then((result) => {

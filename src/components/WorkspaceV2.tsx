@@ -73,6 +73,10 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
   // Get workspace context
   const { currentWorkspace, savedWorkspaces, applyWorkspaceLayout } =
     useWorkspace();
+  // Filter out autosave workspaces
+  const visibleWorkspaces = savedWorkspaces.filter(
+    (w) => !w.name.startsWith("auto-save-")
+  );
   const { setRightActiveSection } = useWorkspaceConfigStore();
   const { selectedNodeIds } = useGraphInteractionStore();
 
@@ -377,7 +381,7 @@ const WorkspaceV2: React.FC<WorkspaceV2Props> = ({
               </div>
               <div className={styles.workspacePanelContent}>
                 <div className={styles.workspaceGrid}>
-                  {savedWorkspaces.map((workspace) => (
+                  {visibleWorkspaces.map((workspace) => (
                     <div
                       key={workspace.id}
                       className={styles.workspaceOption}
