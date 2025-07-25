@@ -146,23 +146,29 @@ const ForceGraph3DViewV2WithBloom: React.FC = () => {
 
     // Enable bloom for selected nodes
     selectedNodeIds.forEach((nodeId) => {
-      const nodeObj = graphRef.current.getNodeObjById(nodeId);
-      if (nodeObj && nodeObj.__threeObj) {
-        console.log("Enabling bloom for node:", nodeId);
-        nodeObj.__threeObj.layers.enable(BLOOM_LAYER);
+      let found = false;
+      scene.traverse((obj: any) => {
+        if (
+          obj.isMesh &&
+          (obj.userData?.id === nodeId || obj.name === nodeId)
+        ) {
+          found = true;
+          obj.layers.enable(BLOOM_LAYER);
 
-        // Store original material and create glow material
-        if (nodeObj.__threeObj.material) {
-          const originalMaterial = nodeObj.__threeObj.material;
-          materialsRef.current[nodeObj.__threeObj.uuid] = originalMaterial;
+          // Store original material and create glow material
+          if (obj.material) {
+            const originalMaterial = obj.material;
+            materialsRef.current[obj.uuid] = originalMaterial;
 
-          const glowMaterial = originalMaterial.clone();
-          glowMaterial.emissive = new THREE.Color(0xffff00);
-          glowMaterial.emissiveIntensity = 0.5;
-          nodeObj.__threeObj.material = glowMaterial;
+            const glowMaterial = originalMaterial.clone();
+            glowMaterial.emissive = new THREE.Color(0xffff00);
+            glowMaterial.emissiveIntensity = 0.5;
+            obj.material = glowMaterial;
+          }
         }
-      } else {
-        console.warn("Could not find node object for:", nodeId);
+      });
+      if (!found) {
+        console.warn("Could not find mesh for node:", nodeId);
       }
     });
 
