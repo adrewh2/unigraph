@@ -1,6 +1,6 @@
 import { useTheme } from "@aesgraph/app-shell";
-import React, { useEffect, useRef, useState } from "react";
-import MonacoEditor, { monaco } from "react-monaco-editor";
+import Editor, { Monaco } from "@monaco-editor/react";
+import React, { useRef, useState } from "react";
 
 interface MonacoEditorViewProps {
   theme?: any;
@@ -9,13 +9,15 @@ interface MonacoEditorViewProps {
 const MonacoEditorView: React.FC<MonacoEditorViewProps> = ({
   theme: appShellTheme,
 }) => {
-  const [code, setCode] = useState(`// Welcome to Monaco Editor with ESLint!
-// This editor now includes syntax highlighting, error detection, and linting.
+  const [code, setCode] =
+    useState(`// Welcome to Monaco Editor with Semantic Highlighting!
+// This editor now includes proper syntax highlighting and IntelliSense.
 
 interface User {
   id: number;
   name: string;
   email: string;
+  createdAt: Date;
 }
 
 class UserService {
@@ -29,14 +31,29 @@ class UserService {
     return this.users.find(user => user.id === id);
   }
 
-  // ESLint will catch issues like unused variables
   getUsersCount(): number {
     return this.users.length;
+  }
+
+  // ESLint will warn about unused parameters
+  updateUser(id: number, updates: Partial<User>): boolean {
+    const userIndex = this.users.findIndex(user => user.id === id);
+    if (userIndex !== -1) {
+      this.users[userIndex] = { ...this.users[userIndex], ...updates };
+      return true;
+    }
+    return false;
   }
 }
 
 const service = new UserService();
-service.addUser({ id: 1, name: "John Doe", email: "john@example.com" });
+service.addUser({ 
+  id: 1, 
+  name: "John Doe", 
+  email: "john@example.com",
+  createdAt: new Date()
+});
+
 console.log(service.getUserById(1));
 console.log(\`Total users: \${service.getUsersCount()}\`);
 `);
@@ -45,85 +62,221 @@ console.log(\`Total users: \${service.getUsersCount()}\`);
   const [editorTheme, setEditorTheme] = useState("vs-dark");
   const [showLinting, setShowLinting] = useState(true);
   const editorRef = useRef<any>(null);
+  const monacoRef = useRef<Monaco | null>(null);
 
   const { theme } = useTheme();
 
-  // Enhanced theme with better syntax coloring
-  useEffect(() => {
-    if (theme) {
-      const customTheme = {
-        base: (theme.id === "dark" ? "vs-dark" : "vs") as
-          | "vs"
-          | "vs-dark"
-          | "hc-black",
-        inherit: true,
-        rules: [
-          { token: "comment", foreground: theme.colors.textMuted },
-          { token: "keyword", foreground: theme.colors.primary },
-          { token: "string", foreground: theme.colors.accent },
-          { token: "number", foreground: theme.colors.secondary },
-          { token: "type", foreground: theme.colors.primary },
-          { token: "class", foreground: theme.colors.primary },
-          { token: "function", foreground: theme.colors.accent },
-          { token: "variable", foreground: theme.colors.text },
-          { token: "operator", foreground: theme.colors.text },
-          { token: "delimiter", foreground: theme.colors.text },
-          { token: "predefined", foreground: theme.colors.secondary },
-        ],
-        colors: {
-          "editor.background": theme.colors.background,
-          "editor.foreground": theme.colors.text,
-          "editor.lineHighlightBackground": theme.colors.backgroundSecondary,
-          "editor.selectionBackground": theme.colors.primary + "40",
-          "editor.inactiveSelectionBackground": theme.colors.primary + "20",
-          "editorCursor.foreground": theme.colors.primary,
-          "editorWhitespace.foreground": theme.colors.textMuted,
-          "editorIndentGuide.background": theme.colors.border,
-          "editor.selectionHighlightBorder": theme.colors.primary,
-          "editorError.foreground": theme.colors.error,
-          "editorWarning.foreground": theme.colors.warning,
-          "editorInfo.foreground": theme.colors.info,
-          "editorHint.foreground": theme.colors.accent,
-          "editorLineNumber.foreground": theme.colors.textMuted,
-          "editorLineNumber.activeForeground": theme.colors.primary,
-          "editorGutter.background": theme.colors.backgroundSecondary,
-          "editorBracketMatch.background": theme.colors.primary + "20",
-          "editorBracketMatch.border": theme.colors.primary,
+  // Define custom theme with semantic highlighting
+  const handleEditorWillMount = (monaco: Monaco) => {
+    monacoRef.current = monaco;
+
+    // Define custom theme based on app-shell theme
+    const customTheme = {
+      base: (theme?.id === "dark" ? "vs-dark" : "vs") as
+        | "vs"
+        | "vs-dark"
+        | "hc-black",
+      inherit: true,
+      rules: [
+        // Type identifiers (interfaces, types, classes)
+        {
+          token: "type.identifier",
+          foreground: theme?.colors?.primary || "#4ec9b0",
+          fontStyle: "italic",
         },
-      };
+        {
+          token: "class.identifier",
+          foreground: theme?.colors?.primary || "#4ec9b0",
+          fontStyle: "italic",
+        },
+        {
+          token: "interface.identifier",
+          foreground: theme?.colors?.primary || "#4ec9b0",
+          fontStyle: "italic",
+        },
 
-      monaco.editor.defineTheme("app-shell-theme", customTheme);
-      setEditorTheme("app-shell-theme");
-    }
-  }, [theme]);
+        // Keywords
+        { token: "keyword", foreground: theme?.colors?.primary || "#569cd6" },
+        {
+          token: "keyword.control",
+          foreground: theme?.colors?.primary || "#569cd6",
+        },
+        {
+          token: "keyword.operator",
+          foreground: theme?.colors?.text || "#d4d4d4",
+        },
 
-  // Configure ESLint-like validation for different languages
-  useEffect(() => {
-    if (!editorRef.current) return;
+        // Strings
+        { token: "string", foreground: theme?.colors?.accent || "#d69d85" },
+        {
+          token: "string.quoted",
+          foreground: theme?.colors?.accent || "#d69d85",
+        },
+        {
+          token: "string.quoted.single",
+          foreground: theme?.colors?.accent || "#d69d85",
+        },
+        {
+          token: "string.quoted.double",
+          foreground: theme?.colors?.accent || "#d69d85",
+        },
 
-    const editor = editorRef.current;
+        // Numbers
+        { token: "number", foreground: theme?.colors?.secondary || "#b5cea8" },
+        {
+          token: "number.hex",
+          foreground: theme?.colors?.secondary || "#b5cea8",
+        },
+        {
+          token: "number.float",
+          foreground: theme?.colors?.secondary || "#b5cea8",
+        },
 
-    // Configure validation rules based on language
+        // Comments
+        {
+          token: "comment",
+          foreground: theme?.colors?.textMuted || "#6a9955",
+          fontStyle: "italic",
+        },
+        {
+          token: "comment.doc",
+          foreground: theme?.colors?.textMuted || "#6a9955",
+          fontStyle: "italic",
+        },
+
+        // Functions and methods
+        { token: "function", foreground: theme?.colors?.accent || "#dcdcaa" },
+        {
+          token: "function.identifier",
+          foreground: theme?.colors?.accent || "#dcdcaa",
+        },
+        { token: "method", foreground: theme?.colors?.accent || "#dcdcaa" },
+        {
+          token: "method.identifier",
+          foreground: theme?.colors?.accent || "#dcdcaa",
+        },
+
+        // Variables
+        { token: "variable", foreground: theme?.colors?.text || "#9cdcfe" },
+        {
+          token: "variable.identifier",
+          foreground: theme?.colors?.text || "#9cdcfe",
+        },
+        {
+          token: "variable.parameter",
+          foreground: theme?.colors?.text || "#9cdcfe",
+        },
+        {
+          token: "variable.language",
+          foreground: theme?.colors?.secondary || "#569cd6",
+        },
+
+        // Constants
+        {
+          token: "constant",
+          foreground: theme?.colors?.secondary || "#4fc1ff",
+        },
+        {
+          token: "constant.language",
+          foreground: theme?.colors?.secondary || "#4fc1ff",
+        },
+
+        // Operators and punctuation
+        { token: "operator", foreground: theme?.colors?.text || "#d4d4d4" },
+        { token: "delimiter", foreground: theme?.colors?.text || "#d4d4d4" },
+        { token: "punctuation", foreground: theme?.colors?.text || "#d4d4d4" },
+
+        // Support (built-in functions, classes)
+        { token: "support", foreground: theme?.colors?.secondary || "#4fc1ff" },
+        {
+          token: "support.function",
+          foreground: theme?.colors?.secondary || "#4fc1ff",
+        },
+        {
+          token: "support.class",
+          foreground: theme?.colors?.secondary || "#4fc1ff",
+        },
+        {
+          token: "support.type",
+          foreground: theme?.colors?.secondary || "#4fc1ff",
+        },
+
+        // Entity names
+        {
+          token: "entity.name",
+          foreground: theme?.colors?.primary || "#4ec9b0",
+        },
+        {
+          token: "entity.name.function",
+          foreground: theme?.colors?.accent || "#dcdcaa",
+        },
+        {
+          token: "entity.name.class",
+          foreground: theme?.colors?.primary || "#4ec9b0",
+        },
+        {
+          token: "entity.name.type",
+          foreground: theme?.colors?.primary || "#4ec9b0",
+        },
+
+        // Storage (var, let, const, function, class)
+        { token: "storage", foreground: theme?.colors?.primary || "#569cd6" },
+        {
+          token: "storage.type",
+          foreground: theme?.colors?.primary || "#569cd6",
+        },
+        {
+          token: "storage.modifier",
+          foreground: theme?.colors?.primary || "#569cd6",
+        },
+      ],
+      colors: {
+        "editor.background": theme?.colors?.background || "#1e1e1e",
+        "editor.foreground": theme?.colors?.text || "#d4d4d4",
+        "editor.lineHighlightBackground":
+          theme?.colors?.backgroundSecondary || "#2a2d2e",
+        "editor.selectionBackground":
+          (theme?.colors?.primary || "#007acc") + "40",
+        "editor.inactiveSelectionBackground":
+          (theme?.colors?.primary || "#007acc") + "20",
+        "editorCursor.foreground": theme?.colors?.primary || "#007acc",
+        "editorWhitespace.foreground": theme?.colors?.textMuted || "#3e3e42",
+        "editorIndentGuide.background": theme?.colors?.border || "#404040",
+        "editor.selectionHighlightBorder": theme?.colors?.primary || "#007acc",
+        "editorError.foreground": theme?.colors?.error || "#f44747",
+        "editorWarning.foreground": theme?.colors?.warning || "#cca700",
+        "editorInfo.foreground": theme?.colors?.info || "#007acc",
+        "editorHint.foreground": theme?.colors?.accent || "#6a9955",
+        "editorLineNumber.foreground": theme?.colors?.textMuted || "#858585",
+        "editorLineNumber.activeForeground":
+          theme?.colors?.primary || "#007acc",
+        "editorGutter.background":
+          theme?.colors?.backgroundSecondary || "#252526",
+        "editorBracketMatch.background":
+          (theme?.colors?.primary || "#007acc") + "20",
+        "editorBracketMatch.border": theme?.colors?.primary || "#007acc",
+      },
+    };
+
+    monaco.editor.defineTheme("app-shell-theme", customTheme);
+    setEditorTheme("app-shell-theme");
+
+    // Configure TypeScript/JavaScript validation
     const validationRules = {
       typescript: {
-        noUnusedLocals: true,
-        noUnusedParameters: true,
-        noImplicitReturns: true,
-        noFallthroughCasesInSwitch: true,
-        noUncheckedIndexedAccess: true,
-        noImplicitOverride: true,
-        noPropertyAccessFromIndexSignature: true,
-        noUncheckedIndexedAccess: true,
+        noUnusedLocals: showLinting,
+        noUnusedParameters: showLinting,
+        noImplicitReturns: showLinting,
+        noFallthroughCasesInSwitch: showLinting,
+        noUncheckedIndexedAccess: showLinting,
+        noImplicitOverride: showLinting,
+        noPropertyAccessFromIndexSignature: showLinting,
       },
       javascript: {
-        noUnusedLocals: true,
-        noUnusedParameters: true,
-        noImplicitReturns: true,
-        noFallthroughCasesInSwitch: true,
-      },
-      json: {
-        allowComments: false,
-        allowTrailingCommas: false,
+        noUnusedLocals: showLinting,
+        noUnusedParameters: showLinting,
+        noImplicitReturns: showLinting,
+        noFallthroughCasesInSwitch: showLinting,
       },
     };
 
@@ -131,13 +284,13 @@ console.log(\`Total users: \${service.getUsersCount()}\`);
       validationRules[language as keyof typeof validationRules] || {};
 
     monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: false,
+      noSemanticValidation: !showLinting,
       noSyntaxValidation: false,
       ...currentRules,
     });
 
     monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-      noSemanticValidation: false,
+      noSemanticValidation: !showLinting,
       noSyntaxValidation: false,
       ...currentRules,
     });
@@ -146,13 +299,17 @@ console.log(\`Total users: \${service.getUsersCount()}\`);
     if (language === "json") {
       monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
         allowComments: false,
-        allowTrailingCommas: false,
         enableSchemaRequest: true,
         schemas: [],
-        validate: true,
+        validate: showLinting,
       });
     }
-  }, [language, showLinting]);
+  };
+
+  const handleEditorDidMount = (editor: any, monaco: Monaco) => {
+    editorRef.current = editor;
+    monaco.editor.setTheme(editorTheme);
+  };
 
   const supportedLanguages = [
     { value: "typescript", label: "TypeScript", linting: true },
@@ -176,7 +333,7 @@ console.log(\`Total users: \${service.getUsersCount()}\`);
     setLanguage(newLanguage);
     // Update code example based on language
     const examples: Record<string, string> = {
-      typescript: `// TypeScript with ESLint Validation
+      typescript: `// TypeScript with Semantic Highlighting
 interface User {
   id: number;
   name: string;
@@ -220,7 +377,7 @@ service.addUser({
 
 console.log(service.getUserById(1));
 console.log(\`Total users: \${service.getUsersCount()}\`);`,
-      javascript: `// JavaScript with ESLint Validation
+      javascript: `// JavaScript with Semantic Highlighting
 class Calculator {
   constructor() {
     this.history = [];
@@ -356,7 +513,7 @@ int main() {
     return 0;
 }`,
       json: `{
-  "name": "Monaco Editor with ESLint",
+  "name": "Monaco Editor with Semantic Highlighting",
   "version": "1.0.0",
   "description": "A powerful code editor with syntax highlighting and linting",
   "features": [
@@ -399,7 +556,7 @@ int main() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monaco Editor with ESLint</title>
+    <title>Monaco Editor with Semantic Highlighting</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -438,7 +595,7 @@ int main() {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Monaco Editor with ESLint</h1>
+            <h1>Monaco Editor with Semantic Highlighting</h1>
             <p>A powerful code editor with syntax highlighting and linting</p>
         </div>
         
@@ -457,7 +614,7 @@ int main() {
     </div>
 </body>
 </html>`,
-      css: `/* CSS with ESLint-like validation */
+      css: `/* CSS with Semantic Highlighting */
 :root {
   --primary-color: #4f46e5;
   --secondary-color: #06b6d4;
@@ -558,7 +715,7 @@ int main() {
     text-align: center;
   }
 }`,
-      markdown: `# Monaco Editor with ESLint
+      markdown: `# Monaco Editor with Semantic Highlighting
 
 ## Features
 
@@ -614,7 +771,7 @@ function createUser(name: string, email: string): User {
 - **Code Style**: Enforces consistent code formatting
 - **Best Practices**: Suggests improvements and catches common mistakes
 
-> Monaco Editor with ESLint provides a professional development experience similar to VS Code!
+> Monaco Editor with Semantic Highlighting provides a professional development experience similar to VS Code!
 `,
     };
 
@@ -781,31 +938,32 @@ function createUser(name: string, email: string): User {
 
       {/* Editor */}
       <div style={{ flex: 1, overflow: "hidden" }}>
-        <MonacoEditor
-          ref={editorRef}
+        <Editor
+          height="100%"
           language={language}
           theme={editorTheme}
           value={code}
-          onChange={setCode}
+          onChange={(value) => setCode(value || "")}
+          beforeMount={handleEditorWillMount}
+          onMount={handleEditorDidMount}
           options={{
-            selectOnLineNumbers: true,
-            automaticLayout: true,
-            formatOnType: true,
-            formatOnPaste: true,
-            minimap: { enabled: true },
-            scrollBeyondLastLine: false,
-            wordWrap: "on",
-            readOnly: false,
+            fontFamily:
+              "Fira Code, 'Cascadia Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace",
+            fontLigatures: true,
             fontSize: 14,
             lineNumbers: "on",
             roundedSelection: false,
-            scrollbar: {
-              vertical: "visible",
-              horizontal: "visible",
-            },
+            scrollBeyondLastLine: false,
+            readOnly: false,
+            minimap: { enabled: true },
+            wordWrap: "on",
+            automaticLayout: true,
+            formatOnType: true,
+            formatOnPaste: true,
+            selectOnLineNumbers: true,
             folding: true,
             foldingStrategy: "indentation",
-            showFoldingControls: "always" as const,
+            showFoldingControls: "always",
             detectIndentation: true,
             tabSize: 2,
             insertSpaces: true,
@@ -829,13 +987,11 @@ function createUser(name: string, email: string): User {
               other: true,
               comments: true,
               strings: true,
-            } as any,
+            },
             suggest: {
               insertMode: "replace",
             },
-            // Enhanced validation options
-            validateOnType: showLinting,
-            validateOnPaste: showLinting,
+            semanticHighlighting: true,
           }}
         />
       </div>
