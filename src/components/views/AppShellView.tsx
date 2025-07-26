@@ -23,6 +23,7 @@ import AboutView from "./AboutView";
 import DevToolsView from "./DevToolsView";
 import EdgeLegendView from "./EdgeLegendView";
 import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
+import MonacoEditorView from "./MonacoEditorView";
 import NodeLegendView from "./NodeLegendView";
 import ReactFlowPanelV2 from "./ReactFlowPanelV2";
 import SystemMonitorView from "./SystemMonitorView";
@@ -775,6 +776,14 @@ const lexicalEditorView = {
   category: "editing",
 };
 
+const monacoEditorView = {
+  id: "monaco-editor",
+  title: "Monaco Editor",
+  icon: "💻",
+  component: (props: any) => <MonacoEditorView {...props} />,
+  category: "editing",
+};
+
 // Define all views
 const allViews = [
   ...defaultViews,
@@ -794,6 +803,7 @@ const allViews = [
   aboutView,
   devToolsView,
   lexicalEditorView,
+  monacoEditorView,
 ];
 
 // Example: Create a custom theme for demonstration
@@ -855,6 +865,11 @@ const AppShellView: React.FC = () => {
             id: "system-monitor",
             title: "System Monitor",
             content: "system-monitor",
+          },
+          {
+            id: "monaco-editor",
+            title: "Monaco Editor",
+            content: "monaco-editor",
           },
         ],
         activeTabId: "system-monitor",

@@ -18,7 +18,10 @@
     "generate-ast": "npx ts-node scripts/generateInterfaceAST.ts",
     "dev:app-shell": "cd ../app-shell && npm run build-lib",
     "watch:app-shell": "cd ../app-shell && npm run build-lib && fswatch -o src/ | xargs -n1 -I{} npm run build-lib",
-    "dev:full": "concurrently \"npm run dev\" \"npm run watch:app-shell\""
+    "dev:full": "concurrently \"npm run dev\" \"npm run watch:app-shell\"",
+    "clean": "rm -rf node_modules package-lock.json dist .vite coverage .nyc_output",
+    "clean:full": "npm run clean && npm cache clean --force",
+    "clean:install": "npm run clean && npm install"
   },
   "keywords": [],
   "author": "",
