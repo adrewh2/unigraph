@@ -139,7 +139,14 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
   };
 
   return (
-    <Box sx={{ height, display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        height,
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "#1f2937",
+      }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -148,21 +155,45 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
           justifyContent: "space-between",
           p: 1,
           borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.paper",
+          borderColor: "#374151",
+          bgcolor: "#111827",
+          color: "white",
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{ fontWeight: 600, color: "white" }}
+        >
           Explorer
         </Typography>
         <Box sx={{ display: "flex", gap: 0.5 }}>
           <Tooltip title="New File">
-            <IconButton size="small" onClick={handleCreateFile}>
+            <IconButton
+              size="small"
+              onClick={handleCreateFile}
+              sx={{
+                color: "#9ca3af",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.1)",
+                  color: "white",
+                },
+              }}
+            >
               <FilePlus size={16} />
             </IconButton>
           </Tooltip>
           <Tooltip title="New Folder">
-            <IconButton size="small" onClick={handleCreateFolder}>
+            <IconButton
+              size="small"
+              onClick={handleCreateFolder}
+              sx={{
+                color: "#9ca3af",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.1)",
+                  color: "white",
+                },
+              }}
+            >
               <FolderPlus size={16} />
             </IconButton>
           </Tooltip>
@@ -170,7 +201,7 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
       </Box>
 
       {/* React Arborist Tree */}
-      <Box sx={{ flex: 1, overflow: "hidden" }}>
+      <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "#1f2937" }}>
         <Tree
           data={fileTree}
           indent={24}
@@ -194,17 +225,29 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                   paddingLeft: 8,
                   paddingRight: 8,
                   backgroundColor: isSelected
-                    ? "rgba(79, 70, 229, 0.1)"
+                    ? "rgba(79, 70, 229, 0.2)"
                     : "transparent",
                   borderLeft: isSelected
                     ? "3px solid #4f46e5"
                     : "3px solid transparent",
                   cursor: "pointer",
                   userSelect: "none",
+                  color: isSelected ? "#4f46e5" : "#d1d5db",
                 }}
                 onClick={() => {
                   if (isFile) {
                     onFileSelect?.(node.data.path);
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255, 255, 255, 0.05)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.backgroundColor = "transparent";
                   }
                 }}
               >
@@ -216,13 +259,15 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                     flex: 1,
                   }}
                 >
-                  {getFileIcon(node.data.name)}
+                  <Box sx={{ color: isSelected ? "#4f46e5" : "#9ca3af" }}>
+                    {getFileIcon(node.data.name)}
+                  </Box>
                   <Typography
                     variant="body2"
                     sx={{
                       fontSize: "0.875rem",
                       fontWeight: isFile ? 400 : 500,
-                      color: isSelected ? "#4f46e5" : "inherit",
+                      color: isSelected ? "#4f46e5" : "#d1d5db",
                     }}
                   >
                     {node.data.name}
