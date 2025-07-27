@@ -140,6 +140,14 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     category: "editing",
     description: "Rich text editor built with Lexical framework",
   },
+  "sandpack-editor": {
+    id: "sandpack-editor",
+    title: "Sandpack Editor",
+    icon: "🖥️",
+    category: "development",
+    description:
+      "Live code editor with file tree and instant preview powered by CodeSandbox",
+  },
 };
 
 // Helper function to get all available view IDs

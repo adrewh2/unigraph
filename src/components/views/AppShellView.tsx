@@ -26,6 +26,7 @@ import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
 import MonacoEditorView from "./MonacoEditorView";
 import NodeLegendView from "./NodeLegendView";
 import ReactFlowPanelV2 from "./ReactFlowPanelV2";
+import SandpackEditorWithFileTree from "./SandpackEditorWithFileTree";
 import SystemMonitorView from "./SystemMonitorView";
 import { VIEW_DEFINITIONS } from "./viewDefinitions";
 
@@ -790,6 +791,14 @@ const monacoEditorView = {
   category: VIEW_DEFINITIONS["monaco-editor"].category,
 };
 
+const sandpackEditorView = {
+  id: VIEW_DEFINITIONS["sandpack-editor"].id,
+  title: VIEW_DEFINITIONS["sandpack-editor"].title,
+  icon: VIEW_DEFINITIONS["sandpack-editor"].icon,
+  component: (props: any) => <SandpackEditorWithFileTree {...props} />,
+  category: VIEW_DEFINITIONS["sandpack-editor"].category,
+};
+
 // Define all views
 const allViews = [
   ...defaultViews,
@@ -810,6 +819,7 @@ const allViews = [
   devToolsView,
   lexicalEditorView,
   monacoEditorView,
+  sandpackEditorView,
 ];
 
 // Example: Create a custom theme for demonstration
