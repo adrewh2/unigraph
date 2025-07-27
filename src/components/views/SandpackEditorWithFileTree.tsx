@@ -160,21 +160,22 @@ const SandpackEditorContent: React.FC<{
   onFileUpdate: (path: string, content: string) => void;
 }> = ({ selectedFile, files, onFileUpdate }) => {
   const { sandpack } = useSandpack();
-  const { code, updateCode } = useActiveCode();
-
-  // Update the active file when selectedFile changes
-  useEffect(() => {
-    if (selectedFile && files[selectedFile]) {
-      sandpack.setActiveFile(selectedFile);
-    }
-  }, [selectedFile, sandpack, files]);
+  const { code } = useActiveCode();
 
   // Sync file content changes back to our file system
   useEffect(() => {
     if (selectedFile && code !== files[selectedFile]) {
+      console.log("Code changed for file:", selectedFile);
+      console.log("New code:", code);
       onFileUpdate(selectedFile, code);
     }
   }, [code, selectedFile, files, onFileUpdate]);
+
+  // Debug: Log current active file
+  useEffect(() => {
+    console.log("Active file in sandpack:", sandpack.activeFile);
+    console.log("Selected file:", selectedFile);
+  }, [sandpack.activeFile, selectedFile]);
 
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
@@ -196,9 +197,9 @@ export const SandpackEditorWithFileTree: React.FC<
 > = ({
   template = "react",
   files = defaultFiles,
-  theme = "dark",
-  height = "100%",
-  title = "Sandpack Editor with File Tree",
+  theme: _theme = "dark",
+  height: _height = "100%",
+  title: _title = "Sandpack Editor with File Tree",
   showFileTree = true,
   fileTreeWidth = 250,
 }) => {
@@ -207,7 +208,13 @@ export const SandpackEditorWithFileTree: React.FC<
     useState<Record<string, string>>(files);
   const [selectedFile, setSelectedFile] = useState<string>("/App.js");
 
+  // Update currentFiles when external files prop changes
+  useEffect(() => {
+    setCurrentFiles(files);
+  }, [files]);
+
   const handleFileSelect = (filePath: string) => {
+    console.log("File selected:", filePath);
     setSelectedFile(filePath);
   };
 
@@ -295,11 +302,13 @@ export const SandpackEditorWithFileTree: React.FC<
       {/* Sandpack Editor and Preview */}
       <Box sx={{ flex: 1 }}>
         <SandpackProvider
+          key={`sandpack-${selectedFile}-${Object.keys(currentFiles).length}`}
           template={template}
           files={currentFiles}
           theme={nightOwl}
           options={{
             autorun: true,
+            activeFile: selectedFile,
           }}
         >
           <SandpackEditorContent
