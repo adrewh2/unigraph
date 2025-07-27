@@ -3,8 +3,7 @@ import {
   type SandpackPredefinedTemplate,
 } from "@codesandbox/sandpack-react";
 import { nightOwl } from "@codesandbox/sandpack-themes";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
-import { Download, Play, Square } from "lucide-react";
+import { Box } from "@mui/material";
 import React, { useState } from "react";
 
 interface SandpackEditorProps {
@@ -78,49 +77,25 @@ export const SandpackEditor: React.FC<SandpackEditorProps> = ({
 }) => {
   const [isRunning, setIsRunning] = useState(true);
 
-  const togglePreview = () => {
-    setIsRunning(!isRunning);
-  };
-
-  const downloadFiles = () => {
-    // Implementation for downloading files
-    console.log("Download files functionality");
-  };
-
   return (
-    <Box sx={{ height, display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          p: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.paper",
-        }}
-      >
-        <Typography variant="h6" component="div">
-          {title}
-        </Typography>
-
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Tooltip title="Toggle Preview">
-            <IconButton size="small" onClick={togglePreview}>
-              {isRunning ? <Square size={16} /> : <Play size={16} />}
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Download Files">
-            <IconButton size="small" onClick={downloadFiles}>
-              <Download size={16} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
-
+    <Box
+      sx={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        "& .sp-wrapper": {
+          height: "100% !important",
+        },
+        "& .sp-layout": {
+          height: "100% !important",
+        },
+        "& .sp-stack": {
+          height: "100% !important",
+        },
+      }}
+    >
       {/* Sandpack Content */}
-      <Box sx={{ flex: 1, overflow: "hidden" }}>
+      <Box sx={{ flex: 1, overflow: "hidden", height: "100%" }}>
         <Sandpack
           template={template}
           files={files}
@@ -132,7 +107,6 @@ export const SandpackEditor: React.FC<SandpackEditorProps> = ({
             showLineNumbers: true,
             showInlineErrors: true,
             wrapContent: true,
-            editorHeight: "100%",
           }}
         />
       </Box>
@@ -150,26 +124,9 @@ export const SandpackEditorFull: React.FC<SandpackEditorProps> = ({
   title = "Sandpack Editor",
 }) => {
   return (
-    <Box sx={{ height, display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          p: 1,
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.paper",
-        }}
-      >
-        <Typography variant="h6" component="div">
-          {title}
-        </Typography>
-      </Box>
-
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Full Sandpack Layout */}
-      <Box sx={{ flex: 1, overflow: "hidden" }}>
+      <Box sx={{ flex: 1, overflow: "hidden", height: "100%" }}>
         <Sandpack
           template={template}
           files={files}
