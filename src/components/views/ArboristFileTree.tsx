@@ -11,7 +11,7 @@ import {
   Image,
   Settings,
 } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Tree } from "react-arborist";
 
 interface FileNode {
@@ -134,6 +134,8 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
   height = "100%",
 }) => {
   const fileTree = useMemo(() => buildFileTree(files), [files]);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameInput, setRenameInput] = useState("");
 
   const handleCreateFile = () => {
     const newPath = "/new-file.js";
@@ -141,8 +143,32 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
   };
 
   const handleCreateFolder = () => {
-    const newPath = "/new-folder";
+    const newPath = `/new-folder-${Date.now()}`;
     onFileCreate?.(newPath, "");
+  };
+
+  const handleRename = (node: any) => {
+    setIsRenaming(true);
+    setRenameInput(node.data.name);
+  };
+
+  const handleRenameSubmit = (node: any) => {
+    if (renameInput.trim() && renameInput !== node.data.name) {
+      const oldPath = node.data.path;
+      const newPath = oldPath.replace(node.data.name, renameInput.trim());
+      onFileRename?.(oldPath, newPath);
+    }
+    setIsRenaming(false);
+    setRenameInput("");
+  };
+
+  const handleRenameCancel = () => {
+    setIsRenaming(false);
+    setRenameInput("");
+  };
+
+  const handleDelete = (node: any) => {
+    onFileDelete?.(node.data.path);
   };
 
   return (
@@ -217,6 +243,55 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
           paddingTop={0}
           paddingBottom={0}
           className="file-tree"
+          onMove={({ dragIds, parentId, index }) => {
+            // Handle drag and drop
+            console.log("Move:", { dragIds, parentId, index });
+
+            if (dragIds.length === 0) return;
+
+            const draggedNodeId = dragIds[0];
+            const draggedNode = fileTree.find(
+              (node) => node.id === draggedNodeId
+            );
+
+            if (!draggedNode) return;
+
+            // Find the new parent path
+            let newParentPath = "/";
+            if (parentId && parentId !== "root") {
+              const parentNode = fileTree.find((node) => node.id === parentId);
+              if (parentNode) {
+                newParentPath = parentNode.path;
+              }
+            }
+
+            // Calculate new path
+            const oldPath = draggedNode.path;
+            const fileName = draggedNode.name;
+            const newPath =
+              newParentPath === "/"
+                ? `/${fileName}`
+                : `${newParentPath}/${fileName}`;
+
+            console.log(`Moving ${oldPath} to ${newPath}`);
+
+            // Simple approach: just rename the node path
+            // The tree will rebuild automatically based on the new file structure
+            if (draggedNode.type === "folder") {
+              // For folders, we need to update all child file paths
+              Object.keys(files).forEach((filePath) => {
+                if (filePath.startsWith(oldPath + "/")) {
+                  const relativePath = filePath.substring(oldPath.length);
+                  const newFilePath = newPath + relativePath;
+                  console.log(`Moving file: ${filePath} -> ${newFilePath}`);
+                  onFileRename?.(filePath, newFilePath);
+                }
+              });
+            } else {
+              // For files, just move the single file
+              onFileRename?.(oldPath, newPath);
+            }
+          }}
         >
           {({ node, style, dragHandle }) => {
             const isSelected = selectedFile === node.data.path;
@@ -224,6 +299,7 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
             const isFolder = node.data.type === "folder";
             const hasChildren =
               node.data.children && node.data.children.length > 0;
+            const isEditing = isRenaming && node.data.name === renameInput;
 
             return (
               <div
@@ -247,20 +323,39 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                   color: isSelected ? "#60a5fa" : "#d1d5db",
                 }}
                 onClick={() => {
+                  if (isEditing) return;
                   if (isFile) {
                     onFileSelect?.(node.data.path);
                   } else if (isFolder) {
                     node.toggle();
                   }
                 }}
+                onDoubleClick={() => {
+                  if (!isEditing) {
+                    handleRename(node);
+                  }
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  // Simple context menu - could be enhanced with a proper menu component
+                  const action = prompt(
+                    `Actions for "${node.data.name}":\n1. Rename\n2. Delete\n3. Cancel`,
+                    "1"
+                  );
+                  if (action === "1") {
+                    handleRename(node);
+                  } else if (action === "2") {
+                    handleDelete(node);
+                  }
+                }}
                 onMouseEnter={(e) => {
-                  if (!isSelected) {
+                  if (!isSelected && !isEditing) {
                     e.currentTarget.style.backgroundColor =
                       "rgba(255, 255, 255, 0.05)";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isSelected) {
+                  if (!isSelected && !isEditing) {
                     e.currentTarget.style.backgroundColor = "transparent";
                   }
                 }}
@@ -271,6 +366,9 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                     alignItems: "center",
                     gap: 1,
                     flex: 1,
+                    minWidth: 0,
+                    overflow: "hidden",
+                    position: "relative",
                   }}
                 >
                   {/* Expand/Collapse icon for folders */}
@@ -282,6 +380,7 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                         alignItems: "center",
                         width: "16px",
                         height: "16px",
+                        flexShrink: 0,
                       }}
                     >
                       {getFolderIcon(node.isOpen)}
@@ -290,11 +389,18 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
 
                   {/* Spacer for files or empty folders */}
                   {(!isFolder || !hasChildren) && (
-                    <Box sx={{ width: "16px", height: "16px" }} />
+                    <Box
+                      sx={{ width: "16px", height: "16px", flexShrink: 0 }}
+                    />
                   )}
 
                   {/* File/Folder icon */}
-                  <Box sx={{ color: isSelected ? "#60a5fa" : "#9ca3af" }}>
+                  <Box
+                    sx={{
+                      color: isSelected ? "#60a5fa" : "#9ca3af",
+                      flexShrink: 0,
+                    }}
+                  >
                     {isFolder ? (
                       <Folder size={16} />
                     ) : (
@@ -302,16 +408,61 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                     )}
                   </Box>
 
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: "0.875rem",
-                      fontWeight: isFile ? 400 : 500,
-                      color: isSelected ? "#60a5fa" : "#d1d5db",
-                    }}
-                  >
-                    {node.data.name}
-                  </Typography>
+                  {/* Name display or edit input */}
+                  {isEditing ? (
+                    <Box sx={{ flex: 1, minWidth: 0, position: "relative" }}>
+                      <input
+                        value={renameInput}
+                        onChange={(e) => setRenameInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleRenameSubmit(node);
+                          } else if (e.key === "Escape") {
+                            handleRenameCancel();
+                          }
+                        }}
+                        onBlur={() => handleRenameSubmit(node)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          outline: "none",
+                          color: "#60a5fa",
+                          fontSize: "0.875rem",
+                          fontWeight: isFile ? 400 : 500,
+                          width: "100%",
+                          padding: 0,
+                          margin: 0,
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          fontFamily: "inherit",
+                          lineHeight: "inherit",
+                          overflow: "visible",
+                          textOverflow: "clip",
+                          whiteSpace: "nowrap",
+                        }}
+                        autoFocus
+                      />
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: "0.875rem",
+                        fontWeight: isFile ? 400 : 500,
+                        color: isSelected ? "#60a5fa" : "#d1d5db",
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {node.data.name}
+                    </Typography>
+                  )}
                 </Box>
               </div>
             );
