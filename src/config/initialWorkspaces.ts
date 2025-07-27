@@ -452,6 +452,82 @@ export const initialWorkspaces: WorkspaceState[] = [
     ],
     theme: "dark",
   },
+  {
+    id: "sandpack-editor-with-file-tree-workspace",
+    name: "Sandpack Editor with Custom File Tree",
+    timestamp: Date.now(),
+    config: {
+      description:
+        "Enhanced code editor with custom file tree, folder management, and live preview",
+    },
+    layout: {
+      horizontal: [0, 100, 0], // 100% center
+      vertical: [100, 0], // 100% top, 0% bottom
+    },
+    tabContainers: [
+      {
+        id: "left",
+        tabs: [],
+        activeTabId: undefined,
+      },
+      {
+        id: "center",
+        tabs: [
+          {
+            id: "sandpack-editor-with-file-tree",
+            title: "Sandpack Editor with File Tree",
+            content: "sandpack-editor-with-file-tree",
+            closable: false,
+          },
+        ],
+        activeTabId: "sandpack-editor-with-file-tree",
+      },
+      {
+        id: "right",
+        tabs: [],
+        activeTabId: undefined,
+      },
+    ],
+    theme: "dark",
+  },
+  {
+    id: "sandpack-editor-with-arborist-workspace",
+    name: "Sandpack Editor with React Arborist",
+    timestamp: Date.now(),
+    config: {
+      description:
+        "Advanced code editor with React Arborist file tree for better performance and features",
+    },
+    layout: {
+      horizontal: [0, 100, 0], // 100% center
+      vertical: [100, 0], // 100% top, 0% bottom
+    },
+    tabContainers: [
+      {
+        id: "left",
+        tabs: [],
+        activeTabId: undefined,
+      },
+      {
+        id: "center",
+        tabs: [
+          {
+            id: "sandpack-editor-with-file-tree",
+            title: "Sandpack Editor with Arborist",
+            content: "sandpack-editor-with-file-tree",
+            closable: false,
+          },
+        ],
+        activeTabId: "sandpack-editor-with-file-tree",
+      },
+      {
+        id: "right",
+        tabs: [],
+        activeTabId: undefined,
+      },
+    ],
+    theme: "dark",
+  },
 ];
 
 export default initialWorkspaces;

@@ -124,7 +124,22 @@ export const SandpackEditorFull: React.FC<SandpackEditorProps> = ({
   title = "Sandpack Editor",
 }) => {
   return (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <Box
+      sx={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        "& .sp-wrapper": {
+          height: "100% !important",
+        },
+        "& .sp-layout": {
+          height: "100% !important",
+        },
+        "& .sp-stack": {
+          height: "100% !important",
+        },
+      }}
+    >
       {/* Full Sandpack Layout */}
       <Box sx={{ flex: 1, overflow: "hidden", height: "100%" }}>
         <Sandpack
@@ -133,6 +148,11 @@ export const SandpackEditorFull: React.FC<SandpackEditorProps> = ({
           theme={nightOwl}
           options={{
             autorun: true,
+            showNavigator: true,
+            showTabs: true,
+            showLineNumbers: true,
+            showInlineErrors: true,
+            wrapContent: true,
           }}
         />
       </Box>
