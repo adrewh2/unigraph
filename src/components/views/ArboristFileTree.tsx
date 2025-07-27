@@ -205,10 +205,10 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
         <Tree
           data={fileTree}
           indent={24}
-          rowHeight={32}
+          rowHeight={28}
           overscanCount={1}
-          paddingTop={8}
-          paddingBottom={8}
+          paddingTop={0}
+          paddingBottom={0}
           className="file-tree"
         >
           {({ node, style, dragHandle }) => {
@@ -224,15 +224,17 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                   alignItems: "center",
                   paddingLeft: 8,
                   paddingRight: 8,
+                  paddingTop: 4,
+                  paddingBottom: 4,
                   backgroundColor: isSelected
-                    ? "rgba(79, 70, 229, 0.2)"
+                    ? "rgba(96, 165, 250, 0.3)"
                     : "transparent",
                   borderLeft: isSelected
-                    ? "3px solid #4f46e5"
+                    ? "3px solid #60a5fa"
                     : "3px solid transparent",
                   cursor: "pointer",
                   userSelect: "none",
-                  color: isSelected ? "#4f46e5" : "#d1d5db",
+                  color: isSelected ? "#60a5fa" : "#d1d5db",
                 }}
                 onClick={() => {
                   if (isFile) {
@@ -259,7 +261,7 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                     flex: 1,
                   }}
                 >
-                  <Box sx={{ color: isSelected ? "#4f46e5" : "#9ca3af" }}>
+                  <Box sx={{ color: isSelected ? "#60a5fa" : "#9ca3af" }}>
                     {getFileIcon(node.data.name)}
                   </Box>
                   <Typography
@@ -267,7 +269,7 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                     sx={{
                       fontSize: "0.875rem",
                       fontWeight: isFile ? 400 : 500,
-                      color: isSelected ? "#4f46e5" : "#d1d5db",
+                      color: isSelected ? "#60a5fa" : "#d1d5db",
                     }}
                   >
                     {node.data.name}
