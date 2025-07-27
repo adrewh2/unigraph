@@ -414,6 +414,44 @@ export const initialWorkspaces: WorkspaceState[] = [
     ],
     theme: "dark",
   },
+  {
+    id: "sandpack-editor-workspace",
+    name: "Sandpack Code Editor",
+    timestamp: Date.now(),
+    config: {
+      description:
+        "Full-featured code editor with file tree, syntax highlighting, and live preview using Sandpack",
+    },
+    layout: {
+      horizontal: [0, 100, 0], // 100% center
+      vertical: [100, 0], // 100% top, 0% bottom
+    },
+    tabContainers: [
+      {
+        id: "left",
+        tabs: [],
+        activeTabId: undefined,
+      },
+      {
+        id: "center",
+        tabs: [
+          {
+            id: "sandpack-editor",
+            title: "Sandpack Editor",
+            content: "sandpack-editor",
+            closable: false,
+          },
+        ],
+        activeTabId: "sandpack-editor",
+      },
+      {
+        id: "right",
+        tabs: [],
+        activeTabId: undefined,
+      },
+    ],
+    theme: "dark",
+  },
 ];
 
 export default initialWorkspaces;
