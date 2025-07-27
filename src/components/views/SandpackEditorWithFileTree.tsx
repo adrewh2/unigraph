@@ -154,18 +154,27 @@ This is a demo project showcasing the Unigraph Sandpack Editor with custom file 
 };
 
 // Component that handles the active file switching
-const SandpackEditorContent: React.FC<{ selectedFile: string }> = ({
-  selectedFile,
-}) => {
+const SandpackEditorContent: React.FC<{
+  selectedFile: string;
+  files: Record<string, string>;
+  onFileUpdate: (path: string, content: string) => void;
+}> = ({ selectedFile, files, onFileUpdate }) => {
   const { sandpack } = useSandpack();
   const { code, updateCode } = useActiveCode();
 
   // Update the active file when selectedFile changes
   useEffect(() => {
-    if (selectedFile && sandpack.files[selectedFile]) {
+    if (selectedFile && files[selectedFile]) {
       sandpack.setActiveFile(selectedFile);
     }
-  }, [selectedFile, sandpack]);
+  }, [selectedFile, sandpack, files]);
+
+  // Sync file content changes back to our file system
+  useEffect(() => {
+    if (selectedFile && code !== files[selectedFile]) {
+      onFileUpdate(selectedFile, code);
+    }
+  }, [code, selectedFile, files, onFileUpdate]);
 
   return (
     <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
@@ -193,6 +202,7 @@ export const SandpackEditorWithFileTree: React.FC<
   showFileTree = true,
   fileTreeWidth = 250,
 }) => {
+  // Single source of truth for all files
   const [currentFiles, setCurrentFiles] =
     useState<Record<string, string>>(files);
   const [selectedFile, setSelectedFile] = useState<string>("/App.js");
@@ -240,6 +250,13 @@ export const SandpackEditorWithFileTree: React.FC<
     }
   };
 
+  const handleFileUpdate = (path: string, content: string) => {
+    setCurrentFiles((prev) => ({
+      ...prev,
+      [path]: content,
+    }));
+  };
+
   return (
     <Box
       sx={{
@@ -285,7 +302,11 @@ export const SandpackEditorWithFileTree: React.FC<
             autorun: true,
           }}
         >
-          <SandpackEditorContent selectedFile={selectedFile} />
+          <SandpackEditorContent
+            selectedFile={selectedFile}
+            files={currentFiles}
+            onFileUpdate={handleFileUpdate}
+          />
         </SandpackProvider>
       </Box>
     </Box>
