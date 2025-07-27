@@ -1,9 +1,12 @@
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import {
+  ChevronDown,
+  ChevronRight,
   Code,
   File,
   FilePlus,
   FileText,
+  Folder,
   FolderPlus,
   Image,
   Settings,
@@ -59,6 +62,10 @@ const getFileIcon = (fileName: string) => {
     default:
       return <File size={16} />;
   }
+};
+
+const getFolderIcon = (isOpen: boolean) => {
+  return isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />;
 };
 
 const buildFileTree = (files: Record<string, string>): FileNode[] => {
@@ -214,6 +221,9 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
           {({ node, style, dragHandle }) => {
             const isSelected = selectedFile === node.data.path;
             const isFile = node.data.type === "file";
+            const isFolder = node.data.type === "folder";
+            const hasChildren =
+              node.data.children && node.data.children.length > 0;
 
             return (
               <div
@@ -239,6 +249,8 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                 onClick={() => {
                   if (isFile) {
                     onFileSelect?.(node.data.path);
+                  } else if (isFolder) {
+                    node.toggle();
                   }
                 }}
                 onMouseEnter={(e) => {
@@ -261,9 +273,35 @@ export const ArboristFileTree: React.FC<ArboristFileTreeProps> = ({
                     flex: 1,
                   }}
                 >
+                  {/* Expand/Collapse icon for folders */}
+                  {isFolder && hasChildren && (
+                    <Box
+                      sx={{
+                        color: isSelected ? "#60a5fa" : "#9ca3af",
+                        display: "flex",
+                        alignItems: "center",
+                        width: "16px",
+                        height: "16px",
+                      }}
+                    >
+                      {getFolderIcon(node.isOpen)}
+                    </Box>
+                  )}
+
+                  {/* Spacer for files or empty folders */}
+                  {(!isFolder || !hasChildren) && (
+                    <Box sx={{ width: "16px", height: "16px" }} />
+                  )}
+
+                  {/* File/Folder icon */}
                   <Box sx={{ color: isSelected ? "#60a5fa" : "#9ca3af" }}>
-                    {getFileIcon(node.data.name)}
+                    {isFolder ? (
+                      <Folder size={16} />
+                    ) : (
+                      getFileIcon(node.data.name)
+                    )}
                   </Box>
+
                   <Typography
                     variant="body2"
                     sx={{
