@@ -178,9 +178,18 @@ const SandpackEditorContent: React.FC<{
   }, [sandpack.activeFile, selectedFile]);
 
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "row", height: "100%" }}>
+    <Box
+      sx={{ flex: 1, display: "flex", flexDirection: "row", height: "100%" }}
+    >
       {/* Code Editor */}
-      <Box sx={{ flex: 1, overflow: "hidden", borderRight: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          flex: 1,
+          overflow: "hidden",
+          borderRight: 1,
+          borderColor: "divider",
+        }}
+      >
         <SandpackCodeEditor showLineNumbers showInlineErrors wrapContent />
       </Box>
 
@@ -267,14 +276,16 @@ export const SandpackEditorWithFileTree: React.FC<
   return (
     <Box
       sx={{
-        height: "100vh",
+        height: _height,
         display: "flex",
         flexDirection: "row",
         "& .sp-wrapper": {
           height: "100% !important",
+          maxHeight: "100% !important",
         },
         "& .sp-layout": {
           height: "100% !important",
+          maxHeight: "100% !important",
         },
         "& .sp-stack": {
           height: "100% !important",
@@ -286,6 +297,12 @@ export const SandpackEditorWithFileTree: React.FC<
           height: "100% !important",
         },
         "& .sp-preview-container": {
+          height: "100% !important",
+        },
+        "& .sp-preview-iframe": {
+          height: "100% !important",
+        },
+        "& .sp-preview-error": {
           height: "100% !important",
         },
       }}
