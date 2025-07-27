@@ -178,14 +178,14 @@ const SandpackEditorContent: React.FC<{
   }, [sandpack.activeFile, selectedFile]);
 
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "row", height: "100%" }}>
       {/* Code Editor */}
-      <Box sx={{ flex: 1, overflow: "hidden" }}>
+      <Box sx={{ flex: 1, overflow: "hidden", borderRight: 1, borderColor: "divider" }}>
         <SandpackCodeEditor showLineNumbers showInlineErrors wrapContent />
       </Box>
 
       {/* Preview */}
-      <Box sx={{ height: "40%", borderTop: 1, borderColor: "divider" }}>
+      <Box sx={{ flex: 1, overflow: "hidden" }}>
         <SandpackPreview />
       </Box>
     </Box>
@@ -279,6 +279,15 @@ export const SandpackEditorWithFileTree: React.FC<
         "& .sp-stack": {
           height: "100% !important",
         },
+        "& .sp-code-editor": {
+          height: "100% !important",
+        },
+        "& .sp-preview": {
+          height: "100% !important",
+        },
+        "& .sp-preview-container": {
+          height: "100% !important",
+        },
       }}
     >
       {/* Custom File Tree */}
@@ -300,7 +309,7 @@ export const SandpackEditorWithFileTree: React.FC<
       )}
 
       {/* Sandpack Editor and Preview */}
-      <Box sx={{ flex: 1 }}>
+      <Box sx={{ flex: 1, height: "100%" }}>
         <SandpackProvider
           key={`sandpack-${selectedFile}-${Object.keys(currentFiles).length}`}
           template={template}
