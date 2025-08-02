@@ -5,3 +5,8 @@ export interface ResourceId {
   description?: string;
   [key: string]: any;
 }
+
+export interface WebUrlResourceId extends ResourceId {
+  type: "web-url";
+  url: string;
+}

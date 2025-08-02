@@ -26,7 +26,11 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
   const [newAnnotation, setNewAnnotation] = useState({
     label: "",
     description: "",
+    tags: [] as string[],
+    urls: [] as { url: string; label?: string }[],
   });
+  const [newTag, setNewTag] = useState("");
+  const [newUrl, setNewUrl] = useState({ url: "", label: "" });
 
   // Canvas size for the preview
   const canvasSize = 300;
@@ -236,6 +240,13 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
         label: newAnnotation.label.trim(),
         description: newAnnotation.description.trim(),
         date: new Date().toISOString(),
+        tags: newAnnotation.tags,
+        urls: newAnnotation.urls.map((url) => ({
+          id: `url-${Date.now()}-${Math.random()}`,
+          type: "web-url",
+          url: url.url,
+          label: url.label || url.url,
+        })),
       };
 
       const updatedData = {
@@ -247,7 +258,7 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
       // Save immediately whether in edit mode or view mode
       onEdit?.(updatedData);
 
-      setNewAnnotation({ label: "", description: "" });
+      setNewAnnotation({ label: "", description: "", tags: [], urls: [] });
       setShowAddAnnotation(false);
     }
   };
@@ -264,6 +275,295 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
     // Save immediately whether in edit mode or view mode
     onEdit?.(updatedData);
   };
+
+  const handleAddTag = () => {
+    if (newTag.trim()) {
+      setNewAnnotation({
+        ...newAnnotation,
+        tags: [...newAnnotation.tags, newTag.trim()],
+      });
+      setNewTag("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setNewAnnotation({
+      ...newAnnotation,
+      tags: newAnnotation.tags.filter((tag) => tag !== tagToRemove),
+    });
+  };
+
+  const handleAddUrl = () => {
+    if (newUrl.url.trim()) {
+      setNewAnnotation({
+        ...newAnnotation,
+        urls: [...newAnnotation.urls, { ...newUrl }],
+      });
+      setNewUrl({ url: "", label: "" });
+    }
+  };
+
+  const handleRemoveUrl = (urlToRemove: string) => {
+    setNewAnnotation({
+      ...newAnnotation,
+      urls: newAnnotation.urls.filter((url) => url.url !== urlToRemove),
+    });
+  };
+
+  const renderAnnotationForm = () => (
+    <div className="add-annotation-form">
+      <input
+        type="text"
+        placeholder="Annotation label"
+        value={newAnnotation.label}
+        onChange={(e) =>
+          setNewAnnotation({ ...newAnnotation, label: e.target.value })
+        }
+        style={{
+          border: "1px solid #ddd",
+          background: "#f8f9fa",
+          fontSize: "13px",
+          padding: "6px 8px",
+          borderRadius: "4px",
+          width: "100%",
+          marginBottom: "8px",
+        }}
+      />
+      <textarea
+        placeholder="Annotation description"
+        value={newAnnotation.description}
+        onChange={(e) =>
+          setNewAnnotation({
+            ...newAnnotation,
+            description: e.target.value,
+          })
+        }
+        style={{
+          border: "1px solid #ddd",
+          background: "#f8f9fa",
+          fontSize: "13px",
+          padding: "6px 8px",
+          borderRadius: "4px",
+          width: "100%",
+          resize: "vertical",
+          minHeight: "60px",
+          marginBottom: "8px",
+        }}
+      />
+
+      {/* Tags Section */}
+      <div style={{ marginBottom: "8px" }}>
+        <label
+          style={{
+            fontSize: "12px",
+            fontWeight: "600",
+            color: "#555",
+            marginBottom: "4px",
+            display: "block",
+          }}
+        >
+          Tags:
+        </label>
+        <div style={{ display: "flex", gap: "4px", marginBottom: "4px" }}>
+          <input
+            type="text"
+            placeholder="Add tag"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
+            style={{
+              border: "1px solid #ddd",
+              background: "#f8f9fa",
+              fontSize: "12px",
+              padding: "4px 6px",
+              borderRadius: "4px",
+              flex: 1,
+            }}
+          />
+          <button
+            onClick={handleAddTag}
+            style={{
+              background: "#28a745",
+              color: "white",
+              border: "none",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              cursor: "pointer",
+            }}
+          >
+            Add
+          </button>
+        </div>
+        {newAnnotation.tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+            {newAnnotation.tags.map((tag, index) => (
+              <span
+                key={index}
+                style={{
+                  background: "#e9ecef",
+                  color: "#495057",
+                  padding: "2px 6px",
+                  borderRadius: "12px",
+                  fontSize: "11px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                {tag}
+                <button
+                  onClick={() => handleRemoveTag(tag)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#dc3545",
+                    cursor: "pointer",
+                    fontSize: "10px",
+                    padding: 0,
+                  }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* URLs Section */}
+      <div style={{ marginBottom: "8px" }}>
+        <label
+          style={{
+            fontSize: "12px",
+            fontWeight: "600",
+            color: "#555",
+            marginBottom: "4px",
+            display: "block",
+          }}
+        >
+          URLs:
+        </label>
+        <div style={{ display: "flex", gap: "4px", marginBottom: "4px" }}>
+          <input
+            type="url"
+            placeholder="URL"
+            value={newUrl.url}
+            onChange={(e) => setNewUrl({ ...newUrl, url: e.target.value })}
+            style={{
+              border: "1px solid #ddd",
+              background: "#f8f9fa",
+              fontSize: "12px",
+              padding: "4px 6px",
+              borderRadius: "4px",
+              flex: 1,
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Label (optional)"
+            value={newUrl.label}
+            onChange={(e) => setNewUrl({ ...newUrl, label: e.target.value })}
+            style={{
+              border: "1px solid #ddd",
+              background: "#f8f9fa",
+              fontSize: "12px",
+              padding: "4px 6px",
+              borderRadius: "4px",
+              flex: 1,
+            }}
+          />
+          <button
+            onClick={handleAddUrl}
+            style={{
+              background: "#007bff",
+              color: "white",
+              border: "none",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              cursor: "pointer",
+            }}
+          >
+            Add
+          </button>
+        </div>
+        {newAnnotation.urls.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            {newAnnotation.urls.map((url, index) => (
+              <div
+                key={index}
+                style={{
+                  background: "#e9ecef",
+                  color: "#495057",
+                  padding: "4px 6px",
+                  borderRadius: "4px",
+                  fontSize: "11px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span>{url.label || url.url}</span>
+                <button
+                  onClick={() => handleRemoveUrl(url.url)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#dc3545",
+                    cursor: "pointer",
+                    fontSize: "10px",
+                    padding: 0,
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: "flex", gap: "8px" }}>
+        <button
+          onClick={handleAddAnnotation}
+          style={{
+            background: "#007bff",
+            color: "white",
+            border: "none",
+            padding: "6px 12px",
+            borderRadius: "4px",
+            fontSize: "12px",
+            cursor: "pointer",
+          }}
+        >
+          Add
+        </button>
+        <button
+          onClick={() => {
+            setShowAddAnnotation(false);
+            setNewAnnotation({
+              label: "",
+              description: "",
+              tags: [],
+              urls: [],
+            });
+          }}
+          style={{
+            background: "#6c757d",
+            color: "white",
+            border: "none",
+            padding: "6px 12px",
+            borderRadius: "4px",
+            fontSize: "12px",
+            cursor: "pointer",
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
 
   const renderEditForm = () => (
     <div className="image-box-inspector-view">
@@ -399,81 +699,7 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
             </button>
           </div>
 
-          {showAddAnnotation && (
-            <div className="add-annotation-form">
-              <input
-                type="text"
-                placeholder="Annotation label"
-                value={newAnnotation.label}
-                onChange={(e) =>
-                  setNewAnnotation({ ...newAnnotation, label: e.target.value })
-                }
-                style={{
-                  border: "1px solid #ddd",
-                  background: "#f8f9fa",
-                  fontSize: "13px",
-                  padding: "6px 8px",
-                  borderRadius: "4px",
-                  width: "100%",
-                  marginBottom: "8px",
-                }}
-              />
-              <textarea
-                placeholder="Annotation description"
-                value={newAnnotation.description}
-                onChange={(e) =>
-                  setNewAnnotation({
-                    ...newAnnotation,
-                    description: e.target.value,
-                  })
-                }
-                style={{
-                  border: "1px solid #ddd",
-                  background: "#f8f9fa",
-                  fontSize: "13px",
-                  padding: "6px 8px",
-                  borderRadius: "4px",
-                  width: "100%",
-                  resize: "vertical",
-                  minHeight: "60px",
-                  marginBottom: "8px",
-                }}
-              />
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={handleAddAnnotation}
-                  style={{
-                    background: "#007bff",
-                    color: "white",
-                    border: "none",
-                    padding: "6px 12px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Add
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddAnnotation(false);
-                    setNewAnnotation({ label: "", description: "" });
-                  }}
-                  style={{
-                    background: "#6c757d",
-                    color: "white",
-                    border: "none",
-                    padding: "6px 12px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+          {showAddAnnotation && renderAnnotationForm()}
 
           <div className="annotations-list">
             {(editedData.annotations || []).length === 0 ? (
@@ -506,8 +732,73 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
                   >
                     {annotation.description}
                   </p>
+
+                  {/* Display Tags */}
+                  {annotation.tags && annotation.tags.length > 0 && (
+                    <div style={{ marginTop: "4px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "4px",
+                        }}
+                      >
+                        {annotation.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            style={{
+                              background: "#e9ecef",
+                              color: "#495057",
+                              padding: "2px 6px",
+                              borderRadius: "12px",
+                              fontSize: "10px",
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display URLs */}
+                  {annotation.urls && annotation.urls.length > 0 && (
+                    <div style={{ marginTop: "4px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "2px",
+                        }}
+                      >
+                        {annotation.urls.map((url, index) => (
+                          <a
+                            key={index}
+                            href={url.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: "#007bff",
+                              fontSize: "11px",
+                              textDecoration: "none",
+                              display: "block",
+                            }}
+                          >
+                            {url.label || url.url}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {annotation.date && (
-                    <div style={{ fontSize: "11px", color: "#999" }}>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#999",
+                        marginTop: "4px",
+                      }}
+                    >
                       {new Date(annotation.date).toLocaleDateString()}
                     </div>
                   )}
@@ -616,81 +907,7 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
             </button>
           </div>
 
-          {showAddAnnotation && (
-            <div className="add-annotation-form">
-              <input
-                type="text"
-                placeholder="Annotation label"
-                value={newAnnotation.label}
-                onChange={(e) =>
-                  setNewAnnotation({ ...newAnnotation, label: e.target.value })
-                }
-                style={{
-                  border: "1px solid #ddd",
-                  background: "#f8f9fa",
-                  fontSize: "13px",
-                  padding: "6px 8px",
-                  borderRadius: "4px",
-                  width: "100%",
-                  marginBottom: "8px",
-                }}
-              />
-              <textarea
-                placeholder="Annotation description"
-                value={newAnnotation.description}
-                onChange={(e) =>
-                  setNewAnnotation({
-                    ...newAnnotation,
-                    description: e.target.value,
-                  })
-                }
-                style={{
-                  border: "1px solid #ddd",
-                  background: "#f8f9fa",
-                  fontSize: "13px",
-                  padding: "6px 8px",
-                  borderRadius: "4px",
-                  width: "100%",
-                  resize: "vertical",
-                  minHeight: "60px",
-                  marginBottom: "8px",
-                }}
-              />
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={handleAddAnnotation}
-                  style={{
-                    background: "#007bff",
-                    color: "white",
-                    border: "none",
-                    padding: "6px 12px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Add
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddAnnotation(false);
-                    setNewAnnotation({ label: "", description: "" });
-                  }}
-                  style={{
-                    background: "#6c757d",
-                    color: "white",
-                    border: "none",
-                    padding: "6px 12px",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+          {showAddAnnotation && renderAnnotationForm()}
 
           <div className="annotations-list">
             {(editedData.annotations || []).length === 0 ? (
