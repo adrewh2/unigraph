@@ -2,14 +2,11 @@
   display: flex;
   height: 100%;
   width: 100%;
-  background: #ffffff;
 }
 
 .documentation-sidebar {
   width: 280px;
   min-width: 280px;
-  border-right: 1px solid #e1e5e9;
-  background: #ffffff;
 }
 
 .documentation-content {
@@ -27,14 +24,12 @@
 }
 
 .documentation-welcome h2 {
-  color: #24292f;
   font-size: 24px;
   font-weight: 600;
   margin: 0 0 16px 0;
 }
 
 .documentation-welcome p {
-  color: #656d76;
   font-size: 16px;
   line-height: 1.5;
   margin: 0 0 32px 0;
@@ -42,14 +37,11 @@
 
 .documentation-features {
   text-align: left;
-  background: #f6f8fa;
-  border: 1px solid #e1e5e9;
   border-radius: 6px;
   padding: 24px;
 }
 
 .documentation-features h3 {
-  color: #24292f;
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 16px 0;
@@ -62,7 +54,6 @@
 }
 
 .documentation-features li {
-  color: #656d76;
   font-size: 14px;
   line-height: 1.6;
   margin: 0 0 8px 0;
@@ -74,43 +65,5 @@
 }
 
 .documentation-features strong {
-  color: #24292f;
   font-weight: 600;
-}
-
-/* Dark theme support */
-@media (prefers-color-scheme: dark) {
-  .documentation-view {
-    background: #0d1117;
-  }
-
-  .documentation-sidebar {
-    background: #0d1117;
-    border-right-color: #30363d;
-  }
-
-  .documentation-welcome h2 {
-    color: #f0f6fc;
-  }
-
-  .documentation-welcome p {
-    color: #8b949e;
-  }
-
-  .documentation-features {
-    background: #161b22;
-    border-color: #30363d;
-  }
-
-  .documentation-features h3 {
-    color: #f0f6fc;
-  }
-
-  .documentation-features li {
-    color: #8b949e;
-  }
-
-  .documentation-features strong {
-    color: #f0f6fc;
-  }
 }

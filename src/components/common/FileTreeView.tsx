@@ -1,3 +1,4 @@
+import { getColor, useTheme } from "@aesgraph/app-shell";
 import {
   ChevronDown,
   ChevronRight,
@@ -29,6 +30,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
   selectedFile,
   className = "",
 }) => {
+  const { theme } = useTheme();
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -140,30 +142,87 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
       <div key={node.path}>
         <div
           className={`file-tree-node ${isSelected ? "selected" : ""}`}
-          style={{ paddingLeft: `${depth * 20}px` }}
+          style={{
+            paddingLeft: `${depth * 20}px`,
+            backgroundColor: isSelected
+              ? getColor(theme.colors, "primary")
+              : "transparent",
+            color: isSelected
+              ? getColor(theme.colors, "textInverse")
+              : getColor(theme.colors, "text"),
+          }}
           onClick={() => toggleNode(node)}
         >
           <div className="file-tree-node-content">
             {node.type === "directory" ? (
               <>
                 {isExpanded ? (
-                  <ChevronDown className="file-tree-icon" size={16} />
+                  <ChevronDown
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
                 ) : (
-                  <ChevronRight className="file-tree-icon" size={16} />
+                  <ChevronRight
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
                 )}
                 {isExpanded ? (
-                  <FolderOpen className="file-tree-icon" size={16} />
+                  <FolderOpen
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
                 ) : (
-                  <Folder className="file-tree-icon" size={16} />
+                  <Folder
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
                 )}
               </>
             ) : (
               <>
                 <div className="file-tree-icon-placeholder" />
-                <FileText className="file-tree-icon" size={16} />
+                <FileText
+                  className="file-tree-icon"
+                  size={16}
+                  style={{
+                    color: isSelected
+                      ? getColor(theme.colors, "textInverse")
+                      : getColor(theme.colors, "textSecondary"),
+                  }}
+                />
               </>
             )}
-            <span className="file-tree-name">{node.name}</span>
+            <span
+              className="file-tree-name"
+              style={{
+                color: isSelected
+                  ? getColor(theme.colors, "textInverse")
+                  : getColor(theme.colors, "text"),
+              }}
+            >
+              {node.name}
+            </span>
           </div>
         </div>
         {node.type === "directory" && isExpanded && node.children && (
@@ -177,17 +236,47 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 
   if (loading) {
     return (
-      <div className={`file-tree-container ${className}`}>
-        <div className="file-tree-loading">Loading file tree...</div>
+      <div
+        className={`file-tree-container ${className}`}
+        style={{
+          backgroundColor: getColor(theme.colors, "background"),
+          color: getColor(theme.colors, "text"),
+        }}
+      >
+        <div
+          className="file-tree-loading"
+          style={{
+            color: getColor(theme.colors, "textSecondary"),
+          }}
+        >
+          Loading file tree...
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={`file-tree-container ${className}`}>
-        <div className="file-tree-error">
-          <h3>Error Loading File Tree</h3>
+      <div
+        className={`file-tree-container ${className}`}
+        style={{
+          backgroundColor: getColor(theme.colors, "background"),
+          color: getColor(theme.colors, "text"),
+        }}
+      >
+        <div
+          className="file-tree-error"
+          style={{
+            color: getColor(theme.colors, "error"),
+          }}
+        >
+          <h3
+            style={{
+              color: getColor(theme.colors, "error"),
+            }}
+          >
+            Error Loading File Tree
+          </h3>
           <p>{error}</p>
         </div>
       </div>
@@ -195,9 +284,28 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
   }
 
   return (
-    <div className={`file-tree-container ${className}`}>
-      <div className="file-tree-header">
-        <h3>Documentation</h3>
+    <div
+      className={`file-tree-container ${className}`}
+      style={{
+        backgroundColor: getColor(theme.colors, "background"),
+        color: getColor(theme.colors, "text"),
+        borderRight: `1px solid ${getColor(theme.colors, "border")}`,
+      }}
+    >
+      <div
+        className="file-tree-header"
+        style={{
+          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+          borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
+        }}
+      >
+        <h3
+          style={{
+            color: getColor(theme.colors, "text"),
+          }}
+        >
+          Documentation
+        </h3>
       </div>
       <div className="file-tree-content">
         {fileTree.map((node) => renderNode(node))}
