@@ -1002,8 +1002,86 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
                   >
                     {annotation.description}
                   </p>
+
+                  {/* Display Tags */}
+                  {annotation.tags && annotation.tags.length > 0 && (
+                    <div style={{ marginTop: "4px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "4px",
+                        }}
+                      >
+                        {annotation.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            style={{
+                              background: "#f8f9fa",
+                              color: "#495057",
+                              padding: "2px 6px",
+                              borderRadius: "12px",
+                              fontSize: "10px",
+                              border: "1px solid #e9ecef",
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display URLs */}
+                  {annotation.urls && annotation.urls.length > 0 && (
+                    <div style={{ marginTop: "4px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                        }}
+                      >
+                        {annotation.urls.map((url, index) => (
+                          <a
+                            key={index}
+                            href={url.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: "#007bff",
+                              fontSize: "11px",
+                              textDecoration: "none",
+                              display: "block",
+                              padding: "2px 4px",
+                              borderRadius: "3px",
+                              transition: "all 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#f0f8ff";
+                              e.currentTarget.style.textDecoration =
+                                "underline";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.textDecoration = "none";
+                            }}
+                          >
+                            {url.label || url.url}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {annotation.date && (
-                    <div style={{ fontSize: "11px", color: "#999" }}>
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#999",
+                        marginTop: "4px",
+                      }}
+                    >
                       {new Date(annotation.date).toLocaleDateString()}
                     </div>
                   )}
