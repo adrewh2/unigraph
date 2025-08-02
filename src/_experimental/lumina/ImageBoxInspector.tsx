@@ -225,106 +225,113 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
   };
 
   const renderEditForm = () => (
-    <div className="image-box-inspector-edit">
-      <h3>Edit Image Box</h3>
-      <div className="form-group">
-        <label>Label:</label>
-        <input
-          type="text"
-          value={editedData.label}
-          onChange={(e) =>
-            setEditedData({ ...editedData, label: e.target.value })
-          }
-        />
-      </div>
-      <div className="form-group">
-        <label>Type:</label>
-        <input
-          type="text"
-          value={editedData.type}
-          onChange={(e) =>
-            setEditedData({ ...editedData, type: e.target.value })
-          }
-        />
-      </div>
-      <div className="form-group">
-        <label>Description:</label>
-        <textarea
-          value={editedData.description}
-          onChange={(e) =>
-            setEditedData({ ...editedData, description: e.target.value })
-          }
-        />
-      </div>
-      <div className="form-group">
-        <label>Top Left (x, y):</label>
-        <div className="coordinate-inputs">
+    <div className="image-box-inspector-view">
+      <div className="inspector-header">
+        <h3>
           <input
-            type="number"
-            value={editedData.topLeft.x}
+            type="text"
+            value={editedData.label}
             onChange={(e) =>
-              setEditedData({
-                ...editedData,
-                topLeft: {
-                  ...editedData.topLeft,
-                  x: parseInt(e.target.value) || 0,
-                },
-              })
+              setEditedData({ ...editedData, label: e.target.value })
             }
+            style={{
+              border: "1px solid #ddd",
+              background: "#f8f9fa",
+              fontSize: "18px",
+              fontWeight: "600",
+              color: "#333",
+              width: "100%",
+              outline: "none",
+              borderRadius: "4px",
+              padding: "4px 8px",
+            }}
           />
-          <input
-            type="number"
-            value={editedData.topLeft.y}
-            onChange={(e) =>
-              setEditedData({
-                ...editedData,
-                topLeft: {
-                  ...editedData.topLeft,
-                  y: parseInt(e.target.value) || 0,
-                },
-              })
-            }
-          />
+        </h3>
+        <div className="header-actions">
+          <button onClick={handleSave} className="edit-button">
+            <Edit size={16} />
+          </button>
+          <button onClick={handleCancel} className="delete-button">
+            <X size={16} />
+          </button>
+          {onClose && (
+            <button onClick={onClose} className="close-button">
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
-      <div className="form-group">
-        <label>Bottom Right (x, y):</label>
-        <div className="coordinate-inputs">
-          <input
-            type="number"
-            value={editedData.bottomRight.x}
+
+      <div className="image-preview">
+        {imageError ? (
+          <div className="error-message">{imageError}</div>
+        ) : !imageLoaded ? (
+          <div className="loading-message">Loading image...</div>
+        ) : (
+          <div>
+            <canvas
+              ref={canvasRef}
+              width={canvasSize}
+              height={canvasSize}
+              className="image-box-canvas"
+            />
+            <div style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+              Canvas size: {canvasSize}×{canvasSize}px
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="image-box-details">
+        <div className="detail-group">
+          <label>Type:</label>
+          <span>{imageBox.type}</span>
+        </div>
+        <div className="detail-group">
+          <label>Description:</label>
+          <textarea
+            value={editedData.description}
             onChange={(e) =>
-              setEditedData({
-                ...editedData,
-                bottomRight: {
-                  ...editedData.bottomRight,
-                  x: parseInt(e.target.value) || 0,
-                },
-              })
+              setEditedData({ ...editedData, description: e.target.value })
             }
-          />
-          <input
-            type="number"
-            value={editedData.bottomRight.y}
-            onChange={(e) =>
-              setEditedData({
-                ...editedData,
-                bottomRight: {
-                  ...editedData.bottomRight,
-                  y: parseInt(e.target.value) || 0,
-                },
-              })
-            }
+            style={{
+              border: "1px solid #ddd",
+              background: "#f8f9fa",
+              fontSize: "13px",
+              color: "#333",
+              width: "100%",
+              outline: "none",
+              resize: "vertical",
+              fontFamily: "inherit",
+              minHeight: "60px",
+              padding: "6px 8px",
+              margin: 0,
+              borderRadius: "4px",
+            }}
           />
         </div>
-      </div>
-      <div className="button-group">
-        <button onClick={handleSave} className="save-button">
-          Save
-        </button>
-        <button onClick={handleCancel} className="cancel-button">
-          Cancel
-        </button>
+        <div className="detail-group">
+          <label>Image:</label>
+          <span>{imageBox.imageUrl}</span>
+        </div>
+        <div className="detail-group">
+          <label>Coordinates:</label>
+          <div className="coordinates">
+            <div>
+              Top Left: ({imageBox.topLeft.x}, {imageBox.topLeft.y})
+            </div>
+            <div>
+              Bottom Right: ({imageBox.bottomRight.x}, {imageBox.bottomRight.y})
+            </div>
+          </div>
+        </div>
+        <div className="detail-group">
+          <label>Dimensions:</label>
+          <span>
+            {imageBox.bottomRight.x - imageBox.topLeft.x} ×{" "}
+            {imageBox.bottomRight.y - imageBox.topLeft.y} pixels
+          </span>
+        </div>
       </div>
     </div>
   );
