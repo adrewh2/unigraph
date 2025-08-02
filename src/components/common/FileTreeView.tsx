@@ -137,7 +137,8 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 
   const renderNode = (node: FileNode, depth: number = 0): React.ReactNode => {
     const isSelected = selectedFile === node.path;
-    const isExpanded = node.isExpanded !== undefined ? node.isExpanded : depth === 0; // Root nodes start expanded but can be collapsed
+    const isExpanded =
+      node.isExpanded !== undefined ? node.isExpanded : depth === 0; // Root nodes start expanded but can be collapsed
 
     return (
       <div key={node.path}>

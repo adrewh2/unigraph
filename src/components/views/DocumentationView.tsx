@@ -32,9 +32,17 @@ const DocumentationView: React.FC = () => {
           selectedFile={selectedFile || undefined}
         />
       </div>
-      <div className="documentation-content">
+      <div
+        className="documentation-content"
+        style={{
+          height: "100%",
+          overflow: "auto",
+        }}
+      >
         {selectedFile ? (
-          <MarkdownViewer filename={selectedFile} />
+          <div style={{ height: "100%" }}>
+            <MarkdownViewer filename={selectedFile} />
+          </div>
         ) : (
           <div
             className="documentation-welcome"

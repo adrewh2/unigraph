@@ -125,6 +125,12 @@
   }
 }
 
+/* Markdown container styling */
+.markdown-container {
+  height: 100%;
+  padding: 20px;
+}
+
 /* Additional markdown content styling */
 .markdown-content .defined-term {
   font-weight: 500;

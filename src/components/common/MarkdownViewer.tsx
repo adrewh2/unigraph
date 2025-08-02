@@ -533,7 +533,13 @@ function MarkdownViewer({
   }
 
   return (
-    <div className="markdown-container" style={{ position: "relative" }}>
+    <div
+      className="markdown-container"
+      style={{
+        position: "relative",
+        height: "100%",
+      }}
+    >
       <div
         ref={contentRef}
         className={`markdown-content ${excerpt ? "markdown-excerpt-no-fade" : ""}`}
