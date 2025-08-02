@@ -48,9 +48,21 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
       ctx.fillStyle = "#f0f0f0";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Add a simple test pattern to verify canvas is working
+      ctx.fillStyle = "#ff0000";
+      ctx.fillRect(10, 10, 20, 20);
+      console.log("Drew test pattern on canvas");
+
       // Get image dimensions
       const imgWidth = image.width;
       const imgHeight = image.height;
+
+      // Ensure image is actually loaded and has dimensions
+      if (imgWidth === 0 || imgHeight === 0) {
+        console.log("Image not fully loaded yet, retrying...");
+        setTimeout(() => drawImageBox(image), 100);
+        return;
+      }
 
       // The coordinates are in pixel space, but we need to ensure they're within bounds
       // Let's also add some debugging to see what's happening
@@ -84,21 +96,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
 
       console.log("Scaled coordinates:", scaledTopLeft, scaledBottomRight);
 
-      // Check if scaled coordinates are reasonable
-      if (scaledTopLeft.x >= imgWidth || scaledTopLeft.y >= imgHeight) {
-        console.log(
-          "Scaled coordinates are outside image bounds, drawing full image"
-        );
-        ctx.drawImage(image, 0, 0, canvasSize, canvasSize);
-        ctx.strokeStyle = "#ff0000";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, canvasSize, canvasSize);
-        ctx.fillStyle = "#ff0000";
-        ctx.font = "14px Arial";
-        ctx.fillText("Scaled coordinates outside image bounds", 5, 20);
-        return;
-      }
-
       const extractX = Math.max(0, Math.min(scaledTopLeft.x, imgWidth));
       const extractY = Math.max(0, Math.min(scaledTopLeft.y, imgHeight));
       const extractWidth = Math.min(
@@ -117,36 +114,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
         extractWidth,
         extractHeight
       );
-
-      // If the extract area is too small or invalid, draw the full image
-      if (extractWidth <= 0 || extractHeight <= 0) {
-        console.log("Invalid extract area, drawing full image");
-        ctx.drawImage(image, 0, 0, canvasSize, canvasSize);
-
-        // Add a red border to indicate this is the full image
-        ctx.strokeStyle = "#ff0000";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, canvasSize, canvasSize);
-
-        // Add label
-        ctx.fillStyle = "#ff0000";
-        ctx.font = "14px Arial";
-        ctx.fillText("Full Image (invalid coordinates)", 5, 20);
-        return;
-      }
-
-      // Check if the extraction area is very small (less than 10 pixels)
-      if (extractWidth < 10 || extractHeight < 10) {
-        console.log("Extraction area too small, drawing full image");
-        ctx.drawImage(image, 0, 0, canvasSize, canvasSize);
-        ctx.strokeStyle = "#ff0000";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, canvasSize, canvasSize);
-        ctx.fillStyle = "#ff0000";
-        ctx.font = "14px Arial";
-        ctx.fillText("Full Image (extraction area too small)", 5, 20);
-        return;
-      }
 
       // Calculate scaling to fit in canvas while maintaining aspect ratio
       const canvasScaleX = canvasSize / extractWidth;
@@ -179,6 +146,10 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
         drawWidth,
         drawHeight
       );
+
+      // Also draw a small version of the full image in the corner for debugging
+      ctx.drawImage(image, 0, 0, 50, 50);
+      console.log("Drew extracted area and debug image");
     };
 
     const loadImage = () => {
@@ -198,9 +169,25 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
       image.onload = () => {
         console.log("Image loaded successfully for:", imageBox.id);
         console.log("Image dimensions:", image.width, image.height);
-        setImageLoaded(true);
-        setImageError(null);
-        drawImageBox(image);
+
+        // Double-check that the image has valid dimensions
+        if (image.width > 0 && image.height > 0) {
+          setImageLoaded(true);
+          setImageError(null);
+          // Add a small delay to ensure canvas is ready
+          setTimeout(() => drawImageBox(image), 50);
+        } else {
+          console.log("Image loaded but has zero dimensions, retrying...");
+          setTimeout(() => {
+            if (image.width > 0 && image.height > 0) {
+              setImageLoaded(true);
+              setImageError(null);
+              drawImageBox(image);
+            } else {
+              setImageError("Image loaded but has invalid dimensions");
+            }
+          }, 100);
+        }
       };
 
       image.onerror = () => {
