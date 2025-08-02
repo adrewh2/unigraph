@@ -52,10 +52,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
       const imgWidth = image.width;
       const imgHeight = image.height;
 
-      // First, let's test if the image loads by drawing it in the corner
-      ctx.drawImage(image, 0, 0, 50, 50);
-      console.log("Drew test image in corner");
-
       // The coordinates are in pixel space, but we need to ensure they're within bounds
       // Let's also add some debugging to see what's happening
       console.log(
