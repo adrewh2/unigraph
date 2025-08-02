@@ -146,10 +146,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
         drawWidth,
         drawHeight
       );
-
-      // Also draw a small version of the full image in the corner for debugging
-      ctx.drawImage(image, 0, 0, 50, 50);
-      console.log("Drew extracted area and debug image");
     };
 
     const loadImage = () => {
