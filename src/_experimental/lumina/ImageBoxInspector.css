@@ -248,3 +248,77 @@
 .cancel-button:hover {
   background-color: #545b62;
 }
+
+/* Annotations Section Styles */
+.annotations-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.annotations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.annotations-header label {
+  font-weight: 600;
+  color: #555;
+  font-size: 13px;
+}
+
+.add-annotation-button {
+  transition: all 0.2s;
+}
+
+.add-annotation-button:hover {
+  background-color: #f0f8ff !important;
+}
+
+.add-annotation-form {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.annotations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.annotation-item {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px;
+  transition: all 0.2s;
+}
+
+.annotation-item:hover {
+  background: #f0f0f0;
+  border-color: #ccc;
+}
+
+.annotation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.annotation-header strong {
+  font-size: 13px;
+  color: #333;
+}
+
+.annotation-item p {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}

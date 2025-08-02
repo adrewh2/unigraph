@@ -1,6 +1,6 @@
-import { Edit, Trash2, X } from "lucide-react";
+import { Edit, Plus, Trash2, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { ImageBoxData } from "../../core/types/ImageBoxData";
+import { Annotation, ImageBoxData } from "../../core/types/ImageBoxData";
 import "./ImageBoxInspector.css";
 import { images } from "./images";
 
@@ -22,6 +22,11 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
   const [editedData, setEditedData] = useState<ImageBoxData>(imageBox);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [showAddAnnotation, setShowAddAnnotation] = useState(false);
+  const [newAnnotation, setNewAnnotation] = useState({
+    label: "",
+    description: "",
+  });
 
   // Canvas size for the preview
   const canvasSize = 300;
@@ -224,6 +229,35 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
     }
   };
 
+  const handleAddAnnotation = () => {
+    if (newAnnotation.label.trim() && newAnnotation.description.trim()) {
+      const annotation: Annotation = {
+        id: `annotation-${Date.now()}`,
+        label: newAnnotation.label.trim(),
+        description: newAnnotation.description.trim(),
+        date: new Date().toISOString(),
+      };
+
+      const updatedData = {
+        ...editedData,
+        annotations: [...(editedData.annotations || []), annotation],
+      };
+      setEditedData(updatedData);
+      setNewAnnotation({ label: "", description: "" });
+      setShowAddAnnotation(false);
+    }
+  };
+
+  const handleDeleteAnnotation = (annotationId: string) => {
+    const updatedData = {
+      ...editedData,
+      annotations: (editedData.annotations || []).filter(
+        (a) => a.id !== annotationId
+      ),
+    };
+    setEditedData(updatedData);
+  };
+
   const renderEditForm = () => (
     <div className="image-box-inspector-view">
       <div className="inspector-header">
@@ -332,6 +366,149 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
             {imageBox.bottomRight.y - imageBox.topLeft.y} pixels
           </span>
         </div>
+
+        {/* Annotations Section */}
+        <div className="annotations-section">
+          <div className="annotations-header">
+            <label>Annotations:</label>
+            <button
+              onClick={() => setShowAddAnnotation(true)}
+              className="add-annotation-button"
+              style={{
+                background: "none",
+                border: "none",
+                color: "#007bff",
+                cursor: "pointer",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontSize: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Plus size={14} />
+              Add
+            </button>
+          </div>
+
+          {showAddAnnotation && (
+            <div className="add-annotation-form">
+              <input
+                type="text"
+                placeholder="Annotation label"
+                value={newAnnotation.label}
+                onChange={(e) =>
+                  setNewAnnotation({ ...newAnnotation, label: e.target.value })
+                }
+                style={{
+                  border: "1px solid #ddd",
+                  background: "#f8f9fa",
+                  fontSize: "13px",
+                  padding: "6px 8px",
+                  borderRadius: "4px",
+                  width: "100%",
+                  marginBottom: "8px",
+                }}
+              />
+              <textarea
+                placeholder="Annotation description"
+                value={newAnnotation.description}
+                onChange={(e) =>
+                  setNewAnnotation({
+                    ...newAnnotation,
+                    description: e.target.value,
+                  })
+                }
+                style={{
+                  border: "1px solid #ddd",
+                  background: "#f8f9fa",
+                  fontSize: "13px",
+                  padding: "6px 8px",
+                  borderRadius: "4px",
+                  width: "100%",
+                  resize: "vertical",
+                  minHeight: "60px",
+                  marginBottom: "8px",
+                }}
+              />
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={handleAddAnnotation}
+                  style={{
+                    background: "#007bff",
+                    color: "white",
+                    border: "none",
+                    padding: "6px 12px",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddAnnotation(false);
+                    setNewAnnotation({ label: "", description: "" });
+                  }}
+                  style={{
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    padding: "6px 12px",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="annotations-list">
+            {(editedData.annotations || []).length === 0 ? (
+              <div
+                style={{ color: "#888", fontStyle: "italic", fontSize: "13px" }}
+              >
+                No annotations yet
+              </div>
+            ) : (
+              (editedData.annotations || []).map((annotation) => (
+                <div key={annotation.id} className="annotation-item">
+                  <div className="annotation-header">
+                    <strong>{annotation.label}</strong>
+                    <button
+                      onClick={() => handleDeleteAnnotation(annotation.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#dc3545",
+                        cursor: "pointer",
+                        padding: "2px",
+                        fontSize: "12px",
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  <p
+                    style={{ margin: "4px 0", fontSize: "13px", color: "#666" }}
+                  >
+                    {annotation.description}
+                  </p>
+                  {annotation.date && (
+                    <div style={{ fontSize: "11px", color: "#999" }}>
+                      {new Date(annotation.date).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -405,6 +582,149 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
             {imageBox.bottomRight.x - imageBox.topLeft.x} ×{" "}
             {imageBox.bottomRight.y - imageBox.topLeft.y} pixels
           </span>
+        </div>
+
+        {/* Annotations Section */}
+        <div className="annotations-section">
+          <div className="annotations-header">
+            <label>Annotations:</label>
+            <button
+              onClick={() => setShowAddAnnotation(true)}
+              className="add-annotation-button"
+              style={{
+                background: "none",
+                border: "none",
+                color: "#007bff",
+                cursor: "pointer",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontSize: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <Plus size={14} />
+              Add
+            </button>
+          </div>
+
+          {showAddAnnotation && (
+            <div className="add-annotation-form">
+              <input
+                type="text"
+                placeholder="Annotation label"
+                value={newAnnotation.label}
+                onChange={(e) =>
+                  setNewAnnotation({ ...newAnnotation, label: e.target.value })
+                }
+                style={{
+                  border: "1px solid #ddd",
+                  background: "#f8f9fa",
+                  fontSize: "13px",
+                  padding: "6px 8px",
+                  borderRadius: "4px",
+                  width: "100%",
+                  marginBottom: "8px",
+                }}
+              />
+              <textarea
+                placeholder="Annotation description"
+                value={newAnnotation.description}
+                onChange={(e) =>
+                  setNewAnnotation({
+                    ...newAnnotation,
+                    description: e.target.value,
+                  })
+                }
+                style={{
+                  border: "1px solid #ddd",
+                  background: "#f8f9fa",
+                  fontSize: "13px",
+                  padding: "6px 8px",
+                  borderRadius: "4px",
+                  width: "100%",
+                  resize: "vertical",
+                  minHeight: "60px",
+                  marginBottom: "8px",
+                }}
+              />
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={handleAddAnnotation}
+                  style={{
+                    background: "#007bff",
+                    color: "white",
+                    border: "none",
+                    padding: "6px 12px",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddAnnotation(false);
+                    setNewAnnotation({ label: "", description: "" });
+                  }}
+                  style={{
+                    background: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    padding: "6px 12px",
+                    borderRadius: "4px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="annotations-list">
+            {(imageBox.annotations || []).length === 0 ? (
+              <div
+                style={{ color: "#888", fontStyle: "italic", fontSize: "13px" }}
+              >
+                No annotations yet
+              </div>
+            ) : (
+              (imageBox.annotations || []).map((annotation) => (
+                <div key={annotation.id} className="annotation-item">
+                  <div className="annotation-header">
+                    <strong>{annotation.label}</strong>
+                    <button
+                      onClick={() => handleDeleteAnnotation(annotation.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#dc3545",
+                        cursor: "pointer",
+                        padding: "2px",
+                        fontSize: "12px",
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  <p
+                    style={{ margin: "4px 0", fontSize: "13px", color: "#666" }}
+                  >
+                    {annotation.description}
+                  </p>
+                  {annotation.date && (
+                    <div style={{ fontSize: "11px", color: "#999" }}>
+                      {new Date(annotation.date).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
