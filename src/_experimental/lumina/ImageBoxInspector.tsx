@@ -352,22 +352,22 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
       />
 
       {/* Tags Section */}
-      <div style={{ marginBottom: "8px" }}>
+      <div style={{ marginBottom: "12px" }}>
         <label
           style={{
             fontSize: "12px",
             fontWeight: "600",
             color: "#555",
-            marginBottom: "4px",
+            marginBottom: "6px",
             display: "block",
           }}
         >
-          Tags:
+          Tags (optional):
         </label>
-        <div style={{ display: "flex", gap: "4px", marginBottom: "4px" }}>
+        <div style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
           <input
             type="text"
-            placeholder="Add tag"
+            placeholder="Enter tag and press Enter"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleAddTag()}
@@ -375,7 +375,7 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
               border: "1px solid #ddd",
               background: "#f8f9fa",
               fontSize: "12px",
-              padding: "4px 6px",
+              padding: "6px 8px",
               borderRadius: "4px",
               flex: 1,
             }}
@@ -383,32 +383,42 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
           <button
             onClick={handleAddTag}
             style={{
-              background: "#28a745",
-              color: "white",
-              border: "none",
-              padding: "4px 8px",
+              background: "none",
+              color: "#28a745",
+              border: "1px solid #28a745",
+              padding: "6px 12px",
               borderRadius: "4px",
               fontSize: "12px",
               cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#28a745";
+              e.currentTarget.style.color = "white";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "none";
+              e.currentTarget.style.color = "#28a745";
             }}
           >
             Add
           </button>
         </div>
         {newAnnotation.tags.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             {newAnnotation.tags.map((tag, index) => (
               <span
                 key={index}
                 style={{
-                  background: "#e9ecef",
+                  background: "#f8f9fa",
                   color: "#495057",
-                  padding: "2px 6px",
-                  borderRadius: "12px",
+                  padding: "4px 8px",
+                  borderRadius: "16px",
                   fontSize: "11px",
                   display: "flex",
                   alignItems: "center",
-                  gap: "4px",
+                  gap: "6px",
+                  border: "1px solid #e9ecef",
                 }}
               >
                 {tag}
@@ -417,10 +427,25 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#dc3545",
+                    color: "#6c757d",
                     cursor: "pointer",
-                    fontSize: "10px",
+                    fontSize: "12px",
                     padding: 0,
+                    width: "16px",
+                    height: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "50%",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#dc3545";
+                    e.currentTarget.style.color = "white";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "none";
+                    e.currentTarget.style.color = "#6c757d";
                   }}
                 >
                   ×
@@ -432,29 +457,29 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
       </div>
 
       {/* URLs Section */}
-      <div style={{ marginBottom: "8px" }}>
+      <div style={{ marginBottom: "12px" }}>
         <label
           style={{
             fontSize: "12px",
             fontWeight: "600",
             color: "#555",
-            marginBottom: "4px",
+            marginBottom: "6px",
             display: "block",
           }}
         >
-          URLs:
+          URLs (optional):
         </label>
-        <div style={{ display: "flex", gap: "4px", marginBottom: "4px" }}>
+        <div style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
           <input
             type="url"
-            placeholder="URL"
+            placeholder="https://example.com"
             value={newUrl.url}
             onChange={(e) => setNewUrl({ ...newUrl, url: e.target.value })}
             style={{
               border: "1px solid #ddd",
               background: "#f8f9fa",
               fontSize: "12px",
-              padding: "4px 6px",
+              padding: "6px 8px",
               borderRadius: "4px",
               flex: 1,
             }}
@@ -468,7 +493,7 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
               border: "1px solid #ddd",
               background: "#f8f9fa",
               fontSize: "12px",
-              padding: "4px 6px",
+              padding: "6px 8px",
               borderRadius: "4px",
               flex: 1,
             }}
@@ -476,32 +501,42 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
           <button
             onClick={handleAddUrl}
             style={{
-              background: "#007bff",
-              color: "white",
-              border: "none",
-              padding: "4px 8px",
+              background: "none",
+              color: "#007bff",
+              border: "1px solid #007bff",
+              padding: "6px 12px",
               borderRadius: "4px",
               fontSize: "12px",
               cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#007bff";
+              e.currentTarget.style.color = "white";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "none";
+              e.currentTarget.style.color = "#007bff";
             }}
           >
             Add
           </button>
         </div>
         {newAnnotation.urls.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
             {newAnnotation.urls.map((url, index) => (
               <div
                 key={index}
                 style={{
-                  background: "#e9ecef",
+                  background: "#f8f9fa",
                   color: "#495057",
-                  padding: "4px 6px",
-                  borderRadius: "4px",
+                  padding: "6px 8px",
+                  borderRadius: "6px",
                   fontSize: "11px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
+                  border: "1px solid #e9ecef",
                 }}
               >
                 <span>{url.label || url.url}</span>
@@ -510,10 +545,25 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#dc3545",
+                    color: "#6c757d",
                     cursor: "pointer",
-                    fontSize: "10px",
+                    fontSize: "12px",
                     padding: 0,
+                    width: "16px",
+                    height: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "50%",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#dc3545";
+                    e.currentTarget.style.color = "white";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "none";
+                    e.currentTarget.style.color = "#6c757d";
                   }}
                 >
                   ×
@@ -768,7 +818,7 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: "2px",
+                          gap: "4px",
                         }}
                       >
                         {annotation.urls.map((url, index) => (
@@ -782,6 +832,18 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
                               fontSize: "11px",
                               textDecoration: "none",
                               display: "block",
+                              padding: "2px 4px",
+                              borderRadius: "3px",
+                              transition: "all 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#f0f8ff";
+                              e.currentTarget.style.textDecoration =
+                                "underline";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.textDecoration = "none";
                             }}
                           >
                             {url.label || url.url}
