@@ -179,16 +179,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
         drawWidth,
         drawHeight
       );
-
-      // Add a border around the extracted area
-      ctx.strokeStyle = "#ff0000";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(offsetX, offsetY, drawWidth, drawHeight);
-
-      // Add label
-      ctx.fillStyle = "#ff0000";
-      ctx.font = "14px Arial";
-      ctx.fillText(imageBox.label, offsetX + 5, offsetY + 20);
     };
 
     const loadImage = () => {
@@ -395,7 +385,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
               width={canvasSize}
               height={canvasSize}
               className="image-box-canvas"
-              style={{ border: "2px solid red" }}
             />
             <div style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
               Canvas size: {canvasSize}×{canvasSize}px
