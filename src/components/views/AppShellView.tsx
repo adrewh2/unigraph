@@ -22,6 +22,7 @@ import MarkdownViewer from "../common/MarkdownViewer";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import AboutView from "./AboutView";
 import DevToolsView from "./DevToolsView";
+import DocumentationView from "./DocumentationView";
 import EdgeLegendView from "./EdgeLegendView";
 import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
 import MonacoEditorView from "./MonacoEditorView";
@@ -810,6 +811,14 @@ const markdownViewerView = {
   category: VIEW_DEFINITIONS["markdown-viewer"].category,
 };
 
+const documentationView = {
+  id: VIEW_DEFINITIONS["documentation"].id,
+  title: VIEW_DEFINITIONS["documentation"].title,
+  icon: VIEW_DEFINITIONS["documentation"].icon,
+  component: (props: any) => <DocumentationView {...props} />,
+  category: VIEW_DEFINITIONS["documentation"].category,
+};
+
 // Define all views
 const allViews = [
   ...defaultViews,
@@ -832,6 +841,7 @@ const allViews = [
   monacoEditorView,
   sandpackEditorView,
   markdownViewerView,
+  documentationView,
 ];
 
 // Example: Create a custom theme for demonstration

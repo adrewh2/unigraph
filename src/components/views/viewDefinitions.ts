@@ -155,6 +155,13 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     category: "content",
     description: "Clean, modern markdown viewer with GitHub-inspired styling",
   },
+  documentation: {
+    id: "documentation",
+    title: "Documentation",
+    icon: "📚",
+    category: "content",
+    description: "Browse and view documentation with file tree navigation",
+  },
 };
 
 // Helper function to get all available view IDs
