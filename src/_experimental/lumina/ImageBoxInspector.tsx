@@ -1,3 +1,4 @@
+import { Edit, Trash2, X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import { ImageBoxData } from "../../core/types/ImageBoxData";
 import "./ImageBoxInspector.css";
@@ -43,15 +44,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw a background to test if canvas is working
-      ctx.fillStyle = "#f0f0f0";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Add a simple test pattern to verify canvas is working
-      ctx.fillStyle = "#ff0000";
-      ctx.fillRect(10, 10, 20, 20);
-      console.log("Drew test pattern on canvas");
 
       // Get image dimensions
       const imgWidth = image.width;
@@ -343,14 +335,14 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
         <h3>{imageBox.label}</h3>
         <div className="header-actions">
           <button onClick={handleEdit} className="edit-button">
-            Edit
+            <Edit size={16} />
           </button>
           <button onClick={handleDelete} className="delete-button">
-            Delete
+            <Trash2 size={16} />
           </button>
           {onClose && (
             <button onClick={onClose} className="close-button">
-              ×
+              <X size={16} />
             </button>
           )}
         </div>
