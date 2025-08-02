@@ -100,6 +100,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
           name: child.name || child.path.split("/").pop() || "Unknown",
           path: `${basePath}/${child.path}`,
           type: child.type,
+          isExpanded: child.type === "directory", // Start directories as expanded
         };
 
         if (child.children && child.children.length > 0) {
@@ -136,7 +137,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 
   const renderNode = (node: FileNode, depth: number = 0): React.ReactNode => {
     const isSelected = selectedFile === node.path;
-    const isExpanded = node.isExpanded || depth === 0; // Root nodes are expanded by default
+    const isExpanded = node.isExpanded !== undefined ? node.isExpanded : depth === 0; // Root nodes start expanded but can be collapsed
 
     return (
       <div key={node.path}>
