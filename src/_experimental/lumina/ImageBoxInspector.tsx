@@ -642,6 +642,9 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
           <button onClick={handleSave} className="edit-button">
             <Edit size={16} />
           </button>
+          <button onClick={handleDelete} className="delete-button">
+            <Trash2 size={16} />
+          </button>
           <button onClick={handleCancel} className="delete-button">
             <X size={16} />
           </button>
@@ -881,9 +884,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
           <button onClick={handleEdit} className="edit-button">
             <Edit size={16} />
           </button>
-          <button onClick={handleDelete} className="delete-button">
-            <Trash2 size={16} />
-          </button>
           {onClose && (
             <button onClick={onClose} className="close-button">
               <X size={16} />
@@ -983,19 +983,6 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
                 <div key={annotation.id} className="annotation-item">
                   <div className="annotation-header">
                     <strong>{annotation.label}</strong>
-                    <button
-                      onClick={() => handleDeleteAnnotation(annotation.id)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#dc3545",
-                        cursor: "pointer",
-                        padding: "2px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
                   </div>
                   <p
                     style={{ margin: "4px 0", fontSize: "13px", color: "#666" }}
