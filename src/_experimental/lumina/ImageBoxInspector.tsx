@@ -243,6 +243,10 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
         annotations: [...(editedData.annotations || []), annotation],
       };
       setEditedData(updatedData);
+
+      // Save immediately whether in edit mode or view mode
+      onEdit?.(updatedData);
+
       setNewAnnotation({ label: "", description: "" });
       setShowAddAnnotation(false);
     }
@@ -256,6 +260,9 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
       ),
     };
     setEditedData(updatedData);
+
+    // Save immediately whether in edit mode or view mode
+    onEdit?.(updatedData);
   };
 
   const renderEditForm = () => (
@@ -686,14 +693,14 @@ const ImageBoxInspector: React.FC<ImageBoxInspectorProps> = ({
           )}
 
           <div className="annotations-list">
-            {(imageBox.annotations || []).length === 0 ? (
+            {(editedData.annotations || []).length === 0 ? (
               <div
                 style={{ color: "#888", fontStyle: "italic", fontSize: "13px" }}
               >
                 No annotations yet
               </div>
             ) : (
-              (imageBox.annotations || []).map((annotation) => (
+              (editedData.annotations || []).map((annotation) => (
                 <div key={annotation.id} className="annotation-item">
                   <div className="annotation-header">
                     <strong>{annotation.label}</strong>
