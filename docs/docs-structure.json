@@ -105,6 +105,17 @@
       ]
     },
     {
+      "path": "developer",
+      "type": "directory",
+      "children": [
+        {
+          "path": "developer/LIVE_CHAT_SETUP.md",
+          "type": "file",
+          "name": "LIVE_CHAT_SETUP.md"
+        }
+      ]
+    },
+    {
       "path": "developmentNotes",
       "type": "directory",
       "children": [
@@ -398,6 +409,11 @@
           "path": "userGuide/layouts.md",
           "type": "file",
           "name": "layouts.md"
+        },
+        {
+          "path": "userGuide/monacoEditorCodeGeneration.md",
+          "type": "file",
+          "name": "monacoEditorCodeGeneration.md"
         },
         {
           "path": "userGuide/navigation.md",

@@ -40,110 +40,72 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         setLoading(true);
         setError(null);
 
-        // For now, we'll build the tree manually since we need to handle
-        // both public/markdowns and docs directories
-        const tree: FileNode[] = [
-          {
-            name: "markdowns",
-            path: "/markdowns",
-            type: "directory",
-            children: [
-              {
-                name: "unigraph",
-                path: "/markdowns/unigraph",
-                type: "directory",
-                children: [
-                  {
-                    name: "UnigraphOverview.md",
-                    path: "/markdowns/unigraph/UnigraphOverview.md",
-                    type: "file",
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            name: "docs",
-            path: "/docs",
-            type: "directory",
-            children: [
-              {
-                name: "overview",
-                path: "/docs/overview",
-                type: "directory",
-                children: [
-                  {
-                    name: "motivation.md",
-                    path: "/docs/overview/motivation.md",
-                    type: "file",
-                  },
-                  {
-                    name: "goals.md",
-                    path: "/docs/overview/goals.md",
-                    type: "file",
-                  },
-                  {
-                    name: "currentProjects.md",
-                    path: "/docs/overview/currentProjects.md",
-                    type: "file",
-                  },
-                ],
-              },
-              {
-                name: "userGuide",
-                path: "/docs/userGuide",
-                type: "directory",
-                children: [
-                  {
-                    name: "analysis.md",
-                    path: "/docs/userGuide/analysis.md",
-                    type: "file",
-                  },
-                  {
-                    name: "definitions.md",
-                    path: "/docs/userGuide/definitions.md",
-                    type: "file",
-                  },
-                  {
-                    name: "fileManagement.md",
-                    path: "/docs/userGuide/fileManagement.md",
-                    type: "file",
-                  },
-                ],
-              },
-              {
-                name: "quickGuides",
-                path: "/docs/quickGuides",
-                type: "directory",
-                children: [
-                  {
-                    name: "importingFromDot.md",
-                    path: "/docs/quickGuides/importingFromDot.md",
-                    type: "file",
-                  },
-                  {
-                    name: "importingFromMermaid.md",
-                    path: "/docs/quickGuides/importingFromMermaid.md",
-                    type: "file",
-                  },
-                  {
-                    name: "loadingFromSvg.md",
-                    path: "/docs/quickGuides/loadingFromSvg.md",
-                    type: "file",
-                  },
-                ],
-              },
-            ],
-          },
-        ];
+        // Load markdowns structure
+        const markdownsResponse = await fetch("/markdowns-structure.json");
+        let markdownsTree: FileNode[] = [];
 
-        setFileTree(tree);
+        if (markdownsResponse.ok) {
+          const markdownsData = await markdownsResponse.json();
+          markdownsTree = convertStructureToFileNodes(
+            markdownsData,
+            "/markdowns"
+          );
+        } else {
+          console.warn(
+            "Could not load markdowns structure:",
+            markdownsResponse.status
+          );
+        }
+
+        // Load docs structure
+        const docsResponse = await fetch("/docs-structure.json");
+        let docsTree: FileNode[] = [];
+
+        if (docsResponse.ok) {
+          const docsData = await docsResponse.json();
+          docsTree = convertStructureToFileNodes(docsData, "/docs");
+        } else {
+          console.warn("Could not load docs structure:", docsResponse.status);
+        }
+
+        // Combine both trees
+        const combinedTree = [...markdownsTree, ...docsTree];
+
+        if (combinedTree.length === 0) {
+          setError(
+            "No documentation structure found. Please run 'npm run generate-structures' to generate the file tree."
+          );
+        } else {
+          setFileTree(combinedTree);
+        }
         setLoading(false);
       } catch (err) {
         console.error("Error fetching file tree:", err);
         setError("Failed to load file tree");
         setLoading(false);
       }
+    };
+
+    // Helper function to convert structure to FileNode format
+    const convertStructureToFileNodes = (
+      structure: any,
+      basePath: string
+    ): FileNode[] => {
+      if (!structure.children) return [];
+
+      return structure.children.map((child: any) => {
+        const node: FileNode = {
+          name: child.name || child.path.split("/").pop() || "Unknown",
+          path: `${basePath}/${child.path}`,
+          type: child.type,
+        };
+
+        if (child.children && child.children.length > 0) {
+          node.children = convertStructureToFileNodes(child, basePath);
+        }
+
+        return node;
+      });
     };
 
     fetchFileTree();
