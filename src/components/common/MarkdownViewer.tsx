@@ -4,6 +4,7 @@ import { marked } from "marked";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { replaceUnigraphUrlsWithLocalhost } from "../../utils/urlUtils";
+import "../applets/StoryCards/StoryCardApp.css";
 import { DefinitionPopup, DefinitionPopupData } from "./DefinitionPopup";
 import "./MarkdownViewer.css";
 
@@ -325,14 +326,24 @@ function MarkdownViewer({
                 ? applyImageStyles(htmlStr)
                 : htmlStr;
               const finalHtml = replaceUnigraphUrlsWithLocalhost(styledHtml);
-              setHtml(finalHtml);
+              // Fix relative image paths for docs
+              const fixedHtml = finalHtml.replace(
+                /src=["']\.\.\/assets\/images\/([^"']*)["']/gi,
+                'src="/docs/assets/images/$1"'
+              );
+              setHtml(fixedHtml);
               setLoading(false);
             });
           } else {
             // Apply image styles and replace Unigraph URLs
             const styledHtml = imageStyle ? applyImageStyles(parsed) : parsed;
             const finalHtml = replaceUnigraphUrlsWithLocalhost(styledHtml);
-            setHtml(finalHtml);
+            // Fix relative image paths for docs
+            const fixedHtml = finalHtml.replace(
+              /src=["']\.\.\/assets\/images\/([^"']*)["']/gi,
+              'src="/docs/assets/images/$1"'
+            );
+            setHtml(fixedHtml);
             setLoading(false);
           }
         } catch (parseError) {

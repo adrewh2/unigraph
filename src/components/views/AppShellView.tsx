@@ -18,6 +18,7 @@ import AIChatPanel from "../ai/AIChatPanel";
 import LexicalEditorV2 from "../applets/Lexical/LexicalEditor";
 import WikipediaArticleViewer_FactorGraph from "../applets/WikipediaViewer/WikipediaArticleViewer_FactorGraph";
 import EntityTableV2 from "../common/EntityTableV2";
+import MarkdownViewer from "../common/MarkdownViewer";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import AboutView from "./AboutView";
 import DevToolsView from "./DevToolsView";
@@ -799,6 +800,16 @@ const sandpackEditorView = {
   category: VIEW_DEFINITIONS["sandpack-editor"].category,
 };
 
+const markdownViewerView = {
+  id: VIEW_DEFINITIONS["markdown-viewer"].id,
+  title: VIEW_DEFINITIONS["markdown-viewer"].title,
+  icon: VIEW_DEFINITIONS["markdown-viewer"].icon,
+  component: (props: any) => (
+    <MarkdownViewer filename="docs/overview/motivation.md" {...props} />
+  ),
+  category: VIEW_DEFINITIONS["markdown-viewer"].category,
+};
+
 // Define all views
 const allViews = [
   ...defaultViews,
@@ -820,6 +831,7 @@ const allViews = [
   lexicalEditorView,
   monacoEditorView,
   sandpackEditorView,
+  markdownViewerView,
 ];
 
 // Example: Create a custom theme for demonstration

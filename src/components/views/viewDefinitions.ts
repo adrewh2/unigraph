@@ -148,6 +148,13 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     description:
       "Live code editor with file tree and instant preview powered by CodeSandbox",
   },
+  "markdown-viewer": {
+    id: "markdown-viewer",
+    title: "Markdown Viewer",
+    icon: "📄",
+    category: "content",
+    description: "Clean, modern markdown viewer with GitHub-inspired styling",
+  },
 };
 
 // Helper function to get all available view IDs
