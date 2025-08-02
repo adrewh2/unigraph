@@ -131,6 +131,11 @@
   padding: 20px;
 }
 
+/* Add bottom padding to markdown content */
+.markdown-content {
+  padding-bottom: 20px;
+}
+
 /* Additional markdown content styling */
 .markdown-content .defined-term {
   font-weight: 500;
