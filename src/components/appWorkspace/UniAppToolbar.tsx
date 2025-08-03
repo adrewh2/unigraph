@@ -177,6 +177,9 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
             key={key}
             className="menu-item"
             onMouseEnter={() => handleMenuMouseEnter(key)}
+            style={{
+              color: getColor(theme.colors, "text"),
+            }}
           >
             {item.checked !== undefined ? (
               <label className="menu-item-label">
@@ -189,7 +192,12 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
                   }}
                   onClick={(e) => e.stopPropagation()}
                 />
-                <span className="menu-item-text">
+                <span
+                  className="menu-item-text"
+                  style={{
+                    color: getColor(theme.colors, "text"),
+                  }}
+                >
                   {key}
                   {item.tooltip && (
                     <KeyboardShortcut
@@ -200,8 +208,18 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
                 </span>
               </label>
             ) : item.action ? (
-              <button onClick={(e) => handleMenuItemClick(e, item)}>
-                <span className="menu-item-text">
+              <button
+                onClick={(e) => handleMenuItemClick(e, item)}
+                style={{
+                  color: getColor(theme.colors, "text"),
+                }}
+              >
+                <span
+                  className="menu-item-text"
+                  style={{
+                    color: getColor(theme.colors, "text"),
+                  }}
+                >
                   {key}
                   {item.tooltip && (
                     <KeyboardShortcut
@@ -212,8 +230,18 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
                 </span>
               </button>
             ) : (
-              <span onClick={(e) => handleMenuItemClick(e, item)}>
-                <span className="menu-item-text">
+              <span
+                onClick={(e) => handleMenuItemClick(e, item)}
+                style={{
+                  color: getColor(theme.colors, "text"),
+                }}
+              >
+                <span
+                  className="menu-item-text"
+                  style={{
+                    color: getColor(theme.colors, "text"),
+                  }}
+                >
                   {key}
                   {item.tooltip && (
                     <KeyboardShortcut
@@ -261,6 +289,10 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
         backgroundColor: getColor(theme.colors, "workspaceTitleBackground"),
         color: getColor(theme.colors, "workspaceTitleText"),
         borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
+        ["--submenu-bg" as any]: getColor(theme.colors, "workspacePanel"),
+        ["--submenu-border" as any]: getColor(theme.colors, "border"),
+        ["--toolbar-text" as any]: getColor(theme.colors, "workspaceTitleText"),
+        ["--shortcut-text" as any]: getColor(theme.colors, "textSecondary"),
         ...style,
       }}
     >

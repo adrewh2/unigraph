@@ -357,7 +357,7 @@
 }
 
 .keyboard-shortcut {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--shortcut-text, rgba(255, 255, 255, 0.5));
   font-size: 0.75rem;
   margin-left: 0.5rem;
   font-family:
@@ -385,7 +385,7 @@
 
 /* Compact Mac-style keyboard shortcut */
 .keyboard-shortcut-compact {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--shortcut-text, rgba(255, 255, 255, 0.6));
   font-size: 0.75rem;
   margin-left: 0.5rem;
   font-family:
