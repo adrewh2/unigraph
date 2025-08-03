@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Search } from "lucide-react";
 import { getColor, useTheme } from "@aesgraph/app-shell";
+import { Search } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
 import "./DocumentationSearchV2.css";
 
 interface SearchMatch {
@@ -234,9 +234,33 @@ const DocumentationSearchV2: React.FC = () => {
   }, [buildSearchIndex]);
 
   return (
-    <div className="documentation-search-v2">
-      <div className="search-header">
-        <h3>Search Documentation</h3>
+    <div
+      className="documentation-search-v2"
+      style={{
+        backgroundColor: getColor(theme.colors, "background"),
+        color: getColor(theme.colors, "text"),
+        borderRight: `1px solid ${getColor(theme.colors, "border")}`,
+      }}
+    >
+      <div
+        className="search-header"
+        style={{
+          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+          borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
+        }}
+      >
+        <h3
+          style={{
+            color: getColor(theme.colors, "text"),
+            margin: "0 0 12px 0",
+            fontSize: "14px",
+            fontWeight: "600",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+          }}
+        >
+          Documentation
+        </h3>
         <div className="file-tree-search">
           <div className="file-tree-search-input-wrapper">
             <Search
@@ -269,47 +293,183 @@ const DocumentationSearchV2: React.FC = () => {
             />
           </div>
         </div>
-        {!isIndexed && <span className="indexing-status">Indexing...</span>}
+        {!isIndexed && (
+          <span
+            className="indexing-status"
+            style={{
+              fontSize: "12px",
+              color: getColor(theme.colors, "textSecondary"),
+              marginTop: "8px",
+              display: "block",
+            }}
+          >
+            Indexing...
+          </span>
+        )}
       </div>
 
-      <div className="search-content">
+      <div
+        className="search-content"
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "4px 0",
+          minHeight: 0,
+        }}
+      >
         {isSearching && (
-          <div className="search-status">
+          <div
+            className="search-status"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: "20px",
+              color: getColor(theme.colors, "textSecondary"),
+              fontStyle: "italic",
+            }}
+          >
             <span>Searching...</span>
           </div>
         )}
 
         {!isSearching && searchTerm && searchResults.length === 0 && (
-          <div className="no-results">
+          <div
+            className="no-results"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: "20px",
+              color: getColor(theme.colors, "textSecondary"),
+              fontStyle: "italic",
+            }}
+          >
             <span>No results found for &quot;{searchTerm}&quot;</span>
           </div>
         )}
 
         {!isSearching && searchResults.length > 0 && (
           <div className="results-container">
-            <div className="results-header">
+            <div
+              className="results-header"
+              style={{
+                marginBottom: "16px",
+                padding: "8px 20px",
+                fontSize: "14px",
+                color: getColor(theme.colors, "textSecondary"),
+                borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
+              }}
+            >
               Found {searchResults.length} result
               {searchResults.length !== 1 ? "s" : ""}
             </div>
-            <div className="results-list">
+            <div
+              className="results-list"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                padding: "0 20px",
+              }}
+            >
               {searchResults.map((result, index) => (
                 <div
                   key={`${result.filePath}-${index}`}
                   className="result-item"
+                  style={{
+                    backgroundColor: getColor(
+                      theme.colors,
+                      "backgroundSecondary"
+                    ),
+                    border: `1px solid ${getColor(theme.colors, "border")}`,
+                    borderRadius: "6px",
+                    padding: "12px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = getColor(
+                      theme.colors,
+                      "backgroundTertiary"
+                    );
+                    e.currentTarget.style.borderColor = getColor(
+                      theme.colors,
+                      "borderHover"
+                    );
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = getColor(
+                      theme.colors,
+                      "backgroundSecondary"
+                    );
+                    e.currentTarget.style.borderColor = getColor(
+                      theme.colors,
+                      "border"
+                    );
+                  }}
                 >
-                  <div className="result-header">
+                  <div
+                    className="result-header"
+                    style={{ marginBottom: "8px" }}
+                  >
                     <div
                       className="result-title"
+                      style={{
+                        fontWeight: "600",
+                        fontSize: "14px",
+                        color: getColor(theme.colors, "text"),
+                        marginBottom: "4px",
+                      }}
                       dangerouslySetInnerHTML={{ __html: result.title }}
                     />
-                    <div className="result-path">{result.filePath}</div>
+                    <div
+                      className="result-path"
+                      style={{
+                        fontSize: "12px",
+                        color: getColor(theme.colors, "textSecondary"),
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      {result.filePath}
+                    </div>
                   </div>
-                  <div className="result-matches">
+                  <div
+                    className="result-matches"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                    }}
+                  >
                     {result.matches.slice(0, 3).map((match, matchIndex) => (
-                      <div key={matchIndex} className="match-item">
-                        <span className="match-line">Line {match.line}:</span>
+                      <div
+                        key={matchIndex}
+                        className="match-item"
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          fontSize: "12px",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        <span
+                          className="match-line"
+                          style={{
+                            color: getColor(theme.colors, "textSecondary"),
+                            minWidth: "60px",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          Line {match.line}:
+                        </span>
                         <span
                           className="match-text"
+                          style={{
+                            color: getColor(theme.colors, "textSecondary"),
+                            flex: 1,
+                            wordBreak: "break-word",
+                          }}
                           dangerouslySetInnerHTML={{
                             __html: match.highlightedText,
                           }}
@@ -317,7 +477,15 @@ const DocumentationSearchV2: React.FC = () => {
                       </div>
                     ))}
                     {result.matches.length > 3 && (
-                      <div className="more-matches">
+                      <div
+                        className="more-matches"
+                        style={{
+                          fontSize: "11px",
+                          color: getColor(theme.colors, "textSecondary"),
+                          fontStyle: "italic",
+                          marginTop: "4px",
+                        }}
+                      >
                         +{result.matches.length - 3} more matches
                       </div>
                     )}
