@@ -307,12 +307,34 @@
   -moz-osx-font-smoothing: auto !important;
   font-smooth: never !important;
   pointer-events: none !important;
+  background: transparent !important;
 }
 
 .markdown-content pre code * {
   display: inline !important;
   font-family: inherit !important;
   pointer-events: none !important;
+  background: transparent !important;
+}
+
+/* Remove any background highlighting from Prism.js tokens */
+.markdown-content pre code .token {
+  background: transparent !important;
+}
+
+.markdown-content pre code .token.string,
+.markdown-content pre code .token.number,
+.markdown-content pre code .token.boolean,
+.markdown-content pre code .token.keyword,
+.markdown-content pre code .token.function,
+.markdown-content pre code .token.class-name,
+.markdown-content pre code .token.tag,
+.markdown-content pre code .token.attr-name,
+.markdown-content pre code .token.attr-value,
+.markdown-content pre code .token.punctuation,
+.markdown-content pre code .token.operator,
+.markdown-content pre code .token.comment {
+  background: transparent !important;
 }
 
 /* Ensure proper line breaks in code blocks */
