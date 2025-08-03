@@ -70,8 +70,8 @@ const TextBasedContextMenu: React.FC<TextBasedContextMenuProps> = ({
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const menuWidth = 140; // More compact width
-    const menuHeight = items.length * 24; // More compact height per item
+    const menuWidth = 160; // Slightly bigger width
+    const menuHeight = items.length * 28; // Slightly bigger height per item
 
     let left = position.x;
     let top = position.y;
@@ -103,9 +103,9 @@ const TextBasedContextMenu: React.FC<TextBasedContextMenuProps> = ({
         boxShadow: `0 4px 12px ${getColor(theme.colors, "border")}`,
         borderRadius: theme.sizes.borderRadius.sm,
         fontSize: theme.sizes.fontSize.sm,
-        padding: "2px 0",
-        minWidth: "120px",
-        maxWidth: "140px",
+        padding: "3px 0",
+        minWidth: "140px",
+        maxWidth: "160px",
         userSelect: "none", // Prevent selection in the menu itself
         border: `1px solid ${getColor(theme.colors, "border")}`,
       }}
@@ -149,13 +149,13 @@ const TextBasedContextMenu: React.FC<TextBasedContextMenuProps> = ({
             }
           }}
           style={{
-            padding: "4px 8px",
+            padding: "6px 10px",
             cursor: item.disabled ? "default" : "pointer",
             opacity: item.disabled ? 0.5 : 1,
             backgroundColor: "transparent",
             color: getColor(theme.colors, "text"),
             whiteSpace: "nowrap",
-            fontSize: theme.sizes.fontSize.xs,
+            fontSize: theme.sizes.fontSize.md,
             borderRadius: theme.sizes.borderRadius.xs,
             margin: "1px 4px",
           }}
