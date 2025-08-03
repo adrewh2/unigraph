@@ -86,7 +86,10 @@ const DocumentationView: React.FC = () => {
               selectedFile={selectedFile || undefined}
             />
           ) : (
-            <DocumentationSearchV2 />
+            <DocumentationSearchV2
+              onFileSelect={handleFileSelect}
+              selectedFile={selectedFile || undefined}
+            />
           )}
         </div>
       </div>

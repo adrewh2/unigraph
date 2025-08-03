@@ -22,7 +22,15 @@ interface SearchIndex {
   };
 }
 
-const DocumentationSearchV2: React.FC = () => {
+interface DocumentationSearchV2Props {
+  onFileSelect?: (filePath: string) => void;
+  selectedFile?: string;
+}
+
+const DocumentationSearchV2: React.FC<DocumentationSearchV2Props> = ({
+  onFileSelect,
+  selectedFile,
+}) => {
   const { theme } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchIndex, setSearchIndex] = useState<SearchIndex>({});
@@ -215,8 +223,9 @@ const DocumentationSearchV2: React.FC = () => {
 
   // Handle result click
   const handleResultClick = (filePath: string) => {
-    // TODO: Implement file opening logic
-    console.log("Clicked on:", filePath);
+    if (onFileSelect) {
+      onFileSelect(filePath);
+    }
   };
 
   // Build index on mount
@@ -377,36 +386,45 @@ const DocumentationSearchV2: React.FC = () => {
                 <div
                   key={`${result.filePath}-${index}`}
                   className="result-item"
+                  onClick={() => handleResultClick(result.filePath)}
                   style={{
-                    backgroundColor: getColor(
-                      theme.colors,
-                      "backgroundSecondary"
-                    ),
-                    border: `1px solid ${getColor(theme.colors, "border")}`,
+                    backgroundColor:
+                      selectedFile === result.filePath
+                        ? getColor(theme.colors, "primary")
+                        : getColor(theme.colors, "backgroundSecondary"),
+                    border: `1px solid ${
+                      selectedFile === result.filePath
+                        ? getColor(theme.colors, "primary")
+                        : getColor(theme.colors, "border")
+                    }`,
                     borderRadius: "6px",
                     padding: "12px",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = getColor(
-                      theme.colors,
-                      "backgroundTertiary"
-                    );
-                    e.currentTarget.style.borderColor = getColor(
-                      theme.colors,
-                      "borderHover"
-                    );
+                    if (selectedFile !== result.filePath) {
+                      e.currentTarget.style.backgroundColor = getColor(
+                        theme.colors,
+                        "backgroundTertiary"
+                      );
+                      e.currentTarget.style.borderColor = getColor(
+                        theme.colors,
+                        "borderHover"
+                      );
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = getColor(
-                      theme.colors,
-                      "backgroundSecondary"
-                    );
-                    e.currentTarget.style.borderColor = getColor(
-                      theme.colors,
-                      "border"
-                    );
+                    if (selectedFile !== result.filePath) {
+                      e.currentTarget.style.backgroundColor = getColor(
+                        theme.colors,
+                        "backgroundSecondary"
+                      );
+                      e.currentTarget.style.borderColor = getColor(
+                        theme.colors,
+                        "border"
+                      );
+                    }
                   }}
                 >
                   <div
@@ -418,7 +436,10 @@ const DocumentationSearchV2: React.FC = () => {
                       style={{
                         fontWeight: "600",
                         fontSize: "14px",
-                        color: getColor(theme.colors, "text"),
+                        color:
+                          selectedFile === result.filePath
+                            ? getColor(theme.colors, "background")
+                            : getColor(theme.colors, "text"),
                         marginBottom: "4px",
                       }}
                       dangerouslySetInnerHTML={{ __html: result.title }}
@@ -427,7 +448,10 @@ const DocumentationSearchV2: React.FC = () => {
                       className="result-path"
                       style={{
                         fontSize: "12px",
-                        color: getColor(theme.colors, "textSecondary"),
+                        color:
+                          selectedFile === result.filePath
+                            ? getColor(theme.colors, "background")
+                            : getColor(theme.colors, "textSecondary"),
                         fontFamily: "monospace",
                       }}
                     >
@@ -456,7 +480,10 @@ const DocumentationSearchV2: React.FC = () => {
                         <span
                           className="match-line"
                           style={{
-                            color: getColor(theme.colors, "textSecondary"),
+                            color:
+                              selectedFile === result.filePath
+                                ? getColor(theme.colors, "background")
+                                : getColor(theme.colors, "textSecondary"),
                             minWidth: "60px",
                             fontFamily: "monospace",
                           }}
@@ -466,7 +493,10 @@ const DocumentationSearchV2: React.FC = () => {
                         <span
                           className="match-text"
                           style={{
-                            color: getColor(theme.colors, "textSecondary"),
+                            color:
+                              selectedFile === result.filePath
+                                ? getColor(theme.colors, "background")
+                                : getColor(theme.colors, "textSecondary"),
                             flex: 1,
                             wordBreak: "break-word",
                           }}
@@ -481,7 +511,10 @@ const DocumentationSearchV2: React.FC = () => {
                         className="more-matches"
                         style={{
                           fontSize: "11px",
-                          color: getColor(theme.colors, "textSecondary"),
+                          color:
+                            selectedFile === result.filePath
+                              ? getColor(theme.colors, "background")
+                              : getColor(theme.colors, "textSecondary"),
                           fontStyle: "italic",
                           marginTop: "4px",
                         }}
