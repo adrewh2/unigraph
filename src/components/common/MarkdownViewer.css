@@ -1,3 +1,70 @@
+/* Toggle button for raw markdown view */
+.markdown-toggle-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  padding: 8px 12px;
+  font-size: 12px;
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: monospace;
+  color: rgba(0, 0, 0, 0.6);
+  transition: color 0.2s;
+}
+
+.markdown-toggle-button:hover {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.markdown-toggle-button.active {
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.markdown-toggle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Raw markdown view styles */
+.markdown-raw-view {
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 20px;
+  background-color: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  overflow: auto;
+  height: calc(100% - 40px);
+  color: #333;
+}
+
+@media (prefers-color-scheme: dark) {
+  .markdown-toggle-button {
+    background-color: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .markdown-toggle-button:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .markdown-toggle-button.active {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .markdown-raw-view {
+    background-color: #1a1a1a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+}
+
 /* Styles for defined terms */
 .defined-term {
   color: #0066cc;

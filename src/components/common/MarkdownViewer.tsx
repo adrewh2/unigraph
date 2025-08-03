@@ -62,6 +62,8 @@ function MarkdownViewer({
     y: number;
   } | null>(null);
   const [selectedText, setSelectedText] = useState<string>("");
+  const [showRawMarkdown, setShowRawMarkdown] = useState(false);
+  const [rawMarkdown, setRawMarkdown] = useState<string>("");
 
   // Context menu handlers
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -488,6 +490,9 @@ function MarkdownViewer({
         // Parse frontmatter to extract metadata including terms
         const { content, metadata } = parseFrontmatter(markdown);
 
+        // Store the raw markdown content
+        setRawMarkdown(content);
+
         // Extract terms from metadata
         const definedTerms: Record<string, string> = metadata.terms || {};
         setTerms(definedTerms);
@@ -749,40 +754,55 @@ function MarkdownViewer({
         height: "100%",
       }}
     >
-      <div
-        ref={contentRef}
-        className={`markdown-content ${excerpt ? "markdown-excerpt-no-fade" : ""}`}
-        style={excerpt ? { maxHeight: "400px", overflow: "hidden" } : {}}
-        dangerouslySetInnerHTML={{ __html: html }}
-        onContextMenu={handleContextMenu}
-        onClick={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.classList.contains("defined-term")) {
-            const termText = target.getAttribute("data-term");
-            if (termText && terms[termText]) {
-              const rect = target.getBoundingClientRect();
-              const positionX = rect.left + rect.width / 2 + window.scrollX;
-              // Raise the popup 24px above the top of the term
-              const positionY = rect.top + window.scrollY - 24;
+      {/* Toggle button for raw markdown */}
+      <button
+        onClick={() => setShowRawMarkdown(!showRawMarkdown)}
+        className={`markdown-toggle-button ${showRawMarkdown ? "active" : ""}`}
+        title={showRawMarkdown ? "Show rendered view" : "Show raw markdown"}
+        disabled={loading}
+      >
+        {showRawMarkdown ? "View markdown" : "View md text"}
+      </button>
+      {showRawMarkdown ? (
+        <div ref={contentRef} className="markdown-content markdown-raw-view">
+          {rawMarkdown || "Loading raw markdown..."}
+        </div>
+      ) : (
+        <div
+          ref={contentRef}
+          className={`markdown-content ${excerpt ? "markdown-excerpt-no-fade" : ""}`}
+          style={excerpt ? { maxHeight: "400px", overflow: "hidden" } : {}}
+          dangerouslySetInnerHTML={{ __html: html }}
+          onContextMenu={handleContextMenu}
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.classList.contains("defined-term")) {
+              const termText = target.getAttribute("data-term");
+              if (termText && terms[termText]) {
+                const rect = target.getBoundingClientRect();
+                const positionX = rect.left + rect.width / 2 + window.scrollX;
+                // Raise the popup 24px above the top of the term
+                const positionY = rect.top + window.scrollY - 24;
 
-              // If the popup is already open for this term, close it
-              if (activeDefinition && activeDefinition.term === termText) {
-                setActiveDefinition(null);
-              } else {
-                setActiveDefinition({
-                  term: termText,
-                  definition: terms[termText],
-                  position: {
-                    x: positionX,
-                    y: positionY,
-                  },
-                  isDragging: false,
-                });
+                // If the popup is already open for this term, close it
+                if (activeDefinition && activeDefinition.term === termText) {
+                  setActiveDefinition(null);
+                } else {
+                  setActiveDefinition({
+                    term: termText,
+                    definition: terms[termText],
+                    position: {
+                      x: positionX,
+                      y: positionY,
+                    },
+                    isDragging: false,
+                  });
+                }
               }
             }
-          }
-        }}
-      />
+          }}
+        />
+      )}
 
       {activeDefinition &&
         createPortal(
