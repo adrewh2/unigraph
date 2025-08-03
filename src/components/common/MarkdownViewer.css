@@ -298,17 +298,21 @@
 
 /* Prevent any React component rendering in code blocks */
 .markdown-content pre code {
-  all: unset !important;
   display: block !important;
-  font-family: inherit !important;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace !important;
   white-space: pre !important;
   word-wrap: break-word !important;
+  text-shadow: none !important;
+  -webkit-font-smoothing: auto !important;
+  -moz-osx-font-smoothing: auto !important;
+  font-smooth: never !important;
+  pointer-events: none !important;
 }
 
 .markdown-content pre code * {
-  all: unset !important;
   display: inline !important;
   font-family: inherit !important;
+  pointer-events: none !important;
 }
 
 /* Ensure proper line breaks in code blocks */
