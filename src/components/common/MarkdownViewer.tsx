@@ -19,10 +19,10 @@ import { replaceUnigraphUrlsWithLocalhost } from "../../utils/urlUtils";
 import "../applets/StoryCards/StoryCardApp.css";
 import { DefinitionPopup, DefinitionPopupData } from "./DefinitionPopup";
 import "./MarkdownViewer.css";
+import { saveAnnotationToSceneGraph } from "./saveAnnotationToSceneGraph";
 import TextBasedContextMenu, {
   TextContextMenuItem,
 } from "./TextBasedContextMenu";
-import { saveAnnotationToSceneGraph } from "./saveAnnotationToSceneGraph";
 
 interface MarkdownViewerProps {
   filename: string;
@@ -547,6 +547,10 @@ function MarkdownViewer({
                 return match;
               }
             );
+
+            // For now, let's keep it simple and just show the JSX as code
+            // The complex JSX parsing approach is too error-prone
+            // We can revisit this with a proper JSX parser library later
 
             setHtml(processedHtml);
             setLoading(false);

@@ -19,6 +19,7 @@ import LexicalEditorV2 from "../applets/Lexical/LexicalEditor";
 import WikipediaArticleViewer_FactorGraph from "../applets/WikipediaViewer/WikipediaArticleViewer_FactorGraph";
 import EntityTableV2 from "../common/EntityTableV2";
 import MarkdownViewer from "../common/MarkdownViewer";
+import UnigraphIframe from "../common/UnigraphIframe";
 import SemanticWebQueryPanel from "../semantic/SemanticWebQueryPanel";
 import AboutView from "./AboutView";
 import DevToolsView from "./DevToolsView";
@@ -760,6 +761,34 @@ const aboutView = {
   category: VIEW_DEFINITIONS["about"].category,
 };
 
+const unigraphIframeView = {
+  id: VIEW_DEFINITIONS["unigraph-iframe"].id,
+  title: VIEW_DEFINITIONS["unigraph-iframe"].title,
+  icon: VIEW_DEFINITIONS["unigraph-iframe"].icon,
+  component: (props: any) => (
+    <UnigraphIframe
+      src="http://localhost:3001"
+      title="Live Unigraph Application"
+      width="100%"
+      height={700}
+      showControls={true}
+      resizable={true}
+      allowFullscreen={true}
+      loadingMessage="Loading Unigraph application..."
+      style={{
+        border: "2px solid #e0e0e0",
+        borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+      }}
+      iframeProps={{
+        sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+        referrerPolicy: "no-referrer",
+      }}
+    />
+  ),
+  category: VIEW_DEFINITIONS["unigraph-iframe"].category,
+};
+
 const devToolsView = {
   id: VIEW_DEFINITIONS["dev-tools"].id,
   title: VIEW_DEFINITIONS["dev-tools"].title,
@@ -850,6 +879,7 @@ const allViews = [
   wikipediaFactorGraphView,
   reactFlowPanelV2View,
   aboutView,
+  unigraphIframeView,
   devToolsView,
   lexicalEditorView,
   monacoEditorView,

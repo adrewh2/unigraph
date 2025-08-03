@@ -284,6 +284,54 @@ Here's a complete reference of all available props:
 
 ## Common Use Cases
 
+### Live Unigraph App Embedding
+
+Here's an example of embedding the actual Unigraph application:
+
+```tsx
+<UnigraphIframe
+  src="http://localhost:3001"
+  title="Live Unigraph Application"
+  width="100%"
+  height={700}
+  showControls={true}
+  resizable={true}
+  allowFullscreen={true}
+  loadingMessage="Loading Unigraph application..."
+  style={{
+    border: "2px solid #e0e0e0",
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  }}
+  iframeProps={{
+    sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+    referrerPolicy: "no-referrer",
+  }}
+/>
+```
+
+**Live Demo:**
+
+<UnigraphIframe
+src="http://localhost:3001"
+title="Live Unigraph Application"
+width="100%"
+height={700}
+showControls={true}
+resizable={true}
+allowFullscreen={true}
+loadingMessage="Loading Unigraph application..."
+style={{
+    border: "2px solid #e0e0e0",
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+  }}
+iframeProps={{
+    sandbox: "allow-scripts allow-same-origin allow-forms allow-popups",
+    referrerPolicy: "no-referrer",
+  }}
+/>
+
 ### Documentation Structure Visualization
 
 ```tsx

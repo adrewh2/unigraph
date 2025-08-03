@@ -162,6 +162,14 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     category: "content",
     description: "Browse and view documentation with file tree navigation",
   },
+  "unigraph-iframe": {
+    id: "unigraph-iframe",
+    title: "Unigraph Iframe",
+    icon: "🖼️",
+    category: "development",
+    description:
+      "Interactive iframe component for embedding external content with controls and customization",
+  },
 };
 
 // Helper function to get all available view IDs

@@ -362,6 +362,14 @@
   box-shadow: none !important;
 }
 
+/* Style for UnigraphIframe placeholders */
+.markdown-content .unigraph-iframe-placeholder {
+  margin: 20px 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
 /* Ensure proper line breaks in code blocks */
 .markdown-content pre,
 .markdown-content pre code {

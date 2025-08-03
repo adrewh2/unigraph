@@ -83,10 +83,16 @@ const UnigraphIframe: React.FC<UnigraphIframeProps> = ({
     setIsLoading(true);
     setHasError(false);
     if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src;
+      // Reload the iframe by temporarily clearing and resetting the src
+      const currentSrc = iframeRef.current.src;
+      iframeRef.current.src = "";
+      setTimeout(() => {
+        if (iframeRef.current) {
+          iframeRef.current.src = currentSrc;
+        }
+      }, 10);
     }
   };
-
   const handleFullscreenToggle = () => {
     if (!allowFullscreen) return;
 
@@ -235,7 +241,7 @@ const UnigraphIframe: React.FC<UnigraphIframeProps> = ({
         title={title}
         style={iframeStyles}
         onLoad={handleIframeLoad}
-        onError={handleIframeError}
+        onError={(event) => handleIframeError(event.nativeEvent)}
         allowFullScreen={allowFullscreen}
         {...iframeProps}
       />
