@@ -1,3 +1,4 @@
+import Editor from "@monaco-editor/react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { marked } from "marked";
@@ -66,6 +67,21 @@ function MarkdownViewer({
   const [selectedText, setSelectedText] = useState<string>("");
   const [showRawMarkdown, setShowRawMarkdown] = useState(false);
   const [rawMarkdown, setRawMarkdown] = useState<string>("");
+
+  // Detect dark mode preference
+  const [isDarkMode, setIsDarkMode] = useState(
+    window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+
+  // Listen for theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   // Context menu handlers
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -769,7 +785,27 @@ function MarkdownViewer({
       )}
       {showRawMarkdown ? (
         <div ref={contentRef} className="markdown-content markdown-raw-view">
-          {rawMarkdown || "Loading raw markdown..."}
+          <Editor
+            language="markdown"
+            theme={isDarkMode ? "vs-dark" : "vs-light"}
+            value={rawMarkdown || "Loading raw markdown..."}
+            onChange={() => {}} // Read-only
+            loading="Loading editor..."
+            options={{
+              selectOnLineNumbers: true,
+              automaticLayout: true,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              wordWrap: "on",
+              readOnly: true,
+              fontSize: 14,
+              fontFamily: "Monaco, 'Courier New', monospace",
+              lineNumbers: "on",
+              folding: true,
+              renderWhitespace: "selection",
+              tabSize: 2,
+            }}
+          />
         </div>
       ) : (
         <div

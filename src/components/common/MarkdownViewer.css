@@ -30,17 +30,10 @@
 
 /* Raw markdown view styles */
 .markdown-raw-view {
-  font-family: monospace;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 20px;
-  background-color: #f8f8f8;
+  height: calc(100% - 40px);
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  white-space: pre-wrap;
-  overflow: auto;
-  height: calc(100% - 40px);
-  color: #333;
+  overflow: hidden;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -59,9 +52,7 @@
   }
 
   .markdown-raw-view {
-    background-color: #1a1a1a;
     border-color: #444;
-    color: #e0e0e0;
   }
 }
 

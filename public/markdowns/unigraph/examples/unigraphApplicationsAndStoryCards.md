@@ -15,16 +15,6 @@ The second view features a zoomed-out ReactFlow view of the content's structure.
 >
 </iframe>
 
-```html
-<iframe
-  src="https://unigraph.vercel.app/?graph=unigraphApplications"
-  width="100%"
-  height="800px"
-  style="border: none;"
->
-</iframe>
-```
-
 <iframe
   src="https://unigraph.vercel.app/?graph=unigraphApplications"
   width="100%"
