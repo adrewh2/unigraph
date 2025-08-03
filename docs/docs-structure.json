@@ -68,11 +68,6 @@
       ]
     },
     {
-      "path": "backgroundAndMotivation.md",
-      "type": "file",
-      "name": "backgroundAndMotivation.md"
-    },
-    {
       "path": "capabilities",
       "type": "directory",
       "children": [
