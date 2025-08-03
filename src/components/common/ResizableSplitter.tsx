@@ -23,17 +23,51 @@ const ResizableSplitter: React.FC<ResizableSplitterProps> = ({
   className = "",
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [startWidth, setStartWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const splitterRef = useRef<HTMLDivElement>(null);
+
+  // Use refs to avoid re-renders during drag
+  const dragStateRef = useRef({
+    startX: 0,
+    startWidth: 0,
+    isDragging: false,
+  });
+
+  // Throttle width updates using requestAnimationFrame
+  const rafRef = useRef<number | null>(null);
+  const pendingWidthRef = useRef<number | null>(null);
+
+  const updateWidth = useCallback(
+    (newWidth: number) => {
+      pendingWidthRef.current = newWidth;
+
+      if (rafRef.current) {
+        return; // Already scheduled
+      }
+
+      rafRef.current = requestAnimationFrame(() => {
+        if (pendingWidthRef.current !== null) {
+          onWidthChange(pendingWidthRef.current);
+          pendingWidthRef.current = null;
+        }
+        rafRef.current = null;
+      });
+    },
+    [onWidthChange]
+  );
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
+      e.stopPropagation();
+
+      dragStateRef.current = {
+        startX: e.clientX,
+        startWidth: leftPanelWidth,
+        isDragging: true,
+      };
+
       setIsDragging(true);
-      setStartX(e.clientX);
-      setStartWidth(leftPanelWidth);
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
     },
@@ -42,19 +76,21 @@ const ResizableSplitter: React.FC<ResizableSplitterProps> = ({
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (!isDragging) return;
+      if (!dragStateRef.current.isDragging) return;
 
-      const deltaX = e.clientX - startX;
+      const deltaX = e.clientX - dragStateRef.current.startX;
       const newWidth = Math.max(
         minLeftWidth,
-        Math.min(maxLeftWidth, startWidth + deltaX)
+        Math.min(maxLeftWidth, dragStateRef.current.startWidth + deltaX)
       );
-      onWidthChange(newWidth);
+
+      updateWidth(newWidth);
     },
-    [isDragging, startX, startWidth, minLeftWidth, maxLeftWidth, onWidthChange]
+    [minLeftWidth, maxLeftWidth, updateWidth]
   );
 
   const handleMouseUp = useCallback(() => {
+    dragStateRef.current.isDragging = false;
     setIsDragging(false);
     document.body.style.cursor = "";
     document.body.style.userSelect = "";
@@ -62,14 +98,25 @@ const ResizableSplitter: React.FC<ResizableSplitterProps> = ({
 
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove, {
+        passive: true,
+      });
+      document.addEventListener("mouseup", handleMouseUp, { passive: true });
       return () => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div

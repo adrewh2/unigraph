@@ -1,5 +1,5 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import FileTreeView from "../common/FileTreeView";
 import MarkdownViewer from "../common/MarkdownViewer";
 import ResizableSplitter from "../common/ResizableSplitter";
@@ -10,125 +10,131 @@ const DocumentationView: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
 
-  const handleFileSelect = (filePath: string) => {
+  const handleFileSelect = useCallback((filePath: string) => {
     setSelectedFile(filePath);
-  };
+  }, []);
 
-  const handleWidthChange = (width: number) => {
+  const handleWidthChange = useCallback((width: number) => {
     setSidebarWidth(width);
-  };
+  }, []);
 
-  const leftPanel = (
-    <div
-      className="documentation-sidebar"
-      style={{
-        backgroundColor: getColor(theme.colors, "backgroundSecondary"),
-        borderRight: `1px solid ${getColor(theme.colors, "border")}`,
-        height: "100%",
-      }}
-    >
-      <FileTreeView
-        onFileSelect={handleFileSelect}
-        selectedFile={selectedFile || undefined}
-      />
-    </div>
+  const leftPanel = useMemo(
+    () => (
+      <div
+        className="documentation-sidebar"
+        style={{
+          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+          borderRight: `1px solid ${getColor(theme.colors, "border")}`,
+          height: "100%",
+        }}
+      >
+        <FileTreeView
+          onFileSelect={handleFileSelect}
+          selectedFile={selectedFile || undefined}
+        />
+      </div>
+    ),
+    [theme.colors, handleFileSelect, selectedFile]
   );
 
-  const rightPanel = (
-    <div
-      className="documentation-content"
-      style={{
-        height: "100%",
-        overflow: "auto",
-      }}
-    >
-      {selectedFile ? (
-        <div style={{ height: "100%" }}>
-          <MarkdownViewer filename={selectedFile} />
-        </div>
-      ) : (
-        <div
-          className="documentation-welcome"
-          style={{
-            color: getColor(theme.colors, "text"),
-          }}
-        >
-          <h2
+  const rightPanel = useMemo(
+    () => (
+      <div
+        className="documentation-content"
+        style={{
+          height: "100%",
+          overflow: "auto",
+        }}
+      >
+        {selectedFile ? (
+          <div style={{ height: "100%" }}>
+            <MarkdownViewer filename={selectedFile} />
+          </div>
+        ) : (
+          <div
+            className="documentation-welcome"
             style={{
               color: getColor(theme.colors, "text"),
             }}
           >
-            Documentation Browser
-          </h2>
-          <p
-            style={{
-              color: getColor(theme.colors, "textSecondary"),
-            }}
-          >
-            Select a file from the sidebar to view its contents. The
-            documentation includes guides, tutorials, and reference materials
-            for Unigraph.
-          </p>
-          <div
-            className="documentation-features"
-            style={{
-              backgroundColor: getColor(theme.colors, "surface"),
-              border: `1px solid ${getColor(theme.colors, "border")}`,
-            }}
-          >
-            <h3
+            <h2
               style={{
                 color: getColor(theme.colors, "text"),
               }}
             >
-              Available Documentation
-            </h3>
-            <ul>
-              <li
+              Documentation Browser
+            </h2>
+            <p
+              style={{
+                color: getColor(theme.colors, "textSecondary"),
+              }}
+            >
+              Select a file from the sidebar to view its contents. The
+              documentation includes guides, tutorials, and reference materials
+              for Unigraph.
+            </p>
+            <div
+              className="documentation-features"
+              style={{
+                backgroundColor: getColor(theme.colors, "surface"),
+                border: `1px solid ${getColor(theme.colors, "border")}`,
+              }}
+            >
+              <h3
                 style={{
-                  color: getColor(theme.colors, "textSecondary"),
+                  color: getColor(theme.colors, "text"),
                 }}
               >
-                <strong style={{ color: getColor(theme.colors, "text") }}>
-                  Overview
-                </strong>{" "}
-                - Introduction and motivation for Unigraph
-              </li>
-              <li
-                style={{
-                  color: getColor(theme.colors, "textSecondary"),
-                }}
-              >
-                <strong style={{ color: getColor(theme.colors, "text") }}>
-                  User Guide
-                </strong>{" "}
-                - How to use Unigraph features
-              </li>
-              <li
-                style={{
-                  color: getColor(theme.colors, "textSecondary"),
-                }}
-              >
-                <strong style={{ color: getColor(theme.colors, "text") }}>
-                  Quick Guides
-                </strong>{" "}
-                - Step-by-step tutorials
-              </li>
-              <li
-                style={{
-                  color: getColor(theme.colors, "textSecondary"),
-                }}
-              >
-                <strong style={{ color: getColor(theme.colors, "text") }}>
-                  Markdowns
-                </strong>{" "}
-                - Additional documentation files
-              </li>
-            </ul>
+                Available Documentation
+              </h3>
+              <ul>
+                <li
+                  style={{
+                    color: getColor(theme.colors, "textSecondary"),
+                  }}
+                >
+                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                    Overview
+                  </strong>{" "}
+                  - Introduction and motivation for Unigraph
+                </li>
+                <li
+                  style={{
+                    color: getColor(theme.colors, "textSecondary"),
+                  }}
+                >
+                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                    User Guide
+                  </strong>{" "}
+                  - How to use Unigraph features
+                </li>
+                <li
+                  style={{
+                    color: getColor(theme.colors, "textSecondary"),
+                  }}
+                >
+                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                    Quick Guides
+                  </strong>{" "}
+                  - Step-by-step tutorials
+                </li>
+                <li
+                  style={{
+                    color: getColor(theme.colors, "textSecondary"),
+                  }}
+                >
+                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                    Markdowns
+                  </strong>{" "}
+                  - Additional documentation files
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    ),
+    [selectedFile, theme.colors]
   );
 
   return (
