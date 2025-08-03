@@ -17,6 +17,7 @@ interface FileNode {
   children?: FileNode[];
   isExpanded?: boolean;
   title?: string;
+  order?: number; // Add order metadata
   displayName: string; // Will show title if available, otherwise name
 }
 
@@ -108,6 +109,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
           const name = child.name || child.path.split("/").pop() || "Unknown";
           let title: string | undefined;
           let displayName = name;
+          let orderValue: number | undefined;
 
           // For markdown files, try to fetch metadata
           if (child.type === "file" && child.path.endsWith(".md")) {
@@ -121,12 +123,24 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
                 );
                 if (frontMatterMatch) {
                   const frontMatter = frontMatterMatch[1];
+                  
+                  // Extract title
                   const titleMatch = frontMatter.match(
                     /title:\s*["']([^"']+)["']/
                   );
                   if (titleMatch) {
                     title = titleMatch[1];
                     displayName = title;
+                  }
+                  
+                  // Extract order
+                  const orderMatch = frontMatter.match(/order:\s*(\d+)/);
+                  if (orderMatch) {
+                    const order = parseInt(orderMatch[1], 10);
+                    if (!isNaN(order)) {
+                      // We'll set this after creating the node
+                      orderValue = order;
+                    }
                   }
                 }
               }
@@ -146,6 +160,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             isExpanded: child.type === "directory", // Start directories as expanded
             title,
             displayName,
+            order: orderValue,
           };
 
           if (child.children && child.children.length > 0) {
@@ -156,7 +171,23 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         })
       );
 
-      return nodes;
+      // Sort nodes by order before returning
+      return sortNodesByOrder(nodes);
+    };
+
+    // Helper function to sort nodes by order
+    const sortNodesByOrder = (nodes: FileNode[]): FileNode[] => {
+      return nodes.sort((a, b) => {
+        // If both have order, sort by order
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        // If only one has order, prioritize the one with order
+        if (a.order !== undefined) return -1;
+        if (b.order !== undefined) return 1;
+        // If neither has order, sort alphabetically by displayName
+        return a.displayName.localeCompare(b.displayName);
+      });
     };
 
     fetchFileTree();
