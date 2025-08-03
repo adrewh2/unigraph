@@ -838,6 +838,7 @@ const MarkdownViewerWrapper: React.FC<any> = (props) => {
     <MarkdownViewer
       filename="docs/overview/motivation.md"
       sceneGraph={currentSceneGraph}
+      showRawToggle={true}
       onAnnotate={(text) => {
         console.log("Annotation created:", text);
       }}

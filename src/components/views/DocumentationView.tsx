@@ -60,6 +60,7 @@ const DocumentationView: React.FC = () => {
             <MarkdownViewer
               filename={selectedFile}
               sceneGraph={currentSceneGraph}
+              showRawToggle={true}
               onAnnotate={(text) => {
                 console.log("Annotation created:", text);
                 // You can add additional annotation handling here

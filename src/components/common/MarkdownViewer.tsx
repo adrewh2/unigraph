@@ -32,6 +32,7 @@ interface MarkdownViewerProps {
   imageStyle?: React.CSSProperties; // Add imageStyle prop
   sceneGraph?: SceneGraph; // Add sceneGraph prop for annotations
   onAnnotate?: (selectedText: string) => void; // Add annotation callback
+  showRawToggle?: boolean; // Add prop to control raw markdown toggle visibility
 }
 
 function MarkdownViewer({
@@ -42,6 +43,7 @@ function MarkdownViewer({
   imageStyle,
   sceneGraph,
   onAnnotate = (text) => console.log("Annotate text:", text), // Default implementation
+  showRawToggle = false, // Default to false - disabled by default
 }: MarkdownViewerProps) {
   const [html, setHtml] = useState("");
   const [loading, setLoading] = useState(true);
@@ -754,15 +756,17 @@ function MarkdownViewer({
         height: "100%",
       }}
     >
-      {/* Toggle button for raw markdown */}
-      <button
-        onClick={() => setShowRawMarkdown(!showRawMarkdown)}
-        className={`markdown-toggle-button ${showRawMarkdown ? "active" : ""}`}
-        title={showRawMarkdown ? "Show rendered view" : "Show raw markdown"}
-        disabled={loading}
-      >
-        {showRawMarkdown ? "View markdown" : "View md text"}
-      </button>
+      {/* Toggle button for raw markdown - only show when enabled */}
+      {showRawToggle && (
+        <button
+          onClick={() => setShowRawMarkdown(!showRawMarkdown)}
+          className={`markdown-toggle-button ${showRawMarkdown ? "active" : ""}`}
+          title={showRawMarkdown ? "Show rendered view" : "Show raw markdown"}
+          disabled={loading}
+        >
+          {showRawMarkdown ? "View markdown" : "View md text"}
+        </button>
+      )}
       {showRawMarkdown ? (
         <div ref={contentRef} className="markdown-content markdown-raw-view">
           {rawMarkdown || "Loading raw markdown..."}
