@@ -1,4 +1,3 @@
----
 ### Statements of Aims
 
 Unigraph is a human-centric graph model engine, application library, and information platform.
@@ -15,6 +14,7 @@ Unigraph is an integration environment for various existing web-based tools, and
 
 Aesgraph is an organization that serves an instance of Unigraph on the web.
 https://unigraph-git-new-features-2-aesgraph.vercel.app/
+
 ---
 
 ### Product Statement

@@ -23,6 +23,7 @@ interface FileTreeViewProps {
   onFileSelect?: (filePath: string) => void;
   selectedFile?: string;
   className?: string;
+  hideEmptyFolders?: boolean;
 }
 
 const FileTreeView: React.FC<FileTreeViewProps> = ({
@@ -30,6 +31,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
   onFileSelect,
   selectedFile,
   className = "",
+  hideEmptyFolders = true,
 }) => {
   const { theme } = useTheme();
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
@@ -118,9 +120,9 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     fetchFileTree();
   }, [rootPath]);
 
-  // Filter tree based on search term
+  // Filter tree based on search term and empty folder preference
   useEffect(() => {
-    if (!searchTerm.trim()) {
+    if (!searchTerm.trim() && !hideEmptyFolders) {
       setFilteredTree(fileTree);
       return;
     }
@@ -128,9 +130,9 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     const filterTree = (nodes: FileNode[]): FileNode[] => {
       return nodes
         .map((node) => {
-          const matchesSearch = node.name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
+          const matchesSearch = searchTerm.trim()
+            ? node.name.toLowerCase().includes(searchTerm.toLowerCase())
+            : true;
 
           if (node.type === "file") {
             return matchesSearch ? node : null;
@@ -140,7 +142,12 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
               ? filterTree(node.children)
               : [];
 
-            if (matchesSearch || filteredChildren.length > 0) {
+            const hasFiles = filteredChildren.some(
+              (child) => child.type === "file"
+            );
+            const shouldShow = hideEmptyFolders ? hasFiles : true;
+
+            if (matchesSearch && shouldShow && filteredChildren.length > 0) {
               return {
                 ...node,
                 children: filteredChildren,
@@ -154,7 +161,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     };
 
     setFilteredTree(filterTree(fileTree));
-  }, [searchTerm, fileTree]);
+  }, [searchTerm, hideEmptyFolders, fileTree]);
 
   const toggleNode = (node: FileNode) => {
     if (node.type === "directory") {
