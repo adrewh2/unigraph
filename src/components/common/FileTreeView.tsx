@@ -375,7 +375,6 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
               onChange={(e) => setSearchTerm(e.target.value)}
               className="file-tree-search-input"
               style={{
-                width: "100%",
                 padding: "8px 12px 8px 36px",
                 border: `1px solid ${getColor(theme.colors, "border")}`,
                 borderRadius: "6px",
@@ -383,6 +382,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
                 backgroundColor: getColor(theme.colors, "background"),
                 color: getColor(theme.colors, "text"),
                 outline: "none",
+                boxSizing: "border-box",
               }}
             />
           </div>
