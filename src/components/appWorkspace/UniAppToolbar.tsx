@@ -1,5 +1,5 @@
+import { getColor, useTheme } from "@aesgraph/app-shell";
 import React, { useCallback, useEffect, useState } from "react";
-import { useTheme, getColor } from "@aesgraph/app-shell";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import GraphSearch from "../common/GraphSearch";
 import GraphViewTabs from "./GraphViewTabs";

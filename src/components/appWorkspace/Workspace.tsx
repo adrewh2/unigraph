@@ -157,6 +157,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
       activeFilter: activeFilter,
       handleLoadSceneGraph: handleLoadSceneGraph,
       handleSetActiveFilter: applyActiveFilterToAppInstance,
+      theme,
     });
 
     return (
@@ -170,7 +171,7 @@ const Workspace: React.FC<WorkspaceProps> = ({
         menuItems={config.mainMenus}
         bottomElements={config.bottomElements}
         isDarkMode={isDarkMode}
-        footer={leftFooterContent}
+        footer={(isOpen: boolean) => leftFooterContent(isOpen, theme)}
         minimal={leftSidebarConfig.minimal}
         mode={leftSidebarConfig.mode}
       />
