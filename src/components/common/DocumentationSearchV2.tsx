@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { Search } from "lucide-react";
+import { getColor, useTheme } from "@aesgraph/app-shell";
 import "./DocumentationSearchV2.css";
 
 interface SearchMatch {
@@ -21,6 +23,7 @@ interface SearchIndex {
 }
 
 const DocumentationSearchV2: React.FC = () => {
+  const { theme } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchIndex, setSearchIndex] = useState<SearchIndex>({});
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -234,16 +237,39 @@ const DocumentationSearchV2: React.FC = () => {
     <div className="documentation-search-v2">
       <div className="search-header">
         <h3>Search Documentation</h3>
-        <div className="search-input-container">
-          <input
-            type="text"
-            placeholder="Search for text..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            className="search-input"
-          />
-          {!isIndexed && <span className="indexing-status">Indexing...</span>}
+        <div className="file-tree-search">
+          <div className="file-tree-search-input-wrapper">
+            <Search
+              size={16}
+              style={{
+                color: getColor(theme.colors, "textSecondary"),
+                position: "absolute",
+                left: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Search for text..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="file-tree-search-input"
+              style={{
+                padding: "8px 12px 8px 36px",
+                border: `1px solid ${getColor(theme.colors, "border")}`,
+                borderRadius: "6px",
+                fontSize: "13px",
+                backgroundColor: getColor(theme.colors, "background"),
+                color: getColor(theme.colors, "text"),
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
         </div>
+        {!isIndexed && <span className="indexing-status">Indexing...</span>}
       </div>
 
       <div className="search-content">
