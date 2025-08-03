@@ -116,7 +116,7 @@ function MarkdownViewer({
   const getContextMenuItems = (): TextContextMenuItem[] => [
     {
       id: "annotate",
-      label: "Create Annotation",
+      label: "Annotate",
       onClick: () => {
         // Keep the selection intact until the action is completed
         const currentSelection = selectedText;
@@ -133,7 +133,7 @@ function MarkdownViewer({
     },
     {
       id: "search",
-      label: "Search Google",
+      label: "Search",
       onClick: () => {
         window.open(
           `https://www.google.com/search?q=${encodeURIComponent(selectedText)}`,
