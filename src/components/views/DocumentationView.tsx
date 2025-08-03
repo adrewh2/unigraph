@@ -34,11 +34,20 @@ const DocumentationView: React.FC = () => {
     () => (
       <div
         className="documentation-sidebar"
-        style={{
-          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
-          borderRight: `1px solid ${getColor(theme.colors, "border")}`,
-          height: "100%",
-        }}
+        style={
+          {
+            backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+            borderRight: `1px solid ${getColor(theme.colors, "border")}`,
+            height: "100%",
+            "--border-color": getColor(theme.colors, "border"),
+            "--background-secondary": getColor(
+              theme.colors,
+              "backgroundSecondary"
+            ),
+            "--surface-hover": getColor(theme.colors, "backgroundTertiary"),
+            "--primary-color": getColor(theme.colors, "primary"),
+          } as React.CSSProperties
+        }
       >
         <div className="sidebar-header">
           <div className="sidebar-tabs">
