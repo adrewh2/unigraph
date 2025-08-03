@@ -282,16 +282,24 @@ const UniAppToolbar: React.FC<UniAppToolbarProps> = ({
     );
   };
 
+  // Debug theme colors
+  console.log("Theme colors:", {
+    workspacePanel: getColor(theme.colors, "workspacePanel"),
+    border: getColor(theme.colors, "border"),
+    text: getColor(theme.colors, "text"),
+    textSecondary: getColor(theme.colors, "textSecondary"),
+  });
+
   return (
     <nav
       className="uni-app-toolbar"
       style={{
         backgroundColor: getColor(theme.colors, "workspaceTitleBackground"),
-        color: getColor(theme.colors, "workspaceTitleText"),
+        color: getColor(theme.colors, "text"),
         borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
-        ["--submenu-bg" as any]: getColor(theme.colors, "workspacePanel"),
+        ["--submenu-bg" as any]: getColor(theme.colors, "workspaceBackground"),
         ["--submenu-border" as any]: getColor(theme.colors, "border"),
-        ["--toolbar-text" as any]: getColor(theme.colors, "workspaceTitleText"),
+        ["--toolbar-text" as any]: getColor(theme.colors, "text"),
         ["--shortcut-text" as any]: getColor(theme.colors, "textSecondary"),
         ...style,
       }}
