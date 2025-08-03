@@ -1,6 +1,7 @@
 ---
 title: Describing Unigraph with Story Cards
 tags: ["documentation", "example", "demo graph", "story cards"]
+order: 3
 ---
 
 Here are two views into the same graph that is a composition of markdown documents explaining what unigraph is.

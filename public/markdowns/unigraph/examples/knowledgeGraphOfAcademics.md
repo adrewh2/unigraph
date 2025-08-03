@@ -1,6 +1,7 @@
 ---
 title: A Knowledge Graph of Academics
 tags: ["documentation", "example", "demo graph"]
+order: 2
 ---
 
 This example visualizes a collection of significant academics across history and their works, showcasing the 3D Graph View.

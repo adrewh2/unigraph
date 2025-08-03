@@ -21,6 +21,11 @@
           "type": "directory",
           "children": [
             {
+              "path": "unigraph/examples/dataUrlGraph.md",
+              "type": "file",
+              "name": "dataUrlGraph.md"
+            },
+            {
               "path": "unigraph/examples/knowledgeGraphOfAcademics.md",
               "type": "file",
               "name": "knowledgeGraphOfAcademics.md"
