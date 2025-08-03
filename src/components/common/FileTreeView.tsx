@@ -16,6 +16,8 @@ interface FileNode {
   type: "file" | "directory";
   children?: FileNode[];
   isExpanded?: boolean;
+  title?: string;
+  displayName: string; // Will show title if available, otherwise name
 }
 
 interface FileTreeViewProps {
@@ -53,7 +55,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 
         if (markdownsResponse.ok) {
           const markdownsData = await markdownsResponse.json();
-          markdownsTree = convertStructureToFileNodes(
+          markdownsTree = await convertStructureToFileNodes(
             markdownsData,
             "/markdowns"
           );
@@ -70,7 +72,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 
         if (docsResponse.ok) {
           const docsData = await docsResponse.json();
-          docsTree = convertStructureToFileNodes(docsData, "/docs");
+          docsTree = await convertStructureToFileNodes(docsData, "/docs");
         } else {
           console.warn("Could not load docs structure:", docsResponse.status);
         }
@@ -95,26 +97,66 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     };
 
     // Helper function to convert structure to FileNode format
-    const convertStructureToFileNodes = (
+    const convertStructureToFileNodes = async (
       structure: any,
       basePath: string
-    ): FileNode[] => {
+    ): Promise<FileNode[]> => {
       if (!structure.children) return [];
 
-      return structure.children.map((child: any) => {
-        const node: FileNode = {
-          name: child.name || child.path.split("/").pop() || "Unknown",
-          path: `${basePath}/${child.path}`,
-          type: child.type,
-          isExpanded: child.type === "directory", // Start directories as expanded
-        };
+      const nodes = await Promise.all(
+        structure.children.map(async (child: any) => {
+          const name = child.name || child.path.split("/").pop() || "Unknown";
+          let title: string | undefined;
+          let displayName = name;
 
-        if (child.children && child.children.length > 0) {
-          node.children = convertStructureToFileNodes(child, basePath);
-        }
+          // For markdown files, try to fetch metadata
+          if (child.type === "file" && child.path.endsWith(".md")) {
+            try {
+              const response = await fetch(`${basePath}/${child.path}`);
+              if (response.ok) {
+                const content = await response.text();
+                // Parse YAML front matter
+                const frontMatterMatch = content.match(
+                  /^---\s*\n([\s\S]*?)\n---\s*\n/
+                );
+                if (frontMatterMatch) {
+                  const frontMatter = frontMatterMatch[1];
+                  const titleMatch = frontMatter.match(
+                    /title:\s*["']([^"']+)["']/
+                  );
+                  if (titleMatch) {
+                    title = titleMatch[1];
+                    displayName = title;
+                  }
+                }
+              }
+            } catch (error) {
+              // Silently fail and use filename as fallback
+              console.debug(
+                `Could not fetch metadata for ${child.path}:`,
+                error
+              );
+            }
+          }
 
-        return node;
-      });
+          const node: FileNode = {
+            name,
+            path: `${basePath}/${child.path}`,
+            type: child.type,
+            isExpanded: child.type === "directory", // Start directories as expanded
+            title,
+            displayName,
+          };
+
+          if (child.children && child.children.length > 0) {
+            node.children = await convertStructureToFileNodes(child, basePath);
+          }
+
+          return node;
+        })
+      );
+
+      return nodes;
     };
 
     fetchFileTree();
@@ -131,7 +173,8 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
       return nodes
         .map((node) => {
           const matchesSearch = searchTerm.trim()
-            ? node.name.toLowerCase().includes(searchTerm.toLowerCase())
+            ? node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              node.displayName.toLowerCase().includes(searchTerm.toLowerCase())
             : true;
 
           if (node.type === "file") {
@@ -272,7 +315,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
                   : getColor(theme.colors, "text"),
               }}
             >
-              {node.name}
+              {node.displayName}
             </span>
           </div>
         </div>
