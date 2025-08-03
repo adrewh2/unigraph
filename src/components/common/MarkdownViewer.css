@@ -337,6 +337,31 @@
   background: transparent !important;
 }
 
+/* Remove any badge/highlighting effects from JSX tags */
+.markdown-content pre code .token.tag,
+.markdown-content pre code .token.tag-name,
+.markdown-content pre code .token.component {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Ensure all JSX elements have no special styling */
+.markdown-content pre code .token.tag .token.tag-name,
+.markdown-content pre code .token.tag .token.punctuation,
+.markdown-content pre code .token.tag .token.attr-name,
+.markdown-content pre code .token.tag .token.attr-value {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
 /* Ensure proper line breaks in code blocks */
 .markdown-content pre,
 .markdown-content pre code {
