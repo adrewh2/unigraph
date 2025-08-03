@@ -19,6 +19,7 @@ interface FileNode {
   title?: string;
   order?: number; // Add order metadata
   displayName: string; // Will show title if available, otherwise name
+  isIndex?: boolean; // Flag to identify index files
 }
 
 interface FileTreeViewProps {
@@ -110,6 +111,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
           let title: string | undefined;
           let displayName = name;
           let orderValue: number | undefined;
+          const isIndexFile = name.toLowerCase() === "index.md";
 
           // For markdown files, try to fetch metadata
           if (child.type === "file" && child.path.endsWith(".md")) {
@@ -169,6 +171,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             title,
             displayName,
             order: orderValue,
+            isIndex: isIndexFile,
           };
 
           if (child.children && child.children.length > 0) {
@@ -179,11 +182,11 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         })
       );
 
-      // Sort nodes by order before returning
-      return sortNodesByOrder(nodes);
+      // Process folder ordering and sort nodes by order before returning
+      return processFolderOrdering(nodes);
     };
 
-    // Helper function to sort nodes by order
+    // Helper function to sort nodes by order and handle folder ordering
     const sortNodesByOrder = (nodes: FileNode[]): FileNode[] => {
       return nodes.sort((a, b) => {
         // If both have order, sort by order
@@ -196,6 +199,31 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         // If neither has order, sort alphabetically by displayName
         return a.displayName.localeCompare(b.displayName);
       });
+    };
+
+    // Helper function to process folder ordering based on index files
+    const processFolderOrdering = async (
+      nodes: FileNode[]
+    ): Promise<FileNode[]> => {
+      const processedNodes = await Promise.all(
+        nodes.map(async (node) => {
+          if (node.type === "directory" && node.children) {
+            // Find index file in the directory
+            const indexFile = node.children.find((child) => child.isIndex);
+            if (indexFile && indexFile.order !== undefined) {
+              // Apply the index file's order to the directory
+              node.order = indexFile.order;
+            }
+            // Remove index files from children display
+            node.children = node.children.filter((child) => !child.isIndex);
+            // Sort the remaining children
+            node.children = sortNodesByOrder(node.children);
+          }
+          return node;
+        })
+      );
+
+      return sortNodesByOrder(processedNodes);
     };
 
     fetchFileTree();
@@ -217,6 +245,10 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             : true;
 
           if (node.type === "file") {
+            // Skip index files
+            if (node.isIndex) {
+              return null;
+            }
             return matchesSearch ? node : null;
           } else {
             // For directories, check if any children match

@@ -420,6 +420,50 @@ export const initialWorkspaces: WorkspaceState[] = [
     ],
     theme: "dark",
   },
+  {
+    id: "documentation",
+    name: "Documentation",
+    timestamp: Date.now(),
+    config: {
+      description: "A workspace for learning about unigraph",
+    },
+    layout: {
+      horizontal: [0, 20, 80], // 40% left, 0% center, 60% right
+      vertical: [100, 0], // 100% top, 0% bottom
+    },
+    tabContainers: [
+      {
+        id: "center",
+        tabs: [
+          {
+            id: "ai-chat",
+            title: "AI Chat",
+            content: "ai-chat",
+            closable: false,
+          },
+        ],
+        activeTabId: "ai-chat",
+      },
+      {
+        id: "left",
+        tabs: [],
+        activeTabId: undefined,
+      },
+      {
+        id: "right",
+        tabs: [
+          {
+            id: "documentation",
+            title: "Documentation",
+            content: "documentation",
+            closable: false,
+          },
+        ],
+        activeTabId: "documentation",
+      },
+    ],
+    theme: "dark",
+  },
 ];
 
 export default initialWorkspaces;
