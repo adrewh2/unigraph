@@ -67,6 +67,7 @@ function MarkdownViewer({
   const [selectedText, setSelectedText] = useState<string>("");
   const [showRawMarkdown, setShowRawMarkdown] = useState(false);
   const [rawMarkdown, setRawMarkdown] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
 
   // Detect dark mode preference
   const [isDarkMode, setIsDarkMode] = useState(
@@ -511,6 +512,9 @@ function MarkdownViewer({
         // Store the raw markdown content
         setRawMarkdown(content);
 
+        // Extract title from metadata
+        setTitle(metadata.title || "");
+
         // Extract terms from metadata
         const definedTerms: Record<string, string> = metadata.terms || {};
         setTerms(definedTerms);
@@ -772,6 +776,13 @@ function MarkdownViewer({
         height: "100%",
       }}
     >
+      {/* Title display */}
+      {title && !showRawMarkdown && (
+        <div className="markdown-title">
+          <h1>{title}</h1>
+        </div>
+      )}
+
       {/* Toggle button for raw markdown - only show when enabled */}
       {showRawToggle && (
         <button

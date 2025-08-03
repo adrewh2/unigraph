@@ -1,11 +1,10 @@
 ---
-title: "Describing Unigraph with Story Cards"
+title: Describing Unigraph with Story Cards
 tags: ["documentation", "example", "demo graph", "story cards"]
 ---
 
-Here are two views into the same graph that is a composition of markdown documents explaining what unigraph is.<br>
+Here are two views into the same graph that is a composition of markdown documents explaining what unigraph is.
 The first view features an applet where users can browse content and click into what interests them most.
-The second view features a zoomed-out ReactFlow view of the content's structure.
 
 <iframe
   src="https://unigraph.vercel.app/?graph=unigraphApplications&view=storyCard"
@@ -14,7 +13,7 @@ The second view features a zoomed-out ReactFlow view of the content's structure.
   style="border: none;"
 >
 </iframe>
-
+The second view features a zoomed-out ReactFlow view of the content's structure.
 <iframe
   src="https://unigraph.vercel.app/?graph=unigraphApplications"
   width="100%"

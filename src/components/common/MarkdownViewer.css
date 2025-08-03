@@ -1,3 +1,30 @@
+/* Title display */
+.markdown-title {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.markdown-title h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+@media (prefers-color-scheme: dark) {
+  .markdown-title {
+    border-bottom-color: #444;
+  }
+
+  .markdown-title h1 {
+    color: #e0e0e0;
+  }
+}
+
 /* Toggle button for raw markdown view */
 .markdown-toggle-button {
   position: absolute;
