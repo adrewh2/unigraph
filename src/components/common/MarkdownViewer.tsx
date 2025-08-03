@@ -1,6 +1,17 @@
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { marked } from "marked";
+import Prism from "prismjs";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-css";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-jsx";
+import "prismjs/components/prism-markdown";
+import "prismjs/components/prism-scss";
+import "prismjs/components/prism-tsx";
+import "prismjs/components/prism-typescript";
+import "prismjs/themes/prism.css";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { SceneGraph } from "../../core/model/SceneGraph";
@@ -193,7 +204,7 @@ function MarkdownViewer({
     setLoading(true);
     setError(null);
 
-    // Configure marked with proper LaTeX support
+    // Configure marked with proper LaTeX support and syntax highlighting
     const renderer = {
       code(this: any, codeObj: { text: string; lang?: string }) {
         const { text, lang } = codeObj;
@@ -209,7 +220,47 @@ function MarkdownViewer({
             return `<div class="latex-error">LaTeX rendering error: ${error instanceof Error ? error.message : String(error)}</div>`;
           }
         }
-        return `<pre><code class="language-${lang}">${text}</code></pre>`;
+
+        // Handle syntax highlighting for various languages
+        if (lang) {
+          try {
+            // Map language aliases to Prism languages
+            const languageMap: Record<string, string> = {
+              ts: "typescript",
+              tsx: "tsx",
+              js: "javascript",
+              jsx: "jsx",
+              json: "json",
+              css: "css",
+              scss: "scss",
+              md: "markdown",
+              bash: "bash",
+              shell: "bash", // Use bash for shell scripts
+              sh: "bash",
+            };
+
+            const prismLang = languageMap[lang] || lang;
+
+            // Ensure newlines are preserved and let Prism handle syntax highlighting
+            const processedText = text;
+
+            const highlighted = Prism.highlight(
+              processedText,
+              Prism.languages[prismLang] || Prism.languages.plaintext,
+              prismLang
+            );
+
+            // Ensure the code is treated as text, not as React components
+            return `<pre><code class="language-${lang}" data-code="true">${highlighted}</code></pre>`;
+          } catch (error) {
+            console.error("Syntax highlighting error:", error);
+            // Fallback to plain text if highlighting fails
+            return `<pre><code class="language-${lang}">${text}</code></pre>`;
+          }
+        }
+
+        // Default case for no language specified
+        return `<pre><code>${text}</code></pre>`;
       },
     };
 
@@ -487,7 +538,17 @@ function MarkdownViewer({
               /src=["']\.\.\/assets\/images\/([^"']*)["']/gi,
               'src="/docs/assets/images/$1"'
             );
-            setHtml(fixedHtml);
+
+            // Post-process to ensure JSX in code blocks is not interpreted as React components
+            const processedHtml = fixedHtml.replace(
+              /<pre><code[^>]*class="[^"]*language-(tsx|jsx)[^"]*"[^>]*>/g,
+              (match) => {
+                // This ensures that JSX code blocks are treated as text, not as React components
+                return match;
+              }
+            );
+
+            setHtml(processedHtml);
             setLoading(false);
           }
         } catch (parseError) {
