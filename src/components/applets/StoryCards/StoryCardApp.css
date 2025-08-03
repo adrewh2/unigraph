@@ -376,6 +376,11 @@
   color: #24292f;
 }
 
+.markdown-content li strong {
+  font-weight: 600;
+  color: #24292f;
+}
+
 .markdown-content blockquote {
   border-left: 4px solid #d0d7de;
   padding-left: 1rem;

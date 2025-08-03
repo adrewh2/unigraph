@@ -81,14 +81,13 @@ function MarkdownViewer({
         }
         return `<pre><code class="language-${lang}">${text}</code></pre>`;
       },
-
-      // Add custom text renderer to handle term linking
-      text(this: any, token: any) {
-        // token: Text | Escape
-        // This will be populated once we have the terms
-        return token.text;
-      },
     };
+
+    // Use default marked configuration for basic markdown parsing
+    marked.setOptions({
+      gfm: true,
+      breaks: true,
+    });
 
     marked.use({ renderer });
 
@@ -318,7 +317,17 @@ function MarkdownViewer({
         // Parse markdown to HTML using marked
         let parsed: string | Promise<string>;
         try {
+          console.log(
+            "Parsing markdown content:",
+            finalContent.substring(0, 200) + "..."
+          );
           parsed = marked.parse(finalContent);
+          console.log(
+            "Parsed HTML:",
+            typeof parsed === "string"
+              ? parsed.substring(0, 200) + "..."
+              : "Promise"
+          );
           if (parsed instanceof Promise) {
             parsed.then((htmlStr) => {
               // Apply image styles and replace Unigraph URLs

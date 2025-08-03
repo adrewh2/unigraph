@@ -67,3 +67,14 @@
 .documentation-features strong {
   font-weight: 600;
 }
+
+/* Markdown content styling for documentation view */
+.documentation-content .markdown-content strong {
+  font-weight: 600;
+  color: #24292f;
+}
+
+.documentation-content .markdown-content li strong {
+  font-weight: 600;
+  color: #24292f;
+}
