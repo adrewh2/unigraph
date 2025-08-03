@@ -647,3 +647,56 @@
     color: #34d399;
   }
 }
+
+/* Line highlighting for search results */
+.markdown-highlighted-line {
+  background-color: rgba(255, 255, 0, 0.1);
+  border-left: 3px solid #ffeb3b;
+  padding-left: 8px;
+  margin-left: -8px;
+  border-radius: 4px;
+  animation: highlight-fade 2s ease-out;
+}
+
+/* Term highlighting for search results */
+.markdown-highlighted-term {
+  background-color: #ffeb3b;
+  color: #000;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+  animation: term-highlight-fade 3s ease-out;
+}
+
+@keyframes highlight-fade {
+  0% {
+    background-color: rgba(255, 255, 0, 0.3);
+  }
+  100% {
+    background-color: rgba(255, 255, 0, 0.1);
+  }
+}
+
+@keyframes term-highlight-fade {
+  0% {
+    background-color: #ffeb3b;
+    color: #000;
+  }
+  100% {
+    background-color: rgba(255, 235, 59, 0.3);
+    color: inherit;
+  }
+}
+
+/* Dark mode adjustments for line highlighting */
+@media (prefers-color-scheme: dark) {
+  .markdown-highlighted-line {
+    background-color: rgba(255, 255, 0, 0.15);
+    border-left-color: #ffeb3b;
+  }
+
+  .markdown-highlighted-term {
+    background-color: #ffeb3b;
+    color: #000;
+  }
+}

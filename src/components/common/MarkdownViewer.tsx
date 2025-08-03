@@ -68,6 +68,8 @@ function MarkdownViewer({
   const [showRawMarkdown, setShowRawMarkdown] = useState(false);
   const [rawMarkdown, setRawMarkdown] = useState<string>("");
   const [title, setTitle] = useState<string>("");
+  const [highlightedLine, setHighlightedLine] = useState<number | null>(null);
+  const [searchHighlight, setSearchHighlight] = useState<string | null>(null);
 
   // Detect dark mode preference
   const [isDarkMode, setIsDarkMode] = useState(
@@ -83,6 +85,135 @@ function MarkdownViewer({
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
+
+  // Handle highlighting
+  useEffect(() => {
+    const lineMatch = filename.match(/#L(\d+)$/);
+    const searchMatch = filename.match(/#search=([^#]+)$/);
+    const lineNumber = lineMatch ? parseInt(lineMatch[1], 10) : null;
+    const searchText = searchMatch ? decodeURIComponent(searchMatch[1]) : null;
+
+    setHighlightedLine(lineNumber);
+    setSearchHighlight(searchText);
+  }, [filename]);
+
+  // Apply highlighting after content is rendered
+  useEffect(() => {
+    console.log("Highlighting effect triggered:", {
+      highlightedLine,
+      searchHighlight,
+      loading,
+      hasContent: !!contentRef.current,
+    });
+
+    if (contentRef.current && !loading) {
+      // Clear previous highlighting
+      contentRef.current
+        .querySelectorAll(".markdown-highlighted-line")
+        .forEach((el) => {
+          el.classList.remove("markdown-highlighted-line");
+        });
+
+      if (searchHighlight) {
+        console.log("Searching for text:", searchHighlight);
+
+        // Find and highlight text by searching for the search term
+        const walker = document.createTreeWalker(
+          contentRef.current,
+          NodeFilter.SHOW_TEXT,
+          null
+        );
+
+        const textNodes: Text[] = [];
+        let node;
+        while ((node = walker.nextNode())) {
+          textNodes.push(node as Text);
+        }
+
+        console.log("Found text nodes:", textNodes.length);
+
+        let foundMatch = false;
+        textNodes.forEach((textNode) => {
+          const text = textNode.textContent || "";
+          const searchLower = searchHighlight.toLowerCase();
+          const textLower = text.toLowerCase();
+
+          console.log(
+            "Checking text node:",
+            text.substring(0, 100),
+            "against:",
+            searchLower
+          );
+
+          // Find all instances of the search term in this text node
+          if (textLower.includes(searchLower)) {
+            console.log("Found exact match in text:", text.substring(0, 100));
+
+            // Create a new text node with highlighted search terms
+            const highlightedText = text.replace(
+              new RegExp(
+                `(${searchHighlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+                "gi"
+              ),
+              '<mark class="markdown-highlighted-term">$1</mark>'
+            );
+
+            // Replace the text node content with highlighted version
+            if (highlightedText !== text) {
+              const span = document.createElement("span");
+              span.innerHTML = highlightedText;
+              textNode.parentNode?.replaceChild(span, textNode);
+              foundMatch = true;
+            }
+          }
+        });
+
+        // Scroll to the first highlighted term
+        if (foundMatch) {
+          const firstHighlight = contentRef.current?.querySelector(
+            ".markdown-highlighted-term"
+          );
+          if (firstHighlight) {
+            setTimeout(() => {
+              firstHighlight.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+            }, 100);
+          }
+        }
+
+        if (!foundMatch) {
+          console.log("No matching text found for:", searchHighlight);
+        }
+      } else if (highlightedLine) {
+        // Fallback to line-based highlighting
+        const elements = contentRef.current.querySelectorAll(
+          "p, h1, h2, h3, h4, h5, h6, pre, li"
+        );
+        console.log("Found elements to highlight:", elements.length);
+
+        elements.forEach((element, index) => {
+          const lineNumber = index + 1;
+          element.setAttribute("data-line", lineNumber.toString());
+
+          if (lineNumber === highlightedLine) {
+            console.log(
+              "Highlighting element:",
+              element,
+              "for line:",
+              lineNumber
+            );
+            element.classList.add("markdown-highlighted-line");
+
+            setTimeout(() => {
+              element.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 100);
+          }
+        });
+      }
+    }
+  }, [html, highlightedLine, searchHighlight, loading]);
 
   // Context menu handlers
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -406,10 +537,17 @@ function MarkdownViewer({
       return processed;
     };
 
+    // Parse filename for highlighting (e.g., "file.md#L123" or "file.md#search=text")
+    const lineMatch = filename.match(/#L(\d+)$/);
+    const searchMatch = filename.match(/#search=([^#]+)$/);
+    const lineNumber = lineMatch ? parseInt(lineMatch[1], 10) : null;
+    const searchText = searchMatch ? decodeURIComponent(searchMatch[1]) : null;
+    const cleanFilename = filename.replace(/#(L\d+|search=[^#]+)$/, "");
+
     // Fix the path construction to handle docs/, markdowns/, and storyCardFiles/ paths
-    const normalizedFilename = filename.startsWith("/")
-      ? filename.substring(1)
-      : filename;
+    const normalizedFilename = cleanFilename.startsWith("/")
+      ? cleanFilename.substring(1)
+      : cleanFilename;
 
     let filePath;
 

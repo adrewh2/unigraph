@@ -202,7 +202,13 @@ const DocumentationView: React.FC = () => {
         )}
       </div>
     ),
-    [selectedFile, theme.colors, textColors]
+    [
+      selectedFile,
+      currentSceneGraph,
+      textColors.primary,
+      textColors.secondary,
+      theme.colors,
+    ]
   );
 
   return (

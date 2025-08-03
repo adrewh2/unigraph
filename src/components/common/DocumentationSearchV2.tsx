@@ -222,9 +222,13 @@ const DocumentationSearchV2: React.FC<DocumentationSearchV2Props> = ({
   };
 
   // Handle result click
-  const handleResultClick = (filePath: string) => {
+  const handleResultClick = (filePath: string, searchText?: string) => {
     if (onFileSelect) {
-      onFileSelect(filePath);
+      // Pass file path with search text for highlighting
+      const filePathWithSearch = searchText
+        ? `${filePath}#search=${encodeURIComponent(searchText)}`
+        : filePath;
+      onFileSelect(filePathWithSearch);
     }
   };
 
@@ -499,6 +503,17 @@ const DocumentationSearchV2: React.FC<DocumentationSearchV2Props> = ({
                                 : getColor(theme.colors, "textSecondary"),
                             flex: 1,
                             wordBreak: "break-word",
+                            cursor: "pointer",
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Use the current search term to highlight the same text
+                            console.log("Clicking on match:", {
+                              searchTerm: searchTerm,
+                              highlightedText: match.highlightedText,
+                              line: match.line,
+                            });
+                            handleResultClick(result.filePath, searchTerm);
                           }}
                           dangerouslySetInnerHTML={{
                             __html: match.highlightedText,
