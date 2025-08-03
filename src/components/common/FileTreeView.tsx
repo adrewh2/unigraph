@@ -123,7 +123,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
                 );
                 if (frontMatterMatch) {
                   const frontMatter = frontMatterMatch[1];
-                  
+
                   // Extract title
                   const titleMatch = frontMatter.match(
                     /title:\s*["']([^"']+)["']/
@@ -131,8 +131,16 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
                   if (titleMatch) {
                     title = titleMatch[1];
                     displayName = title;
+                  } else {
+                    // Try to extract title without quotes
+                    const titleMatchNoQuotes =
+                      frontMatter.match(/title:\s*([^\n\r]+)/);
+                    if (titleMatchNoQuotes) {
+                      title = titleMatchNoQuotes[1].trim();
+                      displayName = title;
+                    }
                   }
-                  
+
                   // Extract order
                   const orderMatch = frontMatter.match(/order:\s*(\d+)/);
                   if (orderMatch) {
