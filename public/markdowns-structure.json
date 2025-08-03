@@ -15,6 +15,22 @@
           "path": "unigraph/UnigraphOverview.md",
           "type": "file",
           "name": "UnigraphOverview.md"
+        },
+        {
+          "path": "unigraph/examples",
+          "type": "directory",
+          "children": [
+            {
+              "path": "unigraph/examples/knowledgeGraphOfAcademics.md",
+              "type": "file",
+              "name": "knowledgeGraphOfAcademics.md"
+            },
+            {
+              "path": "unigraph/examples/unigraphApplicationsAndStoryCards.md",
+              "type": "file",
+              "name": "unigraphApplicationsAndStoryCards.md"
+            }
+          ]
         }
       ]
     }
