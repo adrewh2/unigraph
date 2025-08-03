@@ -238,6 +238,9 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
       const processedNodes = await Promise.all(
         nodes.map(async (node) => {
           if (node.type === "directory" && node.children) {
+            // Process children recursively first
+            node.children = await processFolderOrdering(node.children);
+
             // Find index file in the directory
             const indexFile = node.children.find((child) => child.isIndex);
             if (indexFile) {
