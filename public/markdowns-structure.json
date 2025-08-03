@@ -21,9 +21,19 @@
           "type": "directory",
           "children": [
             {
+              "path": "unigraph/examples/creatingGraphsProgrammatically.md",
+              "type": "file",
+              "name": "creatingGraphsProgrammatically.md"
+            },
+            {
               "path": "unigraph/examples/dataUrlGraph.md",
               "type": "file",
               "name": "dataUrlGraph.md"
+            },
+            {
+              "path": "unigraph/examples/index.md",
+              "type": "file",
+              "name": "index.md"
             },
             {
               "path": "unigraph/examples/knowledgeGraphOfAcademics.md",
@@ -36,6 +46,11 @@
               "name": "unigraphApplicationsAndStoryCards.md"
             }
           ]
+        },
+        {
+          "path": "unigraph/index.md",
+          "type": "file",
+          "name": "index.md"
         }
       ]
     }

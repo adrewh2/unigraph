@@ -82,13 +82,27 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         // Combine both trees
         const combinedTree = [...markdownsTree, ...docsTree];
 
-        if (combinedTree.length === 0) {
+        // Process folder ordering on the combined tree
+        const processedTree = await processFolderOrdering(combinedTree);
+
+        // Debug: Log the final tree structure
+        console.log(
+          "Final processed tree:",
+          processedTree.map((node) => ({
+            name: node.name,
+            displayName: node.displayName,
+            type: node.type,
+            order: node.order,
+          }))
+        );
+
+        if (processedTree.length === 0) {
           setError(
             "No documentation structure found. Please run 'npm run generate-structures' to generate the file tree."
           );
         } else {
-          setFileTree(combinedTree);
-          setFilteredTree(combinedTree);
+          setFileTree(processedTree);
+          setFilteredTree(processedTree);
         }
         setLoading(false);
       } catch (err) {
@@ -113,12 +127,22 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
           let orderValue: number | undefined;
           const isIndexFile = name.toLowerCase() === "index.md";
 
+          console.log(
+            `Processing child: ${child.path}, name: ${name}, isIndex: ${isIndexFile}`
+          );
+
           // For markdown files, try to fetch metadata
           if (child.type === "file" && child.path.endsWith(".md")) {
             try {
-              const response = await fetch(`${basePath}/${child.path}`);
+              const fetchUrl = `${basePath}/${child.path}`;
+              console.log(`Fetching metadata from: ${fetchUrl}`);
+              const response = await fetch(fetchUrl);
               if (response.ok) {
                 const content = await response.text();
+                console.log(
+                  `Content for ${child.path}:`,
+                  content.substring(0, 200) + "..."
+                );
                 // Parse YAML front matter
                 const frontMatterMatch = content.match(
                   /^---\s*\n([\s\S]*?)\n---\s*\n/
@@ -126,21 +150,27 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
                 if (frontMatterMatch) {
                   const frontMatter = frontMatterMatch[1];
 
-                  // Extract title
-                  const titleMatch = frontMatter.match(
+                  // Extract title - try both quoted and unquoted formats
+                  let titleMatch = frontMatter.match(
                     /title:\s*["']([^"']+)["']/
                   );
                   if (titleMatch) {
                     title = titleMatch[1];
                     displayName = title;
                   } else {
-                    // Try to extract title without quotes
-                    const titleMatchNoQuotes =
-                      frontMatter.match(/title:\s*([^\n\r]+)/);
-                    if (titleMatchNoQuotes) {
-                      title = titleMatchNoQuotes[1].trim();
+                    // Try to extract title without quotes - match until end of line
+                    titleMatch = frontMatter.match(/title:\s*([^\r\n]+)/);
+                    if (titleMatch) {
+                      title = titleMatch[1].trim();
                       displayName = title;
                     }
+                  }
+
+                  // Debug logging for index files
+                  if (isIndexFile) {
+                    console.log(
+                      `Index file ${child.path}: frontmatter="${frontMatter}", title="${title}", displayName="${displayName}"`
+                    );
                   }
 
                   // Extract order
@@ -182,8 +212,8 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         })
       );
 
-      // Process folder ordering and sort nodes by order before returning
-      return processFolderOrdering(nodes);
+      // Sort nodes by order before returning
+      return sortNodesByOrder(nodes);
     };
 
     // Helper function to sort nodes by order and handle folder ordering
@@ -210,9 +240,29 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
           if (node.type === "directory" && node.children) {
             // Find index file in the directory
             const indexFile = node.children.find((child) => child.isIndex);
-            if (indexFile && indexFile.order !== undefined) {
+            if (indexFile) {
+              console.log(
+                `Processing folder ${node.name}: indexFile.title="${indexFile.title}", indexFile.displayName="${indexFile.displayName}"`
+              );
               // Apply the index file's order to the directory
-              node.order = indexFile.order;
+              if (indexFile.order !== undefined) {
+                node.order = indexFile.order;
+                console.log(`Set folder ${node.name} order to ${node.order}`);
+              }
+              // Use the index file's title for the folder name if available
+              if (indexFile.title) {
+                const oldDisplayName = node.displayName;
+                node.displayName = indexFile.title;
+                console.log(
+                  `Updated folder ${node.name} displayName from "${oldDisplayName}" to "${node.displayName}"`
+                );
+              } else {
+                console.log(
+                  `No title found in index file for folder ${node.name}`
+                );
+              }
+            } else {
+              console.log(`No index file found for folder ${node.name}`);
             }
             // Remove index files from children display
             node.children = node.children.filter((child) => !child.isIndex);
