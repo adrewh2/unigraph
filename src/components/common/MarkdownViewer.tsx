@@ -3,10 +3,15 @@ import "katex/dist/katex.min.css";
 import { marked } from "marked";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { SceneGraph } from "../../core/model/SceneGraph";
 import { replaceUnigraphUrlsWithLocalhost } from "../../utils/urlUtils";
 import "../applets/StoryCards/StoryCardApp.css";
 import { DefinitionPopup, DefinitionPopupData } from "./DefinitionPopup";
 import "./MarkdownViewer.css";
+import TextBasedContextMenu, {
+  TextContextMenuItem,
+} from "./TextBasedContextMenu";
+import { saveAnnotationToSceneGraph } from "./saveAnnotationToSceneGraph";
 
 interface MarkdownViewerProps {
   filename: string;
@@ -14,6 +19,8 @@ interface MarkdownViewerProps {
   excerptLength?: number;
   overrideMarkdown?: string; // Add this prop
   imageStyle?: React.CSSProperties; // Add imageStyle prop
+  sceneGraph?: SceneGraph; // Add sceneGraph prop for annotations
+  onAnnotate?: (selectedText: string) => void; // Add annotation callback
 }
 
 function MarkdownViewer({
@@ -22,6 +29,8 @@ function MarkdownViewer({
   excerptLength = 150,
   overrideMarkdown,
   imageStyle,
+  sceneGraph,
+  onAnnotate = (text) => console.log("Annotate text:", text), // Default implementation
 }: MarkdownViewerProps) {
   const [html, setHtml] = useState("");
   const [loading, setLoading] = useState(true);
@@ -35,6 +44,127 @@ function MarkdownViewer({
     null
   );
   const eventHandlersSetupRef = useRef(false);
+
+  // Add state for context menu
+  const [contextMenuPosition, setContextMenuPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [selectedText, setSelectedText] = useState<string>("");
+
+  // Context menu handlers
+  const handleContextMenu = (e: React.MouseEvent) => {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+    console.log("Context menu triggered, selected text:", text); // Debug log
+    if (text && text.length > 0) {
+      e.preventDefault(); // Prevent default browser context menu
+      e.stopPropagation(); // Stop propagation to avoid triggering other handlers
+      setSelectedText(text);
+      setContextMenuPosition({ x: e.clientX, y: e.clientY });
+      console.log("Context menu position set:", { x: e.clientX, y: e.clientY }); // Debug log
+    }
+  };
+
+  // Enhanced annotation handler that saves to scene graph
+  const handleAnnotate = (text: string) => {
+    console.log("handleAnnotate called with text:", text); // Debug log
+    if (!text.trim()) return;
+
+    // Get the surrounding HTML context if possible
+    let surroundingHtml = "";
+    const selection = window.getSelection();
+
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+
+      // Get the surrounding context - either the parent element or a few words before/after
+      const container = range.commonAncestorContainer;
+      if (container.nodeType === Node.ELEMENT_NODE) {
+        // If the container is an element, use its HTML
+        surroundingHtml = (container as Element).outerHTML;
+      } else if (container.parentElement) {
+        // If it's a text node, use the parent element's HTML
+        surroundingHtml = container.parentElement.outerHTML;
+      }
+    }
+
+    console.log("SceneGraph available:", !!sceneGraph); // Debug log
+
+    // Save to scene graph if available, otherwise use the default onAnnotate
+    if (sceneGraph) {
+      try {
+        const node = saveAnnotationToSceneGraph(
+          text,
+          surroundingHtml,
+          { type: "markdown", resource_id: filename },
+          sceneGraph
+        );
+        console.log("Created annotation node:", node);
+      } catch (error) {
+        console.error("Failed to save annotation to scene graph:", error);
+        // Fall back to the default onAnnotate
+        onAnnotate(text);
+      }
+    } else {
+      // Use the provided onAnnotate callback
+      onAnnotate(text);
+    }
+  };
+
+  // Define context menu items
+  const getContextMenuItems = (): TextContextMenuItem[] => [
+    {
+      id: "annotate",
+      label: "Create Annotation",
+      onClick: () => {
+        // Keep the selection intact until the action is completed
+        const currentSelection = selectedText;
+        handleAnnotate(currentSelection);
+        // Don't clear selection here - let user manage that
+      },
+    },
+    {
+      id: "copy",
+      label: "Copy",
+      onClick: () => {
+        navigator.clipboard.writeText(selectedText);
+      },
+    },
+    {
+      id: "search",
+      label: "Search Google",
+      onClick: () => {
+        window.open(
+          `https://www.google.com/search?q=${encodeURIComponent(selectedText)}`,
+          "_blank"
+        );
+      },
+    },
+  ];
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    if (!contextMenuPosition) return;
+
+    const handleClickOutside = () => {
+      setContextMenuPosition(null);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    // Also close on Escape key
+    const handleEscapeKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setContextMenuPosition(null);
+      }
+    };
+    document.addEventListener("keydown", handleEscapeKey);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscapeKey);
+    };
+  }, [contextMenuPosition]);
 
   // Add post-processing function to apply styles to images
   const applyImageStyles = React.useCallback(
@@ -559,6 +689,7 @@ function MarkdownViewer({
         className={`markdown-content ${excerpt ? "markdown-excerpt-no-fade" : ""}`}
         style={excerpt ? { maxHeight: "400px", overflow: "hidden" } : {}}
         dangerouslySetInnerHTML={{ __html: html }}
+        onContextMenu={handleContextMenu}
         onClick={(e) => {
           const target = e.target as HTMLElement;
           if (target.classList.contains("defined-term")) {
@@ -595,6 +726,18 @@ function MarkdownViewer({
             onClose={() => setActiveDefinition(null)}
             onMouseDown={handleMouseDown}
             popupRef={popupRef as React.RefObject<HTMLDivElement>}
+          />,
+          document.body
+        )}
+
+      {/* Render the context menu when position is available */}
+      {contextMenuPosition &&
+        createPortal(
+          <TextBasedContextMenu
+            position={contextMenuPosition}
+            selectedText={selectedText}
+            items={getContextMenuItems()}
+            onClose={() => setContextMenuPosition(null)}
           />,
           document.body
         )}

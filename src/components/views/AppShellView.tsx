@@ -801,13 +801,27 @@ const sandpackEditorView = {
   category: VIEW_DEFINITIONS["sandpack-editor"].category,
 };
 
+const MarkdownViewerWrapper: React.FC<any> = (props) => {
+  const currentSceneGraph = useAppConfigStore(
+    (state) => state.currentSceneGraph
+  );
+  return (
+    <MarkdownViewer
+      filename="docs/overview/motivation.md"
+      sceneGraph={currentSceneGraph}
+      onAnnotate={(text) => {
+        console.log("Annotation created:", text);
+      }}
+      {...props}
+    />
+  );
+};
+
 const markdownViewerView = {
   id: VIEW_DEFINITIONS["markdown-viewer"].id,
   title: VIEW_DEFINITIONS["markdown-viewer"].title,
   icon: VIEW_DEFINITIONS["markdown-viewer"].icon,
-  component: (props: any) => (
-    <MarkdownViewer filename="docs/overview/motivation.md" {...props} />
-  ),
+  component: MarkdownViewerWrapper,
   category: VIEW_DEFINITIONS["markdown-viewer"].category,
 };
 

@@ -1,5 +1,6 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
 import React, { useCallback, useMemo, useState } from "react";
+import useAppConfigStore from "../../store/appConfigStore";
 import { getContrastingTextColors } from "../../utils/colorUtils";
 import FileTreeView from "../common/FileTreeView";
 import MarkdownViewer from "../common/MarkdownViewer";
@@ -10,6 +11,9 @@ const DocumentationView: React.FC = () => {
   const { theme } = useTheme();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
+  const currentSceneGraph = useAppConfigStore(
+    (state) => state.currentSceneGraph
+  );
 
   const handleFileSelect = useCallback((filePath: string) => {
     setSelectedFile(filePath);
@@ -53,7 +57,14 @@ const DocumentationView: React.FC = () => {
       >
         {selectedFile ? (
           <div style={{ height: "100%" }}>
-            <MarkdownViewer filename={selectedFile} />
+            <MarkdownViewer
+              filename={selectedFile}
+              sceneGraph={currentSceneGraph}
+              onAnnotate={(text) => {
+                console.log("Annotation created:", text);
+                // You can add additional annotation handling here
+              }}
+            />
           </div>
         ) : (
           <div
