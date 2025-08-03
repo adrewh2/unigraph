@@ -5,6 +5,7 @@ import {
   FileText,
   Folder,
   FolderOpen,
+  Search,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import "./FileTreeView.css";
@@ -32,8 +33,10 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 }) => {
   const { theme } = useTheme();
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
+  const [filteredTree, setFilteredTree] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch the file tree structure
   useEffect(() => {
@@ -79,6 +82,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
           );
         } else {
           setFileTree(combinedTree);
+          setFilteredTree(combinedTree);
         }
         setLoading(false);
       } catch (err) {
@@ -114,9 +118,47 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     fetchFileTree();
   }, [rootPath]);
 
+  // Filter tree based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredTree(fileTree);
+      return;
+    }
+
+    const filterTree = (nodes: FileNode[]): FileNode[] => {
+      return nodes
+        .map((node) => {
+          const matchesSearch = node.name
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase());
+
+          if (node.type === "file") {
+            return matchesSearch ? node : null;
+          } else {
+            // For directories, check if any children match
+            const filteredChildren = node.children
+              ? filterTree(node.children)
+              : [];
+
+            if (matchesSearch || filteredChildren.length > 0) {
+              return {
+                ...node,
+                children: filteredChildren,
+                isExpanded: true, // Expand directories that match search
+              };
+            }
+            return null;
+          }
+        })
+        .filter((node): node is FileNode => node !== null);
+    };
+
+    setFilteredTree(filterTree(fileTree));
+  }, [searchTerm, fileTree]);
+
   const toggleNode = (node: FileNode) => {
     if (node.type === "directory") {
-      setFileTree((prevTree) => {
+      setFilteredTree((prevTree) => {
         const updateNode = (nodes: FileNode[]): FileNode[] => {
           return nodes.map((n) => {
             if (n.path === node.path) {
@@ -304,13 +346,64 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         <h3
           style={{
             color: getColor(theme.colors, "text"),
+            margin: "0 0 12px 0",
+            fontSize: "14px",
+            fontWeight: "600",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
           }}
         >
           Documentation
         </h3>
+        <div className="file-tree-search">
+          <div className="file-tree-search-input-wrapper">
+            <Search
+              size={16}
+              style={{
+                color: getColor(theme.colors, "textSecondary"),
+                position: "absolute",
+                left: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Search files and folders..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="file-tree-search-input"
+              style={{
+                width: "100%",
+                padding: "8px 12px 8px 36px",
+                border: `1px solid ${getColor(theme.colors, "border")}`,
+                borderRadius: "6px",
+                fontSize: "13px",
+                backgroundColor: getColor(theme.colors, "background"),
+                color: getColor(theme.colors, "text"),
+                outline: "none",
+              }}
+            />
+          </div>
+        </div>
       </div>
       <div className="file-tree-content">
-        {fileTree.map((node) => renderNode(node))}
+        {filteredTree.length === 0 && searchTerm ? (
+          <div
+            className="file-tree-no-results"
+            style={{
+              padding: "20px",
+              textAlign: "center",
+              color: getColor(theme.colors, "textSecondary"),
+              fontSize: "13px",
+            }}
+          >
+            No files or folders match &quot;{searchTerm}&quot;
+          </div>
+        ) : (
+          filteredTree.map((node) => renderNode(node))
+        )}
       </div>
     </div>
   );
