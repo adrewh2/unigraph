@@ -204,7 +204,7 @@ function MarkdownViewer({
       return processed;
     };
 
-    // Fix the path construction to handle both docs/ and storyCardFiles/ paths
+    // Fix the path construction to handle docs/, markdowns/, and storyCardFiles/ paths
     const normalizedFilename = filename.startsWith("/")
       ? filename.substring(1)
       : filename;
@@ -214,6 +214,11 @@ function MarkdownViewer({
     // Check if the path explicitly starts with docs/
     if (normalizedFilename.startsWith("docs/")) {
       // Use the path as is for docs folder
+      filePath = `/${normalizedFilename}`;
+    }
+    // Check if the path explicitly starts with markdowns/
+    else if (normalizedFilename.startsWith("markdowns/")) {
+      // Use the path as is for markdowns folder
       filePath = `/${normalizedFilename}`;
     }
     // Check if the path explicitly starts with public/
