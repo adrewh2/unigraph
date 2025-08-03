@@ -1,5 +1,6 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
 import React, { useCallback, useMemo, useState } from "react";
+import { getContrastingTextColors } from "../../utils/colorUtils";
 import FileTreeView from "../common/FileTreeView";
 import MarkdownViewer from "../common/MarkdownViewer";
 import ResizableSplitter from "../common/ResizableSplitter";
@@ -17,6 +18,10 @@ const DocumentationView: React.FC = () => {
   const handleWidthChange = useCallback((width: number) => {
     setSidebarWidth(width);
   }, []);
+
+  // Get dynamic text colors based on background
+  const backgroundColor = getColor(theme.colors, "background");
+  const textColors = getContrastingTextColors(backgroundColor);
 
   const leftPanel = useMemo(
     () => (
@@ -54,19 +59,19 @@ const DocumentationView: React.FC = () => {
           <div
             className="documentation-welcome"
             style={{
-              color: getColor(theme.colors, "text"),
+              color: textColors.primary,
             }}
           >
             <h2
               style={{
-                color: getColor(theme.colors, "text"),
+                color: textColors.primary,
               }}
             >
               Documentation Browser
             </h2>
             <p
               style={{
-                color: getColor(theme.colors, "textSecondary"),
+                color: textColors.secondary,
               }}
             >
               Select a file from the sidebar to view its contents. The
@@ -82,7 +87,7 @@ const DocumentationView: React.FC = () => {
             >
               <h3
                 style={{
-                  color: getColor(theme.colors, "text"),
+                  color: textColors.primary,
                 }}
               >
                 Available Documentation
@@ -90,40 +95,40 @@ const DocumentationView: React.FC = () => {
               <ul>
                 <li
                   style={{
-                    color: getColor(theme.colors, "textSecondary"),
+                    color: textColors.secondary,
                   }}
                 >
-                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                  <strong style={{ color: textColors.primary }}>
                     Overview
                   </strong>{" "}
                   - Introduction and motivation for Unigraph
                 </li>
                 <li
                   style={{
-                    color: getColor(theme.colors, "textSecondary"),
+                    color: textColors.secondary,
                   }}
                 >
-                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                  <strong style={{ color: textColors.primary }}>
                     User Guide
                   </strong>{" "}
                   - How to use Unigraph features
                 </li>
                 <li
                   style={{
-                    color: getColor(theme.colors, "textSecondary"),
+                    color: textColors.secondary,
                   }}
                 >
-                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                  <strong style={{ color: textColors.primary }}>
                     Quick Guides
                   </strong>{" "}
                   - Step-by-step tutorials
                 </li>
                 <li
                   style={{
-                    color: getColor(theme.colors, "textSecondary"),
+                    color: textColors.secondary,
                   }}
                 >
-                  <strong style={{ color: getColor(theme.colors, "text") }}>
+                  <strong style={{ color: textColors.primary }}>
                     Markdowns
                   </strong>{" "}
                   - Additional documentation files
@@ -134,7 +139,7 @@ const DocumentationView: React.FC = () => {
         )}
       </div>
     ),
-    [selectedFile, theme.colors]
+    [selectedFile, theme.colors, textColors]
   );
 
   return (
@@ -142,7 +147,7 @@ const DocumentationView: React.FC = () => {
       className="documentation-view"
       style={{
         backgroundColor: getColor(theme.colors, "background"),
-        color: getColor(theme.colors, "text"),
+        color: textColors.primary,
         height: "100%",
         width: "100%",
       }}

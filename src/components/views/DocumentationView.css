@@ -68,12 +68,83 @@
 }
 
 /* Markdown content styling for documentation view */
-.documentation-content .markdown-content strong {
-  font-weight: 600;
-  color: #24292f;
+.documentation-content .markdown-content {
+  color: inherit;
 }
 
-.documentation-content .markdown-content li strong {
+.documentation-content .markdown-content h1,
+.documentation-content .markdown-content h2,
+.documentation-content .markdown-content h3,
+.documentation-content .markdown-content h4,
+.documentation-content .markdown-content h5,
+.documentation-content .markdown-content h6 {
+  color: inherit;
   font-weight: 600;
-  color: #24292f;
+}
+
+.documentation-content .markdown-content p {
+  color: inherit;
+  line-height: 1.6;
+}
+
+.documentation-content .markdown-content ul,
+.documentation-content .markdown-content ol {
+  color: inherit;
+}
+
+.documentation-content .markdown-content li {
+  color: inherit;
+}
+
+.documentation-content .markdown-content strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.documentation-content .markdown-content em {
+  font-style: italic;
+  color: inherit;
+}
+
+.documentation-content .markdown-content code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.9em;
+}
+
+.documentation-content .markdown-content pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.documentation-content .markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.documentation-content .markdown-content blockquote {
+  border-left: 4px solid rgba(0, 0, 0, 0.2);
+  margin: 0;
+  padding-left: 16px;
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .documentation-content .markdown-content code {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .documentation-content .markdown-content pre {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .documentation-content .markdown-content blockquote {
+    border-left-color: rgba(255, 255, 255, 0.2);
+  }
 }
