@@ -125,38 +125,23 @@ const DocumentationSearchV2: React.FC = () => {
   // Perform search
   const performSearch = useCallback(
     (term: string) => {
-      console.log("=== SEARCH DEBUG ===");
-      console.log("Search term:", term);
-      console.log("Is indexed:", isIndexed);
-      console.log("Search index keys:", Object.keys(searchIndex));
-      console.log("Search index size:", Object.keys(searchIndex).length);
-
       if (!term.trim() || !isIndexed) {
-        console.log("Early return - term empty or not indexed");
         setSearchResults([]);
         return;
       }
 
-      console.log("Performing search for:", term);
       setSearching(true);
 
       const results: SearchResult[] = [];
       const lowerTerm = term.toLowerCase();
 
       Object.entries(searchIndex).forEach(([filePath, fileData]) => {
-        console.log(`Searching in file: ${filePath}`);
-        console.log(`File title: ${fileData.title}`);
-        console.log(`File has ${fileData.lines.length} lines`);
-
         const matches: SearchMatch[] = [];
 
         // Search in lines
         fileData.lines.forEach((line, lineIndex) => {
           const lowerLine = line.toLowerCase();
           if (lowerLine.includes(lowerTerm)) {
-            console.log(
-              `Found match in line ${lineIndex + 1}: ${line.substring(0, 50)}...`
-            );
             // Highlight the match
             const regex = new RegExp(`(${term})`, "gi");
             const highlightedText = line.replace(
@@ -173,7 +158,6 @@ const DocumentationSearchV2: React.FC = () => {
 
         // Search in title
         if (fileData.title.toLowerCase().includes(lowerTerm)) {
-          console.log(`Found match in title: ${fileData.title}`);
           const regex = new RegExp(`(${term})`, "gi");
           const highlightedTitle = fileData.title.replace(
             regex,
@@ -189,9 +173,6 @@ const DocumentationSearchV2: React.FC = () => {
         }
 
         if (matches.length > 0) {
-          console.log(
-            `Adding result for ${filePath} with ${matches.length} matches`
-          );
           results.push({
             filePath,
             title: fileData.title,
@@ -213,15 +194,6 @@ const DocumentationSearchV2: React.FC = () => {
 
       setSearchResults(results);
       setSearching(false);
-      console.log("Search completed, found", results.length, "results");
-      console.log(
-        "Results:",
-        results.map((r) => ({
-          filePath: r.filePath,
-          title: r.title,
-          matchCount: r.matches.length,
-        }))
-      );
     },
     [searchIndex, isIndexed]
   );
@@ -265,7 +237,7 @@ const DocumentationSearchV2: React.FC = () => {
         <div className="search-input-container">
           <input
             type="text"
-            placeholder="Search files..."
+            placeholder="Search for text..."
             value={searchTerm}
             onChange={handleSearchChange}
             className="search-input"
@@ -275,20 +247,6 @@ const DocumentationSearchV2: React.FC = () => {
       </div>
 
       <div className="search-content">
-        {/* Debug info */}
-        <div
-          style={{
-            padding: "8px",
-            fontSize: "12px",
-            color: "#888",
-            borderBottom: "1px solid #333",
-          }}
-        >
-          Debug: Indexed={isIndexed.toString()}, IndexSize=
-          {Object.keys(searchIndex).length}, SearchTerm=&quot;{searchTerm}
-          &quot;, Results={searchResults.length}
-        </div>
-
         {isSearching && (
           <div className="search-status">
             <span>Searching...</span>
