@@ -1,7 +1,9 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
+import { FolderOpen, Search } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import useAppConfigStore from "../../store/appConfigStore";
 import { getContrastingTextColors } from "../../utils/colorUtils";
+import DocumentationSearchV2 from "../common/DocumentationSearchV2";
 import FileTreeView from "../common/FileTreeView";
 import MarkdownViewer from "../common/MarkdownViewer";
 import ResizableSplitter from "../common/ResizableSplitter";
@@ -11,6 +13,7 @@ const DocumentationView: React.FC = () => {
   const { theme } = useTheme();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [sidebarMode, setSidebarMode] = useState<"tree" | "search">("tree");
   const currentSceneGraph = useAppConfigStore(
     (state) => state.currentSceneGraph
   );
@@ -37,13 +40,49 @@ const DocumentationView: React.FC = () => {
           height: "100%",
         }}
       >
-        <FileTreeView
-          onFileSelect={handleFileSelect}
-          selectedFile={selectedFile || undefined}
-        />
+        <div className="sidebar-header">
+          <div className="sidebar-tabs">
+            <button
+              className={`sidebar-tab ${sidebarMode === "tree" ? "active" : ""}`}
+              onClick={() => setSidebarMode("tree")}
+              style={{
+                color:
+                  sidebarMode === "tree"
+                    ? getColor(theme.colors, "primary")
+                    : getColor(theme.colors, "text"),
+              }}
+            >
+              <FolderOpen size={16} />
+              <span>Files</span>
+            </button>
+            <button
+              className={`sidebar-tab ${sidebarMode === "search" ? "active" : ""}`}
+              onClick={() => setSidebarMode("search")}
+              style={{
+                color:
+                  sidebarMode === "search"
+                    ? getColor(theme.colors, "primary")
+                    : getColor(theme.colors, "text"),
+              }}
+            >
+              <Search size={16} />
+              <span>Search</span>
+            </button>
+          </div>
+        </div>
+        <div className="sidebar-content">
+          {sidebarMode === "tree" ? (
+            <FileTreeView
+              onFileSelect={handleFileSelect}
+              selectedFile={selectedFile || undefined}
+            />
+          ) : (
+            <DocumentationSearchV2 />
+          )}
+        </div>
       </div>
     ),
-    [theme.colors, handleFileSelect, selectedFile]
+    [theme.colors, handleFileSelect, selectedFile, sidebarMode]
   );
 
   const rightPanel = useMemo(
