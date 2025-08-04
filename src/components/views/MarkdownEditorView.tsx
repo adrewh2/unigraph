@@ -280,6 +280,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   // Create markdown editor file tree instance
   const markdownEditorInstance: FileTreeInstance = useMemo(
@@ -319,6 +320,12 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
                 ? new Date(document.last_updated_at)
                 : null
             );
+
+            // Clear autosave timeout and reset reference when switching files
+            if (autoSaveTimeoutRef.current) {
+              clearTimeout(autoSaveTimeoutRef.current);
+            }
+            lastAutoSavedContentRef.current = loadedContent;
             console.log("Loaded document:", document);
           } catch (error) {
             console.error("Error loading document:", error);
@@ -585,8 +592,24 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     return `sandpack-${showPreview}-${previewToggleCount}-${currentDocumentId || "default"}`;
   }, [showPreview, previewToggleCount, currentDocumentId]);
 
+  // Cleanup autosave timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Add debouncing to prevent rapid state updates when typing quickly
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Add autosave functionality
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastAutoSavedContentRef = useRef<string>("");
 
   const handleContentUpdate = useCallback(
     (newContent: string) => {
@@ -599,9 +622,42 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       debounceTimeoutRef.current = setTimeout(() => {
         setContent(newContent);
         setHasUnsavedChanges(newContent !== originalContent);
+
+        // Set up autosave timer
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+        }
+
+        // Only autosave if content has actually changed from last save
+        autoSaveTimeoutRef.current = setTimeout(async () => {
+          if (
+            newContent !== originalContent &&
+            newContent !== lastAutoSavedContentRef.current
+          ) {
+            // Inline autosave logic to avoid circular dependency
+            setIsAutoSaving(true);
+            try {
+              if (currentDocumentId) {
+                await updateDocument({
+                  id: currentDocumentId,
+                  content: newContent,
+                });
+                setOriginalContent(newContent);
+                setHasUnsavedChanges(false);
+                setLastSaved(new Date());
+                lastAutoSavedContentRef.current = newContent;
+                console.log("Document auto-saved to Supabase");
+              }
+            } catch (error) {
+              console.error("Error auto-saving document:", error);
+            } finally {
+              setIsAutoSaving(false);
+            }
+          }
+        }, 500); // 0.5 seconds
       }, 100); // 100ms debounce
     },
-    [originalContent]
+    [originalContent, currentDocumentId]
   );
 
   const handleTogglePreview = useCallback(() => {
@@ -613,45 +669,61 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     });
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (!hasUnsavedChanges && !onSave) return;
+  const handleSave = useCallback(
+    async (isAutoSave = false) => {
+      if (!hasUnsavedChanges && !onSave) return;
 
-    setIsSaving(true);
-
-    try {
-      if (onSave) {
-        onSave(content);
-      } else if (currentDocumentId) {
-        // Save to Supabase
-        await updateDocument({
-          id: currentDocumentId,
-          content,
-        });
-
-        // Update state after successful save
-        setOriginalContent(content);
-        setHasUnsavedChanges(false);
-        setLastSaved(new Date());
-        console.log("Document saved to Supabase");
+      if (isAutoSave) {
+        setIsAutoSaving(true);
       } else {
-        // Default save behavior - download file
-        const blob = new Blob([content], { type: "text/markdown" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setIsSaving(true);
       }
-    } catch (error) {
-      console.error("Error saving document:", error);
-      // You could add error state here if needed
-    } finally {
-      setIsSaving(false);
-    }
-  }, [content, filename, onSave, currentDocumentId, hasUnsavedChanges]);
+
+      try {
+        if (onSave) {
+          onSave(content);
+        } else if (currentDocumentId) {
+          // Save to Supabase
+          await updateDocument({
+            id: currentDocumentId,
+            content,
+          });
+
+          // Update state after successful save
+          setOriginalContent(content);
+          setHasUnsavedChanges(false);
+          setLastSaved(new Date());
+
+          // Update lastAutoSavedContent if this was an autosave
+          if (isAutoSave) {
+            lastAutoSavedContentRef.current = content;
+          }
+          console.log("Document saved to Supabase");
+        } else {
+          // Default save behavior - download file
+          const blob = new Blob([content], { type: "text/markdown" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      } catch (error) {
+        console.error("Error saving document:", error);
+        // You could add error state here if needed
+      } finally {
+        if (isAutoSave) {
+          setIsAutoSaving(false);
+        } else {
+          setIsSaving(false);
+        }
+      }
+    },
+    [content, filename, onSave, currentDocumentId, hasUnsavedChanges]
+  );
 
   const handleLoad = useCallback(() => {
     if (onLoad) {
@@ -793,6 +865,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           )}
           {isLoading && " (Loading...)"}
           {isSaving && " (Saving...)"}
+          {isAutoSaving && " (Auto-saving...)"}
         </Typography>
         <Typography
           variant="caption"
@@ -801,8 +874,8 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           }}
         >
           {lastSaved
-            ? `Last saved: ${lastSaved.toLocaleTimeString()}`
-            : "Markdown Editor"}
+            ? `Last saved: ${lastSaved.toLocaleTimeString()} (autosave enabled)`
+            : "Markdown Editor (autosave enabled)"}
         </Typography>
       </Box>
 
