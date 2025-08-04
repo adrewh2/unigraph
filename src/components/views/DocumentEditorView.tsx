@@ -76,16 +76,17 @@ interface DocumentEditorViewProps {
   projectId?: string;
 }
 
-const defaultMarkdownContent = `# Welcome to Markdown Editor
+const defaultMarkdownContent = `# Welcome to Document Editor
 
-This is a live markdown editor with preview capabilities.
+This is a document editor that supports both markdown (.md) and text (.txt) files.
 
 ## Features
 
-- **Live Preview**: See your markdown rendered in real-time
-- **Syntax Highlighting**: Full markdown syntax support
-- **File Operations**: Save and load markdown files
-- **Split View**: Edit and preview side by side
+- **Multi-format Support**: Edit .md files (with Monaco) and .txt files (with Lexical)
+- **Live Preview**: See your markdown rendered in real-time (for .md files)
+- **Syntax Highlighting**: Full markdown syntax support (for .md files)
+- **Rich Text Editing**: Advanced text editing features (for .txt files)
+- **File Operations**: Save and load documents with proper extensions
 
 ## Getting Started
 
@@ -505,12 +506,22 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           setLastSaved(null);
         }
       },
-      onCreateDocument: async (title: string, parentId?: string) => {
+      onCreateDocument: async (
+        title: string,
+        parentId?: string,
+        extension: string = "md"
+      ) => {
         try {
+          // Set initial content based on file type
+          const initialContent =
+            extension === "txt"
+              ? `${title}\n\nStart writing your document here...`
+              : `# ${title}\n\nStart writing your document here...`;
+
           const newDocument = await createDocument({
             title,
-            content: `# ${title}\n\nStart writing your document here...`,
-            extension: "md",
+            content: initialContent,
+            extension,
             metadata: {},
             data: {},
             project_id: projectId,
@@ -970,7 +981,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
         >
           {lastSaved
             ? `Last saved: ${lastSaved.toLocaleTimeString()}`
-            : "Markdown Editor"}
+            : "Document Editor"}
         </Typography>
       </Box>
 
