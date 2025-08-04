@@ -404,10 +404,42 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   return (
     <div
       className="lexical-editor-container"
-      style={{
-        backgroundColor: getColor(appTheme.colors, "background"),
-        color: getColor(appTheme.colors, "text"),
-      }}
+      style={
+        {
+          backgroundColor: getColor(appTheme.colors, "background"),
+          color: getColor(appTheme.colors, "text"),
+          "--editor-text-color": (() => {
+            const backgroundColor = getColor(appTheme.colors, "background");
+            const getLuminance = (color: string): number => {
+              const rgbaMatch = color.match(
+                /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
+              );
+              if (rgbaMatch) {
+                const [, r, g, b] = rgbaMatch.map(Number);
+                return (
+                  0.2126 * (r / 255) + 0.7152 * (g / 255) + 0.0722 * (b / 255)
+                );
+              }
+              const hexMatch = color.match(
+                /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i
+              );
+              if (hexMatch) {
+                const r = parseInt(hexMatch[1], 16);
+                const g = parseInt(hexMatch[2], 16);
+                const b = parseInt(hexMatch[3], 16);
+                return (
+                  0.2126 * (r / 255) + 0.7152 * (g / 255) + 0.0722 * (b / 255)
+                );
+              }
+              return 0;
+            };
+            const luminance = getLuminance(backgroundColor);
+            return luminance < 0.1
+              ? "#ffffff"
+              : getColor(appTheme.colors, "text");
+          })(),
+        } as React.CSSProperties
+      }
     >
       <div className="lexical-content">
         <LexicalComposer key={stableKey} initialConfig={initialConfig}>
@@ -428,51 +460,7 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
               }}
             >
               <RichTextPlugin
-                contentEditable={
-                  <ContentEditable
-                    className="editor-input"
-                    style={{
-                      color: (() => {
-                        const backgroundColor = getColor(
-                          appTheme.colors,
-                          "background"
-                        );
-                        // Calculate luminance to determine if we're in dark mode
-                        const getLuminance = (color: string): number => {
-                          const rgbaMatch = color.match(
-                            /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
-                          );
-                          if (rgbaMatch) {
-                            const [, r, g, b] = rgbaMatch.map(Number);
-                            return (
-                              0.2126 * (r / 255) +
-                              0.7152 * (g / 255) +
-                              0.0722 * (b / 255)
-                            );
-                          }
-                          const hexMatch = color.match(
-                            /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i
-                          );
-                          if (hexMatch) {
-                            const r = parseInt(hexMatch[1], 16);
-                            const g = parseInt(hexMatch[2], 16);
-                            const b = parseInt(hexMatch[3], 16);
-                            return (
-                              0.2126 * (r / 255) +
-                              0.7152 * (g / 255) +
-                              0.0722 * (b / 255)
-                            );
-                          }
-                          return 0;
-                        };
-                        const luminance = getLuminance(backgroundColor);
-                        return luminance < 0.1
-                          ? "#ffffff"
-                          : getColor(appTheme.colors, "text");
-                      })(),
-                    }}
-                  />
-                }
+                contentEditable={<ContentEditable className="editor-input" />}
                 placeholder={
                   <PlaceholderPlugin placeholder="Start typing your document..." />
                 }
