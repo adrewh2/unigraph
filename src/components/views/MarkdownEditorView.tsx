@@ -8,7 +8,7 @@ import {
 } from "@codesandbox/sandpack-react";
 import { nightOwl } from "@codesandbox/sandpack-themes";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
-import { Download, Eye, EyeOff, FileText, Upload } from "lucide-react";
+import { Eye, EyeOff, FileText, Save, Upload } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createDocument,
@@ -86,17 +86,23 @@ const MarkdownEditorContent: React.FC<{
   onSave: () => void;
   onLoad: () => void;
   theme: any;
+  hasUnsavedChanges: boolean;
+  isSaving: boolean;
+  lastSaved: Date | null;
 }> = ({
   selectedFile,
-  content,
+  content: _content,
   onContentUpdate,
   showPreview,
   onTogglePreview,
   onSave,
   onLoad,
   theme,
+  hasUnsavedChanges,
+  isSaving,
+  lastSaved: _lastSaved,
 }) => {
-  const { sandpack } = useSandpack();
+  const { sandpack: _sandpack } = useSandpack();
   const { code } = useActiveCode();
 
   // Sync content changes back to our state immediately
@@ -137,18 +143,33 @@ const MarkdownEditorContent: React.FC<{
             {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
           </IconButton>
         </Tooltip>
-        <Tooltip title="Save File">
+        <Tooltip
+          title={
+            hasUnsavedChanges ? "Save Changes (Ctrl+S)" : "No Changes to Save"
+          }
+        >
           <IconButton
             size="small"
             onClick={onSave}
+            disabled={!hasUnsavedChanges || isSaving}
             sx={{
-              color: getColor(theme.colors, "text"),
+              color: hasUnsavedChanges
+                ? getColor(theme.colors, "primary")
+                : getColor(theme.colors, "textSecondary"),
               "&:hover": {
                 backgroundColor: getColor(theme.colors, "surfaceHover"),
               },
+              "&:disabled": {
+                color: getColor(theme.colors, "textSecondary"),
+                opacity: 0.5,
+              },
             }}
           >
-            <Download size={16} />
+            {isSaving ? (
+              <Upload size={16} className="animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
           </IconButton>
         </Tooltip>
         <Tooltip title="Load File">
@@ -210,6 +231,8 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
 }) => {
   const { theme } = useTheme();
   const [content, setContent] = useState<string>(initialContent);
+  const [originalContent, setOriginalContent] =
+    useState<string>(initialContent);
   const [showPreview, setShowPreview] = useState<boolean>(_showPreview);
   const [previewToggleCount, setPreviewToggleCount] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -218,6 +241,9 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Create markdown editor file tree instance
   const markdownEditorInstance: FileTreeInstance = useMemo(
@@ -247,21 +273,35 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           try {
             const document = await getDocument(metadata.documentId);
             // Always update content to ensure we have the latest version
-            setContent(document.content || "");
+            const loadedContent = document.content || "";
+            setContent(loadedContent);
+            setOriginalContent(loadedContent);
             setCurrentDocumentId(document.id);
+            setHasUnsavedChanges(false);
+            setLastSaved(
+              document.last_updated_at
+                ? new Date(document.last_updated_at)
+                : null
+            );
             console.log("Loaded document:", document);
           } catch (error) {
             console.error("Error loading document:", error);
             // Fallback to default content
             setContent(defaultMarkdownContent);
+            setOriginalContent(defaultMarkdownContent);
             setCurrentDocumentId(null);
+            setHasUnsavedChanges(false);
+            setLastSaved(null);
           } finally {
             setIsLoading(false);
           }
         } else {
           // No document ID, use default content
           setContent(defaultMarkdownContent);
+          setOriginalContent(defaultMarkdownContent);
           setCurrentDocumentId(null);
+          setHasUnsavedChanges(false);
+          setLastSaved(null);
         }
       },
       onCreateDocument: async (title: string, parentId?: string) => {
@@ -351,7 +391,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         }
       },
     }),
-    [userId, projectId]
+    [userId, projectId, currentDocumentId]
   );
 
   // Create files object for Sandpack with proper theme integration
@@ -501,7 +541,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
 </body>
 </html>`,
     }),
-    [content, theme.colors]
+    [content, theme.colors, filename]
   );
 
   // Create a stable key for SandpackProvider that only changes when necessary
@@ -509,9 +549,13 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     return `sandpack-${showPreview}-${previewToggleCount}-${currentDocumentId || "default"}`;
   }, [showPreview, previewToggleCount, currentDocumentId]);
 
-  const handleContentUpdate = useCallback((newContent: string) => {
-    setContent(newContent);
-  }, []);
+  const handleContentUpdate = useCallback(
+    (newContent: string) => {
+      setContent(newContent);
+      setHasUnsavedChanges(newContent !== originalContent);
+    },
+    [originalContent]
+  );
 
   const handleTogglePreview = useCallback(() => {
     setShowPreview((prev) => {
@@ -523,32 +567,44 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (onSave) {
-      onSave(content);
-    } else if (currentDocumentId) {
-      // Save to Supabase
-      try {
+    if (!hasUnsavedChanges && !onSave) return;
+
+    setIsSaving(true);
+
+    try {
+      if (onSave) {
+        onSave(content);
+      } else if (currentDocumentId) {
+        // Save to Supabase
         await updateDocument({
           id: currentDocumentId,
           content,
         });
+
+        // Update state after successful save
+        setOriginalContent(content);
+        setHasUnsavedChanges(false);
+        setLastSaved(new Date());
         console.log("Document saved to Supabase");
-      } catch (error) {
-        console.error("Error saving document:", error);
+      } else {
+        // Default save behavior - download file
+        const blob = new Blob([content], { type: "text/markdown" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
-    } else {
-      // Default save behavior - download file
-      const blob = new Blob([content], { type: "text/markdown" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error saving document:", error);
+      // You could add error state here if needed
+    } finally {
+      setIsSaving(false);
     }
-  }, [content, filename, onSave, currentDocumentId]);
+  }, [content, filename, onSave, currentDocumentId, hasUnsavedChanges]);
 
   const handleLoad = useCallback(() => {
     if (onLoad) {
@@ -577,6 +633,19 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const handleWidthChange = useCallback((width: number) => {
     setSidebarWidth(width);
   }, []);
+
+  // Add keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
+        event.preventDefault();
+        handleSave();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleSave]);
 
   const leftPanel = (
     <div
@@ -659,7 +728,19 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           }}
         >
           {selectedFile || filename}
+          {hasUnsavedChanges && (
+            <span
+              style={{
+                color: getColor(theme.colors, "warning"),
+                marginLeft: 4,
+                fontWeight: "bold",
+              }}
+            >
+              *
+            </span>
+          )}
           {isLoading && " (Loading...)"}
+          {isSaving && " (Saving...)"}
         </Typography>
         <Typography
           variant="caption"
@@ -667,7 +748,9 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
             color: getColor(theme.colors, "textSecondary"),
           }}
         >
-          Markdown Editor
+          {lastSaved
+            ? `Last saved: ${lastSaved.toLocaleTimeString()}`
+            : "Markdown Editor"}
         </Typography>
       </Box>
 
@@ -693,6 +776,9 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
             onSave={handleSave}
             onLoad={handleLoad}
             theme={theme}
+            hasUnsavedChanges={hasUnsavedChanges}
+            isSaving={isSaving}
+            lastSaved={lastSaved}
           />
         </SandpackProvider>
       </Box>
