@@ -243,7 +243,7 @@ export default React.memo(
       // Extract title and extension from filename
       const lastDotIndex = filename.lastIndexOf(".");
       let title = filename;
-      let extension = "md"; // default to markdown
+      let extension = "txt"; // default to text
 
       if (lastDotIndex > 0) {
         title = filename.substring(0, lastDotIndex);
@@ -255,11 +255,8 @@ export default React.memo(
           return;
         }
       } else {
-        // No extension provided, ask user to specify
-        const useMarkdown = confirm(
-          "No extension provided. Use .md for markdown? (Cancel for .txt)"
-        );
-        extension = useMarkdown ? "md" : "txt";
+        // No extension provided, default to .txt
+        extension = "txt";
         title = filename; // use the whole input as title
       }
 
@@ -533,7 +530,7 @@ export default React.memo(
 
       const parentId = contextMenu.node.metadata?.documentId;
       let title: string | null = null;
-      let extension: string = "md"; // default extension
+      let extension: string = "txt"; // default extension
 
       if (action === "delete") {
         const nodeName = contextMenu.node.displayName;
@@ -593,11 +590,8 @@ export default React.memo(
               return;
             }
           } else {
-            // No extension provided, ask user to specify
-            const useMarkdown = confirm(
-              "No extension provided. Use .md for markdown? (Cancel for .txt)"
-            );
-            extension = useMarkdown ? "md" : "txt";
+            // No extension provided, default to .txt
+            extension = "txt";
             title = filename; // use the whole input as title
           }
         } else {
@@ -1029,7 +1023,7 @@ export default React.memo(
               if (child.title) {
                 title = child.title;
                 // Add extension to display name for clarity
-                const extension = name.split(".").pop() || "md";
+                const extension = name.split(".").pop() || "txt";
                 displayName = `${title}.${extension}`;
               } else {
                 // Fallback to filename (keep extension)

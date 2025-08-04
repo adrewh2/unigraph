@@ -400,7 +400,7 @@ const DocumentEditorContent: React.FC<{
             }}
           >
             <MarkdownViewer
-              filename={`${selectedFile || "document"}.md`}
+              filename={selectedFile || "document.md"}
               overrideMarkdown={content}
               showRawToggle={false}
             />
@@ -413,7 +413,7 @@ const DocumentEditorContent: React.FC<{
 
 export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
   initialContent = defaultMarkdownContent,
-  filename = "document.md",
+  filename = "document.txt",
   theme: _theme = "dark",
   height: _height = "100%",
   showPreview: _showPreview = true,
@@ -509,7 +509,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
       onCreateDocument: async (
         title: string,
         parentId?: string,
-        extension: string = "md"
+        extension: string = "txt"
       ) => {
         try {
           // Set initial content based on file type
