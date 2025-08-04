@@ -119,43 +119,44 @@ const getFileType = (filename: string): "markdown" | "text" => {
   return extension === "txt" ? "text" : "markdown";
 };
 
-// Monaco Document Editor component that loads its own content
+// Monaco Document Editor component with smooth content switching
 const MonacoDocumentEditor: React.FC<{
   filename: string;
   documentId: string | null;
   theme: string;
-}> = ({ filename: _filename, documentId, theme }) => {
+  onLastSavedChange: (date: Date | null) => void;
+}> = ({ filename: _filename, documentId, theme, onLastSavedChange }) => {
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
 
   // Use refs to avoid stale closures in debounced functions
   const contentRef = React.useRef<string>("");
 
-  // Load content from server
+  // Load content from server with smooth transitions
   useEffect(() => {
-    if (documentId) {
-      setIsLoading(true);
-      getDocument(documentId)
-        .then((document) => {
-          const documentContent = document.content || "";
-          console.log("MonacoEditor: Loaded content from server:", {
-            documentId,
-            contentLength: documentContent.length,
-          });
-          setContent(documentContent);
-          contentRef.current = documentContent;
-        })
-        .catch((error) => {
-          console.error("MonacoEditor: Error loading document:", error);
-          setContent("");
-          contentRef.current = "";
-        })
-        .finally(() => {
-          setIsLoading(false);
+    if (!documentId) return;
+
+    // Load from server but keep current content visible
+    setIsLoading(true);
+    getDocument(documentId)
+      .then((document) => {
+        const documentContent = document.content || "";
+        console.log("MonacoEditor: Loaded content from server:", {
+          documentId,
+          contentLength: documentContent.length,
         });
-    }
+
+        // Only update content once it's loaded (no flash)
+        setContent(documentContent);
+        contentRef.current = documentContent;
+      })
+      .catch((error) => {
+        console.error("MonacoEditor: Error loading document:", error);
+        // Don't clear content on error - keep current content visible
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, [documentId]);
 
   // Debounced save function
@@ -165,7 +166,6 @@ const MonacoDocumentEditor: React.FC<{
         if (!documentId) return;
 
         try {
-          setIsSaving(true);
           console.log("MonacoEditor: Saving to server:", {
             documentId,
             contentLength: contentToSave.length,
@@ -177,18 +177,16 @@ const MonacoDocumentEditor: React.FC<{
           });
 
           const now = new Date();
-          setLastSaved(now);
+          onLastSavedChange(now); // Update parent component
           console.log(
             "MonacoEditor: Successfully saved to server at",
             now.toLocaleTimeString()
           );
         } catch (error) {
           console.error("MonacoEditor: Error saving to server:", error);
-        } finally {
-          setIsSaving(false);
         }
       }, 500), // 0.5 second debounce
-    [documentId]
+    [documentId, onLastSavedChange]
   );
 
   // Handle content changes
@@ -222,34 +220,10 @@ const MonacoDocumentEditor: React.FC<{
     };
   }, [saveToServer]);
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  // Don't show loading state - keep previous content visible while loading new content
 
   return (
     <div style={{ position: "relative", height: "100%" }}>
-      {/* Status indicator */}
-      <div
-        style={{
-          position: "absolute",
-          top: 8,
-          right: 16,
-          zIndex: 10,
-          fontSize: "12px",
-          color: "var(--vscode-descriptionForeground)",
-          backgroundColor: "var(--vscode-editor-background)",
-          padding: "4px 8px",
-          borderRadius: "4px",
-          border: "1px solid var(--vscode-widget-border)",
-        }}
-      >
-        {isSaving
-          ? "Saving..."
-          : lastSaved
-            ? `Last saved at ${lastSaved.toLocaleTimeString()}`
-            : "Not saved yet"}
-      </div>
-
       <Editor
         height="100%"
         language="markdown"
@@ -286,12 +260,14 @@ const DocumentEditorContent: React.FC<{
   showPreview: boolean;
   onTogglePreview: () => void;
   theme: any;
+  onLastSavedChange: (date: Date | null) => void;
 }> = ({
   selectedFile,
   documentId,
   showPreview,
   onTogglePreview: _onTogglePreview,
   theme,
+  onLastSavedChange,
 }) => {
   // Determine Monaco theme based on app shell background color luminance
   const getMonacoTheme = () => {
@@ -371,7 +347,12 @@ const DocumentEditorContent: React.FC<{
                   documentId,
                 }
               );
-              return <LexicalEditorV3 documentId={documentId} />;
+              return (
+                <LexicalEditorV3
+                  documentId={documentId}
+                  onLastSavedChange={onLastSavedChange}
+                />
+              );
             })()
           ) : (
             <div>No document selected</div>
@@ -382,6 +363,7 @@ const DocumentEditorContent: React.FC<{
             filename={selectedFile}
             documentId={documentId}
             theme={getMonacoTheme()}
+            onLastSavedChange={onLastSavedChange}
           />
         )}
       </Box>
@@ -415,6 +397,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [_isAutoSaving, setIsAutoSaving] = useState(false);
   const [_error, _setError] = useState<string | null>(null);
 
@@ -579,9 +562,45 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
         }
 
         try {
-          // Update the document title in Supabase
-          await updateDocument({ id: documentId, title: newTitle });
-          console.log("Document renamed:", documentId, "to", newTitle);
+          // Parse the new title to extract extension if provided
+          const parseFileName = (fileName: string) => {
+            const lastDotIndex = fileName.lastIndexOf(".");
+            if (lastDotIndex === -1 || lastDotIndex === 0) {
+              // No extension found, or starts with dot (hidden file)
+              return { title: fileName, extension: null };
+            }
+
+            const title = fileName.substring(0, lastDotIndex);
+            const extension = fileName.substring(lastDotIndex + 1);
+
+            // Only consider valid extensions (md, txt)
+            if (["md", "txt"].includes(extension.toLowerCase())) {
+              return { title, extension: extension.toLowerCase() };
+            }
+
+            // If not a valid extension, treat the whole thing as title
+            return { title: fileName, extension: null };
+          };
+
+          const { title, extension } = parseFileName(newTitle);
+
+          // Prepare update data
+          const updateData: any = { id: documentId, title };
+
+          // If user provided a valid extension, update it too
+          if (extension) {
+            updateData.extension = extension;
+          }
+
+          // Update the document in Supabase
+          await updateDocument(updateData);
+          console.log(
+            "Document renamed:",
+            documentId,
+            "to",
+            title,
+            extension ? `with extension: ${extension}` : ""
+          );
         } catch (error) {
           console.error("Error renaming document:", error);
           throw error;
@@ -882,7 +901,9 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
             color: getColor(theme.colors, "textSecondary"),
           }}
         >
-          Document Editor
+          {lastSaved
+            ? `Last saved: ${lastSaved.toLocaleTimeString()}`
+            : "Document Editor"}
         </Typography>
       </Box>
 
@@ -894,6 +915,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           showPreview={showPreview}
           onTogglePreview={handleTogglePreview}
           theme={theme}
+          onLastSavedChange={setLastSaved}
         />
       </Box>
     </Box>

@@ -46,26 +46,31 @@ const PlaceholderPlugin = ({
   return <div className="editor-placeholder">{placeholder}</div>;
 };
 
-// EditorStateInitializer for fresh content loading
+// EditorStateInitializer for smooth content loading
 const EditorStateInitializer: React.FC<{
   content: string;
-  contentKey: string; // Key to force re-initialization when content changes
-}> = ({ content, contentKey }) => {
+  documentId: string; // Track document changes for re-initialization
+}> = ({ content, documentId }) => {
   const [editor] = useLexicalComposerContext();
-  const lastContentKey = React.useRef<string>("");
+  const lastDocumentId = React.useRef<string>("");
+  const lastContent = React.useRef<string>("");
 
   useEffect(() => {
-    // Only initialize if the content key has changed
-    if (lastContentKey.current === contentKey) {
+    // Initialize if document ID changed or content changed significantly
+    const shouldInitialize =
+      lastDocumentId.current !== documentId || lastContent.current !== content;
+
+    if (!shouldInitialize) {
       return;
     }
 
-    lastContentKey.current = contentKey;
+    lastDocumentId.current = documentId;
+    lastContent.current = content;
     console.log(
       "LexicalEditorV3: EditorStateInitializer: Initializing with content length:",
       content.length,
-      "contentKey:",
-      contentKey
+      "documentId:",
+      documentId
     );
 
     if (content && content.trim().length > 0) {
@@ -101,7 +106,7 @@ const EditorStateInitializer: React.FC<{
         root.append($createParagraphNode().append($createTextNode("")));
       });
     }
-  }, [content, contentKey, editor]);
+  }, [content, documentId, editor]);
 
   return null;
 };
@@ -126,6 +131,7 @@ interface LexicalEditorV3Props {
   initialContent?: string; // Fallback content if document is empty
   onChange?: (content: string) => void;
   autoSaveInterval?: number; // Auto-save interval in milliseconds
+  onLastSavedChange?: (date: Date | null) => void; // Callback to update parent's last saved timestamp
 }
 
 const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
@@ -133,6 +139,7 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   initialContent = "",
   onChange,
   autoSaveInterval = 500, // Default 0.5 seconds
+  onLastSavedChange,
 }) => {
   console.log("LexicalEditorV3: Component initialized with props:", {
     documentId,
@@ -142,17 +149,16 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
 
   // Content state
   const [content, setContent] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [_isLoading, setIsLoading] = useState(true);
 
   // Use refs to avoid stale closures in debounced functions
   const contentRef = React.useRef<string>("");
 
-  // Load content from Supabase on mount and when documentId changes
+  // Load content from Supabase for smooth switching
   useEffect(() => {
     if (!documentId) return;
 
+    // Load from server but keep current content visible
     console.log("LexicalEditorV3: Loading document from server:", documentId);
     setIsLoading(true);
 
@@ -164,13 +170,14 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
           contentLength: documentContent.length,
           preview: documentContent.substring(0, 100) + "...",
         });
+
+        // Only update content once it's loaded (no flash)
         setContent(documentContent);
         contentRef.current = documentContent;
       })
       .catch((error) => {
         console.error("LexicalEditorV3: Error loading document:", error);
-        setContent(initialContent);
-        contentRef.current = initialContent;
+        // Don't clear content on error - keep current content visible
       })
       .finally(() => {
         setIsLoading(false);
@@ -184,7 +191,6 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
         if (!documentId) return;
 
         try {
-          setIsSaving(true);
           console.log("LexicalEditorV3: Saving to server:", {
             documentId,
             contentLength: contentToSave.length,
@@ -196,19 +202,21 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
             content: contentToSave,
           });
 
+          // Update cache with new content
+
           const now = new Date();
-          setLastSaved(now);
+          if (onLastSavedChange) {
+            onLastSavedChange(now); // Update parent component
+          }
           console.log(
             "LexicalEditorV3: Successfully saved to server at",
             now.toLocaleTimeString()
           );
         } catch (error) {
           console.error("LexicalEditorV3: Error saving to server:", error);
-        } finally {
-          setIsSaving(false);
         }
       }, autoSaveInterval),
-    [documentId, autoSaveInterval]
+    [documentId, autoSaveInterval, onLastSavedChange]
   );
 
   // Handle editor content changes
@@ -375,36 +383,20 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
     [theme]
   );
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="lexical-editor-container">
-        <div className="editor-loading">Loading document...</div>
-      </div>
-    );
-  }
+  // Don't show loading state - keep previous content visible while loading new content
 
-  // Generate a key based on content to force re-initialization when content changes
-  const contentKey = `${documentId}-${content.length}-${content.substring(0, 50)}`;
+  // Use a completely stable key to prevent remounting during content switches
+  const stableKey = "lexical-editor-v3";
 
   return (
     <div className="lexical-editor-container">
       <div className="lexical-content">
-        <LexicalComposer key={contentKey} initialConfig={initialConfig}>
+        <LexicalComposer key={stableKey} initialConfig={initialConfig}>
           <div className="editor-wrapper">
             <div className="toolbar-container">
               <ToolbarPlugin onSave={handleSave} onExport={handleExport} />
             </div>
             <div className="editor-inner">
-              {/* Status indicator */}
-              <div className="autosave-indicator persistent">
-                {isSaving
-                  ? "Saving..."
-                  : lastSaved
-                    ? `Last saved at ${lastSaved.toLocaleTimeString()}`
-                    : "Not saved yet"}
-              </div>
-
               <RichTextPlugin
                 contentEditable={<ContentEditable className="editor-input" />}
                 placeholder={
@@ -420,7 +412,7 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
               {/* Initialize editor content */}
               <EditorStateInitializer
                 content={content}
-                contentKey={contentKey}
+                documentId={documentId}
               />
 
               {/* Lexical plugins */}

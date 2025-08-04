@@ -746,11 +746,24 @@ export default React.memo(
             );
           }
 
+          // Helper function to generate displayName without duplicate extensions
+          const getDisplayName = (title: string, extension: string): string => {
+            if (isFolder) return title;
+
+            // Check if title already ends with the extension
+            const expectedExtension = `.${extension}`;
+            if (title.toLowerCase().endsWith(expectedExtension.toLowerCase())) {
+              return title; // Already has extension, don't add it again
+            }
+
+            return `${title}${expectedExtension}`;
+          };
+
           return {
             name: doc.title,
             path: `/documents/${doc.id}`,
             type: isFolder ? "directory" : "file",
-            displayName: isFolder ? doc.title : `${doc.title}.${doc.extension}`,
+            displayName: getDisplayName(doc.title, doc.extension || ""),
             isExpanded: isFolder, // Folders start expanded
             metadata: {
               documentId: doc.id,
