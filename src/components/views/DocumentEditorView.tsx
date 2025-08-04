@@ -665,11 +665,11 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
   const [_isAutoSaving, setIsAutoSaving] = useState(false);
   const [_error, _setError] = useState<string | null>(null);
 
-  // Create markdown editor file tree instance
-  const markdownEditorInstance: FileTreeInstance = useMemo(
+  // Create document editor file tree instance
+  const documentEditorInstance: FileTreeInstance = useMemo(
     () => ({
-      id: "markdown-editor",
-      name: "Markdown Files",
+      id: "document-editor",
+      name: "Files",
       dataSource: {
         id: "supabase-documents",
         name: "Supabase Documents",
@@ -1069,8 +1069,8 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
       <div className="sidebar-content">
         {sidebarMode === "tree" ? (
           <FileTreeView
-            instance={markdownEditorInstance}
-            onFileSelect={markdownEditorInstance.onFileSelect}
+            instance={documentEditorInstance}
+            onFileSelect={documentEditorInstance.onFileSelect}
             selectedFile={selectedFile || undefined}
             showSearch={true}
             showCreateButtons={true}
