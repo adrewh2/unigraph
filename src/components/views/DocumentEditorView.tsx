@@ -236,7 +236,14 @@ const MonacoDocumentEditor: React.FC<{
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${_filename || "document"}.md`;
+
+      // Use the filename as-is, don't add .md if it already has an extension
+      const downloadName =
+        _filename && _filename.includes(".")
+          ? _filename
+          : `${_filename || "document"}.md`;
+
+      a.download = downloadName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -269,6 +276,7 @@ const MonacoDocumentEditor: React.FC<{
             gap: "4px",
             padding: "6px 12px",
             border: "none",
+            outline: "none",
             borderRadius: "4px",
             backgroundColor: "var(--color-primary)",
             color: "white",
@@ -288,6 +296,7 @@ const MonacoDocumentEditor: React.FC<{
             gap: "4px",
             padding: "6px 12px",
             border: "none",
+            outline: "none",
             borderRadius: "4px",
             backgroundColor: "var(--color-secondary)",
             color: "white",
