@@ -132,7 +132,7 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   documentId,
   initialContent = "",
   onChange,
-  autoSaveInterval = 3000, // Default 3 seconds
+  autoSaveInterval = 500, // Default 0.5 seconds
 }) => {
   console.log("LexicalEditorV3: Component initialized with props:", {
     documentId,
@@ -181,7 +181,7 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   const saveToServer = React.useMemo(
     () =>
       debounce(async (contentToSave: string) => {
-        if (!documentId || !contentToSave) return;
+        if (!documentId) return;
 
         try {
           setIsSaving(true);
@@ -217,17 +217,21 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
       editorState.read(() => {
         const root = $getRoot();
         const textContent = root.getTextContent();
+        const previousContent = contentRef.current;
 
         // Update refs for latest content
         contentRef.current = textContent;
 
-        console.log("LexicalEditorV3: Content changed:", {
-          textLength: textContent.length,
-          preview: textContent.substring(0, 50) + "...",
-        });
+        // Only save if content actually changed
+        if (textContent !== previousContent) {
+          console.log("LexicalEditorV3: Content changed:", {
+            textLength: textContent.length,
+            preview: textContent.substring(0, 50) + "...",
+          });
 
-        // Trigger autosave
-        saveToServer(textContent);
+          // Trigger autosave
+          saveToServer(textContent);
+        }
 
         // Call onChange callback if provided
         if (onChange) {

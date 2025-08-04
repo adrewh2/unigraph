@@ -162,7 +162,7 @@ const MonacoDocumentEditor: React.FC<{
   const saveToServer = React.useMemo(
     () =>
       debounce(async (contentToSave: string) => {
-        if (!documentId || !contentToSave) return;
+        if (!documentId) return;
 
         try {
           setIsSaving(true);
@@ -187,7 +187,7 @@ const MonacoDocumentEditor: React.FC<{
         } finally {
           setIsSaving(false);
         }
-      }, 3000), // 3 second debounce
+      }, 500), // 0.5 second debounce
     [documentId]
   );
 
@@ -195,16 +195,21 @@ const MonacoDocumentEditor: React.FC<{
   const handleContentChange = React.useCallback(
     (value: string | undefined) => {
       const newContent = value || "";
+      const previousContent = contentRef.current;
+
       setContent(newContent);
       contentRef.current = newContent;
 
-      console.log("MonacoEditor: Content changed:", {
-        contentLength: newContent.length,
-        preview: newContent.substring(0, 50) + "...",
-      });
+      // Only save if content actually changed
+      if (newContent !== previousContent) {
+        console.log("MonacoEditor: Content changed:", {
+          contentLength: newContent.length,
+          preview: newContent.substring(0, 50) + "...",
+        });
 
-      // Trigger autosave
-      saveToServer(newContent);
+        // Trigger autosave
+        saveToServer(newContent);
+      }
     },
     [saveToServer]
   );
