@@ -505,6 +505,7 @@ const MonacoDocumentEditor: React.FC<{
 
 const DocumentEditorContent: React.FC<{
   selectedFile: string;
+  selectedFilename: string;
   documentId: string | null;
   showPreview: boolean;
   onTogglePreview: () => void;
@@ -512,6 +513,7 @@ const DocumentEditorContent: React.FC<{
   onLastSavedChange: (date: Date | null) => void;
 }> = ({
   selectedFile,
+  selectedFilename,
   documentId,
   showPreview,
   onTogglePreview: _onTogglePreview,
@@ -572,8 +574,18 @@ const DocumentEditorContent: React.FC<{
   };
 
   // Determine file type and editor to use
-  const fileType = getFileType(selectedFile);
+  const filename = selectedFilename || "";
+  const fileType = getFileType(filename);
   const isTextFile = fileType === "text";
+
+  // Debug logging
+  console.log("DocumentEditorContent: File type detection:", {
+    selectedFile,
+    selectedFilename,
+    filename,
+    fileType,
+    isTextFile,
+  });
 
   return (
     <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
@@ -640,6 +652,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
   const [showPreview, setShowPreview] = useState<boolean>(_showPreview);
   const [_previewToggleCount, setPreviewToggleCount] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedFilename, setSelectedFilename] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [sidebarMode, setSidebarMode] = useState<"tree" | "search">("tree");
   const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(
@@ -679,13 +692,15 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           try {
             const document = await getDocument(metadata.documentId);
             // Set selectedFile with the full filePath for proper highlighting
-            console.log(
-              "Setting selectedFile to:",
+            const fullFilename = `${document.title}.${document.extension}`;
+            console.log("DocumentEditorView: File selection debug:", {
               filePath,
-              "from document:",
-              document
-            );
+              documentTitle: document.title,
+              documentExtension: document.extension,
+              fullFilename,
+            });
             setSelectedFile(filePath);
+            setSelectedFilename(fullFilename);
 
             // Always update content to ensure we have the latest version
             const loadedContent = document.content || "";
@@ -1162,6 +1177,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
         {currentDocumentId ? (
           <DocumentEditorContent
             selectedFile={selectedFile || filename}
+            selectedFilename={selectedFilename || filename}
             documentId={currentDocumentId}
             showPreview={showPreview}
             onTogglePreview={handleTogglePreview}
