@@ -1,6 +1,6 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
 import { debounce } from "lodash";
-import { FileText, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { Document, searchDocuments } from "../../api/documentsApi";
 import { useAuth } from "../../hooks/useAuth";
@@ -258,132 +258,138 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
 
       {/* Search Results */}
       {showResults && searchResults.length > 0 && (
-        <>
+        <div
+          className="results-container"
+          style={{
+            backgroundColor: "transparent",
+            border: "none",
+            borderRadius: 0,
+            marginTop: 0,
+            marginBottom: 0,
+            padding: 0,
+            boxShadow: "none",
+          }}
+        >
           <div
+            className="results-header"
             style={{
-              padding: "8px 12px",
-              fontSize: "12px",
-              color: getColor(theme.colors, "textSecondary"),
-              borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
               marginBottom: "8px",
+              padding: "12px 0 0 0", // Add padding above the label
+              fontSize: "14px",
+              color: getColor(theme.colors, "textSecondary"),
+              borderBottom: "none",
+              fontWeight: 500,
             }}
           >
             Found {searchResults.length} result
             {searchResults.length !== 1 ? "s" : ""}
           </div>
           <div
-            className="search-results-container"
+            className="results-list"
             style={{
-              flex: 1,
-              backgroundColor: getColor(theme.colors, "background"),
-              border: `1px solid ${getColor(theme.colors, "border")}`,
-              borderRadius: "6px",
-              marginTop: "0px",
-              overflowY: "auto",
-              minHeight: 0, // Important for flex child to shrink
               display: "flex",
               flexDirection: "column",
-              gap: "0px",
-              padding: "8px",
+              gap: "8px", // Minimal vertical gap for readability
+              padding: 0,
             }}
           >
             {searchResults.map((result, index) => (
               <div
                 key={result.document.id}
-                className="search-result-item"
-                onClick={() => handleResultSelect(result)}
+                className="result-item"
                 style={{
-                  padding: "12px",
-                  cursor: "pointer",
-                  borderBottom:
-                    index < searchResults.length - 1
-                      ? `1px solid ${getColor(theme.colors, "border")}`
-                      : "none",
-                  borderRadius: "6px",
                   backgroundColor: "transparent",
-                  transition: "background 0.2s",
+                  border: `1px solid ${getColor(theme.colors, "border")}`,
+                  borderRadius: "6px",
+                  padding: "8px 12px", // Add left and right padding
+                  cursor: "pointer",
+                  transition: "background 0.2s, border-color 0.2s",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = getColor(
                     theme.colors,
                     "backgroundTertiary"
                   );
+                  e.currentTarget.style.borderColor = getColor(
+                    theme.colors,
+                    "primary"
+                  );
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.borderColor = getColor(
+                    theme.colors,
+                    "border"
+                  );
                 }}
+                onClick={() => handleResultSelect(result)}
               >
+                <div style={{ marginBottom: "4px" }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "14px",
+                      color: getColor(theme.colors, "text"),
+                      marginBottom: "2px",
+                    }}
+                  >
+                    {result.document.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      color: getColor(theme.colors, "textSecondary"),
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {result.document.metadata?.path || result.document.id}
+                  </div>
+                </div>
+                {result.preview && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: getColor(theme.colors, "textSecondary"),
+                        fontFamily: "monospace",
+                        marginRight: "8px",
+                      }}
+                    >
+                      {/* If you have line numbers, show them here. */}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: getColor(theme.colors, "textSecondary"),
+                        wordBreak: "break-word",
+                        flex: 1,
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: result.highlightedPreview || result.preview,
+                      }}
+                    />
+                  </div>
+                )}
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "8px",
+                    fontSize: "11px",
+                    color: getColor(theme.colors, "textSecondary"),
+                    marginTop: "2px",
+                    opacity: 0.7,
                   }}
                 >
-                  <FileText
-                    size={16}
-                    style={{
-                      color: getColor(theme.colors, "textSecondary"),
-                      marginTop: "2px",
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        color: getColor(theme.colors, "text"),
-                        marginBottom: "4px",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {result.matchType === "title" &&
-                      result.highlightedPreview ? (
-                        <span
-                          dangerouslySetInnerHTML={{
-                            __html: result.highlightedPreview,
-                          }}
-                        />
-                      ) : (
-                        result.document.title
-                      )}
-                    </div>
-                    {result.matchType === "content" &&
-                      result.highlightedPreview && (
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            color: getColor(theme.colors, "textSecondary"),
-                            lineHeight: "1.4",
-                            overflow: "hidden",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                          }}
-                          dangerouslySetInnerHTML={{
-                            __html: result.highlightedPreview,
-                          }}
-                        />
-                      )}
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: getColor(theme.colors, "textSecondary"),
-                        marginTop: "4px",
-                        opacity: 0.7,
-                      }}
-                    >
-                      Match in {result.matchType}
-                    </div>
-                  </div>
+                  Match in {result.matchType}
                 </div>
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {/* Loading indicator */}
