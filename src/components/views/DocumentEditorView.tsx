@@ -124,7 +124,16 @@ function hello() {
 // Helper function to determine file type based on extension
 const getFileType = (filename: string): "markdown" | "text" => {
   const extension = filename.toLowerCase().split(".").pop();
-  return extension === "txt" ? "text" : "markdown";
+  const result = extension === "txt" ? "text" : "markdown";
+  console.log(
+    "getFileType - filename:",
+    filename,
+    "extension:",
+    extension,
+    "result:",
+    result
+  );
+  return result;
 };
 
 const DocumentEditorContent: React.FC<{
@@ -249,6 +258,16 @@ const DocumentEditorContent: React.FC<{
   // Determine file type and editor to use
   const fileType = getFileType(selectedFile);
   const isTextFile = fileType === "text";
+
+  // Debug logging
+  console.log(
+    "DocumentEditorContent - selectedFile:",
+    selectedFile,
+    "fileType:",
+    fileType,
+    "isTextFile:",
+    isTextFile
+  );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
@@ -461,13 +480,22 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
         filePath: string,
         metadata?: Record<string, any>
       ) => {
-        setSelectedFile(filePath);
         console.log("Selected file:", filePath, "Metadata:", metadata);
 
         if (metadata?.documentId) {
           setIsLoading(true);
           try {
             const document = await getDocument(metadata.documentId);
+            // Set selectedFile with proper filename including extension
+            const filename = `${document.title}.${document.extension}`;
+            console.log(
+              "Setting selectedFile to:",
+              filename,
+              "from document:",
+              document
+            );
+            setSelectedFile(filename);
+
             // Always update content to ensure we have the latest version
             const loadedContent = document.content || "";
             setContent(loadedContent);
@@ -813,7 +841,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           setLastSaved(
             document.last_updated_at ? new Date(document.last_updated_at) : null
           );
-          setSelectedFile(`/documents/${document.id}`);
+          setSelectedFile(`${document.title}.${document.extension}`);
 
           // Clear autosave timeout and reset reference when switching files
           if (autoSaveTimeoutRef.current) {
@@ -988,7 +1016,18 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
       {/* Editor and Preview */}
       <Box sx={{ flex: 1, height: 0 }}>
         <DocumentEditorContent
-          selectedFile={filename}
+          selectedFile={(() => {
+            const finalSelectedFile = selectedFile || filename;
+            console.log(
+              "DocumentEditorView - selectedFile state:",
+              selectedFile,
+              "filename prop:",
+              filename,
+              "final:",
+              finalSelectedFile
+            );
+            return finalSelectedFile;
+          })()}
           content={content}
           onContentUpdate={handleContentUpdate}
           showPreview={showPreview}
