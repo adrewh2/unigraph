@@ -27,6 +27,35 @@ import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
 import "../common/MarkdownViewer.css";
 import ResizableSplitter from "../common/ResizableSplitter";
 
+// Add CSS animation for pulsing dot
+const pulseAnimation = `
+  @keyframes pulse {
+    0%, 100% { 
+      opacity: 1; 
+      transform: scale(1); 
+    }
+    25%, 75% { 
+      opacity: 0.7; 
+      transform: scale(1.2); 
+    }
+    50% { 
+      opacity: 1; 
+      transform: scale(1); 
+    }
+  }
+`;
+
+// Inject the animation into the document head
+if (
+  typeof document !== "undefined" &&
+  !document.getElementById("pulse-animation")
+) {
+  const style = document.createElement("style");
+  style.id = "pulse-animation";
+  style.textContent = pulseAnimation;
+  document.head.appendChild(style);
+}
+
 interface MarkdownEditorViewProps {
   initialContent?: string;
   filename?: string;
@@ -749,12 +778,17 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           {hasUnsavedChanges && (
             <span
               style={{
-                color: getColor(theme.colors, "warning"),
-                marginLeft: 4,
-                fontWeight: "bold",
+                color: getColor(theme.colors, "error"),
+                marginLeft: 6,
+                fontSize: "10px",
+                fontWeight: "900",
+                display: "inline-block",
+                lineHeight: "1",
+                verticalAlign: "middle",
               }}
+              title="Unsaved changes"
             >
-              *
+              ●
             </span>
           )}
           {isLoading && " (Loading...)"}
