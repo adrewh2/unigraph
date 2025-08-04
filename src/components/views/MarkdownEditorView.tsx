@@ -1,12 +1,5 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
-import {
-  SandpackCodeEditor,
-  SandpackPreview,
-  SandpackProvider,
-  useActiveCode,
-  useSandpack,
-} from "@codesandbox/sandpack-react";
-import { nightOwl } from "@codesandbox/sandpack-themes";
+import Editor from "@monaco-editor/react";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
 import {
   Eye,
@@ -36,6 +29,7 @@ import DocumentContentSearch, {
   DocumentSearchResult,
 } from "../common/DocumentContentSearch";
 import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
+import MarkdownViewer from "../common/MarkdownViewer";
 import "../common/MarkdownViewer.css";
 import ResizableSplitter from "../common/ResizableSplitter";
 import "./DocumentationView.css";
@@ -139,7 +133,7 @@ const MarkdownEditorContent: React.FC<{
   lastSaved: Date | null;
 }> = ({
   selectedFile,
-  content: _content,
+  content,
   onContentUpdate,
   showPreview,
   onTogglePreview,
@@ -150,16 +144,49 @@ const MarkdownEditorContent: React.FC<{
   isSaving,
   lastSaved: _lastSaved,
 }) => {
-  const { sandpack: _sandpack } = useSandpack();
-  const { code } = useActiveCode();
+  const [localContent, setLocalContent] = useState(content);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync content changes back to our state immediately
-  useEffect(() => {
-    if (selectedFile) {
-      onContentUpdate(code);
+  // Update local content immediately for responsive typing
+  const handleChange = (value: string | undefined) => {
+    const newValue = value || "";
+    setLocalContent(newValue);
+
+    // Debounce the parent update to reduce expensive operations
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
-  }, [code, selectedFile]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Note: onContentUpdate is intentionally excluded to prevent infinite loop
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      onContentUpdate(newValue);
+    }, 300); // 300ms debounce
+  };
+
+  // Sync with parent content when it changes externally (e.g., file switching)
+  useEffect(() => {
+    setLocalContent(content);
+  }, [content]);
+
+  // Determine Monaco theme based on app shell theme
+  const getMonacoTheme = () => {
+    // Check if the theme is dark mode
+    const isDark =
+      theme.id === "dark" ||
+      theme.mode === "dark" ||
+      theme.colors.background.includes("rgb(10,") || // Check for dark background colors
+      theme.colors.background.includes("rgba(10,");
+
+    return isDark ? "vs-dark" : "vs";
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
@@ -246,11 +273,31 @@ const MarkdownEditorContent: React.FC<{
           borderColor: getColor(theme.colors, "border"),
         }}
       >
-        <SandpackCodeEditor
-          showLineNumbers
-          showInlineErrors
-          wrapContent
-          showTabs={false}
+        <Editor
+          height="100%"
+          language="markdown"
+          value={localContent}
+          onChange={handleChange}
+          theme={getMonacoTheme()}
+          options={{
+            minimap: { enabled: false },
+            lineNumbers: "on",
+            wordWrap: "on",
+            fontSize: 14,
+            fontFamily:
+              "Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
+            padding: { top: 16, bottom: 16 },
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            tabSize: 2,
+            insertSpaces: true,
+            renderWhitespace: "selection",
+            bracketPairColorization: { enabled: true },
+            suggest: {
+              showKeywords: false,
+              showSnippets: false,
+            },
+          }}
         />
       </Box>
 
@@ -259,7 +306,11 @@ const MarkdownEditorContent: React.FC<{
         <>
           <Divider orientation="vertical" flexItem />
           <Box sx={{ flex: 1, overflow: "hidden" }}>
-            <SandpackPreview />
+            <MarkdownViewer
+              filename={`${selectedFile || "document"}.md`}
+              overrideMarkdown={content}
+              showRawToggle={false}
+            />
           </Box>
         </>
       )}
@@ -283,7 +334,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const [originalContent, setOriginalContent] =
     useState<string>(initialContent);
   const [showPreview, setShowPreview] = useState<boolean>(_showPreview);
-  const [previewToggleCount, setPreviewToggleCount] = useState<number>(0);
+  const [_previewToggleCount, setPreviewToggleCount] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(300);
   const [sidebarMode, setSidebarMode] = useState<"tree" | "search">("tree");
@@ -452,160 +503,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     [userId, projectId] // Removed currentDocumentId to prevent unnecessary FileTreeView re-renders
   );
 
-  // Create files object for Sandpack with proper theme integration
-  const files = useMemo(
-    () => ({
-      [filename]: content,
-      "/index.html": `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Preview</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
-    <style>
-        :root {
-            --border-color: ${getColor(theme.colors, "border")};
-            --surface-color: ${getColor(theme.colors, "surface")};
-            --background-color: ${getColor(theme.colors, "background")};
-            --text-color: ${getColor(theme.colors, "text")};
-            --text-secondary-color: ${getColor(theme.colors, "textSecondary")};
-        }
-        
-        body {
-            margin: 0;
-            padding: 20px;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        }
-        
-        .markdown-body {
-            max-width: 800px;
-            margin: 0 auto;
-            color: var(--text-color);
-            background-color: var(--background-color);
-        }
-        
-        .markdown-body h1,
-        .markdown-body h2,
-        .markdown-body h3,
-        .markdown-body h4,
-        .markdown-body h5,
-        .markdown-body h6 {
-            color: var(--text-color);
-            border-bottom-color: var(--border-color);
-        }
-        
-        .markdown-body p,
-        .markdown-body li,
-        .markdown-body blockquote {
-            color: var(--text-color);
-        }
-        
-        .markdown-body a {
-            color: ${getColor(theme.colors, "link")};
-        }
-        
-        .markdown-body a:hover {
-            color: ${getColor(theme.colors, "linkHover")};
-        }
-        
-        .markdown-body pre {
-            background-color: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 16px;
-            overflow-x: auto;
-        }
-        
-        .markdown-body code {
-            background-color: var(--surface-color);
-            color: var(--text-color);
-            padding: 0.2em 0.4em;
-            border-radius: 3px;
-            font-size: 85%;
-        }
-        
-        .markdown-body pre code {
-            background-color: transparent;
-            padding: 0;
-        }
-        
-        .markdown-body blockquote {
-            border-left: 4px solid var(--border-color);
-            padding-left: 16px;
-            color: var(--text-secondary-color);
-        }
-        
-        .markdown-body table {
-            border-collapse: collapse;
-            width: 100%;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        
-        .markdown-body table th,
-        .markdown-body table td {
-            border: 1px solid var(--border-color);
-            padding: 6px 13px;
-        }
-        
-        .markdown-body table th {
-            background-color: var(--surface-color);
-            color: var(--text-color);
-            font-weight: 600;
-        }
-        
-        .markdown-body table td {
-            background-color: var(--background-color);
-            color: var(--text-color);
-        }
-        
-        .markdown-body tr:nth-child(even) td {
-            background-color: var(--surface-color);
-        }
-        
-        .markdown-body hr {
-            border-color: var(--border-color);
-        }
-        
-        .markdown-body strong {
-            color: var(--text-color);
-        }
-        
-        .markdown-body em {
-            color: var(--text-color);
-        }
-    </style>
-</head>
-<body>
-    <div class="markdown-body" id="content"></div>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-        // Get the markdown content from the editor
-        const markdownContent = \`${content.replace(/`/g, "\\`").replace(/\$/g, "\\$")}\`;
-        
-        // Convert markdown to HTML
-        const htmlContent = marked.parse(markdownContent);
-        
-        // Display the HTML
-        document.getElementById('content').innerHTML = htmlContent;
-        
-        // Update content when it changes (this will be handled by Sandpack's file system)
-        // The preview will automatically update when the file changes
-    </script>
-</body>
-</html>`,
-    }),
-    [content, theme.colors, filename] // Re-added content for file switching, but debouncing prevents infinite loops
-  );
-
-  // Create a stable key for SandpackProvider that only changes when necessary
-  const sandpackKey = useMemo(() => {
-    return `sandpack-${showPreview}-${previewToggleCount}-${currentDocumentId || "default"}`;
-  }, [showPreview, previewToggleCount, currentDocumentId]);
+  // Removed Sandpack-related code
 
   // Cleanup autosave timeout on unmount
   useEffect(() => {
@@ -986,31 +884,19 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
 
       {/* Editor and Preview */}
       <Box sx={{ flex: 1, height: 0 }}>
-        <SandpackProvider
-          key={sandpackKey}
-          template="static"
-          files={files}
-          theme={nightOwl}
-          options={{
-            autorun: true,
-            activeFile: filename,
-            visibleFiles: [filename],
-          }}
-        >
-          <MarkdownEditorContent
-            selectedFile={filename}
-            content={content}
-            onContentUpdate={handleContentUpdate}
-            showPreview={showPreview}
-            onTogglePreview={handleTogglePreview}
-            onSave={handleSave}
-            onLoad={handleLoad}
-            theme={theme}
-            hasUnsavedChanges={hasUnsavedChanges}
-            isSaving={isSaving}
-            lastSaved={lastSaved}
-          />
-        </SandpackProvider>
+        <MarkdownEditorContent
+          selectedFile={filename}
+          content={content}
+          onContentUpdate={handleContentUpdate}
+          showPreview={showPreview}
+          onTogglePreview={handleTogglePreview}
+          onSave={handleSave}
+          onLoad={handleLoad}
+          theme={theme}
+          hasUnsavedChanges={hasUnsavedChanges}
+          isSaving={isSaving}
+          lastSaved={lastSaved}
+        />
       </Box>
     </Box>
   );
