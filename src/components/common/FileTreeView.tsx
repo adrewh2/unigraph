@@ -2,9 +2,11 @@ import { getColor, useTheme } from "@aesgraph/app-shell";
 import {
   ChevronDown,
   ChevronRight,
+  FilePlus,
   FileText,
   Folder,
   FolderOpen,
+  FolderPlus,
   Search,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -46,6 +48,8 @@ export interface FileTreeInstance {
   rootPath?: string;
   hideEmptyFolders?: boolean;
   onFileSelect?: (filePath: string, metadata?: Record<string, any>) => void;
+  onCreateDocument?: (title: string, parentId?: string) => Promise<void>;
+  onCreateFolder?: (title: string, parentId?: string) => Promise<void>;
 }
 
 export interface FileTreeViewProps {
@@ -55,6 +59,7 @@ export interface FileTreeViewProps {
   showHeader?: boolean;
   headerTitle?: string;
   showSearch?: boolean;
+  showCreateButtons?: boolean;
 }
 
 const FileTreeView: React.FC<FileTreeViewProps> = ({
@@ -64,6 +69,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
   showHeader = true,
   headerTitle,
   showSearch = true,
+  showCreateButtons = false,
 }) => {
   const { theme } = useTheme();
   const log = useComponentLogger(`FileTreeView-${instance.id}`);
@@ -72,6 +78,45 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  // Handle creating new document
+  const handleCreateDocument = async () => {
+    if (!instance.onCreateDocument) return;
+
+    const title = prompt("Enter document title:");
+    if (!title) return;
+
+    setIsCreating(true);
+    try {
+      await instance.onCreateDocument(title);
+      // Refresh the tree after creation
+      // This will be handled by the parent component updating the data
+    } catch (error) {
+      console.error("Error creating document:", error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Handle creating new folder
+  const handleCreateFolder = async () => {
+    if (!instance.onCreateFolder) return;
+
+    const title = prompt("Enter folder name:");
+    if (!title) return;
+
+    setIsCreating(true);
+    try {
+      await instance.onCreateFolder(title);
+      // Refresh the tree after creation
+      // This will be handled by the parent component updating the data
+    } catch (error) {
+      console.error("Error creating folder:", error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   // Fetch the file tree structure based on data source
   useEffect(() => {
@@ -591,6 +636,61 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
           >
             {headerTitle || instance.name}
           </h3>
+
+          {showCreateButtons && (
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                marginBottom: "12px",
+              }}
+            >
+              <button
+                onClick={handleCreateDocument}
+                disabled={isCreating}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "6px 8px",
+                  fontSize: "12px",
+                  backgroundColor: getColor(theme.colors, "primary"),
+                  color: getColor(theme.colors, "textInverse"),
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: isCreating ? "not-allowed" : "pointer",
+                  opacity: isCreating ? 0.6 : 1,
+                  transition: "opacity 0.2s",
+                }}
+              >
+                <FilePlus size={12} />
+                New Document
+              </button>
+
+              <button
+                onClick={handleCreateFolder}
+                disabled={isCreating}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "6px 8px",
+                  fontSize: "12px",
+                  backgroundColor: getColor(theme.colors, "surface"),
+                  color: getColor(theme.colors, "text"),
+                  border: `1px solid ${getColor(theme.colors, "border")}`,
+                  borderRadius: "4px",
+                  cursor: isCreating ? "not-allowed" : "pointer",
+                  opacity: isCreating ? 0.6 : 1,
+                  transition: "opacity 0.2s",
+                }}
+              >
+                <FolderPlus size={12} />
+                New Folder
+              </button>
+            </div>
+          )}
+
           {showSearch && (
             <div className="file-tree-search">
               <div className="file-tree-search-input-wrapper">

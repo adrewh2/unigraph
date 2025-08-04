@@ -8,9 +8,14 @@ import {
 } from "@codesandbox/sandpack-react";
 import { nightOwl } from "@codesandbox/sandpack-themes";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
+import { debounce } from "lodash";
 import { Download, Eye, EyeOff, FileText, Upload } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { getDocument, updateDocument } from "../../api/documentsApi";
+import {
+  createDocument,
+  getDocument,
+  updateDocument,
+} from "../../api/documentsApi";
 import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
 import "../common/MarkdownViewer.css";
 import ResizableSplitter from "../common/ResizableSplitter";
@@ -240,7 +245,10 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           setIsLoading(true);
           try {
             const document = await getDocument(metadata.documentId);
-            setContent(document.content || "");
+            // Only update content if it's different to prevent flickering
+            if (document.content !== content) {
+              setContent(document.content || "");
+            }
             setCurrentDocumentId(document.id);
             console.log("Loaded document:", document);
           } catch (error) {
@@ -257,14 +265,52 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           setCurrentDocumentId(null);
         }
       },
+      onCreateDocument: async (title: string, parentId?: string) => {
+        try {
+          const newDocument = await createDocument({
+            title,
+            content: `# ${title}\n\nStart writing your document here...`,
+            extension: "md",
+            metadata: {},
+            data: {},
+            project_id: projectId,
+            parent_id: parentId,
+          });
+          console.log("Created new document:", newDocument);
+          // The tree will refresh automatically when the parent component re-renders
+        } catch (error) {
+          console.error("Error creating document:", error);
+          throw error;
+        }
+      },
+      onCreateFolder: async (title: string, parentId?: string) => {
+        try {
+          // For folders, we create a document with a special metadata flag
+          const newFolder = await createDocument({
+            title,
+            content: `# ${title}\n\nThis is a folder. Add documents here.`,
+            extension: "md",
+            metadata: { isFolder: true },
+            data: { type: "folder" },
+            project_id: projectId,
+            parent_id: parentId,
+          });
+          console.log("Created new folder:", newFolder);
+          // The tree will refresh automatically when the parent component re-renders
+        } catch (error) {
+          console.error("Error creating folder:", error);
+          throw error;
+        }
+      },
     }),
     [userId, projectId]
   );
 
   // Create files object for Sandpack with proper theme integration
-  const files = {
-    [filename]: content,
-    "/index.html": `<!DOCTYPE html>
+  const files = useMemo(
+    () => ({
+      [filename]: content,
+      "/index.html": `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -406,11 +452,26 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     </script>
 </body>
 </html>`,
-  };
+    }),
+    [content, theme.colors]
+  );
+
+  // Create a stable key for SandpackProvider that only changes when necessary
+  const sandpackKey = useMemo(() => {
+    return `sandpack-${showPreview}-${previewToggleCount}-${currentDocumentId || "default"}`;
+  }, [showPreview, previewToggleCount, currentDocumentId]);
 
   const handleContentUpdate = useCallback((newContent: string) => {
     setContent(newContent);
   }, []);
+
+  // Debounced content update to prevent rapid changes
+  const debouncedContentUpdate = useCallback(
+    debounce((newContent: string) => {
+      setContent(newContent);
+    }, 300),
+    []
+  );
 
   const handleTogglePreview = useCallback(() => {
     setShowPreview((prev) => {
@@ -489,6 +550,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         instance={markdownEditorInstance}
         selectedFile={selectedFile || undefined}
         headerTitle="Documents"
+        showCreateButtons={true}
       />
     </div>
   );
@@ -568,7 +630,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       {/* Editor and Preview */}
       <Box sx={{ flex: 1, height: 0 }}>
         <SandpackProvider
-          key={`sandpack-${showPreview}-${previewToggleCount}`}
+          key={sandpackKey}
           template="static"
           files={files}
           theme={nightOwl}
