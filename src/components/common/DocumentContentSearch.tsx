@@ -3,6 +3,7 @@ import { debounce } from "lodash";
 import { FileText, Search, X } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
 import { Document, searchDocuments } from "../../api/documentsApi";
+import { useAuth } from "../../hooks/useAuth";
 
 export interface DocumentSearchResult {
   document: Document;
@@ -12,7 +13,6 @@ export interface DocumentSearchResult {
 }
 
 interface DocumentContentSearchProps {
-  userId?: string;
   projectId?: string;
   onResultSelect?: (result: DocumentSearchResult) => void;
   placeholder?: string;
@@ -21,7 +21,6 @@ interface DocumentContentSearchProps {
 }
 
 export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
-  userId,
   projectId,
   onResultSelect,
   placeholder = "Search document content...",
@@ -29,6 +28,7 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
   className = "",
 }) => {
   const { theme } = useTheme();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<DocumentSearchResult[]>(
     []
@@ -38,7 +38,7 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
 
   // Helper function to extract preview text around search term
   const extractPreview = useCallback(
-    (content: string, searchTerm: string, maxLength: number = 200): string => {
+    (content: string, searchTerm: string, _maxLength: number = 200): string => {
       if (!content || !searchTerm) return "";
 
       const lowerContent = content.toLowerCase();
@@ -84,11 +84,18 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
         return;
       }
 
+      if (!user?.id) {
+        console.error("Cannot search: user must be signed in");
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+
       setIsSearching(true);
       try {
         const documents = await searchDocuments({
-          userId,
           searchTerm: term,
+          userId: user.id,
           projectId,
         });
 
@@ -134,7 +141,7 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
         setIsSearching(false);
       }
     },
-    [userId, projectId, maxResults, extractPreview, highlightSearchTerm]
+    [user?.id, projectId, maxResults, extractPreview, highlightSearchTerm]
   );
 
   // Debounced search function
@@ -168,6 +175,22 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
     setSearchResults([]);
     setShowResults(false);
   }, []);
+
+  // Show sign-in message if user is not authenticated
+  if (!user?.id) {
+    return (
+      <div
+        style={{
+          textAlign: "center",
+          color: getColor(theme.colors, "textSecondary"),
+          fontSize: "14px",
+          marginTop: "40px",
+        }}
+      >
+        Please sign in to search documents
+      </div>
+    );
+  }
 
   return (
     <div

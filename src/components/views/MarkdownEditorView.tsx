@@ -892,7 +892,6 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         ) : (
           <div style={{ padding: "16px" }}>
             <DocumentContentSearch
-              userId={userId}
               projectId={projectId}
               onResultSelect={handleContentSearchResultSelect}
               placeholder="Search document content..."
