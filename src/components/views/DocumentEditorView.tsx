@@ -263,8 +263,7 @@ const MonacoDocumentEditor: React.FC<{
           display: "flex",
           gap: "8px",
           padding: "8px",
-          backgroundColor: "rgba(0, 0, 0, 0.1)",
-          borderRadius: "4px",
+          backgroundColor: "transparent",
           margin: "8px",
         }}
       >
@@ -278,8 +277,8 @@ const MonacoDocumentEditor: React.FC<{
             border: "none",
             outline: "none",
             borderRadius: "4px",
-            backgroundColor: "var(--color-primary)",
-            color: "white",
+            backgroundColor: "transparent",
+            color: "var(--color-text)",
             cursor: "pointer",
           }}
           title="Save document"
@@ -296,8 +295,8 @@ const MonacoDocumentEditor: React.FC<{
             border: "none",
             outline: "none",
             borderRadius: "4px",
-            backgroundColor: "var(--color-secondary)",
-            color: "white",
+            backgroundColor: "transparent",
+            color: "var(--color-text)",
             cursor: "pointer",
           }}
           title="Download as Markdown"
