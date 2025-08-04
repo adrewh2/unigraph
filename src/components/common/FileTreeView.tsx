@@ -1184,24 +1184,13 @@ export default React.memo(
               const hasFiles = filteredChildren.some(
                 (child) => child.type === "file" || child.type === "directory"
               );
-              const shouldShow = hideEmptyFolders ? hasFiles : true;
 
-              console.log(
-                `Filtering directory ${node.name}: hasFiles=${hasFiles}, shouldShow=${shouldShow}, filteredChildren=${filteredChildren.length}`
-              );
-
-              if (matchesSearch && shouldShow && filteredChildren.length > 0) {
+              // Show directory if it matches search OR if it has matching children
+              if (matchesSearch || filteredChildren.length > 0) {
                 return {
                   ...node,
                   children: filteredChildren,
                   isExpanded: true, // Expand directories that match search
-                };
-              } else if (matchesSearch && !hideEmptyFolders) {
-                // Show directories even if empty when hideEmptyFolders is false
-                return {
-                  ...node,
-                  children: filteredChildren,
-                  isExpanded: true,
                 };
               }
               return null;

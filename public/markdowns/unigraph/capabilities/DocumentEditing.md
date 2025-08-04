@@ -25,3 +25,11 @@ Access the Document Editor by going to the App Shell, and opening the view calle
 
 - Text documents will be opened in a custom Lexical Editor
 - Markdown documents will be opened in a Monaco Editor. Markdown Preview can be toggled.
+
+## Search
+
+The Document Editor app offers file and text-based search.
+
+## Limits
+
+A user is capped to 200 documents at this time.
