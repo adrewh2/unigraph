@@ -11,7 +11,7 @@ import React, { useEffect, useState } from "react";
 import { useComponentLogger } from "../../hooks/useLogger";
 import "./FileTreeView.css";
 
-interface FileNode {
+export interface FileNode {
   name: string;
   path: string;
   type: "file" | "directory";
@@ -21,72 +21,107 @@ interface FileNode {
   order?: number; // Add order metadata
   displayName: string; // Will show title if available, otherwise name
   isIndex?: boolean; // Flag to identify index files
+  metadata?: Record<string, any>; // Additional metadata for different data sources
 }
 
-interface FileTreeViewProps {
+export interface FileTreeDataSource {
+  id: string;
+  name: string;
+  type: "json" | "supabase" | "custom";
+  config: {
+    url?: string; // For JSON data sources
+    table?: string; // For Supabase data sources
+    query?: string; // For custom data sources
+    transform?: (data: any) => FileNode[]; // Custom transform function
+  };
+}
+
+export interface FileTreeInstance {
+  id: string;
+  name: string;
+  dataSource: FileTreeDataSource;
   rootPath?: string;
-  onFileSelect?: (filePath: string) => void;
+  hideEmptyFolders?: boolean;
+  onFileSelect?: (filePath: string, metadata?: Record<string, any>) => void;
+}
+
+export interface FileTreeViewProps {
+  instance: FileTreeInstance;
   selectedFile?: string;
   className?: string;
-  hideEmptyFolders?: boolean;
+  showHeader?: boolean;
+  headerTitle?: string;
+  showSearch?: boolean;
 }
 
 const FileTreeView: React.FC<FileTreeViewProps> = ({
-  rootPath = "/markdowns",
-  onFileSelect,
+  instance,
   selectedFile,
   className = "",
-  hideEmptyFolders = true,
+  showHeader = true,
+  headerTitle,
+  showSearch = true,
 }) => {
   const { theme } = useTheme();
-  const log = useComponentLogger("FileTreeView");
+  const log = useComponentLogger(`FileTreeView-${instance.id}`);
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
   const [filteredTree, setFilteredTree] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch the file tree structure
+  // Fetch the file tree structure based on data source
   useEffect(() => {
     const fetchFileTree = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Load markdowns structure
-        const markdownsResponse = await fetch("/markdowns-structure.json");
-        let markdownsTree: FileNode[] = [];
+        let treeData: FileNode[] = [];
 
-        if (markdownsResponse.ok) {
-          const markdownsData = await markdownsResponse.json();
-          markdownsTree = await convertStructureToFileNodes(
-            markdownsData,
-            "/markdowns"
-          );
-        } else {
-          log.warn("Could not load markdowns structure", {
-            status: markdownsResponse.status,
-          });
+        switch (instance.dataSource.type) {
+          case "json":
+            if (instance.dataSource.config.url) {
+              const response = await fetch(instance.dataSource.config.url);
+              if (response.ok) {
+                const data = await response.json();
+                treeData = await convertStructureToFileNodes(
+                  data,
+                  instance.rootPath || "/"
+                );
+              } else {
+                log.warn(
+                  `Could not load JSON structure from ${instance.dataSource.config.url}`,
+                  {
+                    status: response.status,
+                  }
+                );
+              }
+            }
+            break;
+
+          case "supabase":
+            // TODO: Implement Supabase data source
+            log.warn("Supabase data source not yet implemented");
+            break;
+
+          case "custom":
+            if (instance.dataSource.config.transform) {
+              // For custom data sources, we expect the data to be provided externally
+              // This would typically be handled by a parent component
+              log.info("Custom data source - expecting external data");
+            }
+            break;
+
+          default:
+            log.error(`Unknown data source type: ${instance.dataSource.type}`);
+            setError(`Unknown data source type: ${instance.dataSource.type}`);
+            setLoading(false);
+            return;
         }
 
-        // Load docs structure
-        const docsResponse = await fetch("/docs-structure.json");
-        let docsTree: FileNode[] = [];
-
-        if (docsResponse.ok) {
-          const docsData = await docsResponse.json();
-          docsTree = await convertStructureToFileNodes(docsData, "/docs");
-        } else {
-          log.warn("Could not load docs structure", {
-            status: docsResponse.status,
-          });
-        }
-
-        // Combine both trees
-        const combinedTree = [...markdownsTree, ...docsTree];
-
-        // Process folder ordering on the combined tree
-        const processedTree = await processFolderOrdering(combinedTree);
+        // Process folder ordering on the tree
+        const processedTree = await processFolderOrdering(treeData);
 
         // Debug: Log the final tree structure
         log.debug(
@@ -101,7 +136,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 
         if (processedTree.length === 0) {
           setError(
-            "No documentation structure found. Please run 'npm run generate-structures' to generate the file tree."
+            `No file structure found for ${instance.name}. Please check your data source configuration.`
           );
         } else {
           setFileTree(processedTree);
@@ -167,6 +202,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             displayName,
             order: orderValue,
             isIndex: isIndexFile,
+            metadata: child.metadata || {},
           };
 
           if (child.children && child.children.length > 0) {
@@ -245,11 +281,11 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     };
 
     fetchFileTree();
-  }, [log, rootPath]);
+  }, [instance, log]);
 
   // Filter tree based on search term and empty folder preference
   useEffect(() => {
-    if (!searchTerm.trim() && !hideEmptyFolders) {
+    if (!searchTerm.trim() && !instance.hideEmptyFolders) {
       setFilteredTree(fileTree);
       return;
     }
@@ -277,7 +313,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             const hasFiles = filteredChildren.some(
               (child) => child.type === "file"
             );
-            const shouldShow = hideEmptyFolders ? hasFiles : true;
+            const shouldShow = instance.hideEmptyFolders ? hasFiles : true;
 
             if (matchesSearch && shouldShow && filteredChildren.length > 0) {
               return {
@@ -293,7 +329,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     };
 
     setFilteredTree(filterTree(fileTree));
-  }, [searchTerm, hideEmptyFolders, fileTree]);
+  }, [searchTerm, instance.hideEmptyFolders, fileTree]);
 
   const toggleNode = (node: FileNode) => {
     if (node.type === "directory") {
@@ -311,8 +347,8 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         };
         return updateNode(prevTree);
       });
-    } else if (onFileSelect) {
-      onFileSelect(node.path);
+    } else if (instance.onFileSelect) {
+      instance.onFileSelect(node.path, node.metadata);
     }
   };
 
@@ -475,58 +511,62 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         borderRight: `1px solid ${getColor(theme.colors, "border")}`,
       }}
     >
-      <div
-        className="file-tree-header"
-        style={{
-          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
-          borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
-        }}
-      >
-        <h3
+      {showHeader && (
+        <div
+          className="file-tree-header"
           style={{
-            color: getColor(theme.colors, "text"),
-            margin: "0 0 12px 0",
-            fontSize: "14px",
-            fontWeight: "600",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+            borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
           }}
         >
-          Documentation
-        </h3>
-        <div className="file-tree-search">
-          <div className="file-tree-search-input-wrapper">
-            <Search
-              size={16}
-              style={{
-                color: getColor(theme.colors, "textSecondary"),
-                position: "absolute",
-                left: "12px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Search files and folders..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="file-tree-search-input"
-              style={{
-                padding: "8px 12px 8px 36px",
-                border: `1px solid ${getColor(theme.colors, "border")}`,
-                borderRadius: "6px",
-                fontSize: "13px",
-                backgroundColor: getColor(theme.colors, "background"),
-                color: getColor(theme.colors, "text"),
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
+          <h3
+            style={{
+              color: getColor(theme.colors, "text"),
+              margin: "0 0 12px 0",
+              fontSize: "14px",
+              fontWeight: "600",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            {headerTitle || instance.name}
+          </h3>
+          {showSearch && (
+            <div className="file-tree-search">
+              <div className="file-tree-search-input-wrapper">
+                <Search
+                  size={16}
+                  style={{
+                    color: getColor(theme.colors, "textSecondary"),
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Search files and folders..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="file-tree-search-input"
+                  style={{
+                    padding: "8px 12px 8px 36px",
+                    border: `1px solid ${getColor(theme.colors, "border")}`,
+                    borderRadius: "6px",
+                    fontSize: "13px",
+                    backgroundColor: getColor(theme.colors, "background"),
+                    color: getColor(theme.colors, "text"),
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
       <div className="file-tree-content">
         {filteredTree.length === 0 && searchTerm ? (
           <div

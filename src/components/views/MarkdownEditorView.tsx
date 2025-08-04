@@ -9,8 +9,10 @@ import {
 import { nightOwl } from "@codesandbox/sandpack-themes";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
 import { Download, Eye, EyeOff, FileText, Upload } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
 import "../common/MarkdownViewer.css";
+import ResizableSplitter from "../common/ResizableSplitter";
 
 interface MarkdownEditorViewProps {
   initialContent?: string;
@@ -199,6 +201,32 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const [content, setContent] = useState<string>(initialContent);
   const [showPreview, setShowPreview] = useState<boolean>(_showPreview);
   const [previewToggleCount, setPreviewToggleCount] = useState<number>(0);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(300);
+
+  // Create markdown editor file tree instance
+  const markdownEditorInstance: FileTreeInstance = useMemo(
+    () => ({
+      id: "markdown-editor",
+      name: "Markdown Files",
+      dataSource: {
+        id: "markdowns-json",
+        name: "Markdowns JSON",
+        type: "json",
+        config: {
+          url: "/markdowns-structure.json",
+        },
+      },
+      rootPath: "/markdowns",
+      hideEmptyFolders: true,
+      onFileSelect: (filePath: string, metadata?: Record<string, any>) => {
+        setSelectedFile(filePath);
+        console.log("Selected file:", filePath, "Metadata:", metadata);
+        // TODO: Load the selected file content
+      },
+    }),
+    []
+  );
 
   // Create files object for Sandpack with proper theme integration
   const files = {
@@ -401,7 +429,27 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     }
   }, [onLoad]);
 
-  return (
+  const handleWidthChange = useCallback((width: number) => {
+    setSidebarWidth(width);
+  }, []);
+
+  const leftPanel = (
+    <div
+      style={{
+        backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+        borderRight: `1px solid ${getColor(theme.colors, "border")}`,
+        height: "100%",
+      }}
+    >
+      <FileTreeView
+        instance={markdownEditorInstance}
+        selectedFile={selectedFile || undefined}
+        headerTitle="Markdown Files"
+      />
+    </div>
+  );
+
+  const rightPanel = (
     <Box
       sx={{
         height: _height,
@@ -460,7 +508,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
             color: getColor(theme.colors, "text"),
           }}
         >
-          {filename}
+          {selectedFile || filename}
         </Typography>
         <Typography
           variant="caption"
@@ -498,6 +546,26 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         </SandpackProvider>
       </Box>
     </Box>
+  );
+
+  return (
+    <div
+      style={{
+        height: _height,
+        width: "100%",
+        backgroundColor: getColor(theme.colors, "background"),
+      }}
+    >
+      <ResizableSplitter
+        leftPanel={leftPanel}
+        rightPanel={rightPanel}
+        leftPanelWidth={sidebarWidth}
+        onWidthChange={handleWidthChange}
+        minLeftWidth={200}
+        maxLeftWidth={600}
+        splitterWidth={6}
+      />
+    </div>
   );
 };
 
