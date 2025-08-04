@@ -8,7 +8,6 @@ import {
 } from "@codesandbox/sandpack-react";
 import { nightOwl } from "@codesandbox/sandpack-themes";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
-import { debounce } from "lodash";
 import { Download, Eye, EyeOff, FileText, Upload } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -100,12 +99,12 @@ const MarkdownEditorContent: React.FC<{
   const { sandpack } = useSandpack();
   const { code } = useActiveCode();
 
-  // Sync content changes back to our state
+  // Sync content changes back to our state immediately
   useEffect(() => {
-    if (selectedFile && code !== content) {
+    if (selectedFile) {
       onContentUpdate(code);
     }
-  }, [code, selectedFile, content, onContentUpdate]);
+  }, [code, selectedFile, onContentUpdate]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
@@ -513,14 +512,6 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const handleContentUpdate = useCallback((newContent: string) => {
     setContent(newContent);
   }, []);
-
-  // Debounced content update to prevent rapid changes
-  const debouncedContentUpdate = useCallback(
-    debounce((newContent: string) => {
-      setContent(newContent);
-    }, 300),
-    []
-  );
 
   const handleTogglePreview = useCallback(() => {
     setShowPreview((prev) => {
