@@ -890,7 +890,14 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
             hideEmptyFolders={false}
           />
         ) : (
-          <div style={{ padding: "16px" }}>
+          <div
+            style={{
+              padding: "16px",
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <DocumentContentSearch
               projectId={projectId}
               onResultSelect={handleContentSearchResultSelect}

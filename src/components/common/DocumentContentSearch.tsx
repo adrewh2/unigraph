@@ -164,7 +164,7 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
   const handleResultSelect = useCallback(
     (result: DocumentSearchResult) => {
       onResultSelect?.(result);
-      setShowResults(false);
+      // Keep results visible after selection
     },
     [onResultSelect]
   );
@@ -195,7 +195,12 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
   return (
     <div
       className={`document-content-search ${className}`}
-      style={{ position: "relative" }}
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+      }}
     >
       <div className="search-input-wrapper" style={{ position: "relative" }}>
         <Search
@@ -251,23 +256,18 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
         )}
       </div>
 
-      {/* Search Results Dropdown */}
+      {/* Search Results */}
       {showResults && searchResults.length > 0 && (
         <div
-          className="search-results-dropdown"
+          className="search-results-container"
           style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
-            zIndex: 1000,
+            flex: 1,
             backgroundColor: getColor(theme.colors, "background"),
             border: `1px solid ${getColor(theme.colors, "border")}`,
             borderRadius: "6px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            marginTop: "4px",
-            maxHeight: "400px",
+            marginTop: "8px",
             overflowY: "auto",
+            minHeight: 0, // Important for flex child to shrink
           }}
         >
           {searchResults.map((result, index) => (
@@ -375,18 +375,18 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
       {isSearching && (
         <div
           style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            right: 0,
+            flex: 1,
             backgroundColor: getColor(theme.colors, "background"),
             border: `1px solid ${getColor(theme.colors, "border")}`,
             borderRadius: "6px",
-            padding: "12px",
+            padding: "20px",
             textAlign: "center",
-            fontSize: "12px",
+            fontSize: "14px",
             color: getColor(theme.colors, "textSecondary"),
-            marginTop: "4px",
+            marginTop: "8px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           Searching...
@@ -400,21 +400,21 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
         !isSearching && (
           <div
             style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              right: 0,
+              flex: 1,
               backgroundColor: getColor(theme.colors, "background"),
               border: `1px solid ${getColor(theme.colors, "border")}`,
               borderRadius: "6px",
-              padding: "12px",
+              padding: "20px",
               textAlign: "center",
-              fontSize: "12px",
+              fontSize: "14px",
               color: getColor(theme.colors, "textSecondary"),
-              marginTop: "4px",
+              marginTop: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            No documents found matching {searchTerm}
+            No documents found matching &ldquo;{searchTerm}&rdquo;
           </div>
         )}
 
