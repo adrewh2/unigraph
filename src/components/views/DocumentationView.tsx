@@ -121,6 +121,7 @@ const DocumentationView: React.FC = () => {
               }}
               selectedFile={selectedFile || undefined}
               showHeader={true}
+              readOnly={true}
             />
           ) : (
             <DocumentationSearchV2

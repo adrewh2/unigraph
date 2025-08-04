@@ -73,6 +73,7 @@ export interface FileTreeViewProps {
   showSearch?: boolean;
   showCreateButtons?: boolean;
   hideEmptyFolders?: boolean;
+  readOnly?: boolean;
 }
 
 export default React.memo(
@@ -86,6 +87,7 @@ export default React.memo(
     showSearch = true,
     showCreateButtons = false,
     hideEmptyFolders = true,
+    readOnly = false,
   }: FileTreeViewProps) {
     console.log("FileTreeView props:", {
       onFileSelect: !!onFileSelect,
@@ -128,7 +130,7 @@ export default React.memo(
     // Handle keyboard shortcuts
     useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === "F2" && selectedFile) {
+        if (event.key === "F2" && selectedFile && !readOnly) {
           // Find the selected node and start editing
           const findNode = (nodes: FileNode[]): FileNode | null => {
             for (const node of nodes) {
@@ -153,7 +155,7 @@ export default React.memo(
 
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
-    }, [selectedFile, fileTree]);
+    }, [selectedFile, fileTree, readOnly]);
 
     // Handle saving inline edit
     const saveEdit = async () => {
@@ -428,6 +430,11 @@ export default React.memo(
     // Handle context menu
     const handleContextMenu = (event: React.MouseEvent, node: FileNode) => {
       event.preventDefault();
+
+      // Don't show context menu in read-only mode
+      if (readOnly) {
+        return;
+      }
 
       // Show context menu for all nodes (files and folders)
       setContextMenu({
@@ -1201,7 +1208,7 @@ export default React.memo(
                 console.log("No onFileSelect callback available");
               }
             }}
-            onDoubleClick={() => startEdit(node)}
+            onDoubleClick={() => !readOnly && startEdit(node)}
             onContextMenu={(event) => handleContextMenu(event, node)}
           >
             <div className="file-tree-node-content">
