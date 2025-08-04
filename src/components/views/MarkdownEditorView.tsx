@@ -14,6 +14,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createDocument,
   deleteDocument,
+  deleteDocumentRecursive,
   getDocument,
   updateDocument,
 } from "../../api/documentsApi";
@@ -314,8 +315,13 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         }
 
         try {
-          await deleteDocument(documentId);
-          console.log("Document/folder deleted:", documentId);
+          if (metadata.isFolder) {
+            await deleteDocumentRecursive(documentId);
+            console.log("Folder deleted recursively:", documentId);
+          } else {
+            await deleteDocument(documentId);
+            console.log("Document deleted:", documentId);
+          }
 
           // If we're currently editing the deleted document, clear the editor
           if (currentDocumentId === documentId) {

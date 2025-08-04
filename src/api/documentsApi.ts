@@ -104,6 +104,20 @@ export async function deleteDocument(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// Recursively delete a document and all its children
+export async function deleteDocumentRecursive(id: string): Promise<void> {
+  // First, get all child documents
+  const children = await getChildDocuments(id);
+
+  // Recursively delete all children
+  for (const child of children) {
+    await deleteDocumentRecursive(child.id);
+  }
+
+  // Finally, delete the parent document
+  await deleteDocument(id);
+}
+
 // List documents with optional filters
 export async function listDocuments({
   userId,
