@@ -1160,14 +1160,28 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
 
       {/* Editor and Preview */}
       <Box sx={{ flex: 1, height: 0 }}>
-        <DocumentEditorContent
-          selectedFile={selectedFile || filename}
-          documentId={currentDocumentId}
-          showPreview={showPreview}
-          onTogglePreview={handleTogglePreview}
-          theme={theme}
-          onLastSavedChange={setLastSaved}
-        />
+        {currentDocumentId ? (
+          <DocumentEditorContent
+            selectedFile={selectedFile || filename}
+            documentId={currentDocumentId}
+            showPreview={showPreview}
+            onTogglePreview={handleTogglePreview}
+            theme={theme}
+            onLastSavedChange={setLastSaved}
+          />
+        ) : (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              color: getColor(theme.colors, "textSecondary"),
+            }}
+          >
+            <Typography variant="h6">No document selected</Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   );
