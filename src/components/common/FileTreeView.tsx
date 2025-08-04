@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { Document, getDocumentTree } from "../../api/documentsApi";
 import { useComponentLogger } from "../../hooks/useLogger";
 import "./FileTreeView.css";
 
@@ -33,6 +34,8 @@ export interface FileTreeDataSource {
     table?: string; // For Supabase data sources
     query?: string; // For custom data sources
     transform?: (data: any) => FileNode[]; // Custom transform function
+    userId?: string; // For Supabase queries
+    projectId?: string; // For Supabase queries
   };
 }
 
@@ -101,8 +104,18 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             break;
 
           case "supabase":
-            // TODO: Implement Supabase data source
-            log.warn("Supabase data source not yet implemented");
+            try {
+              const documents = await getDocumentTree({
+                userId: instance.dataSource.config.userId,
+                projectId: instance.dataSource.config.projectId,
+              });
+              treeData = await convertSupabaseDocumentsToFileNodes(documents);
+            } catch (err) {
+              log.error("Error loading documents from Supabase:", err);
+              setError("Failed to load documents from database");
+              setLoading(false);
+              return;
+            }
             break;
 
           case "custom":
@@ -135,9 +148,10 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         );
 
         if (processedTree.length === 0) {
-          setError(
-            `No file structure found for ${instance.name}. Please check your data source configuration.`
-          );
+          // Don't treat empty results as an error - show a helpful message instead
+          setFileTree([]);
+          setFilteredTree([]);
+          setError(null); // Clear any previous errors
         } else {
           setFileTree(processedTree);
           setFilteredTree(processedTree);
@@ -148,6 +162,52 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
         setError("Failed to load file tree");
         setLoading(false);
       }
+    };
+
+    // Helper function to convert Supabase documents to FileNode format
+    const convertSupabaseDocumentsToFileNodes = async (
+      documents: Document[]
+    ): Promise<FileNode[]> => {
+      const convertDocumentToNode = (doc: Document): FileNode => {
+        return {
+          name: doc.title,
+          path: `/documents/${doc.id}`,
+          type: "file",
+          displayName: doc.title,
+          isExpanded: false,
+          metadata: {
+            documentId: doc.id,
+            content: doc.content,
+            extension: doc.extension,
+            projectId: doc.project_id,
+            parentId: doc.parent_id,
+            createdAt: doc.created_at,
+            lastUpdatedAt: doc.last_updated_at,
+          },
+        };
+      };
+
+      const convertDocumentsToTree = (
+        docs: Document[],
+        parentId: string | null = null
+      ): FileNode[] => {
+        const children = docs.filter((doc) => doc.parent_id === parentId);
+
+        return children.map((doc) => {
+          const node = convertDocumentToNode(doc);
+          const childDocs = convertDocumentsToTree(docs, doc.id);
+
+          if (childDocs.length > 0) {
+            node.type = "directory";
+            node.children = childDocs;
+            node.isExpanded = true;
+          }
+
+          return node;
+        });
+      };
+
+      return convertDocumentsToTree(documents);
     };
 
     // Helper function to convert structure to FileNode format
@@ -579,6 +639,28 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             }}
           >
             No files or folders match &quot;{searchTerm}&quot;
+          </div>
+        ) : filteredTree.length === 0 ? (
+          <div
+            className="file-tree-empty"
+            style={{
+              padding: "20px",
+              textAlign: "center",
+              color: getColor(theme.colors, "textSecondary"),
+              fontSize: "13px",
+            }}
+          >
+            <div style={{ marginBottom: "12px" }}>
+              <FileText size={24} style={{ opacity: 0.5 }} />
+            </div>
+            <div style={{ marginBottom: "8px", fontWeight: "500" }}>
+              No documents found
+            </div>
+            <div style={{ fontSize: "12px", lineHeight: "1.4" }}>
+              {instance.dataSource.type === "supabase"
+                ? "Create your first document to get started"
+                : "No files available in this directory"}
+            </div>
           </div>
         ) : (
           filteredTree.map((node) => renderNode(node))

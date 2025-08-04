@@ -10,6 +10,7 @@ import { nightOwl } from "@codesandbox/sandpack-themes";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
 import { Download, Eye, EyeOff, FileText, Upload } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { getDocument, updateDocument } from "../../api/documentsApi";
 import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
 import "../common/MarkdownViewer.css";
 import ResizableSplitter from "../common/ResizableSplitter";
@@ -22,6 +23,8 @@ interface MarkdownEditorViewProps {
   showPreview?: boolean;
   onSave?: (content: string) => void;
   onLoad?: () => string;
+  userId?: string;
+  projectId?: string;
 }
 
 const defaultMarkdownContent = `# Welcome to Markdown Editor
@@ -196,6 +199,8 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   showPreview: _showPreview = true,
   onSave,
   onLoad,
+  userId,
+  projectId,
 }) => {
   const { theme } = useTheme();
   const [content, setContent] = useState<string>(initialContent);
@@ -203,6 +208,10 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const [previewToggleCount, setPreviewToggleCount] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   // Create markdown editor file tree instance
   const markdownEditorInstance: FileTreeInstance = useMemo(
@@ -210,22 +219,46 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       id: "markdown-editor",
       name: "Markdown Files",
       dataSource: {
-        id: "markdowns-json",
-        name: "Markdowns JSON",
-        type: "json",
+        id: "supabase-documents",
+        name: "Supabase Documents",
+        type: "supabase",
         config: {
-          url: "/markdowns-structure.json",
+          userId,
+          projectId,
         },
       },
-      rootPath: "/markdowns",
+      rootPath: "/documents",
       hideEmptyFolders: true,
-      onFileSelect: (filePath: string, metadata?: Record<string, any>) => {
+      onFileSelect: async (
+        filePath: string,
+        metadata?: Record<string, any>
+      ) => {
         setSelectedFile(filePath);
         console.log("Selected file:", filePath, "Metadata:", metadata);
-        // TODO: Load the selected file content
+
+        if (metadata?.documentId) {
+          setIsLoading(true);
+          try {
+            const document = await getDocument(metadata.documentId);
+            setContent(document.content || "");
+            setCurrentDocumentId(document.id);
+            console.log("Loaded document:", document);
+          } catch (error) {
+            console.error("Error loading document:", error);
+            // Fallback to default content
+            setContent(defaultMarkdownContent);
+            setCurrentDocumentId(null);
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          // No document ID, use default content
+          setContent(defaultMarkdownContent);
+          setCurrentDocumentId(null);
+        }
       },
     }),
-    []
+    [userId, projectId]
   );
 
   // Create files object for Sandpack with proper theme integration
@@ -388,9 +421,20 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     });
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (onSave) {
       onSave(content);
+    } else if (currentDocumentId) {
+      // Save to Supabase
+      try {
+        await updateDocument({
+          id: currentDocumentId,
+          content,
+        });
+        console.log("Document saved to Supabase");
+      } catch (error) {
+        console.error("Error saving document:", error);
+      }
     } else {
       // Default save behavior - download file
       const blob = new Blob([content], { type: "text/markdown" });
@@ -403,7 +447,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
-  }, [content, filename, onSave]);
+  }, [content, filename, onSave, currentDocumentId]);
 
   const handleLoad = useCallback(() => {
     if (onLoad) {
@@ -444,7 +488,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       <FileTreeView
         instance={markdownEditorInstance}
         selectedFile={selectedFile || undefined}
-        headerTitle="Markdown Files"
+        headerTitle="Documents"
       />
     </div>
   );
@@ -509,6 +553,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           }}
         >
           {selectedFile || filename}
+          {isLoading && " (Loading...)"}
         </Typography>
         <Typography
           variant="caption"
