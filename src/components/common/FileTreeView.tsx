@@ -1512,64 +1512,60 @@ export default React.memo(
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <Tooltip title="New Document">
-              <button
-                className="context-menu-item"
-                onClick={() => handleContextMenuAction("document")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  padding: "8px",
-                  border: "none",
-                  background: "none",
-                  color: getColor(theme.colors, "text"),
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = getColor(
-                    theme.colors,
-                    "backgroundSecondary"
-                  );
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
-              >
-                <FilePlus size={16} />
-              </button>
-            </Tooltip>
-            <Tooltip title="New Folder">
-              <button
-                className="context-menu-item"
-                onClick={() => handleContextMenuAction("folder")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  padding: "8px",
-                  border: "none",
-                  background: "none",
-                  color: getColor(theme.colors, "text"),
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = getColor(
-                    theme.colors,
-                    "backgroundSecondary"
-                  );
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
-              >
-                <FolderPlus size={16} />
-              </button>
-            </Tooltip>
+            <button
+              className="context-menu-item"
+              onClick={() => handleContextMenuAction("document")}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "8px 12px",
+                border: "none",
+                background: "none",
+                color: getColor(theme.colors, "text"),
+                cursor: "pointer",
+                textAlign: "left",
+                fontSize: "14px",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = getColor(
+                  theme.colors,
+                  "backgroundSecondary"
+                );
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
+            >
+              <FilePlus size={16} style={{ marginRight: "8px" }} />
+              New Document
+            </button>
+            <button
+              className="context-menu-item"
+              onClick={() => handleContextMenuAction("folder")}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "8px 12px",
+                border: "none",
+                background: "none",
+                color: getColor(theme.colors, "text"),
+                cursor: "pointer",
+                textAlign: "left",
+                fontSize: "14px",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = getColor(
+                  theme.colors,
+                  "backgroundSecondary"
+                );
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
+            >
+              <FolderPlus size={16} style={{ marginRight: "8px" }} />
+              New Folder
+            </button>
             <button
               className="context-menu-item"
               onClick={() => handleContextMenuAction("rename")}
