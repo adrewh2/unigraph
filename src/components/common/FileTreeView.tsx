@@ -87,6 +87,10 @@ export default React.memo(
     showCreateButtons = false,
     hideEmptyFolders = true,
   }: FileTreeViewProps) {
+    console.log("FileTreeView props:", {
+      onFileSelect: !!onFileSelect,
+      selectedFile,
+    });
     const { theme } = useTheme();
     const log = useComponentLogger(`FileTreeView-${instance.id}`);
     const [fileTree, setFileTree] = useState<FileNode[]>([]);
@@ -706,10 +710,12 @@ export default React.memo(
                 const response = await fetch(instance.dataSource.config.url);
                 if (response.ok) {
                   const data = await response.json();
+                  console.log("JSON data loaded:", data);
                   treeData = await convertStructureToFileNodes(
                     data,
-                    instance.rootPath || "/"
+                    "" // No basePath needed since we use paths directly
                   );
+                  console.log("Converted tree data:", treeData);
                 } else {
                   log.warn(
                     `Could not load JSON structure from ${instance.dataSource.config.url}`,
@@ -864,7 +870,7 @@ export default React.memo(
 
             const node: FileNode = {
               name,
-              path: `${basePath}/${child.path}`,
+              path: `/markdowns/${child.path}`, // Prefix with /markdowns/ to access files via web server
               type: child.type,
               isExpanded: child.type === "directory", // Start directories as expanded
               title,
@@ -877,7 +883,7 @@ export default React.memo(
             if (child.children && child.children.length > 0) {
               node.children = await convertStructureToFileNodes(
                 child,
-                basePath
+                "" // No basePath needed since we use paths directly
               );
             }
 
@@ -1179,10 +1185,20 @@ export default React.memo(
                 : getColor(theme.colors, "text"),
             }}
             onClick={() => {
+              console.log("File tree node clicked:", node);
+              console.log("onFileSelect available:", !!onFileSelect);
               if (node.type === "directory") {
+                console.log("Node is directory, toggling");
                 toggleNode(node);
               } else if (onFileSelect) {
+                console.log(
+                  "Calling onFileSelect with:",
+                  node.path,
+                  node.metadata
+                );
                 onFileSelect(node.path, node.metadata);
+              } else {
+                console.log("No onFileSelect callback available");
               }
             }}
             onDoubleClick={() => startEdit(node)}

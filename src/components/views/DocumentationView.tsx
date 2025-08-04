@@ -18,9 +18,17 @@ const DocumentationView: React.FC = () => {
     (state) => state.currentSceneGraph
   );
 
-  const handleFileSelect = useCallback((filePath: string) => {
-    setSelectedFile(filePath);
-  }, []);
+  const handleFileSelect = useCallback(
+    (filePath: string, metadata?: Record<string, any>) => {
+      console.log(
+        "DocumentationView handleFileSelect called with:",
+        filePath,
+        metadata
+      );
+      setSelectedFile(filePath);
+    },
+    []
+  );
 
   const handleWidthChange = useCallback((width: number) => {
     setSidebarWidth(width);
@@ -36,14 +44,14 @@ const DocumentationView: React.FC = () => {
       id: "documentation",
       name: "Documentation",
       dataSource: {
-        id: "docs-json",
-        name: "Documentation JSON",
+        id: "markdowns-json",
+        name: "Markdowns JSON",
         type: "json",
         config: {
-          url: "/docs-structure.json",
+          url: "/markdowns-structure.json",
         },
       },
-      rootPath: "/docs",
+      rootPath: "/markdowns",
       hideEmptyFolders: true,
       onFileSelect: handleFileSelect,
     }),
@@ -102,13 +110,24 @@ const DocumentationView: React.FC = () => {
         <div className="sidebar-content">
           {sidebarMode === "tree" ? (
             <FileTreeView
+              key="documentation-file-tree"
               instance={documentationInstance}
+              onFileSelect={(
+                filePath: string,
+                metadata?: Record<string, any>
+              ) => {
+                console.log("FileTreeView onFileSelect called directly");
+                handleFileSelect(filePath, metadata);
+              }}
               selectedFile={selectedFile || undefined}
               showHeader={true}
             />
           ) : (
             <DocumentationSearchV2
-              onFileSelect={handleFileSelect}
+              onFileSelect={(
+                filePath: string,
+                metadata?: Record<string, any>
+              ) => handleFileSelect(filePath, metadata)}
               selectedFile={selectedFile || undefined}
             />
           )}
