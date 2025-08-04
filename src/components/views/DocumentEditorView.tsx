@@ -1,6 +1,7 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
 import Editor from "@monaco-editor/react";
 import { Box, Typography } from "@mui/material";
+import { debounce } from "lodash";
 import { FileText, FolderOpen, Search } from "lucide-react";
 import React, {
   useCallback,
@@ -126,6 +127,11 @@ const MonacoDocumentEditor: React.FC<{
 }> = ({ filename: _filename, documentId, theme }) => {
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Use refs to avoid stale closures in debounced functions
+  const contentRef = React.useRef<string>("");
 
   // Load content from server
   useEffect(() => {
@@ -133,15 +139,18 @@ const MonacoDocumentEditor: React.FC<{
       setIsLoading(true);
       getDocument(documentId)
         .then((document) => {
+          const documentContent = document.content || "";
           console.log("MonacoEditor: Loaded content from server:", {
             documentId,
-            contentLength: (document.content || "").length,
+            contentLength: documentContent.length,
           });
-          setContent(document.content || "");
+          setContent(documentContent);
+          contentRef.current = documentContent;
         })
         .catch((error) => {
           console.error("MonacoEditor: Error loading document:", error);
           setContent("");
+          contentRef.current = "";
         })
         .finally(() => {
           setIsLoading(false);
@@ -149,37 +158,120 @@ const MonacoDocumentEditor: React.FC<{
     }
   }, [documentId]);
 
+  // Debounced save function
+  const saveToServer = React.useMemo(
+    () =>
+      debounce(async (contentToSave: string) => {
+        if (!documentId || !contentToSave) return;
+
+        try {
+          setIsSaving(true);
+          console.log("MonacoEditor: Saving to server:", {
+            documentId,
+            contentLength: contentToSave.length,
+          });
+
+          await updateDocument({
+            id: documentId,
+            content: contentToSave,
+          });
+
+          const now = new Date();
+          setLastSaved(now);
+          console.log(
+            "MonacoEditor: Successfully saved to server at",
+            now.toLocaleTimeString()
+          );
+        } catch (error) {
+          console.error("MonacoEditor: Error saving to server:", error);
+        } finally {
+          setIsSaving(false);
+        }
+      }, 3000), // 3 second debounce
+    [documentId]
+  );
+
+  // Handle content changes
+  const handleContentChange = React.useCallback(
+    (value: string | undefined) => {
+      const newContent = value || "";
+      setContent(newContent);
+      contentRef.current = newContent;
+
+      console.log("MonacoEditor: Content changed:", {
+        contentLength: newContent.length,
+        preview: newContent.substring(0, 50) + "...",
+      });
+
+      // Trigger autosave
+      saveToServer(newContent);
+    },
+    [saveToServer]
+  );
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      console.log("MonacoEditor: Component unmounting, forcing save");
+      saveToServer.flush();
+    };
+  }, [saveToServer]);
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <Editor
-      height="100%"
-      language="markdown"
-      value={content}
-      onChange={(value) => setContent(value || "")}
-      theme={theme}
-      options={{
-        minimap: { enabled: false },
-        lineNumbers: "on",
-        wordWrap: "on",
-        fontSize: 14,
-        fontFamily:
-          "Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
-        padding: { top: 16, bottom: 16 },
-        scrollBeyondLastLine: false,
-        automaticLayout: true,
-        tabSize: 2,
-        insertSpaces: true,
-        renderWhitespace: "selection",
-        bracketPairColorization: { enabled: true },
-        suggest: {
-          showKeywords: false,
-          showSnippets: false,
-        },
-      }}
-    />
+    <div style={{ position: "relative", height: "100%" }}>
+      {/* Status indicator */}
+      <div
+        style={{
+          position: "absolute",
+          top: 8,
+          right: 16,
+          zIndex: 10,
+          fontSize: "12px",
+          color: "var(--vscode-descriptionForeground)",
+          backgroundColor: "var(--vscode-editor-background)",
+          padding: "4px 8px",
+          borderRadius: "4px",
+          border: "1px solid var(--vscode-widget-border)",
+        }}
+      >
+        {isSaving
+          ? "Saving..."
+          : lastSaved
+            ? `Last saved at ${lastSaved.toLocaleTimeString()}`
+            : "Not saved yet"}
+      </div>
+
+      <Editor
+        height="100%"
+        language="markdown"
+        value={content}
+        onChange={handleContentChange}
+        theme={theme}
+        options={{
+          minimap: { enabled: false },
+          lineNumbers: "on",
+          wordWrap: "on",
+          fontSize: 14,
+          fontFamily:
+            "Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
+          padding: { top: 16, bottom: 16 },
+          scrollBeyondLastLine: false,
+          automaticLayout: true,
+          tabSize: 2,
+          insertSpaces: true,
+          renderWhitespace: "selection",
+          bracketPairColorization: { enabled: true },
+          suggest: {
+            showKeywords: false,
+            showSnippets: false,
+          },
+        }}
+      />
+    </div>
   );
 };
 
