@@ -273,40 +273,36 @@ const MonacoDocumentEditor: React.FC<{
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "4px",
-            padding: "6px 12px",
+            justifyContent: "center",
+            padding: "8px",
             border: "none",
             outline: "none",
             borderRadius: "4px",
             backgroundColor: "var(--color-primary)",
             color: "white",
             cursor: "pointer",
-            fontSize: "12px",
           }}
           title="Save document"
         >
-          <Save size={14} />
-          Save
+          <Save size={16} />
         </button>
         <button
           onClick={handleDownload}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "4px",
-            padding: "6px 12px",
+            justifyContent: "center",
+            padding: "8px",
             border: "none",
             outline: "none",
             borderRadius: "4px",
             backgroundColor: "var(--color-secondary)",
             color: "white",
             cursor: "pointer",
-            fontSize: "12px",
           }}
           title="Download as Markdown"
         >
-          <Download size={14} />
-          Download
+          <Download size={16} />
         </button>
       </div>
       <Editor
