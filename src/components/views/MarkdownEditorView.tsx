@@ -403,7 +403,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
             console.log("Document deleted:", documentId);
           }
 
-          if (currentDocumentId === documentId) {
+          if (currentDocumentIdRef.current === documentId) {
             setContent(defaultMarkdownContent);
             setCurrentDocumentId(null);
             setSelectedFile(null);
@@ -434,7 +434,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         }
       },
     }),
-    [userId, projectId, currentDocumentId]
+    [userId, projectId] // Removed currentDocumentId to prevent unnecessary FileTreeView re-renders
   );
 
   // Create files object for Sandpack with proper theme integration
@@ -604,12 +604,16 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     };
   }, []);
 
-  // Add debouncing to prevent rapid state updates when typing quickly
+    // Add debouncing to prevent rapid state updates when typing quickly
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  
   // Add autosave functionality
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastAutoSavedContentRef = useRef<string>("");
+  
+  // Use ref to access current document ID in callbacks without causing re-renders
+  const currentDocumentIdRef = useRef(currentDocumentId);
+  currentDocumentIdRef.current = currentDocumentId;
 
   const handleContentUpdate = useCallback(
     (newContent: string) => {
