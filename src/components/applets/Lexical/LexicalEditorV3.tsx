@@ -1,4 +1,5 @@
 /* eslint-disable unused-imports/no-unused-vars */
+import { getColor, useTheme } from "@aesgraph/app-shell";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { HashtagNode } from "@lexical/hashtag";
 import { LinkNode } from "@lexical/link";
@@ -43,7 +44,17 @@ const PlaceholderPlugin = ({
 }: {
   placeholder: string;
 }): JSX.Element => {
-  return <div className="editor-placeholder">{placeholder}</div>;
+  const { theme } = useTheme();
+  return (
+    <div
+      className="editor-placeholder"
+      style={{
+        color: getColor(theme.colors, "textSecondary"),
+      }}
+    >
+      {placeholder}
+    </div>
+  );
 };
 
 // EditorStateInitializer for smooth content loading
@@ -141,6 +152,8 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   autoSaveInterval = 500, // Default 0.5 seconds
   onLastSavedChange,
 }) => {
+  const { theme: appTheme } = useTheme();
+
   console.log("LexicalEditorV3: Component initialized with props:", {
     documentId,
     initialContentLength: initialContent.length,
@@ -389,16 +402,77 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   const stableKey = "lexical-editor-v3";
 
   return (
-    <div className="lexical-editor-container">
+    <div
+      className="lexical-editor-container"
+      style={{
+        backgroundColor: getColor(appTheme.colors, "background"),
+        color: getColor(appTheme.colors, "text"),
+      }}
+    >
       <div className="lexical-content">
         <LexicalComposer key={stableKey} initialConfig={initialConfig}>
           <div className="editor-wrapper">
-            <div className="toolbar-container">
+            <div
+              className="toolbar-container"
+              style={{
+                backgroundColor: getColor(appTheme.colors, "surface"),
+                borderBottom: `1px solid ${getColor(appTheme.colors, "border")}`,
+              }}
+            >
               <ToolbarPlugin onSave={handleSave} onExport={handleExport} />
             </div>
-            <div className="editor-inner">
+            <div
+              className="editor-inner"
+              style={{
+                backgroundColor: getColor(appTheme.colors, "background"),
+              }}
+            >
               <RichTextPlugin
-                contentEditable={<ContentEditable className="editor-input" />}
+                contentEditable={
+                  <ContentEditable
+                    className="editor-input"
+                    style={{
+                      color: (() => {
+                        const backgroundColor = getColor(
+                          appTheme.colors,
+                          "background"
+                        );
+                        // Calculate luminance to determine if we're in dark mode
+                        const getLuminance = (color: string): number => {
+                          const rgbaMatch = color.match(
+                            /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
+                          );
+                          if (rgbaMatch) {
+                            const [, r, g, b] = rgbaMatch.map(Number);
+                            return (
+                              0.2126 * (r / 255) +
+                              0.7152 * (g / 255) +
+                              0.0722 * (b / 255)
+                            );
+                          }
+                          const hexMatch = color.match(
+                            /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i
+                          );
+                          if (hexMatch) {
+                            const r = parseInt(hexMatch[1], 16);
+                            const g = parseInt(hexMatch[2], 16);
+                            const b = parseInt(hexMatch[3], 16);
+                            return (
+                              0.2126 * (r / 255) +
+                              0.7152 * (g / 255) +
+                              0.0722 * (b / 255)
+                            );
+                          }
+                          return 0;
+                        };
+                        const luminance = getLuminance(backgroundColor);
+                        return luminance < 0.1
+                          ? "#ffffff"
+                          : getColor(appTheme.colors, "text");
+                      })(),
+                    }}
+                  />
+                }
                 placeholder={
                   <PlaceholderPlugin placeholder="Start typing your document..." />
                 }

@@ -13,8 +13,13 @@ Access the Document Editor by going to the App Shell, and opening the view calle
 
 ## Editing Features
 
-- Rich text editor: .txt documents will be opened in a custom Lexical Editor.
-- Markdown support: .md documents will be opened in a Monaco Code Editor, and perviews will be rendered using react-markdown library.
+- Left: Markdown editor
+- Right: Lexical rich-text editor
+
+<div style="display: flex; gap: 16px;">
+    <img src="../../../images/documentation/markdownEditor.png" alt="Markdown Editor" style="width: 50%;" />
+    <img src="../../../images/documentation/lexicalEditor.png" alt="Lexical Editor" style="width: 50%;" />
+</div>
 
 ## Document Types
 
