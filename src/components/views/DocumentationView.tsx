@@ -104,7 +104,7 @@ const DocumentationView: React.FC = () => {
             <FileTreeView
               instance={documentationInstance}
               selectedFile={selectedFile || undefined}
-              showHeader={false}
+              showHeader={true}
             />
           ) : (
             <DocumentationSearchV2
