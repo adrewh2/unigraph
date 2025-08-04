@@ -414,7 +414,6 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [_isAutoSaving, setIsAutoSaving] = useState(false);
   const [_error, _setError] = useState<string | null>(null);
@@ -467,11 +466,6 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
             setOriginalContent(loadedContent);
             setCurrentDocumentId(document.id);
             setHasUnsavedChanges(false);
-            setLastSaved(
-              document.last_updated_at
-                ? new Date(document.last_updated_at)
-                : null
-            );
 
             // Clear autosave timeout and reset reference when switching files
             if (autoSaveTimeoutRef.current) {
@@ -486,7 +480,6 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
             setOriginalContent(defaultMarkdownContent);
             setCurrentDocumentId(null);
             setHasUnsavedChanges(false);
-            setLastSaved(null);
           } finally {
             setIsLoading(false);
           }
@@ -496,7 +489,6 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           setOriginalContent(defaultMarkdownContent);
           setCurrentDocumentId(null);
           setHasUnsavedChanges(false);
-          setLastSaved(null);
         }
       },
       onCreateDocument: async (
@@ -656,7 +648,6 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           // Update state after successful save
           setOriginalContent(content);
           setHasUnsavedChanges(false);
-          setLastSaved(new Date());
 
           // Update lastAutoSavedContent if this was an autosave
           if (isAutoSave) {
@@ -725,9 +716,6 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           setOriginalContent(loadedContent);
           setCurrentDocumentId(document.id);
           setHasUnsavedChanges(false);
-          setLastSaved(
-            document.last_updated_at ? new Date(document.last_updated_at) : null
-          );
           setSelectedFile(`${document.title}.${document.extension}`);
 
           // Clear autosave timeout and reset reference when switching files
@@ -894,9 +882,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
             color: getColor(theme.colors, "textSecondary"),
           }}
         >
-          {lastSaved
-            ? `Last saved: ${lastSaved.toLocaleTimeString()}`
-            : "Document Editor"}
+          Document Editor
         </Typography>
       </Box>
 
