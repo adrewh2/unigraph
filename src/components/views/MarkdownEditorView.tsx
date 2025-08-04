@@ -285,12 +285,12 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       },
       onCreateFolder: async (title: string, parentId?: string) => {
         try {
-          // For folders, we create a document with a special metadata flag
+          // For folders, we create a document with "folder" extension
           const newFolder = await createDocument({
             title,
             content: `# ${title}\n\nThis is a folder. Add documents here.`,
-            extension: "md",
-            metadata: { isFolder: true },
+            extension: "folder",
+            metadata: { isFolder: true, type: "folder" },
             data: { type: "folder" },
             project_id: projectId,
             parent_id: parentId,
@@ -548,9 +548,13 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     >
       <FileTreeView
         instance={markdownEditorInstance}
+        onFileSelect={markdownEditorInstance.onFileSelect}
         selectedFile={selectedFile || undefined}
+        showHeader={true}
         headerTitle="Documents"
+        showSearch={true}
         showCreateButtons={true}
+        hideEmptyFolders={false}
       />
     </div>
   );

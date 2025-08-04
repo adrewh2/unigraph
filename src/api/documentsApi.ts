@@ -260,3 +260,17 @@ export async function getDocumentStats({
     byProject,
   };
 }
+
+// Get documents by extension
+export async function getDocumentsByExtension(
+  extension: string,
+  {
+    userId,
+    projectId,
+  }: {
+    userId?: string;
+    projectId?: string;
+  } = {}
+): Promise<Document[]> {
+  return listDocuments({ userId, projectId, extension });
+}

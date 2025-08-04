@@ -10,7 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { Document, getDocumentTree } from "../../api/documentsApi";
+import { Document, listDocuments } from "../../api/documentsApi";
 import { useComponentLogger } from "../../hooks/useLogger";
 import "./FileTreeView.css";
 
@@ -54,23 +54,27 @@ export interface FileTreeInstance {
 
 export interface FileTreeViewProps {
   instance: FileTreeInstance;
+  onFileSelect?: (filePath: string, metadata?: Record<string, any>) => void;
   selectedFile?: string;
   className?: string;
   showHeader?: boolean;
   headerTitle?: string;
   showSearch?: boolean;
   showCreateButtons?: boolean;
+  hideEmptyFolders?: boolean;
 }
 
-const FileTreeView: React.FC<FileTreeViewProps> = ({
+export default function FileTreeView({
   instance,
+  onFileSelect,
   selectedFile,
   className = "",
   showHeader = true,
   headerTitle,
   showSearch = true,
   showCreateButtons = false,
-}) => {
+  hideEmptyFolders = true,
+}: FileTreeViewProps) {
   const { theme } = useTheme();
   const log = useComponentLogger(`FileTreeView-${instance.id}`);
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
@@ -150,10 +154,23 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
 
           case "supabase":
             try {
-              const documents = await getDocumentTree({
+              // Get all documents for the user/project
+              const documents = await listDocuments({
                 userId: instance.dataSource.config.userId,
                 projectId: instance.dataSource.config.projectId,
               });
+
+              console.log(
+                "Fetched documents from Supabase:",
+                documents.map((doc) => ({
+                  id: doc.id,
+                  title: doc.title,
+                  extension: doc.extension,
+                  parent_id: doc.parent_id,
+                  metadata: doc.metadata,
+                }))
+              );
+
               treeData = await convertSupabaseDocumentsToFileNodes(documents);
             } catch (err) {
               log.error("Error loading documents from Supabase:", err);
@@ -214,12 +231,18 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
       documents: Document[]
     ): Promise<FileNode[]> => {
       const convertDocumentToNode = (doc: Document): FileNode => {
+        const isFolder = doc.extension === "folder" || doc.metadata?.isFolder;
+
+        console.log(
+          `Converting document: ${doc.title}, extension: ${doc.extension}, isFolder: ${isFolder}`
+        );
+
         return {
           name: doc.title,
           path: `/documents/${doc.id}`,
-          type: "file",
+          type: isFolder ? "directory" : "file",
           displayName: doc.title,
-          isExpanded: false,
+          isExpanded: isFolder, // Folders start expanded
           metadata: {
             documentId: doc.id,
             content: doc.content,
@@ -228,31 +251,69 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             parentId: doc.parent_id,
             createdAt: doc.created_at,
             lastUpdatedAt: doc.last_updated_at,
+            isFolder,
           },
         };
       };
 
-      const convertDocumentsToTree = (
-        docs: Document[],
-        parentId: string | null = null
-      ): FileNode[] => {
-        const children = docs.filter((doc) => doc.parent_id === parentId);
+      // Build tree structure from flat documents
+      const buildTree = (parentId: string | null = null): FileNode[] => {
+        const children = documents.filter((doc) => doc.parent_id === parentId);
 
-        return children.map((doc) => {
-          const node = convertDocumentToNode(doc);
-          const childDocs = convertDocumentsToTree(docs, doc.id);
+        console.log(
+          `Building tree for parentId: ${parentId}, found ${children.length} children`
+        );
 
-          if (childDocs.length > 0) {
-            node.type = "directory";
-            node.children = childDocs;
-            node.isExpanded = true;
-          }
+        return children
+          .map((doc) => {
+            console.log(
+              `Processing document: ${doc.title}, extension: ${doc.extension}, parentId: ${doc.parent_id}`
+            );
 
-          return node;
-        });
+            const node = convertDocumentToNode(doc);
+            const childNodes = buildTree(doc.id);
+
+            // If it has children, add them
+            if (childNodes.length > 0) {
+              node.children = childNodes;
+              node.type = "directory";
+              node.isExpanded = true;
+              console.log(
+                `Document ${doc.title} has ${childNodes.length} children, set as directory`
+              );
+            }
+
+            // If it's a folder document (extension === "folder"), always treat as directory
+            if (doc.extension === "folder" || doc.metadata?.isFolder) {
+              node.type = "directory";
+              node.isExpanded = true;
+              console.log(
+                `Document ${doc.title} is a folder document, set as directory`
+              );
+            }
+
+            // Skip empty folders if hideEmptyFolders is true, but only if it's not a folder document
+            if (
+              hideEmptyFolders &&
+              node.type === "directory" &&
+              doc.extension !== "folder" &&
+              !doc.metadata?.isFolder
+            ) {
+              if (!node.children || node.children.length === 0) {
+                console.log(`Skipping empty folder: ${doc.title}`);
+                return null;
+              }
+            }
+
+            console.log(
+              `Final node for ${doc.title}: type=${node.type}, isExpanded=${node.isExpanded}`
+            );
+            return node;
+          })
+          .filter(Boolean) as FileNode[];
       };
 
-      return convertDocumentsToTree(documents);
+      return buildTree();
     };
 
     // Helper function to convert structure to FileNode format
@@ -386,11 +447,11 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     };
 
     fetchFileTree();
-  }, [instance, log]);
+  }, [instance, log, hideEmptyFolders]);
 
   // Filter tree based on search term and empty folder preference
   useEffect(() => {
-    if (!searchTerm.trim() && !instance.hideEmptyFolders) {
+    if (!searchTerm.trim() && !hideEmptyFolders) {
       setFilteredTree(fileTree);
       return;
     }
@@ -418,7 +479,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
             const hasFiles = filteredChildren.some(
               (child) => child.type === "file"
             );
-            const shouldShow = instance.hideEmptyFolders ? hasFiles : true;
+            const shouldShow = hideEmptyFolders ? hasFiles : true;
 
             if (matchesSearch && shouldShow && filteredChildren.length > 0) {
               return {
@@ -434,7 +495,7 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
     };
 
     setFilteredTree(filterTree(fileTree));
-  }, [searchTerm, instance.hideEmptyFolders, fileTree]);
+  }, [searchTerm, hideEmptyFolders, fileTree]);
 
   const toggleNode = (node: FileNode) => {
     if (node.type === "directory") {
@@ -768,6 +829,4 @@ const FileTreeView: React.FC<FileTreeViewProps> = ({
       </div>
     </div>
   );
-};
-
-export default FileTreeView;
+}
