@@ -847,25 +847,9 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           }}
         >
           {selectedFile || filename}
-          {hasUnsavedChanges && (
-            <span
-              style={{
-                color: getColor(theme.colors, "error"),
-                marginLeft: 6,
-                fontSize: "10px",
-                fontWeight: "900",
-                display: "inline-block",
-                lineHeight: "1",
-                verticalAlign: "middle",
-              }}
-              title="Unsaved changes"
-            >
-              ●
-            </span>
-          )}
+
           {isLoading && " (Loading...)"}
           {isSaving && " (Saving...)"}
-          {isAutoSaving && " (Auto-saving...)"}
         </Typography>
         <Typography
           variant="caption"
@@ -874,8 +858,8 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           }}
         >
           {lastSaved
-            ? `Last saved: ${lastSaved.toLocaleTimeString()} (autosave enabled)`
-            : "Markdown Editor (autosave enabled)"}
+            ? `Last saved: ${lastSaved.toLocaleTimeString()}`
+            : "Markdown Editor"}
         </Typography>
       </Box>
 
