@@ -28,7 +28,7 @@ Access the Document Editor by going to the App Shell, and opening the view calle
 
 ## Search
 
-The Document Editor app offers file and text-based search.
+The Document Editor app offers file and text-based searching.
 
 ## Limits
 
