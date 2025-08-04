@@ -50,11 +50,55 @@
 .file-tree-node {
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  margin: 2px 6px;
+  position: relative;
 }
 
 .file-tree-node:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-tree-node.selected {
+  background-color: rgba(9, 105, 218, 0.15);
+  border-color: rgba(9, 105, 218, 0.5);
+  box-shadow: 0 2px 6px rgba(9, 105, 218, 0.3);
+}
+
+.file-tree-node.context-menu-target {
+  background-color: rgba(9, 105, 218, 0.25);
+  border-color: rgba(9, 105, 218, 0.7);
+  box-shadow:
+    0 0 0 2px rgba(9, 105, 218, 0.3),
+    0 4px 8px rgba(9, 105, 218, 0.4);
+}
+
+/* Dark mode adjustments */
+.file-tree-container.dark .file-tree-node:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.file-tree-container.dark .file-tree-node.selected {
+  background-color: rgba(9, 105, 218, 0.25);
+  border-color: rgba(9, 105, 218, 0.6);
+  box-shadow: 0 2px 6px rgba(9, 105, 218, 0.4);
+}
+
+.file-tree-container.dark .file-tree-node.context-menu-target {
+  background-color: rgba(9, 105, 218, 0.35);
+  border-color: rgba(9, 105, 218, 0.8);
+  box-shadow:
+    0 0 0 2px rgba(9, 105, 218, 0.4),
+    0 4px 8px rgba(9, 105, 218, 0.5);
 }
 
 .file-tree-node-content {

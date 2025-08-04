@@ -1044,17 +1044,16 @@ export default React.memo(
       const isSelected = selectedFile === node.path;
       const isExpanded =
         node.isExpanded !== undefined ? node.isExpanded : depth === 0; // Root nodes start expanded but can be collapsed
+      const isContextMenuTarget =
+        contextMenu.visible && contextMenu.node?.path === node.path;
 
       if (editingNode?.node.path === node.path) {
         return (
           <div
             key={node.path}
-            className={`file-tree-node ${isSelected ? "selected" : ""}`}
+            className={`file-tree-node ${isSelected ? "selected" : ""} ${isContextMenuTarget ? "context-menu-target" : ""}`}
             style={{
               paddingLeft: `${depth * 20}px`,
-              backgroundColor: isSelected
-                ? getColor(theme.colors, "primary")
-                : "transparent",
               color: isSelected
                 ? getColor(theme.colors, "textInverse")
                 : getColor(theme.colors, "text"),
@@ -1172,12 +1171,9 @@ export default React.memo(
       return (
         <div key={node.path}>
           <div
-            className={`file-tree-node ${isSelected ? "selected" : ""}`}
+            className={`file-tree-node ${isSelected ? "selected" : ""} ${isContextMenuTarget ? "context-menu-target" : ""}`}
             style={{
               paddingLeft: `${depth * 20}px`,
-              backgroundColor: isSelected
-                ? getColor(theme.colors, "primary")
-                : "transparent",
               color: isSelected
                 ? getColor(theme.colors, "textInverse")
                 : getColor(theme.colors, "text"),
