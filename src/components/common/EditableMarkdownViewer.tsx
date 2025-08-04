@@ -1,7 +1,7 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
 import Editor from "@monaco-editor/react";
 import { Edit3, Save, X } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { updateDocument } from "../../api/documentsApi";
 import { checkFileWritable, saveMarkdownFile } from "../../api/filesApi";
 import { SceneGraph } from "../../core/model/SceneGraph";
@@ -18,8 +18,6 @@ interface EditableMarkdownViewerProps {
   onAnnotate?: (selectedText: string) => void;
   showRawToggle?: boolean;
   readOnly?: boolean;
-  autoSave?: boolean; // Enable autosave every 10 seconds
-  autoSaveInterval?: number; // Autosave interval in milliseconds (default: 10000)
 }
 
 export default function EditableMarkdownViewer({
@@ -32,8 +30,6 @@ export default function EditableMarkdownViewer({
   onAnnotate,
   showRawToggle = false,
   readOnly = false,
-  autoSave = true,
-  autoSaveInterval = 10000, // 10 seconds
 }: EditableMarkdownViewerProps) {
   const { theme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
@@ -44,16 +40,13 @@ export default function EditableMarkdownViewer({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isFileWritable, setIsFileWritable] = useState(false);
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   // Update content when initial content changes
   useEffect(() => {
-    if (initialContent !== originalContent) {
-      setContent(initialContent);
-      setOriginalContent(initialContent);
-      setHasUnsavedChanges(false);
-    }
-  }, [initialContent, originalContent]);
+    setContent(initialContent);
+    setOriginalContent(initialContent);
+    setHasUnsavedChanges(false);
+  }, [initialContent]);
 
   // Check if file is writable when filename changes
   useEffect(() => {
@@ -86,89 +79,66 @@ export default function EditableMarkdownViewer({
     }
   }, [filename, initialContent, overrideMarkdown]);
 
-  // Handle content changes in editor with debouncing for better performance
+  // Handle content changes in editor - simplified approach
   const handleContentChange = useCallback(
     (value: string | undefined) => {
-      if (value !== undefined && value !== content) {
+      if (value !== undefined) {
         setContent(value);
-        // Use a ref to check original content to avoid frequent re-renders
-        const hasChanges = value !== originalContent;
-        if (hasChanges !== hasUnsavedChanges) {
-          setHasUnsavedChanges(hasChanges);
-        }
+        setHasUnsavedChanges(value !== originalContent);
         setError(null);
       }
     },
-    [content, originalContent, hasUnsavedChanges]
+    [originalContent]
   );
 
-  // Handle save (now supports both manual and auto save)
-  const handleSave = useCallback(
-    async (isAutoSaveAction = false) => {
-      if (!hasUnsavedChanges) return;
+  // Handle save
+  const handleSave = useCallback(async () => {
+    if (!hasUnsavedChanges) return;
 
-      // Check if we can save (either have documentId or writable file)
-      if (!documentId && !isFileWritable) {
-        if (!isAutoSaveAction) {
-          setError("File is not writable or no document ID provided.");
+    // Check if we can save (either have documentId or writable file)
+    if (!documentId && !isFileWritable) {
+      setError("File is not writable or no document ID provided.");
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      if (documentId) {
+        // Save to database
+        await updateDocument({
+          id: documentId,
+          content: content,
+        });
+        console.log(`Saved document ${documentId}`);
+      } else if (filename) {
+        // Save to filesystem
+        const result = await saveMarkdownFile({
+          filePath: filename,
+          content: content,
+        });
+
+        if (!result.success) {
+          throw new Error(result.message);
         }
-        return;
-      }
-
-      if (isAutoSaveAction) {
-        setIsAutoSaving(true);
+        console.log(`Saved file ${filename}`);
       } else {
-        setIsSaving(true);
+        throw new Error("No document ID or filename provided for saving.");
       }
-      setError(null);
 
-      try {
-        if (documentId) {
-          // Save to database
-          await updateDocument({
-            id: documentId,
-            content: content,
-          });
-          console.log(
-            `${isAutoSaveAction ? "Auto-saved" : "Saved"} document ${documentId}`
-          );
-        } else if (filename) {
-          // Save to filesystem
-          const result = await saveMarkdownFile({
-            filePath: filename,
-            content: content,
-          });
-
-          if (!result.success) {
-            throw new Error(result.message);
-          }
-          console.log(
-            `${isAutoSaveAction ? "Auto-saved" : "Saved"} file ${filename}`
-          );
-        } else {
-          throw new Error("No document ID or filename provided for saving.");
-        }
-
-        setOriginalContent(content);
-        setHasUnsavedChanges(false);
-        setLastSaved(new Date());
-      } catch (err) {
-        console.error("Error saving:", err);
-        if (!isAutoSaveAction) {
-          setError(
-            `Failed to save. ${err instanceof Error ? err.message : "Please try again."}`
-          );
-        }
-      } finally {
-        if (isAutoSaveAction) {
-          setIsAutoSaving(false);
-        } else {
-          setIsSaving(false);
-        }
-      }
-    },
-    [documentId, filename, isFileWritable, content, hasUnsavedChanges]
-  );
+      setOriginalContent(content);
+      setHasUnsavedChanges(false);
+      setLastSaved(new Date());
+    } catch (err) {
+      console.error("Error saving:", err);
+      setError(
+        `Failed to save. ${err instanceof Error ? err.message : "Please try again."}`
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }, [documentId, filename, isFileWritable, content, hasUnsavedChanges]);
 
   // Handle enter edit mode
   const handleStartEdit = useCallback(() => {
@@ -198,7 +168,7 @@ export default function EditableMarkdownViewer({
       if (isEditing && (event.metaKey || event.ctrlKey)) {
         if (event.key === "s") {
           event.preventDefault();
-          handleSave(false); // Manual save
+          handleSave();
         } else if (event.key === "Escape") {
           event.preventDefault();
           handleCancelEdit();
@@ -209,67 +179,6 @@ export default function EditableMarkdownViewer({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isEditing, handleSave, handleCancelEdit]);
-
-  // Auto-save functionality - use useRef to avoid dependency issues
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const autoSaveStateRef = useRef({
-    hasUnsavedChanges,
-    isSaving,
-    isAutoSaving,
-    handleSave,
-  });
-
-  // Update refs on every render
-  autoSaveStateRef.current = {
-    hasUnsavedChanges,
-    isSaving,
-    isAutoSaving,
-    handleSave,
-  };
-
-  useEffect(() => {
-    // Clear existing timer
-    if (autoSaveTimerRef.current) {
-      clearInterval(autoSaveTimerRef.current);
-      autoSaveTimerRef.current = null;
-    }
-
-    // Only set up autosave if conditions are met
-    if (!autoSave || !isEditing || (!documentId && !isFileWritable)) {
-      return;
-    }
-
-    console.log(
-      "✅ Autosave enabled - timer set for",
-      autoSaveInterval / 1000,
-      "seconds"
-    );
-
-    autoSaveTimerRef.current = setInterval(() => {
-      const state = autoSaveStateRef.current;
-      if (state.hasUnsavedChanges && !state.isSaving && !state.isAutoSaving) {
-        console.log("💾 Auto-saving document...");
-        state.handleSave(true); // Auto save
-      }
-    }, autoSaveInterval);
-
-    return () => {
-      if (autoSaveTimerRef.current) {
-        clearInterval(autoSaveTimerRef.current);
-        autoSaveTimerRef.current = null;
-      }
-    };
-  }, [autoSave, isEditing, autoSaveInterval, documentId, isFileWritable]); // Removed frequently changing dependencies
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimerRef.current) {
-        clearInterval(autoSaveTimerRef.current);
-        autoSaveTimerRef.current = null;
-      }
-    };
-  }, []);
 
   // Get the title from filename
   const getTitle = () => {
@@ -309,27 +218,22 @@ export default function EditableMarkdownViewer({
                 </span>
               )}
             </h2>
-            {(lastSaved || isAutoSaving) && (
+            {lastSaved && (
               <span
                 className="last-saved"
                 style={{ color: getColor(theme.colors, "textSecondary") }}
               >
-                {isAutoSaving
-                  ? "Auto-saving..."
-                  : lastSaved
-                    ? `Last saved: ${lastSaved.toLocaleTimeString()}${autoSave ? " (auto-save enabled)" : ""}`
-                    : ""}
+                Last saved: {lastSaved.toLocaleTimeString()}
               </span>
             )}
           </div>
 
           <div className="editable-markdown-actions">
             <button
-              onClick={() => handleSave(false)}
+              onClick={handleSave}
               disabled={
                 !hasUnsavedChanges ||
                 isSaving ||
-                isAutoSaving ||
                 (!documentId && !isFileWritable)
               }
               className="save-button"
@@ -345,11 +249,7 @@ export default function EditableMarkdownViewer({
               title="Save (Ctrl+S)"
             >
               <Save size={16} />
-              {isSaving
-                ? "Saving..."
-                : isAutoSaving
-                  ? "Auto-saving..."
-                  : "Save"}
+              {isSaving ? "Saving..." : "Save"}
             </button>
 
             <button
@@ -385,11 +285,13 @@ export default function EditableMarkdownViewer({
         {/* Monaco Editor */}
         <div className="editable-markdown-editor">
           <Editor
+            key={`editor-${filename}-${isEditing}`}
             height="100%"
             language="markdown"
             theme="vs-dark"
             value={content}
             onChange={handleContentChange}
+            loading={null}
             options={{
               wordWrap: "on",
               minimap: { enabled: false },
@@ -399,6 +301,18 @@ export default function EditableMarkdownViewer({
               lineNumbers: "on",
               folding: true,
               renderWhitespace: "selection",
+              // Performance optimizations to prevent flickering
+              quickSuggestions: false,
+              suggestOnTriggerCharacters: false,
+              acceptSuggestionOnEnter: "off",
+              tabCompletion: "off",
+              wordBasedSuggestions: "off",
+              // Disable features that can cause re-renders
+              hover: { enabled: false },
+              selectionHighlight: false,
+              // Smoother editing experience
+              cursorBlinking: "smooth",
+              cursorSmoothCaretAnimation: "off",
             }}
           />
         </div>

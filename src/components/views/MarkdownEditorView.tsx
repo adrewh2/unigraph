@@ -9,7 +9,13 @@ import {
 import { nightOwl } from "@codesandbox/sandpack-themes";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
 import { Eye, EyeOff, FileText, Save, Upload } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   createDocument,
   deleteDocument,
@@ -110,7 +116,8 @@ const MarkdownEditorContent: React.FC<{
     if (selectedFile) {
       onContentUpdate(code);
     }
-  }, [code, selectedFile, onContentUpdate]);
+  }, [code, selectedFile]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Note: onContentUpdate is intentionally excluded to prevent infinite loop
 
   return (
     <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
@@ -541,7 +548,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
 </body>
 </html>`,
     }),
-    [content, theme.colors, filename]
+    [content, theme.colors, filename] // Re-added content for file switching, but debouncing prevents infinite loops
   );
 
   // Create a stable key for SandpackProvider that only changes when necessary
@@ -549,10 +556,21 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     return `sandpack-${showPreview}-${previewToggleCount}-${currentDocumentId || "default"}`;
   }, [showPreview, previewToggleCount, currentDocumentId]);
 
+  // Add debouncing to prevent rapid state updates when typing quickly
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleContentUpdate = useCallback(
     (newContent: string) => {
-      setContent(newContent);
-      setHasUnsavedChanges(newContent !== originalContent);
+      // Clear previous timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Debounce the state update to prevent infinite loops during fast typing
+      debounceTimeoutRef.current = setTimeout(() => {
+        setContent(newContent);
+        setHasUnsavedChanges(newContent !== originalContent);
+      }, 100); // 100ms debounce
     },
     [originalContent]
   );
