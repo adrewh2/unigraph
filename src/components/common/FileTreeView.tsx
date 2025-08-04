@@ -83,6 +83,17 @@ export default function FileTreeView({
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    node: FileNode | null;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    node: null,
+  });
 
   // Handle creating new document
   const handleCreateDocument = async () => {
@@ -121,6 +132,60 @@ export default function FileTreeView({
       setIsCreating(false);
     }
   };
+
+  // Handle context menu
+  const handleContextMenu = (event: React.MouseEvent, node: FileNode) => {
+    event.preventDefault();
+
+    // Only show context menu for directories (folders)
+    if (node.type === "directory") {
+      setContextMenu({
+        visible: true,
+        x: event.clientX,
+        y: event.clientY,
+        node,
+      });
+    }
+  };
+
+  // Handle context menu item click
+  const handleContextMenuAction = async (action: "document" | "folder") => {
+    if (!contextMenu.node) return;
+
+    const parentId = contextMenu.node.metadata?.documentId;
+    const title = prompt(`Enter ${action} name:`);
+    if (!title) return;
+
+    setIsCreating(true);
+    try {
+      if (action === "document" && instance.onCreateDocument) {
+        await instance.onCreateDocument(title, parentId);
+      } else if (action === "folder" && instance.onCreateFolder) {
+        await instance.onCreateFolder(title, parentId);
+      }
+    } catch (error) {
+      console.error(`Error creating ${action}:`, error);
+    } finally {
+      setIsCreating(false);
+      setContextMenu({ visible: false, x: 0, y: 0, node: null });
+    }
+  };
+
+  // Close context menu when clicking outside
+  const handleClickOutside = () => {
+    setContextMenu({ visible: false, x: 0, y: 0, node: null });
+  };
+
+  // Add click outside handler
+  useEffect(() => {
+    if (contextMenu.visible) {
+      const handleClick = () => {
+        setContextMenu({ visible: false, x: 0, y: 0, node: null });
+      };
+      document.addEventListener("click", handleClick);
+      return () => document.removeEventListener("click", handleClick);
+    }
+  }, [contextMenu.visible]);
 
   // Fetch the file tree structure based on data source
   useEffect(() => {
@@ -170,6 +235,20 @@ export default function FileTreeView({
                   metadata: doc.metadata,
                 }))
               );
+
+              // Log parent-child relationships
+              console.log("Parent-child relationships:");
+              documents.forEach((doc) => {
+                const children = documents.filter(
+                  (child) => child.parent_id === doc.id
+                );
+                if (children.length > 0) {
+                  console.log(
+                    `${doc.title} (${doc.id}) has children:`,
+                    children.map((child) => `${child.title} (${child.id})`)
+                  );
+                }
+              });
 
               treeData = await convertSupabaseDocumentsToFileNodes(documents);
             } catch (err) {
@@ -273,6 +352,11 @@ export default function FileTreeView({
             const node = convertDocumentToNode(doc);
             const childNodes = buildTree(doc.id);
 
+            console.log(
+              `Document ${doc.title} has ${childNodes.length} children:`,
+              childNodes.map((child) => child.name)
+            );
+
             // If it has children, add them
             if (childNodes.length > 0) {
               node.children = childNodes;
@@ -306,7 +390,7 @@ export default function FileTreeView({
             }
 
             console.log(
-              `Final node for ${doc.title}: type=${node.type}, isExpanded=${node.isExpanded}`
+              `Final node for ${doc.title}: type=${node.type}, isExpanded=${node.isExpanded}, children=${node.children?.length || 0}`
             );
             return node;
           })
@@ -459,16 +543,12 @@ export default function FileTreeView({
     const filterTree = (nodes: FileNode[]): FileNode[] => {
       return nodes
         .map((node) => {
-          const matchesSearch = searchTerm.trim()
-            ? node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              node.displayName.toLowerCase().includes(searchTerm.toLowerCase())
-            : true;
+          const matchesSearch =
+            !searchTerm.trim() ||
+            node.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            node.path.toLowerCase().includes(searchTerm.toLowerCase());
 
           if (node.type === "file") {
-            // Skip index files
-            if (node.isIndex) {
-              return null;
-            }
             return matchesSearch ? node : null;
           } else {
             // For directories, check if any children match
@@ -477,15 +557,26 @@ export default function FileTreeView({
               : [];
 
             const hasFiles = filteredChildren.some(
-              (child) => child.type === "file"
+              (child) => child.type === "file" || child.type === "directory"
             );
             const shouldShow = hideEmptyFolders ? hasFiles : true;
+
+            console.log(
+              `Filtering directory ${node.name}: hasFiles=${hasFiles}, shouldShow=${shouldShow}, filteredChildren=${filteredChildren.length}`
+            );
 
             if (matchesSearch && shouldShow && filteredChildren.length > 0) {
               return {
                 ...node,
                 children: filteredChildren,
                 isExpanded: true, // Expand directories that match search
+              };
+            } else if (matchesSearch && !hideEmptyFolders) {
+              // Show directories even if empty when hideEmptyFolders is false
+              return {
+                ...node,
+                children: filteredChildren,
+                isExpanded: true,
               };
             }
             return null;
@@ -537,6 +628,7 @@ export default function FileTreeView({
               : getColor(theme.colors, "text"),
           }}
           onClick={() => toggleNode(node)}
+          onContextMenu={(event) => handleContextMenu(event, node)}
         >
           <div className="file-tree-node-content">
             {node.type === "directory" ? (
@@ -827,6 +919,88 @@ export default function FileTreeView({
           filteredTree.map((node) => renderNode(node))
         )}
       </div>
+      {contextMenu.visible && (
+        <div
+          style={{
+            position: "fixed",
+            top: contextMenu.y,
+            left: contextMenu.x,
+            backgroundColor: getColor(theme.colors, "background"),
+            border: `1px solid ${getColor(theme.colors, "border")}`,
+            borderRadius: "4px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+            zIndex: 1000,
+            padding: "4px 0",
+            minWidth: "160px",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleContextMenuAction("document");
+            }}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: getColor(theme.colors, "text"),
+              fontSize: "13px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = getColor(
+                theme.colors,
+                "backgroundSecondary"
+              );
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <FilePlus size={16} />
+            New Document
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleContextMenuAction("folder");
+            }}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              textAlign: "left",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: getColor(theme.colors, "text"),
+              fontSize: "13px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "background-color 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = getColor(
+                theme.colors,
+                "backgroundSecondary"
+              );
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <FolderPlus size={16} />
+            New Folder
+          </button>
+        </div>
+      )}
     </div>
   );
 }
