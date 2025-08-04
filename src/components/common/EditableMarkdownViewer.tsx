@@ -1,7 +1,7 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
 import Editor from "@monaco-editor/react";
 import { Edit3, Save, X } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { updateDocument } from "../../api/documentsApi";
 import { checkFileWritable, saveMarkdownFile } from "../../api/filesApi";
 import { SceneGraph } from "../../core/model/SceneGraph";
@@ -86,16 +86,20 @@ export default function EditableMarkdownViewer({
     }
   }, [filename, initialContent, overrideMarkdown]);
 
-  // Handle content changes in editor
+  // Handle content changes in editor with debouncing for better performance
   const handleContentChange = useCallback(
     (value: string | undefined) => {
-      if (value !== undefined) {
+      if (value !== undefined && value !== content) {
         setContent(value);
-        setHasUnsavedChanges(value !== originalContent);
+        // Use a ref to check original content to avoid frequent re-renders
+        const hasChanges = value !== originalContent;
+        if (hasChanges !== hasUnsavedChanges) {
+          setHasUnsavedChanges(hasChanges);
+        }
         setError(null);
       }
     },
-    [originalContent]
+    [content, originalContent, hasUnsavedChanges]
   );
 
   // Handle save (now supports both manual and auto save)
@@ -206,30 +210,66 @@ export default function EditableMarkdownViewer({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isEditing, handleSave, handleCancelEdit]);
 
-  // Auto-save functionality
+  // Auto-save functionality - use useRef to avoid dependency issues
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveStateRef = useRef({
+    hasUnsavedChanges,
+    isSaving,
+    isAutoSaving,
+    handleSave,
+  });
+
+  // Update refs on every render
+  autoSaveStateRef.current = {
+    hasUnsavedChanges,
+    isSaving,
+    isAutoSaving,
+    handleSave,
+  };
+
   useEffect(() => {
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearInterval(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+
+    // Only set up autosave if conditions are met
     if (!autoSave || !isEditing || (!documentId && !isFileWritable)) {
       return;
     }
 
-    const autoSaveTimer = setInterval(() => {
-      if (hasUnsavedChanges && !isSaving && !isAutoSaving) {
-        handleSave(true); // Auto save
+    console.log(
+      "✅ Autosave enabled - timer set for",
+      autoSaveInterval / 1000,
+      "seconds"
+    );
+
+    autoSaveTimerRef.current = setInterval(() => {
+      const state = autoSaveStateRef.current;
+      if (state.hasUnsavedChanges && !state.isSaving && !state.isAutoSaving) {
+        console.log("💾 Auto-saving document...");
+        state.handleSave(true); // Auto save
       }
     }, autoSaveInterval);
 
-    return () => clearInterval(autoSaveTimer);
-  }, [
-    autoSave,
-    isEditing,
-    hasUnsavedChanges,
-    isSaving,
-    isAutoSaving,
-    autoSaveInterval,
-    handleSave,
-    documentId,
-    isFileWritable,
-  ]);
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearInterval(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, [autoSave, isEditing, autoSaveInterval, documentId, isFileWritable]); // Removed frequently changing dependencies
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearInterval(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Get the title from filename
   const getTitle = () => {
