@@ -2,7 +2,15 @@ import { getColor, useTheme } from "@aesgraph/app-shell";
 import Editor from "@monaco-editor/react";
 import { Box, Typography } from "@mui/material";
 import { debounce } from "lodash";
-import { Download, FileText, FolderOpen, Save, Search } from "lucide-react";
+import {
+  Download,
+  Eye,
+  EyeOff,
+  FileText,
+  FolderOpen,
+  Save,
+  Search,
+} from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -23,6 +31,7 @@ import DocumentContentSearch, {
   DocumentSearchResult,
 } from "../common/DocumentContentSearch";
 import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
+import MarkdownViewer from "../common/MarkdownViewer";
 import "../common/MarkdownViewer.css";
 import ResizableSplitter from "../common/ResizableSplitter";
 import "./DocumentationView.css";
@@ -125,9 +134,19 @@ const MonacoDocumentEditor: React.FC<{
   documentId: string | null;
   theme: string;
   onLastSavedChange: (date: Date | null) => void;
-}> = ({ filename: _filename, documentId, theme, onLastSavedChange }) => {
+  showPreview?: boolean;
+  onTogglePreview?: () => void;
+}> = ({
+  filename: _filename,
+  documentId,
+  theme,
+  onLastSavedChange,
+  showPreview = false,
+  onTogglePreview,
+}) => {
   const [content, setContent] = useState("");
   const [_isLoading, setIsLoading] = useState(false);
+  const [splitterWidth, setSplitterWidth] = useState(400);
 
   // Use refs to avoid stale closures in debounced functions
   const contentRef = React.useRef<string>("");
@@ -253,83 +272,233 @@ const MonacoDocumentEditor: React.FC<{
 
   return (
     <div style={{ position: "relative", height: "100%" }}>
-      {/* Toolbar */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          zIndex: 10,
-          display: "flex",
-          gap: "8px",
-          padding: "8px",
-          backgroundColor: "transparent",
-          margin: "8px",
-        }}
-      >
-        <button
-          onClick={handleSave}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "8px",
-            border: "none",
-            outline: "none",
-            borderRadius: "4px",
-            backgroundColor: "transparent",
-            color: "var(--color-text)",
-            cursor: "pointer",
-          }}
-          title="Save document"
-        >
-          <Save size={16} />
-        </button>
-        <button
-          onClick={handleDownload}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "8px",
-            border: "none",
-            outline: "none",
-            borderRadius: "4px",
-            backgroundColor: "transparent",
-            color: "var(--color-text)",
-            cursor: "pointer",
-          }}
-          title="Download as Markdown"
-        >
-          <Download size={16} />
-        </button>
-      </div>
-      <Editor
-        height="100%"
-        language="markdown"
-        value={content}
-        onChange={handleContentChange}
-        theme={theme}
-        options={{
-          minimap: { enabled: false },
-          lineNumbers: "on",
-          wordWrap: "on",
-          fontSize: 14,
-          fontFamily:
-            "Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
-          padding: { top: 16, bottom: 16 },
-          scrollBeyondLastLine: false,
-          automaticLayout: true,
-          tabSize: 2,
-          insertSpaces: true,
-          renderWhitespace: "selection",
-          bracketPairColorization: { enabled: true },
-          suggest: {
-            showKeywords: false,
-            showSnippets: false,
-          },
-        }}
-      />
+      {showPreview ? (
+        // Side-by-side layout with splitter
+        <ResizableSplitter
+          leftPanel={
+            <div style={{ position: "relative", height: "100%" }}>
+              {/* Toolbar */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  zIndex: 10,
+                  display: "flex",
+                  gap: "8px",
+                  padding: "8px",
+                  backgroundColor: "transparent",
+                  margin: "8px",
+                }}
+              >
+                <button
+                  onClick={handleSave}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "8px",
+                    border: "none",
+                    outline: "none",
+                    borderRadius: "4px",
+                    backgroundColor: "transparent",
+                    color: "var(--color-text)",
+                    cursor: "pointer",
+                  }}
+                  title="Save document"
+                >
+                  <Save size={16} />
+                </button>
+                <button
+                  onClick={handleDownload}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "8px",
+                    border: "none",
+                    outline: "none",
+                    borderRadius: "4px",
+                    backgroundColor: "transparent",
+                    color: "var(--color-text)",
+                    cursor: "pointer",
+                  }}
+                  title="Download as Markdown"
+                >
+                  <Download size={16} />
+                </button>
+                {onTogglePreview && (
+                  <button
+                    onClick={onTogglePreview}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "8px",
+                      border: "none",
+                      outline: "none",
+                      borderRadius: "4px",
+                      backgroundColor: "transparent",
+                      color: "var(--color-text)",
+                      cursor: "pointer",
+                    }}
+                    title={showPreview ? "Hide preview" : "Show preview"}
+                  >
+                    {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                )}
+              </div>
+              <Editor
+                height="100%"
+                language="markdown"
+                value={content}
+                onChange={handleContentChange}
+                theme={theme}
+                options={{
+                  minimap: { enabled: false },
+                  lineNumbers: "on",
+                  wordWrap: "on",
+                  fontSize: 14,
+                  fontFamily:
+                    "Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
+                  padding: { top: 16, bottom: 16 },
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  tabSize: 2,
+                  insertSpaces: true,
+                  renderWhitespace: "selection",
+                  bracketPairColorization: { enabled: true },
+                  suggest: {
+                    showKeywords: false,
+                    showSnippets: false,
+                  },
+                }}
+              />
+            </div>
+          }
+          rightPanel={
+            <div
+              style={{
+                height: "100%",
+                overflow: "auto",
+                padding: "16px",
+              }}
+              className="documentation-content"
+            >
+              <MarkdownViewer
+                filename="preview.md"
+                overrideMarkdown={content}
+              />
+            </div>
+          }
+          leftPanelWidth={splitterWidth}
+          onWidthChange={setSplitterWidth}
+          minLeftWidth={200}
+          maxLeftWidth={800}
+          splitterWidth={6}
+        />
+      ) : (
+        // Single editor layout
+        <div style={{ position: "relative", height: "100%" }}>
+          {/* Toolbar */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              zIndex: 10,
+              display: "flex",
+              gap: "8px",
+              padding: "8px",
+              backgroundColor: "transparent",
+              margin: "8px",
+            }}
+          >
+            <button
+              onClick={handleSave}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "8px",
+                border: "none",
+                outline: "none",
+                borderRadius: "4px",
+                backgroundColor: "transparent",
+                color: "var(--color-text)",
+                cursor: "pointer",
+              }}
+              title="Save document"
+            >
+              <Save size={16} />
+            </button>
+            <button
+              onClick={handleDownload}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "8px",
+                border: "none",
+                outline: "none",
+                borderRadius: "4px",
+                backgroundColor: "transparent",
+                color: "var(--color-text)",
+                cursor: "pointer",
+              }}
+              title="Download as Markdown"
+            >
+              <Download size={16} />
+            </button>
+            {onTogglePreview && (
+              <button
+                onClick={onTogglePreview}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "8px",
+                  border: "none",
+                  outline: "none",
+                  borderRadius: "4px",
+                  backgroundColor: "transparent",
+                  color: "var(--color-text)",
+                  cursor: "pointer",
+                }}
+                title={showPreview ? "Hide preview" : "Show preview"}
+              >
+                {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            )}
+          </div>
+          <Editor
+            height="100%"
+            language="markdown"
+            value={content}
+            onChange={handleContentChange}
+            theme={theme}
+            options={{
+              minimap: { enabled: false },
+              lineNumbers: "on",
+              wordWrap: "on",
+              fontSize: 14,
+              fontFamily:
+                "Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace",
+              padding: { top: 16, bottom: 16 },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              tabSize: 2,
+              insertSpaces: true,
+              renderWhitespace: "selection",
+              bracketPairColorization: { enabled: true },
+              suggest: {
+                showKeywords: false,
+                showSnippets: false,
+              },
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -444,6 +613,8 @@ const DocumentEditorContent: React.FC<{
             documentId={documentId}
             theme={getMonacoTheme()}
             onLastSavedChange={onLastSavedChange}
+            showPreview={showPreview}
+            onTogglePreview={_onTogglePreview}
           />
         )}
       </Box>
