@@ -1,4 +1,5 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
+import { Tooltip } from "@mui/material";
 import {
   ChevronDown,
   ChevronRight,
@@ -1058,7 +1059,19 @@ export default React.memo(
                 ? getColor(theme.colors, "textInverse")
                 : getColor(theme.colors, "text"),
             }}
-            onClick={() => saveEdit()}
+            onClick={(e) => {
+              e.stopPropagation();
+              saveEdit();
+            }}
+            onMouseUp={(e) => {
+              // Only stop propagation if the click is on the input or its container
+              if (
+                e.target === e.currentTarget ||
+                e.target instanceof HTMLInputElement
+              ) {
+                e.stopPropagation();
+              }
+            }}
             onContextMenu={(event) => handleContextMenu(event, node)}
           >
             <div className="file-tree-node-content">
@@ -1133,6 +1146,9 @@ export default React.memo(
                     cancelEdit();
                   }
                 }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseUp={(e) => e.stopPropagation()}
                 autoFocus
                 style={{
                   flex: 1,
@@ -1342,51 +1358,58 @@ export default React.memo(
                   display: "flex",
                   gap: "8px",
                   marginBottom: "12px",
+                  justifyContent: "flex-end",
                 }}
               >
-                <button
-                  onClick={handleCreateDocument}
-                  disabled={isCreating}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    padding: "6px 8px",
-                    fontSize: "12px",
-                    backgroundColor: getColor(theme.colors, "primary"),
-                    color: getColor(theme.colors, "textInverse"),
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor: isCreating ? "not-allowed" : "pointer",
-                    opacity: isCreating ? 0.6 : 1,
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  <FilePlus size={12} />
-                  New Document
-                </button>
+                <Tooltip title="New Document">
+                  <button
+                    onClick={handleCreateDocument}
+                    disabled={isCreating}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "6px",
+                      fontSize: "12px",
+                      backgroundColor: getColor(theme.colors, "surface"),
+                      color: getColor(theme.colors, "text"),
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: isCreating ? "not-allowed" : "pointer",
+                      opacity: isCreating ? 0.6 : 1,
+                      transition: "opacity 0.2s",
+                      minWidth: "32px",
+                      minHeight: "32px",
+                    }}
+                  >
+                    <FilePlus size={16} />
+                  </button>
+                </Tooltip>
 
-                <button
-                  onClick={handleCreateFolder}
-                  disabled={isCreating}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    padding: "6px 8px",
-                    fontSize: "12px",
-                    backgroundColor: getColor(theme.colors, "surface"),
-                    color: getColor(theme.colors, "text"),
-                    border: `1px solid ${getColor(theme.colors, "border")}`,
-                    borderRadius: "4px",
-                    cursor: isCreating ? "not-allowed" : "pointer",
-                    opacity: isCreating ? 0.6 : 1,
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  <FolderPlus size={12} />
-                  New Folder
-                </button>
+                <Tooltip title="New Folder">
+                  <button
+                    onClick={handleCreateFolder}
+                    disabled={isCreating}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "6px",
+                      fontSize: "12px",
+                      backgroundColor: getColor(theme.colors, "surface"),
+                      color: getColor(theme.colors, "text"),
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: isCreating ? "not-allowed" : "pointer",
+                      opacity: isCreating ? 0.6 : 1,
+                      transition: "opacity 0.2s",
+                      minWidth: "32px",
+                      minHeight: "32px",
+                    }}
+                  >
+                    <FolderPlus size={16} />
+                  </button>
+                </Tooltip>
               </div>
             )}
 
@@ -1482,60 +1505,64 @@ export default React.memo(
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              className="context-menu-item"
-              onClick={() => handleContextMenuAction("document")}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "8px 12px",
-                border: "none",
-                background: "none",
-                color: getColor(theme.colors, "text"),
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: "14px",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = getColor(
-                  theme.colors,
-                  "backgroundSecondary"
-                );
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <FilePlus size={16} style={{ marginRight: "8px" }} />
-              New Document
-            </button>
-            <button
-              className="context-menu-item"
-              onClick={() => handleContextMenuAction("folder")}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: "8px 12px",
-                border: "none",
-                background: "none",
-                color: getColor(theme.colors, "text"),
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: "14px",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = getColor(
-                  theme.colors,
-                  "backgroundSecondary"
-                );
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
-              <FolderPlus size={16} style={{ marginRight: "8px" }} />
-              New Folder
-            </button>
+            <Tooltip title="New Document">
+              <button
+                className="context-menu-item"
+                onClick={() => handleContextMenuAction("document")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  padding: "8px",
+                  border: "none",
+                  background: "none",
+                  color: getColor(theme.colors, "text"),
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = getColor(
+                    theme.colors,
+                    "backgroundSecondary"
+                  );
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                <FilePlus size={16} />
+              </button>
+            </Tooltip>
+            <Tooltip title="New Folder">
+              <button
+                className="context-menu-item"
+                onClick={() => handleContextMenuAction("folder")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  padding: "8px",
+                  border: "none",
+                  background: "none",
+                  color: getColor(theme.colors, "text"),
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = getColor(
+                    theme.colors,
+                    "backgroundSecondary"
+                  );
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                <FolderPlus size={16} />
+              </button>
+            </Tooltip>
             <button
               className="context-menu-item"
               onClick={() => handleContextMenuAction("rename")}
