@@ -146,11 +146,13 @@ const MarkdownEditorContent: React.FC<{
 }) => {
   const [localContent, setLocalContent] = useState(content);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isUpdatingFromUserRef = useRef(false);
 
   // Update local content immediately for responsive typing
   const handleChange = (value: string | undefined) => {
     const newValue = value || "";
     setLocalContent(newValue);
+    isUpdatingFromUserRef.current = true;
 
     // Debounce the parent update to reduce expensive operations
     if (debounceTimeoutRef.current) {
@@ -159,13 +161,20 @@ const MarkdownEditorContent: React.FC<{
 
     debounceTimeoutRef.current = setTimeout(() => {
       onContentUpdate(newValue);
+      // Reset the flag after the parent update
+      setTimeout(() => {
+        isUpdatingFromUserRef.current = false;
+      }, 50);
     }, 300); // 300ms debounce
   };
 
   // Sync with parent content when it changes externally (e.g., file switching)
+  // But avoid syncing when the change is from our own typing
   useEffect(() => {
-    setLocalContent(content);
-  }, [content]);
+    if (!isUpdatingFromUserRef.current && content !== localContent) {
+      setLocalContent(content);
+    }
+  }, [content, localContent]);
 
   // Determine Monaco theme based on app shell background color luminance
   const getMonacoTheme = () => {
