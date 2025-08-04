@@ -240,14 +240,14 @@ const MarkdownEditorContent: React.FC<{
 
   return (
     <Box sx={{ display: "flex", flexDirection: "row", height: "100%" }}>
-      {/* Toolbar */}
+      {/* Toolbar - Hidden */}
       <Box
         sx={{
           position: "absolute",
           top: 8,
           right: 8,
           zIndex: 10,
-          display: "flex",
+          display: "none", // Hide the toolbar
           gap: 1,
           backgroundColor: getColor(theme.colors, "surface"),
           border: `1px solid ${getColor(theme.colors, "border")}`,
