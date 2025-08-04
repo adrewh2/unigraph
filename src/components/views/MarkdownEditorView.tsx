@@ -247,10 +247,8 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           setIsLoading(true);
           try {
             const document = await getDocument(metadata.documentId);
-            // Only update content if it's different to prevent flickering
-            if (document.content !== content) {
-              setContent(document.content || "");
-            }
+            // Always update content to ensure we have the latest version
+            setContent(document.content || "");
             setCurrentDocumentId(document.id);
             console.log("Loaded document:", document);
           } catch (error) {
@@ -354,7 +352,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         }
       },
     }),
-    [userId, projectId, content, currentDocumentId]
+    [userId, projectId]
   );
 
   // Create files object for Sandpack with proper theme integration
