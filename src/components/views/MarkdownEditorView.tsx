@@ -23,6 +23,7 @@ import {
   getDocument,
   updateDocument,
 } from "../../api/documentsApi";
+import { addNotification } from "../../store/notificationStore";
 import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
 import "../common/MarkdownViewer.css";
 import ResizableSplitter from "../common/ResizableSplitter";
@@ -280,7 +281,6 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   // Create markdown editor file tree instance
   const markdownEditorInstance: FileTreeInstance = useMemo(
@@ -650,6 +650,11 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
               }
             } catch (error) {
               console.error("Error auto-saving document:", error);
+              addNotification({
+                message: "Failed to auto-save document",
+                type: "error",
+                groupId: "autosave-error",
+              });
             } finally {
               setIsAutoSaving(false);
             }
@@ -713,7 +718,11 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
         }
       } catch (error) {
         console.error("Error saving document:", error);
-        // You could add error state here if needed
+        addNotification({
+          message: "Failed to save document",
+          type: "error",
+          groupId: "save-error",
+        });
       } finally {
         if (isAutoSave) {
           setIsAutoSaving(false);
