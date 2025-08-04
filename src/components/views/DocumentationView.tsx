@@ -155,7 +155,7 @@ const DocumentationView: React.FC = () => {
       >
         {selectedFile ? (
           <div style={{ height: "100%" }}>
-            <EditableMarkdownViewer
+            <MarkdownViewer
               filename={selectedFile}
               sceneGraph={currentSceneGraph}
               showRawToggle={true}

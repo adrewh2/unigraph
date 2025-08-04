@@ -35,18 +35,33 @@
 }
 
 .unsaved-indicator {
-  font-size: 20px;
-  font-weight: bold;
-  animation: pulse 1.5s infinite;
+  font-size: 24px;
+  font-weight: 900;
+  animation: pulseDot 2s infinite;
+  display: inline-block;
+  transform-origin: center;
 }
 
-@keyframes pulse {
-  0%,
-  100% {
+@keyframes pulseDot {
+  0% {
     opacity: 1;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 0.8;
+    transform: scale(1.1);
   }
   50% {
-    opacity: 0.5;
+    opacity: 1;
+    transform: scale(1);
+  }
+  75% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
