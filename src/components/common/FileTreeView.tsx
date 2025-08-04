@@ -1337,11 +1337,19 @@ export default React.memo(
     return (
       <div
         className={`file-tree-container ${className}`}
-        style={{
-          backgroundColor: getColor(theme.colors, "background"),
-          color: getColor(theme.colors, "text"),
-          borderRight: `1px solid ${getColor(theme.colors, "border")}`,
-        }}
+        style={
+          {
+            backgroundColor: getColor(theme.colors, "background"),
+            color: getColor(theme.colors, "text"),
+            borderRight: `1px solid ${getColor(theme.colors, "border")}`,
+            "--primary-selection-bg": `${getColor(theme.colors, "primary")}15`,
+            "--primary-selection-bg-strong": `${getColor(theme.colors, "primary")}25`,
+            "--primary-selection-bg-dark": `${getColor(theme.colors, "primary")}20`,
+            "--primary-selection-bg-strong-dark": `${getColor(theme.colors, "primary")}35`,
+            "--primary-selection-text": getColor(theme.colors, "primary"),
+            "--primary-selection-text-dark": getColor(theme.colors, "primary"),
+          } as React.CSSProperties
+        }
       >
         {showHeader && (
           <div
