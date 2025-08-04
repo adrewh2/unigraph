@@ -1146,16 +1146,16 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           {isLoading && " (Loading...)"}
           {isSaving && " (Saving...)"}
         </Typography>
-        <Typography
-          variant="caption"
-          sx={{
-            color: getColor(theme.colors, "textSecondary"),
-          }}
-        >
-          {lastSaved
-            ? `Last saved: ${lastSaved.toLocaleTimeString()}`
-            : "Document Editor"}
-        </Typography>
+        {lastSaved && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: getColor(theme.colors, "textSecondary"),
+            }}
+          >
+            Last saved: {lastSaved.toLocaleTimeString()}
+          </Typography>
+        )}
       </Box>
 
       {/* Editor and Preview */}
