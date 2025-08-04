@@ -205,8 +205,28 @@ export default function FileTreeView({
     setIsCreating(true);
     try {
       await instance.onCreateDocument(title);
-      // Refresh the tree after creation
-      // This will be handled by the parent component updating the data
+
+      // Fallback refresh after create operation
+      console.log("Refreshing tree after document creation (header button)");
+      const refreshAfterCreate = async () => {
+        try {
+          const documents = await listDocuments({
+            userId: instance.dataSource.config.userId,
+            projectId: instance.dataSource.config.projectId,
+          });
+
+          console.log(
+            "Fetched documents after create (header):",
+            documents.length
+          );
+          const treeData = await convertSupabaseDocumentsToFileNodes(documents);
+          setFileTree(treeData);
+        } catch (error) {
+          console.error("Error refreshing tree after create (header):", error);
+        }
+      };
+
+      refreshAfterCreate();
     } catch (error) {
       console.error("Error creating document:", error);
     } finally {
@@ -224,8 +244,28 @@ export default function FileTreeView({
     setIsCreating(true);
     try {
       await instance.onCreateFolder(title);
-      // Refresh the tree after creation
-      // This will be handled by the parent component updating the data
+
+      // Fallback refresh after create operation
+      console.log("Refreshing tree after folder creation (header button)");
+      const refreshAfterCreate = async () => {
+        try {
+          const documents = await listDocuments({
+            userId: instance.dataSource.config.userId,
+            projectId: instance.dataSource.config.projectId,
+          });
+
+          console.log(
+            "Fetched documents after create (header):",
+            documents.length
+          );
+          const treeData = await convertSupabaseDocumentsToFileNodes(documents);
+          setFileTree(treeData);
+        } catch (error) {
+          console.error("Error refreshing tree after create (header):", error);
+        }
+      };
+
+      refreshAfterCreate();
     } catch (error) {
       console.error("Error creating folder:", error);
     } finally {
@@ -300,8 +340,48 @@ export default function FileTreeView({
     try {
       if (action === "document" && instance.onCreateDocument) {
         await instance.onCreateDocument(title!, parentId);
+
+        // Fallback refresh after create operation
+        console.log("Refreshing tree after document creation");
+        const refreshAfterCreate = async () => {
+          try {
+            const documents = await listDocuments({
+              userId: instance.dataSource.config.userId,
+              projectId: instance.dataSource.config.projectId,
+            });
+
+            console.log("Fetched documents after create:", documents.length);
+            const treeData =
+              await convertSupabaseDocumentsToFileNodes(documents);
+            setFileTree(treeData);
+          } catch (error) {
+            console.error("Error refreshing tree after create:", error);
+          }
+        };
+
+        refreshAfterCreate();
       } else if (action === "folder" && instance.onCreateFolder) {
         await instance.onCreateFolder(title!, parentId);
+
+        // Fallback refresh after create operation
+        console.log("Refreshing tree after folder creation");
+        const refreshAfterCreate = async () => {
+          try {
+            const documents = await listDocuments({
+              userId: instance.dataSource.config.userId,
+              projectId: instance.dataSource.config.projectId,
+            });
+
+            console.log("Fetched documents after create:", documents.length);
+            const treeData =
+              await convertSupabaseDocumentsToFileNodes(documents);
+            setFileTree(treeData);
+          } catch (error) {
+            console.error("Error refreshing tree after create:", error);
+          }
+        };
+
+        refreshAfterCreate();
       } else if (action === "delete" && instance.onDeleteNode) {
         await instance.onDeleteNode(
           contextMenu.node.path,
@@ -448,6 +528,36 @@ export default function FileTreeView({
       return () => document.removeEventListener("click", handleClick);
     }
   }, [contextMenu.visible]);
+
+  // Simple 5-second delayed refresh for Supabase data sources
+  useEffect(() => {
+    if (instance.dataSource.type === "supabase") {
+      const timeout = setTimeout(async () => {
+        try {
+          console.log("Performing 5-second delayed refresh");
+          const documents = await listDocuments({
+            userId: instance.dataSource.config.userId,
+            projectId: instance.dataSource.config.projectId,
+          });
+
+          console.log(
+            "Fetched documents in delayed refresh:",
+            documents.length
+          );
+          const treeData = await convertSupabaseDocumentsToFileNodes(documents);
+          setFileTree(treeData);
+        } catch (error) {
+          console.error("Error in delayed refresh:", error);
+        }
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timeout);
+    }
+  }, [
+    instance.dataSource.type,
+    instance.dataSource.config.userId,
+    instance.dataSource.config.projectId,
+  ]);
 
   // Fetch the file tree structure based on data source
   useEffect(() => {
