@@ -51,6 +51,11 @@ export interface FileTreeInstance {
   onFileSelect?: (filePath: string, metadata?: Record<string, any>) => void;
   onCreateDocument?: (title: string, parentId?: string) => Promise<void>;
   onCreateFolder?: (title: string, parentId?: string) => Promise<void>;
+  onRenameNode?: (
+    filePath: string,
+    newTitle: string,
+    metadata?: Record<string, any>
+  ) => Promise<void>;
   onDeleteNode?: (
     path: string,
     metadata?: Record<string, any>
@@ -99,6 +104,102 @@ export default function FileTreeView({
     y: 0,
     node: null,
   });
+
+  // State for inline editing
+  const [editingNode, setEditingNode] = useState<{
+    node: FileNode;
+    originalName: string;
+  } | null>(null);
+  const [editValue, setEditValue] = useState("");
+
+  // Handle starting inline edit
+  const startEdit = (node: FileNode) => {
+    setEditingNode({ node, originalName: node.displayName });
+    setEditValue(node.displayName);
+    setContextMenu({ visible: false, x: 0, y: 0, node: null });
+  };
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "F2" && selectedFile) {
+        // Find the selected node and start editing
+        const findNode = (nodes: FileNode[]): FileNode | null => {
+          for (const node of nodes) {
+            if (node.path === selectedFile) {
+              return node;
+            }
+            if (node.children) {
+              const found = findNode(node.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        const selectedNode = findNode(fileTree);
+        if (selectedNode) {
+          event.preventDefault();
+          startEdit(selectedNode);
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedFile, fileTree]);
+
+  // Handle saving inline edit
+  const saveEdit = async () => {
+    if (!editingNode || !editValue.trim()) {
+      setEditingNode(null);
+      setEditValue("");
+      return;
+    }
+
+    try {
+      if (instance.onRenameNode) {
+        await instance.onRenameNode(
+          editingNode.node.path,
+          editValue.trim(),
+          editingNode.node.metadata
+        );
+        console.log(
+          `Renamed node: ${editingNode.node.path} to "${editValue.trim()}"`
+        );
+
+        // Refresh the tree to show the updated name
+        const refreshAfterRename = async () => {
+          try {
+            const documents = await listDocuments({
+              userId: instance.dataSource.config.userId,
+              projectId: instance.dataSource.config.projectId,
+            });
+
+            console.log("Fetched documents after rename:", documents.length);
+            const treeData =
+              await convertSupabaseDocumentsToFileNodes(documents);
+            setFileTree(treeData);
+          } catch (error) {
+            console.error("Error refreshing tree after rename:", error);
+          }
+        };
+
+        refreshAfterRename();
+      }
+    } catch (error) {
+      console.error("Error renaming document:", error);
+    } finally {
+      setEditingNode(null);
+      setEditValue("");
+    }
+  };
+
+  // Handle canceling inline edit
+  const cancelEdit = () => {
+    setEditingNode(null);
+    setEditValue("");
+  };
 
   // Helper function to convert Supabase documents to FileNode format
   const convertSupabaseDocumentsToFileNodes = async (
@@ -301,7 +402,7 @@ export default function FileTreeView({
 
   // Handle context menu item click
   const handleContextMenuAction = async (
-    action: "document" | "folder" | "delete"
+    action: "document" | "folder" | "delete" | "rename"
   ) => {
     if (!contextMenu.node) return;
 
@@ -395,6 +496,9 @@ export default function FileTreeView({
         };
 
         refreshAfterCreate();
+      } else if (action === "rename") {
+        // Start inline editing for the selected node
+        startEdit(contextMenu.node);
       } else if (action === "delete" && instance.onDeleteNode) {
         await instance.onDeleteNode(
           contextMenu.node.path,
@@ -901,8 +1005,8 @@ export default function FileTreeView({
         };
         return updateNode(prevTree);
       });
-    } else if (instance.onFileSelect) {
-      instance.onFileSelect(node.path, node.metadata);
+    } else if (onFileSelect) {
+      onFileSelect(node.path, node.metadata);
     }
   };
 
@@ -910,6 +1014,115 @@ export default function FileTreeView({
     const isSelected = selectedFile === node.path;
     const isExpanded =
       node.isExpanded !== undefined ? node.isExpanded : depth === 0; // Root nodes start expanded but can be collapsed
+
+    if (editingNode?.node.path === node.path) {
+      return (
+        <div
+          key={node.path}
+          className={`file-tree-node ${isSelected ? "selected" : ""}`}
+          style={{
+            paddingLeft: `${depth * 20}px`,
+            backgroundColor: isSelected
+              ? getColor(theme.colors, "primary")
+              : "transparent",
+            color: isSelected
+              ? getColor(theme.colors, "textInverse")
+              : getColor(theme.colors, "text"),
+          }}
+          onClick={() => saveEdit()}
+          onContextMenu={(event) => handleContextMenu(event, node)}
+        >
+          <div className="file-tree-node-content">
+            {node.type === "directory" ? (
+              <>
+                {isExpanded ? (
+                  <ChevronDown
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
+                ) : (
+                  <ChevronRight
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
+                )}
+                {isExpanded ? (
+                  <FolderOpen
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
+                ) : (
+                  <Folder
+                    className="file-tree-icon"
+                    size={16}
+                    style={{
+                      color: isSelected
+                        ? getColor(theme.colors, "textInverse")
+                        : getColor(theme.colors, "textSecondary"),
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                <div className="file-tree-icon-placeholder" />
+                <FileText
+                  className="file-tree-icon"
+                  size={16}
+                  style={{
+                    color: isSelected
+                      ? getColor(theme.colors, "textInverse")
+                      : getColor(theme.colors, "textSecondary"),
+                  }}
+                />
+              </>
+            )}
+            <input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={saveEdit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  saveEdit();
+                } else if (e.key === "Escape") {
+                  cancelEdit();
+                }
+              }}
+              autoFocus
+              style={{
+                flex: 1,
+                padding: "2px 4px",
+                border: `1px solid ${getColor(theme.colors, "primary")}`,
+                borderRadius: "2px",
+                background: getColor(theme.colors, "background"),
+                color: getColor(theme.colors, "text"),
+                fontSize: "13px",
+                fontWeight: "600",
+                outline: "none",
+                boxSizing: "border-box",
+                minWidth: "100px",
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div key={node.path}>
@@ -924,7 +1137,14 @@ export default function FileTreeView({
               ? getColor(theme.colors, "textInverse")
               : getColor(theme.colors, "text"),
           }}
-          onClick={() => toggleNode(node)}
+          onClick={() => {
+            if (node.type === "directory") {
+              toggleNode(node);
+            } else if (onFileSelect) {
+              onFileSelect(node.path, node.metadata);
+            }
+          }}
+          onDoubleClick={() => startEdit(node)}
           onContextMenu={(event) => handleContextMenu(event, node)}
         >
           <div className="file-tree-node-content">
@@ -1218,126 +1438,128 @@ export default function FileTreeView({
       </div>
       {contextMenu.visible && (
         <div
+          className="context-menu"
           style={{
             position: "fixed",
-            top: contextMenu.y,
             left: contextMenu.x,
+            top: contextMenu.y,
             backgroundColor: getColor(theme.colors, "background"),
             border: `1px solid ${getColor(theme.colors, "border")}`,
             borderRadius: "4px",
+            padding: "4px 0",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
             zIndex: 1000,
-            padding: "4px 0",
-            minWidth: "160px",
+            minWidth: "120px",
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Show create options only for directories */}
-          {contextMenu.node?.type === "directory" && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleContextMenuAction("document");
-                }}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  textAlign: "left",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: getColor(theme.colors, "text"),
-                  fontSize: "13px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "background-color 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = getColor(
-                    theme.colors,
-                    "backgroundSecondary"
-                  );
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
-              >
-                <FilePlus size={16} />
-                New Document
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleContextMenuAction("folder");
-                }}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  textAlign: "left",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: getColor(theme.colors, "text"),
-                  fontSize: "13px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "background-color 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = getColor(
-                    theme.colors,
-                    "backgroundSecondary"
-                  );
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
-              >
-                <FolderPlus size={16} />
-                New Folder
-              </button>
-            </>
-          )}
-
-          {/* Show delete option for all nodes */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleContextMenuAction("delete");
-            }}
-            disabled={isCreating}
+            className="context-menu-item"
+            onClick={() => handleContextMenuAction("document")}
             style={{
+              display: "block",
               width: "100%",
               padding: "8px 12px",
-              textAlign: "left",
-              backgroundColor: "transparent",
               border: "none",
-              cursor: isCreating ? "not-allowed" : "pointer",
-              color: getColor(theme.colors, "error"),
-              fontSize: "13px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              transition: "background-color 0.2s",
-              opacity: isCreating ? 0.6 : 1,
+              background: "none",
+              color: getColor(theme.colors, "text"),
+              cursor: "pointer",
+              textAlign: "left",
+              fontSize: "14px",
             }}
             onMouseEnter={(e) => {
-              if (!isCreating) {
-                e.currentTarget.style.backgroundColor = getColor(
-                  theme.colors,
-                  "backgroundSecondary"
-                );
-              }
+              e.currentTarget.style.backgroundColor = getColor(
+                theme.colors,
+                "backgroundSecondary"
+              );
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
             }}
           >
-            <Trash size={16} />
-            {isCreating ? "Deleting..." : "Delete"}
+            <FilePlus size={16} style={{ marginRight: "8px" }} />
+            New Document
+          </button>
+          <button
+            className="context-menu-item"
+            onClick={() => handleContextMenuAction("folder")}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "8px 12px",
+              border: "none",
+              background: "none",
+              color: getColor(theme.colors, "text"),
+              cursor: "pointer",
+              textAlign: "left",
+              fontSize: "14px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = getColor(
+                theme.colors,
+                "backgroundSecondary"
+              );
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <FolderPlus size={16} style={{ marginRight: "8px" }} />
+            New Folder
+          </button>
+          <button
+            className="context-menu-item"
+            onClick={() => handleContextMenuAction("rename")}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "8px 12px",
+              border: "none",
+              background: "none",
+              color: getColor(theme.colors, "text"),
+              cursor: "pointer",
+              textAlign: "left",
+              fontSize: "14px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = getColor(
+                theme.colors,
+                "backgroundSecondary"
+              );
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <FileText size={16} style={{ marginRight: "8px" }} />
+            Rename
+          </button>
+          <button
+            className="context-menu-item"
+            onClick={() => handleContextMenuAction("delete")}
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "8px 12px",
+              border: "none",
+              background: "none",
+              color: getColor(theme.colors, "text"),
+              cursor: "pointer",
+              textAlign: "left",
+              fontSize: "14px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = getColor(
+                theme.colors,
+                "backgroundSecondary"
+              );
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <Trash size={16} style={{ marginRight: "8px" }} />
+            Delete
           </button>
         </div>
       )}

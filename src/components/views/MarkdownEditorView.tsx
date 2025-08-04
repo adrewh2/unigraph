@@ -323,16 +323,33 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
             console.log("Document deleted:", documentId);
           }
 
-          // If we're currently editing the deleted document, clear the editor
           if (currentDocumentId === documentId) {
             setContent(defaultMarkdownContent);
             setCurrentDocumentId(null);
             setSelectedFile(null);
           }
-
-          // The tree will refresh automatically when the parent component re-renders
         } catch (error) {
           console.error("Error deleting document/folder:", error);
+          throw error;
+        }
+      },
+      onRenameNode: async (
+        filePath: string,
+        newTitle: string,
+        metadata?: Record<string, any>
+      ) => {
+        const documentId = metadata?.documentId;
+        if (!documentId) {
+          console.error("No document ID found in metadata");
+          return;
+        }
+
+        try {
+          // Update the document title in Supabase
+          await updateDocument({ id: documentId, title: newTitle });
+          console.log("Document renamed:", documentId, "to", newTitle);
+        } catch (error) {
+          console.error("Error renaming document:", error);
           throw error;
         }
       },
