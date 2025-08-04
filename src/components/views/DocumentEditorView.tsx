@@ -678,15 +678,14 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
           setIsLoading(true);
           try {
             const document = await getDocument(metadata.documentId);
-            // Set selectedFile with proper filename including extension
-            const filename = `${document.title}.${document.extension}`;
+            // Set selectedFile with the full filePath for proper highlighting
             console.log(
               "Setting selectedFile to:",
-              filename,
+              filePath,
               "from document:",
               document
             );
-            setSelectedFile(filename);
+            setSelectedFile(filePath);
 
             // Always update content to ensure we have the latest version
             const loadedContent = document.content || "";
