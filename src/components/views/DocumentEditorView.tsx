@@ -2,7 +2,7 @@ import { getColor, useTheme } from "@aesgraph/app-shell";
 import Editor from "@monaco-editor/react";
 import { Box, Typography } from "@mui/material";
 import { debounce } from "lodash";
-import { FileText, FolderOpen, Search } from "lucide-react";
+import { Download, FileText, FolderOpen, Save, Search } from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -222,8 +222,84 @@ const MonacoDocumentEditor: React.FC<{
 
   // Don't show loading state - keep previous content visible while loading new content
 
+  // Handle save button click
+  const handleSave = React.useCallback(() => {
+    if (content) {
+      saveToServer(content);
+    }
+  }, [content, saveToServer]);
+
+  // Handle download button click
+  const handleDownload = React.useCallback(() => {
+    if (content) {
+      const blob = new Blob([content], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${_filename || "document"}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  }, [content, _filename]);
+
   return (
     <div style={{ position: "relative", height: "100%" }}>
+      {/* Toolbar */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          zIndex: 10,
+          display: "flex",
+          gap: "8px",
+          padding: "8px",
+          backgroundColor: "rgba(0, 0, 0, 0.1)",
+          borderRadius: "4px",
+          margin: "8px",
+        }}
+      >
+        <button
+          onClick={handleSave}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "6px 12px",
+            border: "none",
+            borderRadius: "4px",
+            backgroundColor: "var(--color-primary)",
+            color: "white",
+            cursor: "pointer",
+            fontSize: "12px",
+          }}
+          title="Save document"
+        >
+          <Save size={14} />
+          Save
+        </button>
+        <button
+          onClick={handleDownload}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "6px 12px",
+            border: "none",
+            borderRadius: "4px",
+            backgroundColor: "var(--color-secondary)",
+            color: "white",
+            cursor: "pointer",
+            fontSize: "12px",
+          }}
+          title="Download as Markdown"
+        >
+          <Download size={14} />
+          Download
+        </button>
+      </div>
       <Editor
         height="100%"
         language="markdown"
