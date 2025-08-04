@@ -138,7 +138,7 @@ export default function FileTreeView({
         `Building tree for parentId: ${parentId}, found ${children.length} children`
       );
 
-      return children
+      const nodes = children
         .map((doc) => {
           console.log(
             `Processing document: ${doc.title}, extension: ${doc.extension}, parentId: ${doc.parent_id}`
@@ -190,6 +190,19 @@ export default function FileTreeView({
           return node;
         })
         .filter(Boolean) as FileNode[];
+
+      // Sort nodes: folders first, then files, both alphabetically
+      return nodes.sort((a, b) => {
+        // First, sort by type: directories first, then files
+        if (a.type === "directory" && b.type === "file") {
+          return -1;
+        }
+        if (a.type === "file" && b.type === "directory") {
+          return 1;
+        }
+        // If both are the same type, sort alphabetically by displayName
+        return a.displayName.localeCompare(b.displayName);
+      });
     };
 
     return buildTree();
@@ -754,7 +767,14 @@ export default function FileTreeView({
         // If only one has order, prioritize the one with order
         if (a.order !== undefined) return -1;
         if (b.order !== undefined) return 1;
-        // If neither has order, sort alphabetically by displayName
+        // If neither has order, sort folders first, then files, both alphabetically
+        if (a.type === "directory" && b.type === "file") {
+          return -1;
+        }
+        if (a.type === "file" && b.type === "directory") {
+          return 1;
+        }
+        // If both are the same type, sort alphabetically by displayName
         return a.displayName.localeCompare(b.displayName);
       });
     };
