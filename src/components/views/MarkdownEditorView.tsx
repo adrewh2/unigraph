@@ -884,7 +884,6 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
             instance={markdownEditorInstance}
             onFileSelect={markdownEditorInstance.onFileSelect}
             selectedFile={selectedFile || undefined}
-            showHeader={false}
             showSearch={true}
             showCreateButtons={true}
             hideEmptyFolders={false}

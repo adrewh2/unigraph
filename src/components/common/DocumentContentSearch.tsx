@@ -258,117 +258,132 @@ export const DocumentContentSearch: React.FC<DocumentContentSearchProps> = ({
 
       {/* Search Results */}
       {showResults && searchResults.length > 0 && (
-        <div
-          className="search-results-container"
-          style={{
-            flex: 1,
-            backgroundColor: getColor(theme.colors, "background"),
-            border: `1px solid ${getColor(theme.colors, "border")}`,
-            borderRadius: "6px",
-            marginTop: "8px",
-            overflowY: "auto",
-            minHeight: 0, // Important for flex child to shrink
-          }}
-        >
-          {searchResults.map((result, index) => (
-            <div
-              key={result.document.id}
-              className="search-result-item"
-              onClick={() => handleResultSelect(result)}
-              style={{
-                padding: "12px",
-                cursor: "pointer",
-                borderBottom:
-                  index < searchResults.length - 1
-                    ? `1px solid ${getColor(theme.colors, "border")}`
-                    : "none",
-                // "&:hover": {
-                //   backgroundColor: getColor(
-                //     theme.colors,
-                //     "backgroundSecondary"
-                //   ),
-                // },
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = getColor(
-                  theme.colors,
-                  "backgroundSecondary"
-                );
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }}
-            >
+        <>
+          <div
+            style={{
+              padding: "8px 12px",
+              fontSize: "12px",
+              color: getColor(theme.colors, "textSecondary"),
+              borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
+              marginBottom: "8px",
+            }}
+          >
+            Found {searchResults.length} result
+            {searchResults.length !== 1 ? "s" : ""}
+          </div>
+          <div
+            className="search-results-container"
+            style={{
+              flex: 1,
+              backgroundColor: getColor(theme.colors, "background"),
+              border: `1px solid ${getColor(theme.colors, "border")}`,
+              borderRadius: "6px",
+              marginTop: "0px",
+              overflowY: "auto",
+              minHeight: 0, // Important for flex child to shrink
+              display: "flex",
+              flexDirection: "column",
+              gap: "0px",
+              padding: "8px",
+            }}
+          >
+            {searchResults.map((result, index) => (
               <div
+                key={result.document.id}
+                className="search-result-item"
+                onClick={() => handleResultSelect(result)}
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "8px",
+                  padding: "12px",
+                  cursor: "pointer",
+                  borderBottom:
+                    index < searchResults.length - 1
+                      ? `1px solid ${getColor(theme.colors, "border")}`
+                      : "none",
+                  borderRadius: "6px",
+                  backgroundColor: "transparent",
+                  transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = getColor(
+                    theme.colors,
+                    "backgroundTertiary"
+                  );
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
                 }}
               >
-                <FileText
-                  size={16}
+                <div
                   style={{
-                    color: getColor(theme.colors, "textSecondary"),
-                    marginTop: "2px",
-                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "8px",
                   }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
+                >
+                  <FileText
+                    size={16}
                     style={{
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: getColor(theme.colors, "text"),
-                      marginBottom: "4px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {result.matchType === "title" &&
-                    result.highlightedPreview ? (
-                      <span
-                        dangerouslySetInnerHTML={{
-                          __html: result.highlightedPreview,
-                        }}
-                      />
-                    ) : (
-                      result.document.title
-                    )}
-                  </div>
-                  {result.matchType === "content" &&
-                    result.highlightedPreview && (
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: getColor(theme.colors, "textSecondary"),
-                          lineHeight: "1.4",
-                          overflow: "hidden",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                        dangerouslySetInnerHTML={{
-                          __html: result.highlightedPreview,
-                        }}
-                      />
-                    )}
-                  <div
-                    style={{
-                      fontSize: "11px",
                       color: getColor(theme.colors, "textSecondary"),
-                      marginTop: "4px",
-                      opacity: 0.7,
+                      marginTop: "2px",
+                      flexShrink: 0,
                     }}
-                  >
-                    Match in {result.matchType}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        color: getColor(theme.colors, "text"),
+                        marginBottom: "4px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {result.matchType === "title" &&
+                      result.highlightedPreview ? (
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: result.highlightedPreview,
+                          }}
+                        />
+                      ) : (
+                        result.document.title
+                      )}
+                    </div>
+                    {result.matchType === "content" &&
+                      result.highlightedPreview && (
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: getColor(theme.colors, "textSecondary"),
+                            lineHeight: "1.4",
+                            overflow: "hidden",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                          }}
+                          dangerouslySetInnerHTML={{
+                            __html: result.highlightedPreview,
+                          }}
+                        />
+                      )}
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: getColor(theme.colors, "textSecondary"),
+                        marginTop: "4px",
+                        opacity: 0.7,
+                      }}
+                    >
+                      Match in {result.matchType}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Loading indicator */}
