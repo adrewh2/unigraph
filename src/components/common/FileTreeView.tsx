@@ -1339,79 +1339,86 @@ export default React.memo(
               borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
             }}
           >
-            <h3
+            <div
               style={{
-                color: getColor(theme.colors, "text"),
-                margin: "0 0 12px 0",
-                fontSize: "14px",
-                fontWeight: "600",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px",
               }}
             >
-              {headerTitle || instance.name}
-            </h3>
-
-            {showCreateButtons && (
-              <div
+              <h3
                 style={{
-                  display: "flex",
-                  gap: "8px",
-                  marginBottom: "12px",
-                  justifyContent: "flex-end",
+                  color: getColor(theme.colors, "text"),
+                  margin: "0",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
                 }}
               >
-                <Tooltip title="New Document">
-                  <button
-                    onClick={handleCreateDocument}
-                    disabled={isCreating}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "6px",
-                      fontSize: "12px",
-                      backgroundColor: getColor(theme.colors, "surface"),
-                      color: getColor(theme.colors, "text"),
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: isCreating ? "not-allowed" : "pointer",
-                      opacity: isCreating ? 0.6 : 1,
-                      transition: "opacity 0.2s",
-                      minWidth: "32px",
-                      minHeight: "32px",
-                    }}
-                  >
-                    <FilePlus size={16} />
-                  </button>
-                </Tooltip>
+                {headerTitle || instance.name}
+              </h3>
 
-                <Tooltip title="New Folder">
-                  <button
-                    onClick={handleCreateFolder}
-                    disabled={isCreating}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "6px",
-                      fontSize: "12px",
-                      backgroundColor: getColor(theme.colors, "surface"),
-                      color: getColor(theme.colors, "text"),
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: isCreating ? "not-allowed" : "pointer",
-                      opacity: isCreating ? 0.6 : 1,
-                      transition: "opacity 0.2s",
-                      minWidth: "32px",
-                      minHeight: "32px",
-                    }}
-                  >
-                    <FolderPlus size={16} />
-                  </button>
-                </Tooltip>
-              </div>
-            )}
+              {showCreateButtons && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                  }}
+                >
+                  <Tooltip title="New Document">
+                    <button
+                      onClick={handleCreateDocument}
+                      disabled={isCreating}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "6px",
+                        fontSize: "12px",
+                        backgroundColor: getColor(theme.colors, "surface"),
+                        color: getColor(theme.colors, "text"),
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: isCreating ? "not-allowed" : "pointer",
+                        opacity: isCreating ? 0.6 : 1,
+                        transition: "opacity 0.2s",
+                        minWidth: "32px",
+                        minHeight: "32px",
+                      }}
+                    >
+                      <FilePlus size={16} />
+                    </button>
+                  </Tooltip>
+
+                  <Tooltip title="New Folder">
+                    <button
+                      onClick={handleCreateFolder}
+                      disabled={isCreating}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "6px",
+                        fontSize: "12px",
+                        backgroundColor: getColor(theme.colors, "surface"),
+                        color: getColor(theme.colors, "text"),
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: isCreating ? "not-allowed" : "pointer",
+                        opacity: isCreating ? 0.6 : 1,
+                        transition: "opacity 0.2s",
+                        minWidth: "32px",
+                        minHeight: "32px",
+                      }}
+                    >
+                      <FolderPlus size={16} />
+                    </button>
+                  </Tooltip>
+                </div>
+              )}
+            </div>
 
             {showSearch && (
               <div className="file-tree-search">
