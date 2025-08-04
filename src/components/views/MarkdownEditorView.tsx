@@ -8,7 +8,15 @@ import {
 } from "@codesandbox/sandpack-react";
 import { nightOwl } from "@codesandbox/sandpack-themes";
 import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
-import { Eye, EyeOff, FileText, Save, Upload } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  FileText,
+  FolderOpen,
+  Save,
+  Search,
+  Upload,
+} from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -24,9 +32,13 @@ import {
   updateDocument,
 } from "../../api/documentsApi";
 import { addNotification } from "../../store/notificationStore";
+import DocumentContentSearch, {
+  DocumentSearchResult,
+} from "../common/DocumentContentSearch";
 import FileTreeView, { FileTreeInstance } from "../common/FileTreeView";
 import "../common/MarkdownViewer.css";
 import ResizableSplitter from "../common/ResizableSplitter";
+import "./DocumentationView.css";
 
 // Add CSS animation for pulsing dot
 const pulseAnimation = `
@@ -274,6 +286,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const [previewToggleCount, setPreviewToggleCount] = useState<number>(0);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(300);
+  const [sidebarMode, setSidebarMode] = useState<"tree" | "search">("tree");
   const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(
     null
   );
@@ -281,6 +294,8 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [_isAutoSaving, setIsAutoSaving] = useState(false);
+  const [_error, _setError] = useState<string | null>(null);
 
   // Create markdown editor file tree instance
   const markdownEditorInstance: FileTreeInstance = useMemo(
@@ -604,13 +619,13 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     };
   }, []);
 
-    // Add debouncing to prevent rapid state updates when typing quickly
+  // Add debouncing to prevent rapid state updates when typing quickly
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Add autosave functionality
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastAutoSavedContentRef = useRef<string>("");
-  
+
   // Use ref to access current document ID in callbacks without causing re-renders
   const currentDocumentIdRef = useRef(currentDocumentId);
   currentDocumentIdRef.current = currentDocumentId;
@@ -779,24 +794,112 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleSave]);
 
+  // Handle content search result selection
+  const handleContentSearchResultSelect = useCallback(
+    async (result: DocumentSearchResult) => {
+      console.log("Content search result selected:", result);
+
+      // Load the document from the search result
+      if (result.document.id) {
+        setIsLoading(true);
+        try {
+          const document = await getDocument(result.document.id);
+          const loadedContent = document.content || "";
+          setContent(loadedContent);
+          setOriginalContent(loadedContent);
+          setCurrentDocumentId(document.id);
+          setHasUnsavedChanges(false);
+          setLastSaved(
+            document.last_updated_at ? new Date(document.last_updated_at) : null
+          );
+          setSelectedFile(`/documents/${document.id}`);
+
+          // Clear autosave timeout and reset reference when switching files
+          if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+          }
+          lastAutoSavedContentRef.current = loadedContent;
+          console.log("Loaded document from content search:", document);
+        } catch (error) {
+          console.error("Error loading document from content search:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    },
+    []
+  );
+
   const leftPanel = (
     <div
-      style={{
-        backgroundColor: getColor(theme.colors, "backgroundSecondary"),
-        borderRight: `1px solid ${getColor(theme.colors, "border")}`,
-        height: "100%",
-      }}
+      className="documentation-sidebar"
+      style={
+        {
+          backgroundColor: getColor(theme.colors, "backgroundSecondary"),
+          borderRight: `1px solid ${getColor(theme.colors, "border")}`,
+          height: "100%",
+          "--border-color": getColor(theme.colors, "border"),
+          "--background-secondary": getColor(
+            theme.colors,
+            "backgroundSecondary"
+          ),
+          "--surface-hover": getColor(theme.colors, "backgroundTertiary"),
+          "--primary-color": getColor(theme.colors, "primary"),
+        } as React.CSSProperties
+      }
     >
-      <FileTreeView
-        instance={markdownEditorInstance}
-        onFileSelect={markdownEditorInstance.onFileSelect}
-        selectedFile={selectedFile || undefined}
-        showHeader={true}
-        headerTitle="Documents"
-        showSearch={true}
-        showCreateButtons={true}
-        hideEmptyFolders={false}
-      />
+      <div className="sidebar-header">
+        <div className="sidebar-tabs">
+          <button
+            className={`sidebar-tab ${sidebarMode === "tree" ? "active" : ""}`}
+            onClick={() => setSidebarMode("tree")}
+            style={{
+              color:
+                sidebarMode === "tree"
+                  ? getColor(theme.colors, "primary")
+                  : getColor(theme.colors, "text"),
+            }}
+          >
+            <FolderOpen size={16} />
+            <span>Files</span>
+          </button>
+          <button
+            className={`sidebar-tab ${sidebarMode === "search" ? "active" : ""}`}
+            onClick={() => setSidebarMode("search")}
+            style={{
+              color:
+                sidebarMode === "search"
+                  ? getColor(theme.colors, "primary")
+                  : getColor(theme.colors, "text"),
+            }}
+          >
+            <Search size={16} />
+            <span>Search</span>
+          </button>
+        </div>
+      </div>
+      <div className="sidebar-content">
+        {sidebarMode === "tree" ? (
+          <FileTreeView
+            instance={markdownEditorInstance}
+            onFileSelect={markdownEditorInstance.onFileSelect}
+            selectedFile={selectedFile || undefined}
+            showHeader={false}
+            showSearch={true}
+            showCreateButtons={true}
+            hideEmptyFolders={false}
+          />
+        ) : (
+          <div style={{ padding: "16px" }}>
+            <DocumentContentSearch
+              userId={userId}
+              projectId={projectId}
+              onResultSelect={handleContentSearchResultSelect}
+              placeholder="Search document content..."
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 

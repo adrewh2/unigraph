@@ -35,6 +35,11 @@ export interface UpdateDocumentParams {
   parent_id?: string;
 }
 
+export interface SearchResult extends Document {
+  snippet?: string;
+  matchCount?: number;
+}
+
 // Create a new document
 export async function createDocument(
   params: CreateDocumentParams
@@ -154,29 +159,6 @@ export async function getChildDocuments(parentId: string): Promise<Document[]> {
   return listDocuments({ parentId });
 }
 
-// Search documents by title or content
-export async function searchDocuments({
-  userId,
-  searchTerm,
-  projectId,
-}: {
-  userId?: string;
-  searchTerm: string;
-  projectId?: string;
-}): Promise<Document[]> {
-  let query = supabase
-    .from("documents")
-    .select("*")
-    .or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
-
-  if (userId) query = query.eq("user_id", userId);
-  if (projectId) query = query.eq("project_id", projectId);
-
-  const { data, error } = await query;
-  if (error) throw error;
-  return data || [];
-}
-
 // Get document tree (hierarchy)
 export async function getDocumentTree({
   userId,
@@ -287,4 +269,100 @@ export async function getDocumentsByExtension(
   } = {}
 ): Promise<Document[]> {
   return listDocuments({ userId, projectId, extension });
+}
+
+// Search documents by text content
+export async function searchDocuments({
+  searchTerm,
+  userId,
+  projectId,
+}: {
+  searchTerm: string;
+  userId: string;
+  projectId?: string;
+}): Promise<SearchResult[]> {
+  if (!searchTerm.trim()) {
+    return [];
+  }
+
+  let query = supabase
+    .from("documents")
+    .select(
+      "id, title, content, extension, project_id, created_at, last_updated_at"
+    )
+    .eq("user_id", userId)
+    .or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
+    .order("last_updated_at", { ascending: false })
+    .limit(50);
+
+  // Filter by project if specified
+  if (projectId) {
+    query = query.eq("project_id", projectId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error searching documents:", error);
+    throw error;
+  }
+
+  // Process results to add snippets and match counts
+  const results: SearchResult[] = (data || []).map((doc: Document) => {
+    const content = doc.content || "";
+    const title = doc.title || "";
+
+    // Count matches in title and content
+    const titleMatches = (
+      title.toLowerCase().match(new RegExp(searchTerm.toLowerCase(), "g")) || []
+    ).length;
+    const contentMatches = (
+      content.toLowerCase().match(new RegExp(searchTerm.toLowerCase(), "g")) ||
+      []
+    ).length;
+    const matchCount = titleMatches + contentMatches;
+
+    // Create a snippet around the first match in content
+    let snippet = "";
+    const searchRegex = new RegExp(searchTerm, "gi");
+    const match = searchRegex.exec(content);
+    if (match) {
+      const start = Math.max(0, match.index - 50);
+      const end = Math.min(
+        content.length,
+        match.index + searchTerm.length + 50
+      );
+      snippet = content.substring(start, end);
+
+      // Highlight the search term in the snippet
+      snippet = snippet.replace(searchRegex, `<mark>$&</mark>`);
+
+      // Add ellipsis if truncated
+      if (start > 0) snippet = "..." + snippet;
+      if (end < content.length) snippet = snippet + "...";
+    } else {
+      // If no match in content, take first 100 characters
+      snippet = content.substring(0, 100) + (content.length > 100 ? "..." : "");
+    }
+
+    return {
+      ...doc,
+      content,
+      snippet,
+      matchCount,
+    };
+  });
+
+  // Sort by relevance (match count, then recency)
+  results.sort((a, b) => {
+    if (a.matchCount !== b.matchCount) {
+      return (b.matchCount || 0) - (a.matchCount || 0);
+    }
+    return (
+      new Date(b.last_updated_at || 0).getTime() -
+      new Date(a.last_updated_at || 0).getTime()
+    );
+  });
+
+  return results;
 }

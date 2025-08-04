@@ -18,6 +18,7 @@ import {
   updateDocument,
 } from "../../api/documentsApi";
 import { useComponentLogger } from "../../hooks/useLogger";
+
 import "./FileTreeView.css";
 
 export interface FileNode {
@@ -224,138 +225,6 @@ export default React.memo(
     const cancelEdit = () => {
       setEditingNode(null);
       setEditValue("");
-    };
-
-    // Helper function to convert Supabase documents to FileNode format
-    const convertSupabaseDocumentsToFileNodes = async (
-      documents: Document[]
-    ): Promise<FileNode[]> => {
-      const convertDocumentToNode = (doc: Document): FileNode => {
-        const isFolder = doc.extension === "folder" || doc.metadata?.isFolder;
-
-        // Only log in development
-        if (process.env.NODE_ENV === "development") {
-          console.log(
-            `Converting document: ${doc.title}, extension: ${doc.extension}, isFolder: ${isFolder}`
-          );
-        }
-
-        return {
-          name: doc.title,
-          path: `/documents/${doc.id}`,
-          type: isFolder ? "directory" : "file",
-          displayName: doc.title,
-          isExpanded: isFolder, // Folders start expanded
-          metadata: {
-            documentId: doc.id,
-            content: doc.content,
-            extension: doc.extension,
-            projectId: doc.project_id,
-            parentId: doc.parent_id,
-            createdAt: doc.created_at,
-            lastUpdatedAt: doc.last_updated_at,
-            isFolder,
-          },
-        };
-      };
-
-      // Build tree structure from flat documents
-      const buildTree = (parentId: string | null = null): FileNode[] => {
-        const children = documents.filter((doc) => doc.parent_id === parentId);
-
-        // Only log in development
-        if (process.env.NODE_ENV === "development") {
-          console.log(
-            `Building tree for parentId: ${parentId}, found ${children.length} children`
-          );
-        }
-
-        const nodes = children
-          .map((doc) => {
-            // Only log in development
-            if (process.env.NODE_ENV === "development") {
-              console.log(
-                `Processing document: ${doc.title}, extension: ${doc.extension}, parentId: ${doc.parent_id}`
-              );
-            }
-
-            const node = convertDocumentToNode(doc);
-            const childNodes = buildTree(doc.id);
-
-            // Only log in development
-            if (process.env.NODE_ENV === "development") {
-              console.log(
-                `Document ${doc.title} has ${childNodes.length} children:`,
-                childNodes.map((child) => child.name)
-              );
-            }
-
-            // If it has children, add them
-            if (childNodes.length > 0) {
-              node.children = childNodes;
-              node.type = "directory";
-              node.isExpanded = true;
-              // Only log in development
-              if (process.env.NODE_ENV === "development") {
-                console.log(
-                  `Document ${doc.title} has ${childNodes.length} children, set as directory`
-                );
-              }
-            }
-
-            // If it's a folder document (extension === "folder"), always treat as directory
-            if (doc.extension === "folder" || doc.metadata?.isFolder) {
-              node.type = "directory";
-              node.isExpanded = true;
-              // Only log in development
-              if (process.env.NODE_ENV === "development") {
-                console.log(
-                  `Document ${doc.title} is a folder document, set as directory`
-                );
-              }
-            }
-
-            // Skip empty folders if hideEmptyFolders is true, but only if it's not a folder document
-            if (
-              hideEmptyFolders &&
-              node.type === "directory" &&
-              doc.extension !== "folder" &&
-              !doc.metadata?.isFolder
-            ) {
-              if (!node.children || node.children.length === 0) {
-                // Only log in development
-                if (process.env.NODE_ENV === "development") {
-                  console.log(`Skipping empty folder: ${doc.title}`);
-                }
-                return null;
-              }
-            }
-
-            // Only log in development
-            if (process.env.NODE_ENV === "development") {
-              console.log(
-                `Final node for ${doc.title}: type=${node.type}, isExpanded=${node.isExpanded}, children=${node.children?.length || 0}`
-              );
-            }
-            return node;
-          })
-          .filter(Boolean) as FileNode[];
-
-        // Sort nodes: folders first, then files, both alphabetically
-        return nodes.sort((a: FileNode, b: FileNode) => {
-          // First, sort by type: directories first, then files
-          if (a.type === "directory" && b.type === "file") {
-            return -1;
-          }
-          if (a.type === "file" && b.type === "directory") {
-            return 1;
-          }
-          // If both are the same type, sort alphabetically by displayName
-          return a.displayName.localeCompare(b.displayName);
-        });
-      };
-
-      return buildTree();
     };
 
     // Handle creating new document
@@ -584,7 +453,7 @@ export default React.memo(
         ) {
           await updateDocument({
             id: draggedNode.metadata.documentId,
-            parent_id: newParentId || null,
+            parent_id: newParentId || undefined,
           });
 
           console.log(
@@ -742,7 +611,6 @@ export default React.memo(
         if (action === "delete") {
           // Trigger a re-fetch of the tree data
           const currentInstance = instance;
-          const currentHideEmptyFolders = hideEmptyFolders;
 
           const fetchFileTree = async () => {
             try {
@@ -760,79 +628,6 @@ export default React.memo(
                     });
 
                     // Re-use the existing conversion logic
-                    const convertSupabaseDocumentsToFileNodes = async (
-                      documents: Document[]
-                    ): Promise<FileNode[]> => {
-                      const convertDocumentToNode = (
-                        doc: Document
-                      ): FileNode => {
-                        const isFolder =
-                          doc.extension === "folder" || doc.metadata?.isFolder;
-                        return {
-                          name: doc.title,
-                          path: `/documents/${doc.id}`,
-                          type: isFolder ? "directory" : "file",
-                          displayName: doc.title,
-                          isExpanded: isFolder,
-                          metadata: {
-                            documentId: doc.id,
-                            content: doc.content,
-                            extension: doc.extension,
-                            projectId: doc.project_id,
-                            parentId: doc.parent_id,
-                            createdAt: doc.created_at,
-                            lastUpdatedAt: doc.last_updated_at,
-                            isFolder,
-                          },
-                        };
-                      };
-
-                      const buildTree = (
-                        parentId: string | null = null
-                      ): FileNode[] => {
-                        const children = documents.filter(
-                          (doc) => doc.parent_id === parentId
-                        );
-                        return children
-                          .map((doc) => {
-                            const node = convertDocumentToNode(doc);
-                            const childNodes = buildTree(doc.id);
-
-                            if (childNodes.length > 0) {
-                              node.children = childNodes;
-                              node.type = "directory";
-                              node.isExpanded = true;
-                            }
-
-                            if (
-                              doc.extension === "folder" ||
-                              doc.metadata?.isFolder
-                            ) {
-                              node.type = "directory";
-                              node.isExpanded = true;
-                            }
-
-                            if (
-                              currentHideEmptyFolders &&
-                              node.type === "directory" &&
-                              doc.extension !== "folder" &&
-                              !doc.metadata?.isFolder
-                            ) {
-                              if (
-                                !node.children ||
-                                node.children.length === 0
-                              ) {
-                                return null;
-                              }
-                            }
-
-                            return node;
-                          })
-                          .filter(Boolean) as FileNode[];
-                      };
-
-                      return buildTree();
-                    };
 
                     treeData =
                       await convertSupabaseDocumentsToFileNodes(documents);
@@ -866,7 +661,7 @@ export default React.memo(
     };
 
     // Close context menu when clicking outside
-    const handleClickOutside = () => {
+    const _handleClickOutside = () => {
       setContextMenu({ visible: false, x: 0, y: 0, node: null });
     };
 
@@ -883,6 +678,141 @@ export default React.memo(
 
     // Remove the 5-second delayed refresh as it's causing performance issues
     // The immediate refreshes after create/rename/delete operations are sufficient
+
+    // Helper function to convert Supabase documents to FileNode format
+    const convertSupabaseDocumentsToFileNodes = React.useCallback(
+      async (documents: Document[]): Promise<FileNode[]> => {
+        const convertDocumentToNode = (doc: Document): FileNode => {
+          const isFolder = doc.extension === "folder" || doc.metadata?.isFolder;
+
+          // Only log in development
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `Converting document: ${doc.title}, extension: ${doc.extension}, isFolder: ${isFolder}`
+            );
+          }
+
+          return {
+            name: doc.title,
+            path: `/documents/${doc.id}`,
+            type: isFolder ? "directory" : "file",
+            displayName: doc.title,
+            isExpanded: isFolder, // Folders start expanded
+            metadata: {
+              documentId: doc.id,
+              content: doc.content,
+              extension: doc.extension,
+              projectId: doc.project_id,
+              parentId: doc.parent_id,
+              createdAt: doc.created_at,
+              lastUpdatedAt: doc.last_updated_at,
+              isFolder,
+            },
+          };
+        };
+
+        // Build tree structure from flat documents
+        const buildTree = (parentId: string | null = null): FileNode[] => {
+          const children = documents.filter(
+            (doc) => doc.parent_id === parentId
+          );
+
+          // Only log in development
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `Building tree for parentId: ${parentId}, found ${children.length} children`
+            );
+          }
+
+          const nodes = children
+            .map((doc) => {
+              // Only log in development
+              if (process.env.NODE_ENV === "development") {
+                console.log(
+                  `Processing document: ${doc.title}, extension: ${doc.extension}, parentId: ${doc.parent_id}`
+                );
+              }
+
+              const node = convertDocumentToNode(doc);
+              const childNodes = buildTree(doc.id);
+
+              // Only log in development
+              if (process.env.NODE_ENV === "development") {
+                console.log(
+                  `Document ${doc.title} has ${childNodes.length} children:`,
+                  childNodes.map((child) => child.name)
+                );
+              }
+
+              // If it has children, add them
+              if (childNodes.length > 0) {
+                node.children = childNodes;
+                node.type = "directory";
+                node.isExpanded = true;
+                // Only log in development
+                if (process.env.NODE_ENV === "development") {
+                  console.log(
+                    `Document ${doc.title} has ${childNodes.length} children, set as directory`
+                  );
+                }
+              }
+
+              // If it's a folder document (extension === "folder"), always treat as directory
+              if (doc.extension === "folder" || doc.metadata?.isFolder) {
+                node.type = "directory";
+                node.isExpanded = true;
+                // Only log in development
+                if (process.env.NODE_ENV === "development") {
+                  console.log(
+                    `Document ${doc.title} is a folder document, set as directory`
+                  );
+                }
+              }
+
+              // Skip empty folders if hideEmptyFolders is true, but only if it's not a folder document
+              if (
+                hideEmptyFolders &&
+                node.type === "directory" &&
+                doc.extension !== "folder" &&
+                !doc.metadata?.isFolder
+              ) {
+                if (!node.children || node.children.length === 0) {
+                  // Only log in development
+                  if (process.env.NODE_ENV === "development") {
+                    console.log(`Skipping empty folder: ${doc.title}`);
+                  }
+                  return null;
+                }
+              }
+
+              // Only log in development
+              if (process.env.NODE_ENV === "development") {
+                console.log(
+                  `Final node for ${doc.title}: type=${node.type}, isExpanded=${node.isExpanded}, children=${node.children?.length || 0}`
+                );
+              }
+              return node;
+            })
+            .filter(Boolean) as FileNode[];
+
+          // Sort nodes: folders first, then files, both alphabetically
+          return nodes.sort((a: FileNode, b: FileNode) => {
+            // First, sort by type: directories first, then files
+            if (a.type === "directory" && b.type === "file") {
+              return -1;
+            }
+            if (a.type === "file" && b.type === "directory") {
+              return 1;
+            }
+            // If both are the same type, sort alphabetically by displayName
+            return a.displayName.localeCompare(b.displayName);
+          });
+        };
+
+        return buildTree();
+      },
+      [hideEmptyFolders]
+    );
 
     // Fetch the file tree structure based on data source
     useEffect(() => {
@@ -1017,7 +947,7 @@ export default React.memo(
       // Helper function to convert structure to FileNode format
       const convertStructureToFileNodes = async (
         structure: any,
-        basePath: string
+        _basePath: string
       ): Promise<FileNode[]> => {
         if (!structure.children) return [];
 
@@ -1155,7 +1085,7 @@ export default React.memo(
       };
 
       fetchFileTree();
-    }, [instance, log, hideEmptyFolders]);
+    }, [instance, log, hideEmptyFolders, convertSupabaseDocumentsToFileNodes]);
 
     // Filter tree based on search term and empty folder preference
     useEffect(() => {
