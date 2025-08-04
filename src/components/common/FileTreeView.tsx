@@ -12,7 +12,11 @@ import {
   Trash,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { Document, listDocuments } from "../../api/documentsApi";
+import {
+  Document,
+  listDocuments,
+  updateDocument,
+} from "../../api/documentsApi";
 import { useComponentLogger } from "../../hooks/useLogger";
 import "./FileTreeView.css";
 
@@ -111,6 +115,19 @@ export default React.memo(
       x: 0,
       y: 0,
       node: null,
+    });
+
+    // State for drag and drop
+    const [dragState, setDragState] = useState<{
+      isDragging: boolean;
+      draggedNode: FileNode | null;
+      dropTarget: FileNode | null;
+      dropPosition: "before" | "after" | "inside" | null;
+    }>({
+      isDragging: false,
+      draggedNode: null,
+      dropTarget: null,
+      dropPosition: null,
     });
 
     // State for inline editing
@@ -442,6 +459,171 @@ export default React.memo(
         x: event.clientX,
         y: event.clientY,
         node,
+      });
+    };
+
+    // Handle drag start
+    const handleDragStart = (event: React.DragEvent, node: FileNode) => {
+      if (readOnly) {
+        event.preventDefault();
+        return;
+      }
+
+      setDragState({
+        isDragging: true,
+        draggedNode: node,
+        dropTarget: null,
+        dropPosition: null,
+      });
+
+      // Set drag data
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", node.path);
+    };
+
+    // Handle drag over
+    const handleDragOver = (event: React.DragEvent, node: FileNode) => {
+      if (readOnly || !dragState.isDragging || !dragState.draggedNode) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+
+      // Don't allow dropping on itself or its children
+      if (
+        dragState.draggedNode.path === node.path ||
+        node.path.startsWith(dragState.draggedNode.path + "/")
+      ) {
+        return;
+      }
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const y = event.clientY - rect.top;
+      const height = rect.height;
+
+      let dropPosition: "before" | "after" | "inside" = "inside";
+
+      if (node.type === "directory") {
+        // For directories, allow dropping inside, before, or after
+        if (y < height * 0.25) {
+          dropPosition = "before";
+        } else if (y > height * 0.75) {
+          dropPosition = "after";
+        } else {
+          dropPosition = "inside";
+        }
+      } else {
+        // For files, only allow before or after
+        if (y < height * 0.5) {
+          dropPosition = "before";
+        } else {
+          dropPosition = "after";
+        }
+      }
+
+      setDragState((prev) => ({
+        ...prev,
+        dropTarget: node,
+        dropPosition,
+      }));
+    };
+
+    // Handle drag leave
+    const handleDragLeave = (event: React.DragEvent) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+        setDragState((prev) => ({
+          ...prev,
+          dropTarget: null,
+          dropPosition: null,
+        }));
+      }
+    };
+
+    // Handle drop
+    const handleDrop = async (event: React.DragEvent, targetNode: FileNode) => {
+      event.preventDefault();
+
+      if (readOnly || !dragState.isDragging || !dragState.draggedNode) {
+        return;
+      }
+
+      const { draggedNode, dropPosition } = dragState;
+
+      // Reset drag state
+      setDragState({
+        isDragging: false,
+        draggedNode: null,
+        dropTarget: null,
+        dropPosition: null,
+      });
+
+      // Don't allow dropping on itself or its children
+      if (
+        draggedNode.path === targetNode.path ||
+        targetNode.path.startsWith(draggedNode.path + "/")
+      ) {
+        return;
+      }
+
+      try {
+        let newParentId: string | undefined;
+
+        if (dropPosition === "inside" && targetNode.type === "directory") {
+          // Drop inside directory
+          newParentId = targetNode.metadata?.documentId;
+        } else {
+          // Drop before/after - use the target's parent
+          newParentId = targetNode.metadata?.parentId;
+        }
+
+        // For Supabase data sources, call the API directly to update the parent_id
+        if (
+          instance.dataSource.type === "supabase" &&
+          draggedNode.metadata?.documentId
+        ) {
+          await updateDocument({
+            id: draggedNode.metadata.documentId,
+            parent_id: newParentId || null,
+          });
+
+          console.log(
+            `Moved document ${draggedNode.metadata.documentId} to new parent: ${newParentId}`
+          );
+
+          // Refresh the tree by re-fetching documents
+          const documents = await listDocuments({
+            userId: instance.dataSource.config.userId,
+            projectId: instance.dataSource.config.projectId,
+          });
+
+          console.log("Fetched documents after move:", documents.length);
+          const treeData = await convertSupabaseDocumentsToFileNodes(documents);
+          setFileTree(treeData);
+        } else if (instance.onRenameNode) {
+          // Fallback to the rename function for other data sources
+          await instance.onRenameNode(
+            draggedNode.path,
+            draggedNode.displayName,
+            { ...draggedNode.metadata, parentId: newParentId }
+          );
+
+          console.log(
+            `Moved ${draggedNode.path} to new parent: ${newParentId}`
+          );
+        }
+      } catch (error) {
+        console.error("Error moving file/folder:", error);
+      }
+    };
+
+    // Handle drag end
+    const handleDragEnd = () => {
+      setDragState({
+        isDragging: false,
+        draggedNode: null,
+        dropTarget: null,
+        dropPosition: null,
       });
     };
 
@@ -1184,13 +1366,23 @@ export default React.memo(
       return (
         <div key={node.path}>
           <div
-            className={`file-tree-node ${isSelected ? "selected" : ""} ${isContextMenuTarget ? "context-menu-target" : ""}`}
+            className={`file-tree-node ${isSelected ? "selected" : ""} ${isContextMenuTarget ? "context-menu-target" : ""} ${
+              dragState.dropTarget?.path === node.path
+                ? `drop-target drop-${dragState.dropPosition}`
+                : ""
+            } ${dragState.draggedNode?.path === node.path ? "dragging" : ""}`}
             style={{
               paddingLeft: `${depth * 20}px`,
               color: isSelected
                 ? getColor(theme.colors, "textInverse")
                 : getColor(theme.colors, "text"),
             }}
+            draggable={!readOnly}
+            onDragStart={(event) => handleDragStart(event, node)}
+            onDragOver={(event) => handleDragOver(event, node)}
+            onDragLeave={handleDragLeave}
+            onDrop={(event) => handleDrop(event, node)}
+            onDragEnd={handleDragEnd}
             onClick={() => {
               console.log("File tree node clicked:", node);
               console.log("onFileSelect available:", !!onFileSelect);
