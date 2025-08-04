@@ -13,6 +13,7 @@ import { Download, Eye, EyeOff, FileText, Upload } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createDocument,
+  deleteDocument,
   getDocument,
   updateDocument,
 } from "../../api/documentsApi";
@@ -302,8 +303,35 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           throw error;
         }
       },
+      onDeleteNode: async (
+        filePath: string,
+        metadata?: Record<string, any>
+      ) => {
+        const documentId = metadata?.documentId;
+        if (!documentId) {
+          console.error("No document ID found in metadata");
+          return;
+        }
+
+        try {
+          await deleteDocument(documentId);
+          console.log("Document/folder deleted:", documentId);
+
+          // If we're currently editing the deleted document, clear the editor
+          if (currentDocumentId === documentId) {
+            setContent(defaultMarkdownContent);
+            setCurrentDocumentId(null);
+            setSelectedFile(null);
+          }
+
+          // The tree will refresh automatically when the parent component re-renders
+        } catch (error) {
+          console.error("Error deleting document/folder:", error);
+          throw error;
+        }
+      },
     }),
-    [userId, projectId]
+    [userId, projectId, content, currentDocumentId]
   );
 
   // Create files object for Sandpack with proper theme integration

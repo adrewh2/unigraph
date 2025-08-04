@@ -8,6 +8,7 @@ import {
   FolderOpen,
   FolderPlus,
   Search,
+  Trash,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Document, listDocuments } from "../../api/documentsApi";
@@ -50,6 +51,10 @@ export interface FileTreeInstance {
   onFileSelect?: (filePath: string, metadata?: Record<string, any>) => void;
   onCreateDocument?: (title: string, parentId?: string) => Promise<void>;
   onCreateFolder?: (title: string, parentId?: string) => Promise<void>;
+  onDeleteNode?: (
+    path: string,
+    metadata?: Record<string, any>
+  ) => Promise<void>;
 }
 
 export interface FileTreeViewProps {
@@ -137,34 +142,56 @@ export default function FileTreeView({
   const handleContextMenu = (event: React.MouseEvent, node: FileNode) => {
     event.preventDefault();
 
-    // Only show context menu for directories (folders)
-    if (node.type === "directory") {
-      setContextMenu({
-        visible: true,
-        x: event.clientX,
-        y: event.clientY,
-        node,
-      });
-    }
+    // Show context menu for all nodes (files and folders)
+    setContextMenu({
+      visible: true,
+      x: event.clientX,
+      y: event.clientY,
+      node,
+    });
   };
 
   // Handle context menu item click
-  const handleContextMenuAction = async (action: "document" | "folder") => {
+  const handleContextMenuAction = async (
+    action: "document" | "folder" | "delete"
+  ) => {
     if (!contextMenu.node) return;
 
     const parentId = contextMenu.node.metadata?.documentId;
-    const title = prompt(`Enter ${action} name:`);
-    if (!title) return;
+    let title: string | null = null;
+
+    if (action === "delete") {
+      const nodeName = contextMenu.node.displayName;
+      const nodeType =
+        contextMenu.node.type === "directory" ? "folder" : "file";
+      const confirmMessage = `Are you sure you want to delete the ${nodeType} "${nodeName}"? This action cannot be undone.`;
+
+      if (!confirm(confirmMessage)) {
+        setContextMenu({ visible: false, x: 0, y: 0, node: null });
+        return;
+      }
+    } else {
+      title = prompt(`Enter ${action} name:`);
+      if (!title) return;
+    }
 
     setIsCreating(true);
     try {
       if (action === "document" && instance.onCreateDocument) {
-        await instance.onCreateDocument(title, parentId);
+        await instance.onCreateDocument(title!, parentId);
       } else if (action === "folder" && instance.onCreateFolder) {
-        await instance.onCreateFolder(title, parentId);
+        await instance.onCreateFolder(title!, parentId);
+      } else if (action === "delete" && instance.onDeleteNode) {
+        await instance.onDeleteNode(
+          contextMenu.node.path,
+          contextMenu.node.metadata
+        );
       }
     } catch (error) {
-      console.error(`Error creating ${action}:`, error);
+      console.error(
+        `Error ${action === "delete" ? "deleting" : "creating"} ${action}:`,
+        error
+      );
     } finally {
       setIsCreating(false);
       setContextMenu({ visible: false, x: 0, y: 0, node: null });
@@ -935,10 +962,81 @@ export default function FileTreeView({
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Show create options only for directories */}
+          {contextMenu.node?.type === "directory" && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleContextMenuAction("document");
+                }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: getColor(theme.colors, "text"),
+                  fontSize: "13px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = getColor(
+                    theme.colors,
+                    "backgroundSecondary"
+                  );
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                <FilePlus size={16} />
+                New Document
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleContextMenuAction("folder");
+                }}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  textAlign: "left",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: getColor(theme.colors, "text"),
+                  fontSize: "13px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = getColor(
+                    theme.colors,
+                    "backgroundSecondary"
+                  );
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                <FolderPlus size={16} />
+                New Folder
+              </button>
+            </>
+          )}
+
+          {/* Show delete option for all nodes */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleContextMenuAction("document");
+              handleContextMenuAction("delete");
             }}
             style={{
               width: "100%",
@@ -947,7 +1045,7 @@ export default function FileTreeView({
               backgroundColor: "transparent",
               border: "none",
               cursor: "pointer",
-              color: getColor(theme.colors, "text"),
+              color: getColor(theme.colors, "error"),
               fontSize: "13px",
               display: "flex",
               alignItems: "center",
@@ -964,40 +1062,8 @@ export default function FileTreeView({
               e.currentTarget.style.backgroundColor = "transparent";
             }}
           >
-            <FilePlus size={16} />
-            New Document
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleContextMenuAction("folder");
-            }}
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              textAlign: "left",
-              backgroundColor: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: getColor(theme.colors, "text"),
-              fontSize: "13px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              transition: "background-color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = getColor(
-                theme.colors,
-                "backgroundSecondary"
-              );
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-            }}
-          >
-            <FolderPlus size={16} />
-            New Folder
+            <Trash size={16} />
+            Delete
           </button>
         </div>
       )}
