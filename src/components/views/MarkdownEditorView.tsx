@@ -169,11 +169,7 @@ const MarkdownEditorContent: React.FC<{
 
   // Determine Monaco theme based on app shell background color luminance
   const getMonacoTheme = () => {
-    console.log("getMonacoTheme called!"); // Debug: Check if function is called
     const backgroundColor = getColor(theme.colors, "background");
-
-    // Debug: Log the background color to see what we're working with
-    console.log("Background color:", backgroundColor);
 
     // Function to calculate luminance from a color string
     const getLuminance = (color: string): number => {
@@ -183,7 +179,6 @@ const MarkdownEditorContent: React.FC<{
       );
       if (rgbaMatch) {
         const [, r, g, b] = rgbaMatch.map(Number);
-        console.log("Parsed RGB:", { r, g, b });
         return calculateLuminance(r, g, b);
       }
 
@@ -193,7 +188,6 @@ const MarkdownEditorContent: React.FC<{
         const r = parseInt(hexMatch[1], 16);
         const g = parseInt(hexMatch[2], 16);
         const b = parseInt(hexMatch[3], 16);
-        console.log("Parsed hex RGB:", { r, g, b });
         return calculateLuminance(r, g, b);
       }
 
@@ -203,12 +197,10 @@ const MarkdownEditorContent: React.FC<{
         const [, r, g, b] = shortHexMatch
           .slice(1)
           .map((hex) => parseInt(hex + hex, 16));
-        console.log("Parsed short hex RGB:", { r, g, b });
         return calculateLuminance(r, g, b);
       }
 
       // Default to dark if we can't parse the color
-      console.warn("Could not parse color:", color);
       return 0;
     };
 
@@ -218,26 +210,14 @@ const MarkdownEditorContent: React.FC<{
         c = c / 255;
         return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
       });
-      const luminance = 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-      console.log("Calculated luminance:", luminance);
-      return luminance;
+      return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
     };
 
     const luminance = getLuminance(backgroundColor);
 
     // Use a lower threshold (0.1) to better detect dark themes
     // Most dark themes have very low luminance (< 0.1)
-    const isDark = luminance < 0.1;
-    const monacoTheme = isDark ? "vs-dark" : "vs";
-
-    console.log(
-      "Monaco theme chosen:",
-      monacoTheme,
-      "for luminance:",
-      luminance
-    );
-
-    return monacoTheme;
+    return luminance < 0.1 ? "vs-dark" : "vs";
   };
 
   // Cleanup timeout on unmount
@@ -339,15 +319,7 @@ const MarkdownEditorContent: React.FC<{
           language="markdown"
           value={localContent}
           onChange={handleChange}
-          theme={(() => {
-            console.log("Theme calculation started in Editor!");
-            try {
-              return getMonacoTheme();
-            } catch (error) {
-              console.error("Error in getMonacoTheme:", error);
-              return "vs-dark";
-            }
-          })()}
+          theme={getMonacoTheme()}
           options={{
             minimap: { enabled: false },
             lineNumbers: "on",
@@ -374,13 +346,20 @@ const MarkdownEditorContent: React.FC<{
       {showPreview && (
         <>
           <Divider orientation="vertical" flexItem />
-          <Box sx={{ flex: 1, overflow: "hidden" }}>
+          <div
+            className="documentation-content"
+            style={{
+              flex: 1,
+              overflow: "auto",
+              height: "100%",
+            }}
+          >
             <MarkdownViewer
               filename={`${selectedFile || "document"}.md`}
               overrideMarkdown={content}
               showRawToggle={false}
             />
-          </Box>
+          </div>
         </>
       )}
     </Box>
