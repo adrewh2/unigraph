@@ -27,12 +27,12 @@ import DevToolsView from "./DevToolsView";
 import DocumentationView from "./DocumentationView";
 import EdgeLegendView from "./EdgeLegendView";
 import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
+import MarkdownEditorView from "./MarkdownEditorView";
 import MonacoEditorView from "./MonacoEditorView";
 import NodeLegendView from "./NodeLegendView";
 import ReactFlowPanelV2 from "./ReactFlowPanelV2";
 import SandpackEditorWithFileTree from "./SandpackEditorWithFileTree";
 import SystemMonitorView from "./SystemMonitorView";
-import MarkdownEditorView from "./MarkdownEditorView";
 import { VIEW_DEFINITIONS } from "./viewDefinitions";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel

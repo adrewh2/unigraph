@@ -1,3 +1,4 @@
+import { getColor, useTheme } from "@aesgraph/app-shell";
 import {
   SandpackCodeEditor,
   SandpackPreview,
@@ -6,10 +7,9 @@ import {
   useSandpack,
 } from "@codesandbox/sandpack-react";
 import { nightOwl } from "@codesandbox/sandpack-themes";
-import { getColor, useTheme } from "@aesgraph/app-shell";
-import { Box, Divider, Typography, IconButton, Tooltip } from "@mui/material";
-import { FileText, Eye, EyeOff, Download, Upload } from "lucide-react";
-import React, { useEffect, useState, useCallback } from "react";
+import { Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
+import { Download, Eye, EyeOff, FileText, Upload } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
 import "../common/MarkdownViewer.css";
 
 interface MarkdownEditorViewProps {
@@ -75,15 +75,15 @@ const MarkdownEditorContent: React.FC<{
   onSave: () => void;
   onLoad: () => void;
   theme: any;
-}> = ({ 
-  selectedFile, 
-  content, 
-  onContentUpdate, 
-  showPreview, 
-  onTogglePreview, 
-  onSave, 
+}> = ({
+  selectedFile,
+  content,
+  onContentUpdate,
+  showPreview,
+  onTogglePreview,
+  onSave,
   onLoad,
-  theme
+  theme,
 }) => {
   const { sandpack } = useSandpack();
   const { code } = useActiveCode();
@@ -116,11 +116,11 @@ const MarkdownEditorContent: React.FC<{
           <IconButton
             size="small"
             onClick={onTogglePreview}
-            sx={{ 
+            sx={{
               color: getColor(theme.colors, "text"),
-              '&:hover': {
+              "&:hover": {
                 backgroundColor: getColor(theme.colors, "surfaceHover"),
-              }
+              },
             }}
           >
             {showPreview ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -130,11 +130,11 @@ const MarkdownEditorContent: React.FC<{
           <IconButton
             size="small"
             onClick={onSave}
-            sx={{ 
+            sx={{
               color: getColor(theme.colors, "text"),
-              '&:hover': {
+              "&:hover": {
                 backgroundColor: getColor(theme.colors, "surfaceHover"),
-              }
+              },
             }}
           >
             <Download size={16} />
@@ -144,11 +144,11 @@ const MarkdownEditorContent: React.FC<{
           <IconButton
             size="small"
             onClick={onLoad}
-            sx={{ 
+            sx={{
               color: getColor(theme.colors, "text"),
-              '&:hover': {
+              "&:hover": {
                 backgroundColor: getColor(theme.colors, "surfaceHover"),
-              }
+              },
             }}
           >
             <Upload size={16} />
@@ -165,9 +165,9 @@ const MarkdownEditorContent: React.FC<{
           borderColor: getColor(theme.colors, "border"),
         }}
       >
-        <SandpackCodeEditor 
-          showLineNumbers 
-          showInlineErrors 
+        <SandpackCodeEditor
+          showLineNumbers
+          showInlineErrors
           wrapContent
           showTabs={false}
         />
@@ -198,6 +198,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   const { theme } = useTheme();
   const [content, setContent] = useState<string>(initialContent);
   const [showPreview, setShowPreview] = useState<boolean>(_showPreview);
+  const [previewToggleCount, setPreviewToggleCount] = useState<number>(0);
 
   // Create files object for Sandpack with proper theme integration
   const files = {
@@ -331,7 +332,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         // Get the markdown content from the editor
-        const markdownContent = \`${content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+        const markdownContent = \`${content.replace(/`/g, "\\`").replace(/\$/g, "\\$")}\`;
         
         // Convert markdown to HTML
         const htmlContent = marked.parse(markdownContent);
@@ -351,7 +352,12 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   }, []);
 
   const handleTogglePreview = useCallback(() => {
-    setShowPreview(prev => !prev);
+    setShowPreview((prev) => {
+      const newValue = !prev;
+      // Increment toggle count to force re-render
+      setPreviewToggleCount((count) => count + 1);
+      return newValue;
+    });
   }, []);
 
   const handleSave = useCallback(() => {
@@ -359,9 +365,9 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       onSave(content);
     } else {
       // Default save behavior - download file
-      const blob = new Blob([content], { type: 'text/markdown' });
+      const blob = new Blob([content], { type: "text/markdown" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
@@ -377,9 +383,9 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       setContent(loadedContent);
     } else {
       // Default load behavior - open file input
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.md,.markdown,.txt';
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".md,.markdown,.txt";
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
@@ -443,20 +449,23 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
           backgroundColor: getColor(theme.colors, "surface"),
         }}
       >
-        <FileText size={16} style={{ marginRight: 8, color: getColor(theme.colors, "text") }} />
-        <Typography 
-          variant="body2" 
-          sx={{ 
+        <FileText
+          size={16}
+          style={{ marginRight: 8, color: getColor(theme.colors, "text") }}
+        />
+        <Typography
+          variant="body2"
+          sx={{
             flex: 1,
-            color: getColor(theme.colors, "text")
+            color: getColor(theme.colors, "text"),
           }}
         >
           {filename}
         </Typography>
-        <Typography 
-          variant="caption" 
-          sx={{ 
-            color: getColor(theme.colors, "textSecondary")
+        <Typography
+          variant="caption"
+          sx={{
+            color: getColor(theme.colors, "textSecondary"),
           }}
         >
           Markdown Editor
@@ -466,6 +475,7 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
       {/* Editor and Preview */}
       <Box sx={{ flex: 1, height: 0 }}>
         <SandpackProvider
+          key={`sandpack-${showPreview}-${previewToggleCount}`}
           template="static"
           files={files}
           theme={nightOwl}
@@ -491,4 +501,4 @@ export const MarkdownEditorView: React.FC<MarkdownEditorViewProps> = ({
   );
 };
 
-export default MarkdownEditorView; 
+export default MarkdownEditorView;
