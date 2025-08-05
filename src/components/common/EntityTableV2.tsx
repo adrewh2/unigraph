@@ -1048,7 +1048,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         <button
           onClick={handleDelete}
           style={{
-            background: theme.colors.surface,
+            background: "transparent",
             color: theme.colors.error,
             border: "none",
             borderRadius: "50%",
@@ -1064,7 +1064,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
             (e.currentTarget.style.background = `${theme.colors.error}20`)
           }
           onMouseLeave={(e) =>
-            (e.currentTarget.style.background = theme.colors.surface)
+            (e.currentTarget.style.background = "transparent")
           }
           title="Delete entity"
         >
