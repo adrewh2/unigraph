@@ -34,48 +34,19 @@ const Terms: React.FC = () => {
             borderBottom: "1px solid #e5e7eb",
           }}
         >
-          <div style={{ position: "relative", marginBottom: "8px" }}>
-            <button
-              onClick={handleBack}
+          <div style={{ textAlign: "center" }}>
+            <h1
               style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                padding: "6px 10px",
-                borderRadius: "4px",
-                border: "1px solid #e5e7eb",
-                background: "#fff",
-                color: "#666",
-                fontWeight: 500,
-                fontSize: "11px",
-                cursor: "pointer",
-                transition: "background 0.15s, border 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#f8f9fa";
-                e.currentTarget.style.borderColor = "#d1d5db";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#fff";
-                e.currentTarget.style.borderColor = "#e5e7eb";
+                marginBottom: "2px",
+                fontWeight: 700,
+                fontSize: "20px",
               }}
             >
-              ← Back
-            </button>
-            <div style={{ textAlign: "center" }}>
-              <h1
-                style={{
-                  marginBottom: "2px",
-                  fontWeight: 700,
-                  fontSize: "20px",
-                }}
-              >
-                Terms of Service
-              </h1>
-              <p style={{ color: "#666", fontSize: "13px", margin: 0 }}>
-                Last updated: {new Date().toLocaleDateString()}
-              </p>
-            </div>
+              Terms of Service
+            </h1>
+            <p style={{ color: "#666", fontSize: "13px", margin: 0 }}>
+              Last updated: {new Date().toLocaleDateString()}
+            </p>
           </div>
         </div>
 
@@ -311,6 +282,43 @@ const Terms: React.FC = () => {
             If you have any questions about these Terms of Service, please
             contact us through the appropriate channels.
           </p>
+
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: "24px",
+              paddingTop: "16px",
+              borderTop: "1px solid #e5e7eb",
+            }}
+          >
+            <button
+              onClick={handleBack}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "6px",
+                border: "1px solid #3b82f6",
+                background: "#3b82f6",
+                color: "#fff",
+                fontWeight: 400,
+                fontSize: "13px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#2563eb";
+                e.currentTarget.style.borderColor = "#2563eb";
+                e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#3b82f6";
+                e.currentTarget.style.borderColor = "#3b82f6";
+                e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+              }}
+            >
+              ← Back to Login
+            </button>
+          </div>
         </div>
       </div>
     </div>
