@@ -1,12 +1,19 @@
 import { useTheme } from "@aesgraph/app-shell";
 import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getWebpage } from "../../api/webpagesApi";
+
+// Global cache to persist content across all tab instances
+const globalContentCache = new Map<
+  string,
+  { html: string; url: string; title: string }
+>();
 
 interface HtmlPageViewerProps {
   resourceId?: string;
   url?: string;
   title?: string;
+  tabId?: string;
   onClose?: () => void;
 }
 
@@ -14,6 +21,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   resourceId,
   url,
   title,
+  tabId,
   onClose,
 }) => {
   const { theme } = useTheme();
@@ -22,48 +30,94 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string>(url || "");
   const [currentTitle, setCurrentTitle] = useState<string>(title || "");
-  const cssInjected = useRef(false);
+  const [loadedResourceId, setLoadedResourceId] = useState<string | null>(null);
 
-  // Get URL parameters if not provided as props
+  // Initialize component from props or URL parameters
   useEffect(() => {
+    // Get resourceId from props or URL parameters
     const urlParams = new URLSearchParams(window.location.search);
+    const resourceIdFromParams = urlParams.get("resourceId");
     const urlFromParams = urlParams.get("url");
     const titleFromParams = urlParams.get("title");
-    const resourceIdFromParams = urlParams.get("resourceId");
 
-    if (urlFromParams && !url) {
-      setCurrentUrl(decodeURIComponent(urlFromParams));
-    }
-
-    if (titleFromParams && !title) {
-      setCurrentTitle(decodeURIComponent(titleFromParams));
-      // Update the title if provided via URL params
-      document.title = decodeURIComponent(titleFromParams);
-    }
-
-    // Use resourceId from URL params if not provided as prop
     const finalResourceId = resourceId || resourceIdFromParams;
-    if (finalResourceId) {
-      fetchWebpageContent(finalResourceId);
+    const finalUrl =
+      url || urlFromParams ? decodeURIComponent(urlFromParams!) : "";
+    const finalTitle =
+      title || titleFromParams ? decodeURIComponent(titleFromParams!) : "";
+
+    // Set initial state
+    setCurrentUrl(finalUrl);
+    setCurrentTitle(finalTitle);
+
+    if (finalTitle) {
+      document.title = finalTitle;
     }
-  }, [resourceId, url, title]);
+
+    console.log("HtmlPageViewer - Debug:", {
+      finalResourceId,
+      hasCached: finalResourceId
+        ? globalContentCache.has(finalResourceId)
+        : false,
+      cacheSize: globalContentCache.size,
+      cacheKeys: Array.from(globalContentCache.keys()),
+      loadedResourceId,
+      html: html ? html.length : 0,
+      tabId,
+    });
+
+    // Always fetch fresh data for now to debug
+    if (finalResourceId && loadedResourceId !== finalResourceId) {
+      console.log("Fetching from server for resourceId:", finalResourceId);
+      fetchWebpageContent(finalResourceId);
+    } else if (!finalResourceId) {
+      setLoading(false);
+    }
+  }, [resourceId, url, title, loadedResourceId]); // Use loadedResourceId instead of html
+
+  // Component lifecycle debugging
+  useEffect(() => {
+    console.log("HtmlPageViewer mounted");
+    return () => {
+      console.log("HtmlPageViewer unmounted");
+      // Reset document title when component unmounts
+      document.title = "Unigraph";
+    };
+  }, []);
 
   const fetchWebpageContent = async (webpageId: string) => {
+    console.log("fetchWebpageContent called with webpageId:", webpageId);
     setLoading(true);
     setError(null);
 
     try {
       const webpage = await getWebpage(webpageId);
+      console.log("getWebpage result:", webpage);
 
-      if (webpage.html_content) {
+      if (webpage && webpage.html_content) {
+        console.log(
+          "Setting content for resourceId:",
+          webpageId,
+          "Content length:",
+          webpage.html_content.length,
+          "URL:",
+          webpage.url
+        );
+
         setHtml(webpage.html_content);
         setCurrentUrl(webpage.url);
         setCurrentTitle(webpage.title || webpage.url);
         document.title = webpage.title || webpage.url;
+        setLoadedResourceId(webpageId); // Mark this resourceId as loaded
       } else {
+        console.log(
+          "No webpage or html_content found for webpageId:",
+          webpageId
+        );
         setError("No HTML content available for this webpage");
       }
     } catch (err) {
+      console.error("Error in fetchWebpageContent:", err);
       setError(
         `Error loading webpage: ${err instanceof Error ? err.message : String(err)}`
       );
@@ -71,37 +125,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       setLoading(false);
     }
   };
-
-  // Legacy external URL fetching (kept for backward compatibility)
-  useEffect(() => {
-    if (!resourceId && currentUrl) {
-      const fetchExternalPage = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-          // Use a CORS proxy to fetch the page content
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(currentUrl)}`;
-          const response = await fetch(proxyUrl);
-          const data = await response.json();
-
-          if (data.contents) {
-            setHtml(data.contents);
-          } else {
-            setError("Failed to load page content");
-          }
-        } catch (err) {
-          setError(
-            `Error loading page: ${err instanceof Error ? err.message : String(err)}`
-          );
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchExternalPage();
-    }
-  }, [currentUrl, resourceId]);
 
   const handleRefresh = () => {
     setCurrentUrl(currentUrl);
@@ -244,44 +267,28 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         </div>
       </div>
 
-      {/* Content - Walled Garden */}
+      {/* Content - Isolated iframe */}
       <div
         style={{
           flex: 1,
-          overflow: "auto",
+          overflow: "hidden",
           padding: "0",
           backgroundColor: "white",
         }}
       >
-        <div
-          style={{
-            width: "100%",
-            minHeight: "100%",
-            backgroundColor: "white",
-            color: "black",
-            fontFamily: "sans-serif",
-            fontSize: "14px",
-            lineHeight: "1.4",
-            margin: "0",
-            padding: "0",
-            position: "relative", // Ensure proper positioning context
-          }}
-        >
-          <div
-            dangerouslySetInnerHTML={{ __html: html }}
+        {html && (
+          <iframe
+            srcDoc={html}
             style={{
               width: "100%",
+              height: "100%",
+              border: "none",
               backgroundColor: "white",
-              color: "black",
-              fontFamily: "sans-serif",
-              fontSize: "14px",
-              lineHeight: "1.4",
-              margin: "0",
-              padding: "0",
-              position: "relative", // Ensure proper positioning context
             }}
+            title={currentTitle || title || "HTML Content"}
+            sandbox="allow-scripts allow-same-origin"
           />
-        </div>
+        )}
       </div>
     </div>
   );
