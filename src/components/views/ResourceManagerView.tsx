@@ -1,5 +1,5 @@
 import { useTheme } from "@aesgraph/app-shell";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
 import {
   checkWebpagesContent,
@@ -35,13 +35,52 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
   }>({});
 
+  // Cache for storing fetched data
+  const [dataCache, setDataCache] = useState<{
+    webpages: Webpage[] | null;
+    annotations: Annotation[] | null;
+    webpageContentAvailability: {
+      [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
+    } | null;
+    lastFetched: number | null;
+  }>({
+    webpages: null,
+    annotations: null,
+    webpageContentAvailability: null,
+    lastFetched: null,
+  });
+
   // Fetch data from Supabase
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(
+    async (forceRefresh = false) => {
       if (!user?.id) return;
+
+      const now = Date.now();
+      const cacheAge = dataCache.lastFetched
+        ? now - dataCache.lastFetched
+        : Infinity;
+      const cacheValid = cacheAge < 30000; // 30 seconds cache validity
+
+      // Use cached data if available and not expired
+      if (
+        !forceRefresh &&
+        dataCache.webpages &&
+        dataCache.annotations &&
+        dataCache.webpageContentAvailability &&
+        cacheValid
+      ) {
+        console.log("Using cached data, age:", cacheAge, "ms");
+        setWebpages(dataCache.webpages);
+        setAnnotations(dataCache.annotations);
+        setWebpageContentAvailability(dataCache.webpageContentAvailability);
+        setLoading(false);
+        return;
+      }
 
       setLoading(true);
       try {
+        console.log("Fetching fresh data from server");
+
         // Fetch webpages (lightweight version without html_content and screenshot_url)
         const webpagesData = await listWebpages({
           userId: user.id,
@@ -52,24 +91,41 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         const webpageIds = webpagesData?.map((w: Webpage) => w.id) || [];
         const contentAvailability = await checkWebpagesContent(webpageIds);
 
-        setWebpages(webpagesData || []);
-        setWebpageContentAvailability(contentAvailability);
-
         // Fetch annotations (lightweight version without image_url)
         const annotationsData = await listAnnotations({
           userId: user.id,
           includeContent: false,
         });
+
+        // Update state
+        setWebpages(webpagesData || []);
         setAnnotations(annotationsData || []);
+        setWebpageContentAvailability(contentAvailability);
+
+        // Update cache
+        setDataCache({
+          webpages: webpagesData || [],
+          annotations: annotationsData || [],
+          webpageContentAvailability: contentAvailability,
+          lastFetched: now,
+        });
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [user?.id, dataCache]
+  );
 
+  useEffect(() => {
     fetchData();
-  }, [user?.id]);
+  }, [fetchData]);
+
+  // Function to force refresh data
+  const refreshData = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
 
   if (!currentSceneGraph) {
     return (
@@ -346,67 +402,103 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           display: "flex",
           borderBottom: `1px solid ${theme.colors.border}`,
           backgroundColor: theme.colors.surface,
+          alignItems: "center",
+          padding: "0 16px",
         }}
       >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              flex: 1,
-              padding: "12px 16px",
-              border: "none",
-              backgroundColor:
-                activeTab === tab.id ? theme.colors.primary : "transparent",
-              color:
-                activeTab === tab.id
-                  ? theme.colors.textInverse
-                  : theme.colors.text,
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: activeTab === tab.id ? "600" : "400",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              if (activeTab !== tab.id) {
-                e.currentTarget.style.backgroundColor =
-                  theme.colors.surfaceHover;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (activeTab !== tab.id) {
-                e.currentTarget.style.backgroundColor = "transparent";
-              }
-            }}
-          >
-            <span style={{ fontSize: "16px" }}>{tab.icon}</span>
-            <span>{tab.label}</span>
-            <span
+        <div style={{ display: "flex", flex: 1 }}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               style={{
+                padding: "8px 12px",
+                border: "none",
                 backgroundColor:
-                  activeTab === tab.id
-                    ? theme.colors.textInverse
-                    : theme.colors.textSecondary,
+                  activeTab === tab.id ? theme.colors.primary : "transparent",
                 color:
                   activeTab === tab.id
-                    ? theme.colors.primary
-                    : theme.colors.surface,
-                borderRadius: "12px",
-                padding: "2px 8px",
-                fontSize: "12px",
+                    ? theme.colors.textInverse
+                    : theme.colors.text,
+                cursor: "pointer",
+                fontSize: "13px",
                 fontWeight: "500",
-                minWidth: "20px",
-                textAlign: "center",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "all 0.2s ease",
+                borderBottom:
+                  activeTab === tab.id
+                    ? `2px solid ${theme.colors.primary}`
+                    : "2px solid transparent",
+                minWidth: "80px",
+                justifyContent: "center",
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.backgroundColor =
+                    theme.colors.surfaceHover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== tab.id) {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }
               }}
             >
-              {tab.container.size()}
-            </span>
-          </button>
-        ))}
+              <span>{tab.label}</span>
+              <span
+                style={{
+                  backgroundColor:
+                    activeTab === tab.id
+                      ? theme.colors.textInverse
+                      : theme.colors.textSecondary,
+                  color:
+                    activeTab === tab.id
+                      ? theme.colors.primary
+                      : theme.colors.surface,
+                  borderRadius: "10px",
+                  padding: "1px 6px",
+                  fontSize: "11px",
+                  fontWeight: "500",
+                  minWidth: "16px",
+                  textAlign: "center",
+                }}
+              >
+                {tab.container.size()}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Refresh Button */}
+        <button
+          onClick={refreshData}
+          style={{
+            padding: "6px 10px",
+            border: `1px solid ${theme.colors.border}`,
+            backgroundColor: theme.colors.surface,
+            color: theme.colors.text,
+            cursor: "pointer",
+            fontSize: "12px",
+            fontWeight: "500",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            borderRadius: "4px",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = theme.colors.surfaceHover;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = theme.colors.surface;
+          }}
+          title="Refresh data from server"
+        >
+          <span style={{ fontSize: "12px" }}>🔄</span>
+          <span>Refresh</span>
+        </button>
       </div>
 
       {/* Tab Content */}
