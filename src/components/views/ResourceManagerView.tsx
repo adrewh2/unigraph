@@ -278,11 +278,11 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       const hasScreenshot = !!(annotationData as any).screenshot_url;
 
       // Determine type based on what fields are present
-      let annotationType = "unknown";
+      let annotationType = "annotation";
       if (selectedText) {
-        annotationType = "text_selection";
+        annotationType = "annotation:text";
       } else if (imageUrl) {
-        annotationType = "image";
+        annotationType = "annotation:image";
       }
 
       // Debug logging to see what's in the data
