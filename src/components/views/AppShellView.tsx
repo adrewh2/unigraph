@@ -790,11 +790,41 @@ const htmlPageViewerView = {
   title: VIEW_DEFINITIONS["html-page-viewer"].title,
   icon: VIEW_DEFINITIONS["html-page-viewer"].icon,
   component: (props: any) => {
-    // Get URL parameters for the HTML Page Viewer
-    const urlParams = new URLSearchParams(window.location.search);
-    const resourceId = urlParams.get("resourceId");
-    const url = urlParams.get("url") || "https://example.com";
-    const title = urlParams.get("title") || "Example Page";
+    // Get parameters from sessionStorage, props, or URL parameters
+    let resourceId = props.resourceId;
+    let url = props.url;
+    let title = props.title;
+
+    // Try to get data from sessionStorage first
+    try {
+      const storedData = sessionStorage.getItem("htmlPageViewerData");
+      if (storedData) {
+        const data = JSON.parse(storedData);
+        resourceId = resourceId || data.resourceId;
+        url = url || data.url;
+        title = title || data.title;
+        // Clear the stored data after reading it
+        sessionStorage.removeItem("htmlPageViewerData");
+      }
+    } catch (error) {
+      console.warn(
+        "Failed to parse htmlPageViewerData from sessionStorage:",
+        error
+      );
+    }
+
+    // Fallback to URL parameters
+    resourceId =
+      resourceId ||
+      new URLSearchParams(window.location.search).get("resourceId");
+    url =
+      url ||
+      new URLSearchParams(window.location.search).get("url") ||
+      "https://example.com";
+    title =
+      title ||
+      new URLSearchParams(window.location.search).get("title") ||
+      "Example Page";
 
     return (
       <HtmlPageViewer

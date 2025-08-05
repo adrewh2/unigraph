@@ -48,35 +48,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     }
   }, [resourceId, url, title]);
 
-  // Function to detect if URL is Wikipedia and load appropriate CSS
-  const loadWikipediaCSS = (url: string) => {
-    if (!url.includes("wikipedia.org")) return;
-
-    if (cssInjected.current) return;
-    cssInjected.current = true;
-
-    const language = url.includes(".wikipedia.org")
-      ? url.split(".")[0].replace("https://", "").replace("http://", "")
-      : "en";
-
-    const cssLinks = [
-      `https://${language}.wikipedia.org/w/load.php?debug=false&lang=${language}&modules=site.styles&only=styles&skin=vector`,
-      `https://${language}.wikipedia.org/w/load.php?debug=false&lang=${language}&modules=mediawiki.legacy.commonPrint,shared|mediawiki.skinning.content.parsoid|mediawiki.skinning.interface|mediawiki.skinning.content&only=styles&skin=vector`,
-      `https://${language}.wikipedia.org/w/load.php?debug=false&lang=${language}&modules=ext.cite.styles|ext.pygments&only=styles&skin=vector`,
-    ];
-
-    cssLinks.forEach((href) => {
-      if (!document.querySelector(`link[data-wiki-css][href="${href}"]`)) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.type = "text/css";
-        link.href = href;
-        link.setAttribute("data-wiki-css", "true");
-        document.head.appendChild(link);
-      }
-    });
-  };
-
   const fetchWebpageContent = async (webpageId: string) => {
     setLoading(true);
     setError(null);
@@ -89,9 +60,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         setCurrentUrl(webpage.url);
         setCurrentTitle(webpage.title || webpage.url);
         document.title = webpage.title || webpage.url;
-
-        // Load Wikipedia CSS if the URL is from Wikipedia
-        loadWikipediaCSS(webpage.url);
       } else {
         setError("No HTML content available for this webpage");
       }
@@ -119,8 +87,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
           if (data.contents) {
             setHtml(data.contents);
-            // Load Wikipedia CSS if the URL is from Wikipedia
-            loadWikipediaCSS(currentUrl);
           } else {
             setError("Failed to load page content");
           }
@@ -193,7 +159,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             style={{
               padding: "8px 16px",
               backgroundColor: theme.colors.primary,
-              color: theme.colors.onPrimary,
+              color: "white",
               border: "none",
               borderRadius: "4px",
               cursor: "pointer",
@@ -212,15 +178,15 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: theme.colors.background,
+        backgroundColor: "white",
       }}
     >
       {/* Header */}
       <div
         style={{
           padding: "12px 16px",
-          borderBottom: `1px solid ${theme.colors.border}`,
-          backgroundColor: theme.colors.surface,
+          borderBottom: "1px solid #e0e0e0",
+          backgroundColor: "#f8f9fa",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -234,7 +200,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: theme.colors.textSecondary,
+              color: "#666",
               padding: "4px",
               borderRadius: "4px",
             }}
@@ -242,7 +208,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           >
             <ArrowLeft size={16} />
           </button>
-          <span style={{ fontSize: "14px", color: theme.colors.textSecondary }}>
+          <span style={{ fontSize: "14px", color: "#666" }}>
             {currentTitle || title || currentUrl}
           </span>
         </div>
@@ -253,7 +219,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: theme.colors.textSecondary,
+              color: "#666",
               padding: "4px",
               borderRadius: "4px",
             }}
@@ -267,7 +233,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: theme.colors.textSecondary,
+              color: "#666",
               padding: "4px",
               borderRadius: "4px",
             }}
@@ -278,21 +244,44 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content - Walled Garden */}
       <div
         style={{
           flex: 1,
           overflow: "auto",
-          padding: "16px",
+          padding: "0",
+          backgroundColor: "white",
         }}
       >
         <div
-          dangerouslySetInnerHTML={{ __html: html }}
           style={{
-            maxWidth: "100%",
-            lineHeight: "1.6",
+            width: "100%",
+            minHeight: "100%",
+            backgroundColor: "white",
+            color: "black",
+            fontFamily: "sans-serif",
+            fontSize: "14px",
+            lineHeight: "1.4",
+            margin: "0",
+            padding: "0",
+            position: "relative", // Ensure proper positioning context
           }}
-        />
+        >
+          <div
+            dangerouslySetInnerHTML={{ __html: html }}
+            style={{
+              width: "100%",
+              backgroundColor: "white",
+              color: "black",
+              fontFamily: "sans-serif",
+              fontSize: "14px",
+              lineHeight: "1.4",
+              margin: "0",
+              padding: "0",
+              position: "relative", // Ensure proper positioning context
+            }}
+          />
+        </div>
       </div>
     </div>
   );

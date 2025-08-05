@@ -200,31 +200,24 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
                   entityData.label || entityData.title || entityData.url;
 
                 if (resourceId) {
-                  // Check if it's a Wikipedia URL
-                  if (url && url.includes("wikipedia.org")) {
-                    // Extract Wikipedia article title from URL
-                    const urlMatch = url.match(
-                      /wikipedia\.org\/wiki\/([^#?]+)/
-                    );
-                    const articleTitle = urlMatch
-                      ? decodeURIComponent(urlMatch[1].replace(/_/g, " "))
-                      : title;
+                  // Store the resource data in sessionStorage for the HTML Page Viewer to access
+                  sessionStorage.setItem(
+                    "htmlPageViewerData",
+                    JSON.stringify({
+                      resourceId: resourceId,
+                      title: title,
+                      url: url,
+                    })
+                  );
 
-                    // Open Wikipedia Article Viewer in a new tab using the app shell
-                    const event = new CustomEvent("add-tab", {
-                      detail: {
-                        viewId: "wikipedia-factor-graph",
-                        panelId: "center",
-                      },
-                    });
-                    document.dispatchEvent(event);
-                  } else {
-                    // Open HTML Page Viewer in a modal for non-Wikipedia URLs
-                    setHtmlPageViewerData({
-                      resourceId,
-                      title,
-                    });
-                  }
+                  // Open HTML Page Viewer in a new tab using the app shell
+                  const event = new CustomEvent("add-tab", {
+                    detail: {
+                      viewId: "html-page-viewer",
+                      panelId: "center",
+                    },
+                  });
+                  document.dispatchEvent(event);
                 }
               }
               handleClose();
