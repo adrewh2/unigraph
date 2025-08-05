@@ -1,7 +1,11 @@
 import { useTheme } from "@aesgraph/app-shell";
 import React, { useEffect, useState } from "react";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
-import { listWebpages, Webpage } from "../../api/webpagesApi";
+import {
+  checkWebpagesContent,
+  listWebpages,
+  Webpage,
+} from "../../api/webpagesApi";
 import { Graph } from "../../core/model/Graph";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
@@ -27,6 +31,9 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [webpages, setWebpages] = useState<Webpage[]>([]);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
+    [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
+  }>({});
 
   // Fetch data from Supabase
   useEffect(() => {
@@ -35,12 +42,24 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
       setLoading(true);
       try {
-        // Fetch webpages
-        const webpagesData = await listWebpages({ userId: user.id });
-        setWebpages(webpagesData || []);
+        // Fetch webpages (lightweight version without html_content and screenshot_url)
+        const webpagesData = await listWebpages({
+          userId: user.id,
+          includeContent: false,
+        });
 
-        // Fetch annotations
-        const annotationsData = await listAnnotations({ userId: user.id });
+        // Check content availability for all webpages
+        const webpageIds = webpagesData?.map((w: Webpage) => w.id) || [];
+        const contentAvailability = await checkWebpagesContent(webpageIds);
+
+        setWebpages(webpagesData || []);
+        setWebpageContentAvailability(contentAvailability);
+
+        // Fetch annotations (lightweight version without image_url)
+        const annotationsData = await listAnnotations({
+          userId: user.id,
+          includeContent: false,
+        });
         setAnnotations(annotationsData || []);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -79,6 +98,8 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const webResourcesContainer = new EntitiesContainer(
     webpages.map((webpage) => {
       // Create a mock entity for webpages that implements the required interface
+      const contentAvailable = webpageContentAvailability[webpage.id];
+
       return {
         getId: () => webpage.id,
         getType: () => "webpage",
@@ -90,8 +111,12 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           type: "webpage",
           url: webpage.url,
           title: webpage.title,
-          html_content: webpage.html_content,
-          screenshot_url: webpage.screenshot_url,
+          html_content: contentAvailable?.hasHtml
+            ? "Available"
+            : "Not available",
+          screenshot_url: contentAvailable?.hasScreenshot
+            ? "Available"
+            : "Not available",
           metadata: webpage.metadata,
           created_at: webpage.created_at,
           last_updated_at: webpage.last_updated_at,
@@ -140,6 +165,11 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       const secondaryComment = (annotationData as any).secondary_comment || "";
       const tags = (annotationData as any).tags || [];
 
+      // Check if heavy content is available (without fetching it)
+      const hasImage = !!(annotationData as any).image_url;
+      const hasHtml = !!(annotationData as any).html_content;
+      const hasScreenshot = !!(annotationData as any).screenshot_url;
+
       // Determine type based on what fields are present
       let annotationType = "unknown";
       if (selectedText) {
@@ -173,8 +203,10 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           comment: comment,
           secondary_comment: secondaryComment,
           selected_text: selectedText,
-          image_url: imageUrl,
+          image_url: hasImage ? "Available" : "",
           page_url: pageUrl,
+          html_content: hasHtml ? "Available" : null,
+          screenshot_url: hasScreenshot ? "Available" : null,
           parent_resource_type: annotation.parent_resource_type,
           parent_resource_id: annotation.parent_resource_id,
           created_at: annotation.created_at,

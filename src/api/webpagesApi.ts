@@ -26,11 +26,18 @@ export async function saveWebpage(webpage: Webpage) {
 export async function listWebpages({
   userId,
   urls,
+  includeContent = false,
 }: {
   userId?: string;
   urls?: string[];
+  includeContent?: boolean;
 } = {}) {
-  let query = supabase.from("webpages").select("*");
+  // Select fields based on includeContent flag
+  const selectFields = includeContent
+    ? "*"
+    : "id, url, user_id, title, metadata, created_at, last_updated_at";
+
+  let query = supabase.from("webpages").select(selectFields);
   if (userId) query = query.eq("user_id", userId);
   if (urls && urls.length > 0) query = query.in("url", urls);
   const { data, error } = await query;
@@ -47,4 +54,62 @@ export async function getWebpage(id: string) {
     .single();
   if (error) throw error;
   return data;
+}
+
+// Get webpage content (html_content and screenshot_url) on demand
+export async function getWebpageContent(id: string) {
+  const { data, error } = await supabase
+    .from("webpages")
+    .select("html_content, screenshot_url")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Get multiple webpages with full content
+export async function getWebpagesWithContent(ids: string[]) {
+  const { data, error } = await supabase
+    .from("webpages")
+    .select("id, html_content, screenshot_url")
+    .in("id", ids);
+  if (error) throw error;
+  return data;
+}
+
+// Check if webpage has heavy content available
+export async function checkWebpageContent(id: string) {
+  const { data, error } = await supabase
+    .from("webpages")
+    .select("html_content, screenshot_url")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+
+  return {
+    hasHtml: !!data?.html_content,
+    hasScreenshot: !!data?.screenshot_url,
+  };
+}
+
+// Check if multiple webpages have heavy content available
+export async function checkWebpagesContent(ids: string[]) {
+  const { data, error } = await supabase
+    .from("webpages")
+    .select("id, html_content, screenshot_url")
+    .in("id", ids);
+  if (error) throw error;
+
+  const results: {
+    [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
+  } = {};
+
+  data?.forEach((webpage) => {
+    results[webpage.id] = {
+      hasHtml: !!webpage.html_content,
+      hasScreenshot: !!webpage.screenshot_url,
+    };
+  });
+
+  return results;
 }
