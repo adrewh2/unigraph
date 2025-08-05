@@ -100,28 +100,79 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       // Create a mock entity for webpages that implements the required interface
       const contentAvailable = webpageContentAvailability[webpage.id];
 
+      // Extract tags from metadata
+      let tags: string[] = [];
+      console.log("Webpage metadata:", webpage.metadata);
+      console.log("Webpage metadata type:", typeof webpage.metadata);
+
+      let metadataObj = webpage.metadata;
+
+      // If metadata is a string, try to parse it as JSON
+      if (typeof metadataObj === "string") {
+        console.log("Metadata is a string, attempting to parse JSON");
+        try {
+          metadataObj = JSON.parse(metadataObj);
+          console.log("Successfully parsed metadata from JSON:", metadataObj);
+        } catch (e) {
+          console.warn("Failed to parse metadata as JSON:", metadataObj);
+          console.warn("Parse error:", e);
+        }
+      } else {
+        console.log("Metadata is not a string, type:", typeof metadataObj);
+      }
+
+      if (metadataObj && typeof metadataObj === "object") {
+        console.log("Metadata object keys:", Object.keys(metadataObj));
+        console.log("Full metadata object:", metadataObj);
+
+        // Try to extract tags from metadata.tags or metadata.tag or metadata.keywords
+        const tagsFromTags = (metadataObj as any).tags;
+        const tagsFromTag = (metadataObj as any).tag;
+        const tagsFromKeywords = (metadataObj as any).keywords;
+
+        console.log("tags from .tags:", tagsFromTags);
+        console.log("tags from .tag:", tagsFromTag);
+        console.log("tags from .keywords:", tagsFromKeywords);
+
+        tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+
+        console.log("Final extracted tags:", tags);
+        console.log("Tags type:", typeof tags);
+        console.log("Is tags array:", Array.isArray(tags));
+
+        // Ensure tags is an array
+        if (!Array.isArray(tags)) {
+          console.log("Tags is not an array, converting to empty array");
+          tags = [];
+        }
+      }
+
       return {
         getId: () => webpage.id,
         getType: () => "webpage",
         getLabel: () => webpage.title || webpage.url,
-        getTags: () => new Set(),
-        getData: () => ({
-          id: webpage.id,
-          label: webpage.title || webpage.url,
-          type: "webpage",
-          url: webpage.url,
-          title: webpage.title,
-          html_content: contentAvailable?.hasHtml
-            ? "Available"
-            : "Not available",
-          screenshot_url: contentAvailable?.hasScreenshot
-            ? "Available"
-            : "Not available",
-          metadata: webpage.metadata,
-          created_at: webpage.created_at,
-          last_updated_at: webpage.last_updated_at,
-          userData: webpage,
-        }),
+        getTags: () => new Set(tags),
+        getData: () => {
+          const data = {
+            id: webpage.id,
+            label: webpage.title || webpage.url,
+            type: "webpage",
+            tags: tags,
+            url: webpage.url,
+            title: webpage.title,
+            html_content: contentAvailable?.hasHtml
+              ? "Available"
+              : "Not available",
+            screenshot_url: contentAvailable?.hasScreenshot
+              ? "Available"
+              : "Not available",
+            metadata: webpage.metadata,
+            created_at: webpage.created_at,
+            last_updated_at: webpage.last_updated_at,
+            userData: webpage,
+          };
+          return data;
+        },
         getEntityType: () => "node",
         getFullyQualifiedId: () => webpage.id,
         setId: () => {},

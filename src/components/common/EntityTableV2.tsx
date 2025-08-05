@@ -1136,8 +1136,21 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         valueGetter: (params: any) => {
           if (!params.data) return "";
           const value = (params.data.getData() as any)[col];
-          if (col === "tags" && value instanceof Set) {
-            return Array.from(value);
+          if (col === "tags") {
+            console.log(
+              "Tags valueGetter - col:",
+              col,
+              "value:",
+              value,
+              "type:",
+              typeof value,
+              "isArray:",
+              Array.isArray(value)
+            );
+            if (value instanceof Set) {
+              return Array.from(value);
+            }
+            return value;
           }
           return formatValue(value);
         },
@@ -1211,18 +1224,41 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
     }
 
     // Default column configuration for other entity types
-    const COLUMN_ORDER = [
-      "label",
-      "type",
-      "tags",
-      "id",
-      "position",
-      "isvisible",
-      "color",
-      "size",
-      "opacity",
-    ];
-    const EXCLUDED_COLUMNS = ["userData"];
+    let COLUMN_ORDER: string[];
+    let EXCLUDED_COLUMNS: string[];
+
+    if (entityType === "web-resources") {
+      // Web resources specific configuration
+      COLUMN_ORDER = [
+        "label",
+        "type",
+        "tags",
+        "url",
+        "html_content",
+        "screenshot_url",
+        "id",
+      ];
+      EXCLUDED_COLUMNS = ["userData", "title"]; // Exclude title since we have label
+      console.log("Web-resources configuration - COLUMN_ORDER:", COLUMN_ORDER);
+      console.log(
+        "Web-resources configuration - EXCLUDED_COLUMNS:",
+        EXCLUDED_COLUMNS
+      );
+    } else {
+      // Default configuration for other entity types
+      COLUMN_ORDER = [
+        "label",
+        "type",
+        "tags",
+        "id",
+        "position",
+        "isvisible",
+        "color",
+        "size",
+        "opacity",
+      ];
+      EXCLUDED_COLUMNS = ["userData"];
+    }
     const allColumns = new Set<string>();
 
     container.forEach((entity) => {
@@ -1233,12 +1269,22 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       });
     });
 
+    if (entityType === "web-resources") {
+      console.log("Web-resources - allColumns:", Array.from(allColumns));
+    }
+
     const orderedColumns = COLUMN_ORDER.filter((col) => allColumns.has(col));
     const remainingColumns = Array.from(allColumns).filter(
       (col) => !COLUMN_ORDER.includes(col)
     );
 
     const finalColumns = [...orderedColumns, ...remainingColumns];
+
+    if (entityType === "web-resources") {
+      console.log("Web-resources - orderedColumns:", orderedColumns);
+      console.log("Web-resources - remainingColumns:", remainingColumns);
+      console.log("Web-resources - finalColumns:", finalColumns);
+    }
 
     // Create the actions column
     const actionsColumn = {
@@ -1316,8 +1362,17 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           console.log(`Column ${col}:`, value, "Type:", typeof value);
         }
 
-        if (col === "tags" && value instanceof Set) {
-          return Array.from(value);
+        if (col === "tags") {
+          console.log(
+            "Tags valueGetter called - value:",
+            value,
+            "type:",
+            typeof value
+          );
+          if (value instanceof Set) {
+            return Array.from(value);
+          }
+          return value;
         }
         return formatValue(value);
       },
