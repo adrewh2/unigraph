@@ -407,6 +407,71 @@ export class MenuConfig {
               debugForceGraph3DCamera(getForceGraph3dInstance());
             },
           },
+          "Print AppShell Workspace Layout": {
+            action: async () => {
+              const { getAllWorkspaces, saveCurrentLayout } =
+                this.callbacks.appShellWorkspaceFunctions || {};
+              if (getAllWorkspaces) {
+                const workspaces = getAllWorkspaces();
+                console.log("=== AppShell Workspace Layout Configuration ===");
+                console.log("Available workspaces:", workspaces);
+                console.log("Current workspace config:", {
+                  leftSidebar: getLeftSidebarConfig(),
+                  rightSidebar: getRightSidebarConfig(),
+                });
+
+                // Get the current workspace layout configuration
+                try {
+                  // Try to get the current workspace data from the app shell
+                  const { getAllWorkspaces, saveCurrentLayout } =
+                    this.callbacks.appShellWorkspaceFunctions || {};
+
+                  if (getAllWorkspaces && saveCurrentLayout) {
+                    const workspaces = getAllWorkspaces();
+                    console.log("=== Available Workspaces ===");
+                    console.log("Workspaces:", workspaces);
+                    console.log("=== End Available Workspaces ===");
+
+                    // Save current workspace layout to a temporary workspace and print it
+                    console.log("=== Saving Current Workspace Layout ===");
+                    const tempWorkspaceName = `temp-workspace-${Date.now()}`;
+                    console.log("Saving current layout as:", tempWorkspaceName);
+
+                    try {
+                      const savedWorkspace =
+                        await saveCurrentLayout(tempWorkspaceName);
+                      console.log(
+                        "=== Current Workspace Layout Data Structure ==="
+                      );
+                      console.log("Saved workspace data:", savedWorkspace);
+                      console.log(
+                        "=== End Current Workspace Layout Data Structure ==="
+                      );
+
+                      // Clean up the temporary workspace
+                      console.log("Cleaning up temporary workspace...");
+                      // Note: We could add a deleteWorkspace function if needed
+                    } catch (saveError) {
+                      console.log(
+                        "Error saving current workspace layout:",
+                        saveError
+                      );
+                    }
+                  } else {
+                    console.log("Workspace functions not available");
+                  }
+                } catch (error) {
+                  console.log("Error accessing workspace layout data:", error);
+                }
+
+                console.log(
+                  "=== End AppShell Workspace Layout Configuration ==="
+                );
+              } else {
+                console.log("AppShell workspace functions not available");
+              }
+            },
+          },
           "Copy SceneGraph as URL": {
             action: () => {
               const sceneGraph = getCurrentSceneGraph();
