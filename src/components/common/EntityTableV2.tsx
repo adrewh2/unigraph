@@ -1078,7 +1078,17 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   const columnDefs = useMemo<ColDef<any>[]>(() => {
     // For annotations, use a simplified column set
     if (entityType === "annotations") {
-      const COLUMN_ORDER = ["label", "type", "tags", "id"];
+      const COLUMN_ORDER = [
+        "label",
+        "type",
+        "tags",
+        "selected_text",
+        "image_url",
+        "page_url",
+        "comment",
+        "secondary_comment",
+        "id",
+      ];
       const EXCLUDED_COLUMNS = [
         "userData",
         "position",
@@ -1296,6 +1306,16 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       valueGetter: (params: any) => {
         if (!params.data) return "";
         const value = (params.data.getData() as any)[col];
+
+        // Debug logging for annotation fields
+        if (
+          col === "selected_text" ||
+          col === "image_url" ||
+          col === "page_url"
+        ) {
+          console.log(`Column ${col}:`, value, "Type:", typeof value);
+        }
+
         if (col === "tags" && value instanceof Set) {
           return Array.from(value);
         }

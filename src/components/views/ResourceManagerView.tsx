@@ -116,29 +116,65 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const annotationsContainer = new EntitiesContainer(
     annotations.map((annotation) => {
       // Create a mock entity for annotations that implements the required interface
-      const annotationData = annotation.data;
+      console.log("Raw annotation from database:", annotation);
+      let annotationData = annotation.data;
+
+      // If data is a string, try to parse it as JSON
+      if (typeof annotationData === "string") {
+        try {
+          annotationData = JSON.parse(annotationData);
+          console.log("Parsed annotation data from JSON:", annotationData);
+        } catch (e) {
+          console.warn(
+            "Failed to parse annotation data as JSON:",
+            annotationData
+          );
+        }
+      }
+
+      // Extract fields directly from the data object since they're stored at the top level
+      const selectedText = (annotationData as any).selected_text || "";
+      const imageUrl = (annotationData as any).image_url || "";
+      const pageUrl = (annotationData as any).page_url || "";
+      const comment = (annotationData as any).comment || "";
+      const secondaryComment = (annotationData as any).secondary_comment || "";
+      const tags = (annotationData as any).tags || [];
+
+      // Determine type based on what fields are present
+      let annotationType = "unknown";
+      if (selectedText) {
+        annotationType = "text_selection";
+      } else if (imageUrl) {
+        annotationType = "image";
+      }
+
+      // Debug logging to see what's in the data
+      console.log("Extracted annotation data:", {
+        id: annotation.id,
+        type: annotationType,
+        selected_text: selectedText,
+        image_url: imageUrl,
+        page_url: pageUrl,
+        comment: comment,
+        secondary_comment: secondaryComment,
+        tags: tags,
+      });
 
       return {
         getId: () => annotation.id,
-        getType: () => annotationData.type,
+        getType: () => annotationType,
         getLabel: () => annotation.title,
-        getTags: () => new Set(annotationData.tags || []),
+        getTags: () => new Set(tags),
         getData: () => ({
           id: annotation.id,
           label: annotation.title,
-          type: annotationData.type,
-          tags: new Set(annotationData.tags || []),
-          comment: annotationData.comment,
-          secondary_comment: annotationData.secondary_comment,
-          selected_text:
-            annotationData.type === "text_selection"
-              ? (annotationData as any).selected_text
-              : undefined,
-          image_url:
-            annotationData.type === "image"
-              ? (annotationData as any).image_url
-              : undefined,
-          page_url: annotationData.page_url,
+          type: annotationType,
+          tags: new Set(tags),
+          comment: comment,
+          secondary_comment: secondaryComment,
+          selected_text: selectedText,
+          image_url: imageUrl,
+          page_url: pageUrl,
           parent_resource_type: annotation.parent_resource_type,
           parent_resource_id: annotation.parent_resource_id,
           created_at: annotation.created_at,
