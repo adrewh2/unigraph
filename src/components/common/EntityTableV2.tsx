@@ -1096,6 +1096,13 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         "color",
         "size",
         "opacity",
+        "page_url",
+        "id",
+        "html_content",
+        "screenshot_url",
+        "parent_resource_id",
+        "created_at",
+        "last_updated_at",
       ];
       const allColumns = new Set<string>();
 
