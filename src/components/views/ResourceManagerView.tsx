@@ -1,9 +1,11 @@
 import { useTheme } from "@aesgraph/app-shell";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Annotation, listAnnotations } from "../../api/annotationsApi";
+import { listWebpages, Webpage } from "../../api/webpagesApi";
 import { Graph } from "../../core/model/Graph";
-import { Node } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
+import { useAuth } from "../../hooks/useAuth";
 import useAppConfigStore from "../../store/appConfigStore";
 import EntityTableV2 from "../common/EntityTableV2";
 
@@ -20,7 +22,35 @@ interface TabData {
 const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const { currentSceneGraph } = useAppConfigStore();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("nodes");
+  const [webpages, setWebpages] = useState<Webpage[]>([]);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch data from Supabase
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user?.id) return;
+
+      setLoading(true);
+      try {
+        // Fetch webpages
+        const webpagesData = await listWebpages({ userId: user.id });
+        setWebpages(webpagesData || []);
+
+        // Fetch annotations
+        const annotationsData = await listAnnotations({ userId: user.id });
+        setAnnotations(annotationsData || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user?.id]);
 
   if (!currentSceneGraph) {
     return (
@@ -45,28 +75,90 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const nodesContainer = graph.getNodes();
   const edgesContainer = graph.getEdges();
 
-  // Filter nodes by type for web resources and annotations
+  // Create containers for Supabase data
   const webResourcesContainer = new EntitiesContainer(
-    nodesContainer
-      .toArray()
-      .filter(
-        (node: Node) =>
-          node.getType() === "webpage" ||
-          node.getType() === "resource" ||
-          node.getType() === "url" ||
-          (node.getData() as any)?.url
-      )
+    webpages.map((webpage) => {
+      // Create a mock entity for webpages that implements the required interface
+      return {
+        getId: () => webpage.id,
+        getType: () => "webpage",
+        getLabel: () => webpage.title || webpage.url,
+        getTags: () => new Set(),
+        getData: () => ({
+          id: webpage.id,
+          label: webpage.title || webpage.url,
+          type: "webpage",
+          url: webpage.url,
+          title: webpage.title,
+          html_content: webpage.html_content,
+          screenshot_url: webpage.screenshot_url,
+          metadata: webpage.metadata,
+          created_at: webpage.created_at,
+          last_updated_at: webpage.last_updated_at,
+          userData: webpage,
+        }),
+        getEntityType: () => "node",
+        getFullyQualifiedId: () => webpage.id,
+        setId: () => {},
+        setData: () => {},
+        setType: () => {},
+        setLabel: () => {},
+        setTags: () => {},
+        addTag: () => {},
+        removeTag: () => {},
+        hasTag: () => false,
+        toJSON: () => "",
+        fromJSON: () => {},
+      } as any;
+    })
   );
 
   const annotationsContainer = new EntitiesContainer(
-    nodesContainer
-      .toArray()
-      .filter(
-        (node: Node) =>
-          node.getType() === "annotation" ||
-          node.getType() === "text_selection" ||
-          node.getType() === "image_annotation"
-      )
+    annotations.map((annotation) => {
+      // Create a mock entity for annotations that implements the required interface
+      const annotationData = annotation.data;
+
+      return {
+        getId: () => annotation.id,
+        getType: () => annotationData.type,
+        getLabel: () => annotation.title,
+        getTags: () => new Set(annotationData.tags || []),
+        getData: () => ({
+          id: annotation.id,
+          label: annotation.title,
+          type: annotationData.type,
+          tags: new Set(annotationData.tags || []),
+          comment: annotationData.comment,
+          secondary_comment: annotationData.secondary_comment,
+          selected_text:
+            annotationData.type === "text_selection"
+              ? (annotationData as any).selected_text
+              : undefined,
+          image_url:
+            annotationData.type === "image"
+              ? (annotationData as any).image_url
+              : undefined,
+          page_url: annotationData.page_url,
+          parent_resource_type: annotation.parent_resource_type,
+          parent_resource_id: annotation.parent_resource_id,
+          created_at: annotation.created_at,
+          last_updated_at: annotation.last_updated_at,
+          userData: annotation,
+        }),
+        getEntityType: () => "node",
+        getFullyQualifiedId: () => annotation.id,
+        setId: () => {},
+        setData: () => {},
+        setType: () => {},
+        setLabel: () => {},
+        setTags: () => {},
+        addTag: () => {},
+        removeTag: () => {},
+        hasTag: () => false,
+        toJSON: () => "",
+        fromJSON: () => {},
+      } as any;
+    })
   );
 
   const tabs: TabData[] = [
@@ -101,6 +193,23 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   ];
 
   const activeTabData = tabs.find((tab) => tab.id === activeTab);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: theme.colors.text,
+        }}
+      >
+        <p>Loading resources...</p>
+      </div>
+    );
+  }
 
   return (
     <div
