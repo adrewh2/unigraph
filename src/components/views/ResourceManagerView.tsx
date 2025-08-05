@@ -1,4 +1,5 @@
 import { useTheme } from "@aesgraph/app-shell";
+import { RefreshCw } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
 import {
@@ -475,29 +476,28 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         <button
           onClick={refreshData}
           style={{
-            padding: "6px 10px",
-            border: `1px solid ${theme.colors.border}`,
-            backgroundColor: theme.colors.surface,
-            color: theme.colors.text,
+            padding: "6px",
+            border: "none",
+            backgroundColor: "transparent",
+            color: theme.colors.textSecondary,
             cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: "500",
             display: "flex",
             alignItems: "center",
-            gap: "4px",
+            justifyContent: "center",
             borderRadius: "4px",
             transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = theme.colors.surfaceHover;
+            e.currentTarget.style.color = theme.colors.text;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = theme.colors.surface;
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = theme.colors.textSecondary;
           }}
           title="Refresh data from server"
         >
-          <span style={{ fontSize: "12px" }}>🔄</span>
-          <span>Refresh</span>
+          <RefreshCw size={16} />
         </button>
       </div>
 
