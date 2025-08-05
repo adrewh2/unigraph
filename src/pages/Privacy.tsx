@@ -68,13 +68,14 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            1. Introduction
+            1. Overview
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            This Privacy Policy describes how Unigraph (&quot;we,&quot;
-            &quot;us,&quot; or &quot;our&quot;) collects, uses, and protects
-            your information when you use our prototype software application.
-            Please read this policy carefully to understand our practices.
+            This Privacy Policy describes how Unigraph handles user information.
+            This is experimental software provided without warranties or
+            guarantees. Unigraph has no intent to invade user privacy and
+            collects only the information necessary for the application to
+            function.
           </p>
 
           <h2
@@ -85,10 +86,10 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            2. Information We Collect
+            2. Information Collection
           </h2>
           <p style={{ marginBottom: "8px", fontSize: "14px" }}>
-            We may collect the following types of information:
+            Unigraph may collect:
           </p>
           <ul
             style={{
@@ -98,23 +99,10 @@ const Privacy: React.FC = () => {
               fontSize: "14px",
             }}
           >
-            <li>
-              <strong>Account Information:</strong> Email address, password
-              (hashed), and authentication data when you create an account
-            </li>
-            <li>
-              <strong>Usage Data:</strong> Information about how you use the
-              application, including graphs, diagrams, and other content you
-              create
-            </li>
-            <li>
-              <strong>Technical Data:</strong> Browser type, operating system,
-              IP address, and other technical information
-            </li>
-            <li>
-              <strong>User Content:</strong> Data you upload, create, or process
-              within the application
-            </li>
+            <li>Account credentials and authentication data</li>
+            <li>Usage data and application interactions</li>
+            <li>Content created within the application</li>
+            <li>Technical information (browser, OS, IP address)</li>
           </ul>
 
           <h2
@@ -125,25 +113,14 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            3. How We Use Your Information
+            3. Use of Information
           </h2>
-          <p style={{ marginBottom: "8px", fontSize: "14px" }}>
-            We use the collected information for:
+          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
+            Information is used solely for application functionality,
+            development, and security purposes. Unigraph does not sell or
+            monetize user data and has no commercial interest in user
+            information beyond service provisioning.
           </p>
-          <ul
-            style={{
-              marginLeft: "16px",
-              marginTop: "4px",
-              marginBottom: "12px",
-              fontSize: "14px",
-            }}
-          >
-            <li>Providing and maintaining the service</li>
-            <li>Improving and developing the application</li>
-            <li>Processing your requests and transactions</li>
-            <li>Communicating with you about the service</li>
-            <li>Ensuring the security and integrity of the application</li>
-          </ul>
 
           <h2
             style={{
@@ -153,7 +130,7 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            4. Data Storage and Security
+            4. Data Security
           </h2>
           <p
             style={{
@@ -166,19 +143,9 @@ const Privacy: React.FC = () => {
               fontSize: "13px",
             }}
           >
-            <strong>IMPORTANT:</strong> This is prototype software. While we
-            implement reasonable security measures, we cannot guarantee the
-            security of your data.
-          </p>
-          <p style={{ marginBottom: "8px", fontSize: "14px" }}>
-            <strong>No Guarantees:</strong> We cannot guarantee that your data
-            will be secure or that unauthorized access will not occur. You use
-            this service at your own risk regarding data security.
-          </p>
-          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            <strong>Data Loss:</strong> As this is experimental software, data
-            loss may occur. We recommend backing up any important data before
-            using the service.
+            <strong>IMPORTANT:</strong> This is prototype software. Unigraph
+            implements reasonable security measures but cannot guarantee data
+            protection. Use at your own risk.
           </p>
 
           <h2
@@ -189,40 +156,12 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            5. Data Sharing and Disclosure
-          </h2>
-          <p style={{ marginBottom: "8px", fontSize: "14px" }}>
-            We do not sell, trade, or otherwise transfer your personal
-            information to third parties, except:
-          </p>
-          <ul
-            style={{
-              marginLeft: "16px",
-              marginTop: "4px",
-              marginBottom: "12px",
-              fontSize: "14px",
-            }}
-          >
-            <li>With your explicit consent</li>
-            <li>To comply with legal obligations</li>
-            <li>To protect our rights and safety</li>
-            <li>In connection with a business transfer or merger</li>
-          </ul>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            6. Third-Party Services
+            5. Data Sharing
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            Our application may integrate with third-party services (such as
-            authentication providers). These services have their own privacy
-            policies, and we are not responsible for their practices.
+            Unigraph does not share personal information with third parties
+            except as required by law or with explicit user consent. No
+            commercial data sharing occurs.
           </p>
 
           <h2
@@ -233,12 +172,12 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            7. Cookies and Tracking
+            6. User Rights
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            We may use cookies and similar technologies to improve your
-            experience. You can control cookie settings through your browser
-            preferences.
+            Users may request access to, correction of, or deletion of their
+            data. Contact Unigraph through appropriate channels for such
+            requests.
           </p>
 
           <h2
@@ -249,40 +188,11 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            8. Your Rights and Choices
-          </h2>
-          <p style={{ marginBottom: "8px", fontSize: "14px" }}>
-            You have the right to:
-          </p>
-          <ul
-            style={{
-              marginLeft: "16px",
-              marginTop: "4px",
-              marginBottom: "12px",
-              fontSize: "14px",
-            }}
-          >
-            <li>Access your personal information</li>
-            <li>Correct inaccurate information</li>
-            <li>Request deletion of your data</li>
-            <li>Opt out of certain communications</li>
-            <li>Control cookie settings</li>
-          </ul>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            9. Data Retention
+            7. Changes to Policy
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            We retain your information for as long as necessary to provide the
-            service and comply with legal obligations. You may request deletion
-            of your data at any time.
+            Unigraph may update this policy. Continued use constitutes
+            acceptance of changes.
           </p>
 
           <h2
@@ -293,68 +203,7 @@ const Privacy: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            10. Children&apos;s Privacy
-          </h2>
-          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            Our service is not intended for children under 13. We do not
-            knowingly collect personal information from children under 13.
-          </p>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            11. International Transfers
-          </h2>
-          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            Your information may be transferred to and processed in countries
-            other than your own. We will take appropriate measures to protect
-            your information in accordance with this policy.
-          </p>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            12. Changes to This Policy
-          </h2>
-          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            We may update this Privacy Policy from time to time. We will notify
-            you of any material changes by posting the new policy on this page.
-          </p>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            13. Contact Information
-          </h2>
-          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            If you have any questions about this Privacy Policy or our data
-            practices, please contact us through the appropriate channels.
-          </p>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            14. Disclaimer
+            8. Disclaimer
           </h2>
           <p
             style={{
@@ -367,10 +216,10 @@ const Privacy: React.FC = () => {
               fontSize: "13px",
             }}
           >
-            <strong>EXPERIMENTAL SOFTWARE:</strong> This application is a
-            prototype and is provided &quot;AS IS&quot; without any warranties.
-            We cannot guarantee the security, reliability, or availability of
-            your data. Use at your own risk.
+            <strong>PROTOTYPE SOFTWARE:</strong> This application is
+            experimental and provided &quot;AS IS&quot; without warranties.
+            Unigraph assumes no responsibility for data security, loss, or
+            unauthorized access. Use at your own risk.
           </p>
 
           <div

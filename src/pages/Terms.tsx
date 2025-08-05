@@ -67,12 +67,11 @@ const Terms: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            1. Acceptance of Terms
+            1. Acceptance
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            By accessing and using Unigraph (&quot;the Service&quot;), you
-            accept and agree to be bound by the terms and provision of this
-            agreement.
+            By using Unigraph, you agree to these terms. This is experimental
+            software provided without warranties.
           </p>
 
           <h2
@@ -83,12 +82,12 @@ const Terms: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            2. Description of Service
+            2. Service Description
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            Unigraph is a prototype software application for graph
-            visualization, data analysis, and interactive diagram creation. The
-            Service is provided for experimental and research purposes.
+            Unigraph is a prototype application for graph visualization and data
+            analysis. This is experimental software for research and development
+            purposes.
           </p>
 
           <h2
@@ -99,7 +98,7 @@ const Terms: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            3. DISCLAIMER OF WARRANTIES
+            3. No Warranties
           </h2>
           <p
             style={{
@@ -113,39 +112,14 @@ const Terms: React.FC = () => {
             }}
           >
             <strong>IMPORTANT:</strong> This software is provided &quot;AS
-            IS&quot; and &quot;AS AVAILABLE&quot; without any warranties of any
-            kind, either express or implied.
+            IS&quot; and &quot;AS AVAILABLE&quot; without any warranties,
+            expressed or implied.
           </p>
-          <p style={{ marginBottom: "8px", fontSize: "14px" }}>
-            THE SOFTWARE IS A PROTOTYPE AND IS PRESENTED &quot;AS-IS&quot;
-            WITHOUT ANY GUARANTEES. WE EXPLICITLY DISCLAIM ALL WARRANTIES,
-            INCLUDING BUT NOT LIMITED TO:
+          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
+            We explicitly disclaim all warranties including merchantability,
+            fitness for purpose, accuracy, reliability, security, and
+            uninterrupted operation.
           </p>
-          <ul
-            style={{
-              marginLeft: "16px",
-              marginTop: "4px",
-              marginBottom: "12px",
-              fontSize: "14px",
-            }}
-          >
-            <li>
-              Warranties of merchantability or fitness for a particular purpose
-            </li>
-            <li>
-              Warranties that the software will be error-free or uninterrupted
-            </li>
-            <li>
-              Warranties regarding the accuracy, reliability, or completeness of
-              any data or information
-            </li>
-            <li>
-              Warranties that the software will meet your specific requirements
-            </li>
-            <li>
-              Warranties regarding the security of the software or your data
-            </li>
-          </ul>
 
           <h2
             style={{
@@ -155,18 +129,12 @@ const Terms: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            4. LIMITATION OF LIABILITY
+            4. No Liability
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            IN NO EVENT SHALL THE DEVELOPERS, CONTRIBUTORS, OR ANY OTHER PARTIES
-            INVOLVED IN THE CREATION, PRODUCTION, OR DELIVERY OF THE SOFTWARE BE
-            LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-            CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-            SUBSTITUTE GOODS OR SERVICES, LOSS OF USE, DATA, OR PROFITS, OR
-            BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-            LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-            NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-            SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+            We assume no responsibility for any damages, data loss, or other
+            issues arising from use of this software. You use this service
+            entirely at your own risk.
           </p>
 
           <h2
@@ -180,10 +148,9 @@ const Terms: React.FC = () => {
             5. Experimental Nature
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            This software is experimental and may contain bugs, errors, or
-            incomplete features. The functionality may change without notice.
-            Users should not rely on this software for critical or production
-            use.
+            This is prototype software that may contain bugs, errors, or
+            incomplete features. Functionality may change without notice. Do not
+            rely on this software for critical use.
           </p>
 
           <h2
@@ -194,40 +161,7 @@ const Terms: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            6. Data and Privacy
-          </h2>
-          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            While we strive to protect your data, we cannot guarantee the
-            security of any information transmitted to or from the Service. You
-            use the Service at your own risk regarding data security and
-            privacy.
-          </p>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            7. Service Availability
-          </h2>
-          <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            The Service may be unavailable at any time for maintenance, updates,
-            or other reasons. We do not guarantee continuous availability of the
-            Service.
-          </p>
-
-          <h2
-            style={{
-              marginTop: "16px",
-              marginBottom: "8px",
-              fontSize: "16px",
-              fontWeight: 600,
-            }}
-          >
-            8. User Responsibilities
+            6. User Responsibilities
           </h2>
           <p style={{ marginBottom: "8px", fontSize: "14px" }}>
             You are responsible for:
@@ -240,16 +174,10 @@ const Terms: React.FC = () => {
               fontSize: "14px",
             }}
           >
-            <li>
-              Ensuring you have the necessary rights to use any data you upload
-              or process
-            </li>
-            <li>Backing up any important data before using the Service</li>
-            <li>Not using the Service for illegal or harmful purposes</li>
-            <li>
-              Understanding that the software is experimental and may not work
-              as expected
-            </li>
+            <li>Backing up any important data before use</li>
+            <li>Ensuring you have rights to any data you upload</li>
+            <li>Not using the service for illegal purposes</li>
+            <li>Understanding this is experimental software</li>
           </ul>
 
           <h2
@@ -260,12 +188,11 @@ const Terms: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            9. Changes to Terms
+            7. Service Availability
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            We reserve the right to modify these terms at any time. Changes will
-            be effective immediately upon posting. Your continued use of the
-            Service constitutes acceptance of any changes.
+            The service may be unavailable at any time for maintenance, updates,
+            or other reasons. We do not guarantee continuous availability.
           </p>
 
           <h2
@@ -276,11 +203,38 @@ const Terms: React.FC = () => {
               fontWeight: 600,
             }}
           >
-            10. Contact Information
+            8. Changes to Terms
           </h2>
           <p style={{ marginBottom: "12px", fontSize: "14px" }}>
-            If you have any questions about these Terms of Service, please
-            contact us through the appropriate channels.
+            We may modify these terms at any time. Continued use constitutes
+            acceptance of changes.
+          </p>
+
+          <h2
+            style={{
+              marginTop: "16px",
+              marginBottom: "8px",
+              fontSize: "16px",
+              fontWeight: 600,
+            }}
+          >
+            9. Disclaimer
+          </h2>
+          <p
+            style={{
+              backgroundColor: "#f8d7da",
+              border: "1px solid #f5c6cb",
+              borderRadius: "4px",
+              padding: "8px",
+              marginBottom: "12px",
+              fontWeight: 500,
+              fontSize: "13px",
+            }}
+          >
+            <strong>PROTOTYPE SOFTWARE:</strong> This application is
+            experimental and provided &quot;AS IS&quot; without warranties. We
+            assume no responsibility for any damages, data loss, or security
+            issues. Use at your own risk.
           </p>
 
           <div
