@@ -188,6 +188,13 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     description:
       "Tabbed interface for managing and viewing different types of entities: nodes, edges, web resources, and annotations",
   },
+  "html-page-viewer": {
+    id: "html-page-viewer",
+    title: "HTML Page Viewer",
+    icon: "🌐",
+    category: "content",
+    description: "View web pages within the application",
+  },
 };
 
 // Helper function to get all available view IDs

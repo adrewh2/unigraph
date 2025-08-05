@@ -23,6 +23,7 @@ import EntityJsonViewer from "./EntityJsonViewer";
 import styles from "./EntityTableV2.module.css";
 import EntityTagsSelectorDropdown from "./EntityTagsSelectorDropdown";
 import EntityTypeSelectDropdown from "./EntityTypeSelectDropdown";
+import HtmlPageViewer from "./HtmlPageViewer";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -49,6 +50,10 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   } | null>(null);
 
   const [jsonViewerEntity, setJsonViewerEntity] = useState<Entity | null>(null);
+  const [htmlPageViewerData, setHtmlPageViewerData] = useState<{
+    resourceId: string;
+    title: string;
+  } | null>(null);
 
   const { setEditingEntity, setJsonEditEntity } = useAppContext();
 
@@ -181,6 +186,52 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         handleClose();
       },
     },
+    // Add "View Page" option for web resources
+    ...(entityType === "web-resources" && contextMenu?.entity
+      ? [
+          {
+            label: "View Page",
+            action: () => {
+              if (contextMenu?.entity) {
+                const entityData = contextMenu.entity.getData() as any;
+                const resourceId = entityData.id;
+                const url = entityData.url;
+                const title =
+                  entityData.label || entityData.title || entityData.url;
+
+                if (resourceId) {
+                  // Check if it's a Wikipedia URL
+                  if (url && url.includes("wikipedia.org")) {
+                    // Extract Wikipedia article title from URL
+                    const urlMatch = url.match(
+                      /wikipedia\.org\/wiki\/([^#?]+)/
+                    );
+                    const articleTitle = urlMatch
+                      ? decodeURIComponent(urlMatch[1].replace(/_/g, " "))
+                      : title;
+
+                    // Open Wikipedia Article Viewer in a new tab using the app shell
+                    const event = new CustomEvent("add-tab", {
+                      detail: {
+                        viewId: "wikipedia-factor-graph",
+                        panelId: "center",
+                      },
+                    });
+                    document.dispatchEvent(event);
+                  } else {
+                    // Open HTML Page Viewer in a modal for non-Wikipedia URLs
+                    setHtmlPageViewerData({
+                      resourceId,
+                      title,
+                    });
+                  }
+                }
+              }
+              handleClose();
+            },
+          } as ContextMenuItem,
+        ]
+      : []),
   ];
 
   // Actions cell renderer component with improved stability
@@ -1669,6 +1720,40 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           entity={jsonViewerEntity}
           onClose={() => setJsonViewerEntity(null)}
         />
+      )}
+
+      {/* HTML Page Viewer Modal */}
+      {htmlPageViewerData && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "90vw",
+              height: "90vh",
+              backgroundColor: "white",
+              borderRadius: "8px",
+              overflow: "hidden",
+            }}
+          >
+            <HtmlPageViewer
+              resourceId={htmlPageViewerData.resourceId}
+              title={htmlPageViewerData.title}
+              onClose={() => setHtmlPageViewerData(null)}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

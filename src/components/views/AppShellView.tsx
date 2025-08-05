@@ -18,6 +18,7 @@ import AIChatPanel from "../ai/AIChatPanel";
 
 import WikipediaArticleViewer_FactorGraph from "../applets/WikipediaViewer/WikipediaArticleViewer_FactorGraph";
 import EntityTableV2 from "../common/EntityTableV2";
+import HtmlPageViewer from "../common/HtmlPageViewer";
 import LogViewer from "../common/LogViewer";
 import MarkdownViewer from "../common/MarkdownViewer";
 import UnigraphIframe from "../common/UnigraphIframe";
@@ -784,6 +785,29 @@ const unigraphIframeView = {
   category: VIEW_DEFINITIONS["unigraph-iframe"].category,
 };
 
+const htmlPageViewerView = {
+  id: VIEW_DEFINITIONS["html-page-viewer"].id,
+  title: VIEW_DEFINITIONS["html-page-viewer"].title,
+  icon: VIEW_DEFINITIONS["html-page-viewer"].icon,
+  component: (props: any) => {
+    // Get URL parameters for the HTML Page Viewer
+    const urlParams = new URLSearchParams(window.location.search);
+    const resourceId = urlParams.get("resourceId");
+    const url = urlParams.get("url") || "https://example.com";
+    const title = urlParams.get("title") || "Example Page";
+
+    return (
+      <HtmlPageViewer
+        resourceId={resourceId ? decodeURIComponent(resourceId) : undefined}
+        url={decodeURIComponent(url)}
+        title={decodeURIComponent(title)}
+        {...props}
+      />
+    );
+  },
+  category: VIEW_DEFINITIONS["html-page-viewer"].category,
+};
+
 const devToolsView = {
   id: VIEW_DEFINITIONS["dev-tools"].id,
   title: VIEW_DEFINITIONS["dev-tools"].title,
@@ -930,6 +954,7 @@ const allViews = [
   wikipediaFactorGraphView,
   reactFlowPanelV2View,
   unigraphIframeView,
+  htmlPageViewerView,
   devToolsView,
   monacoEditorView,
   sandpackEditorView,
