@@ -253,7 +253,7 @@ export default function SignIn() {
         alignItems: "center",
         justifyContent: "center",
         background: "#f9fafb",
-        padding: "20px",
+        padding: "20px 0",
       }}
     >
       <div

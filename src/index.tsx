@@ -5,6 +5,8 @@ import { LayoutEngineOption } from "./core/layouts/layoutEngineTypes";
 import { decompressSceneGraphJsonFromUrl } from "./core/serializers/toFromJson";
 import "./index.css";
 import SignIn from "./pages/SignIn";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import {
   setActiveLayout,
   setActiveSceneGraph,
@@ -36,6 +38,20 @@ const initializeApp = async () => {
   // --- Add this block for /signin route ---
   if (window.location.pathname === "/signin") {
     root.render(<SignIn />);
+    return;
+  }
+  // --- End block ---
+
+  // --- Add this block for /terms route ---
+  if (window.location.pathname === "/terms") {
+    root.render(<Terms />);
+    return;
+  }
+  // --- End block ---
+
+  // --- Add this block for /privacy route ---
+  if (window.location.pathname === "/privacy") {
+    root.render(<Privacy />);
     return;
   }
   // --- End block ---
