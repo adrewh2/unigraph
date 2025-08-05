@@ -343,7 +343,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
           <button
             onClick={handleGoTo}
             style={{
-              background: theme.colors.surface,
+              background: "transparent",
               color: theme.colors.primary,
               border: "none",
               borderRadius: "50%",
@@ -359,7 +359,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
               (e.currentTarget.style.background = theme.colors.surfaceHover)
             }
             onMouseLeave={(e) =>
-              (e.currentTarget.style.background = theme.colors.surface)
+              (e.currentTarget.style.background = "transparent")
             }
             title="Go to entity"
           >
@@ -370,7 +370,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
             <button
               onClick={handleMoreOptionsClick}
               style={{
-                background: theme.colors.surface,
+                background: "transparent",
                 color: theme.colors.textSecondary,
                 border: "none",
                 borderRadius: "50%",
@@ -389,7 +389,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
                 (e.currentTarget.style.background = theme.colors.surfaceHover)
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.background = theme.colors.surface)
+                (e.currentTarget.style.background = "transparent")
               }
               title="More options"
             >
@@ -1238,7 +1238,14 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         "screenshot_url",
         "id",
       ];
-      EXCLUDED_COLUMNS = ["userData", "title", "metadata", "created_at", "last_updated_at", "id"]; // Exclude title since we have label
+      EXCLUDED_COLUMNS = [
+        "userData",
+        "title",
+        "metadata",
+        "created_at",
+        "last_updated_at",
+        "id",
+      ]; // Exclude title since we have label
       console.log("Web-resources configuration - COLUMN_ORDER:", COLUMN_ORDER);
       console.log(
         "Web-resources configuration - EXCLUDED_COLUMNS:",
