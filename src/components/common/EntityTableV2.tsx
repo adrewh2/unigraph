@@ -1,3 +1,4 @@
+import { useTheme } from "@aesgraph/app-shell";
 import type { ColDef } from "ag-grid-community";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
@@ -10,19 +11,18 @@ import React, {
   useState,
 } from "react";
 import ReactDOM from "react-dom";
-import { useTheme } from "@aesgraph/app-shell";
 import { useAppContext } from "../../context/AppContext";
 import { RenderingManager } from "../../controllers/RenderingManager";
 import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { Node as ModelNode, NodeId } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";
+import { createThemedAgGridContainer } from "../../utils/aggridThemeUtils";
 import { ContextMenuItem } from "./ContextMenu";
 import EntityJsonViewer from "./EntityJsonViewer";
 import styles from "./EntityTableV2.module.css";
 import EntityTagsSelectorDropdown from "./EntityTagsSelectorDropdown";
 import EntityTypeSelectDropdown from "./EntityTypeSelectDropdown";
-import { createThemedAgGridContainer } from "../../utils/aggridThemeUtils";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -32,6 +32,7 @@ interface EntityTableV2Props {
   sceneGraph: SceneGraph;
   onEntityClick?: (entity: Entity) => void;
   maxHeight?: string | number;
+  entityType?: string; // Add entity type for custom configurations
 }
 
 const EntityTableV2: React.FC<EntityTableV2Props> = ({
@@ -39,6 +40,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
   sceneGraph,
   onEntityClick,
   maxHeight = 600,
+  entityType,
 }) => {
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
@@ -1074,6 +1076,131 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
 
   // Generate column definitions dynamically
   const columnDefs = useMemo<ColDef<any>[]>(() => {
+    // For annotations, use a simplified column set
+    if (entityType === "annotations") {
+      const COLUMN_ORDER = ["label", "type", "tags", "id"];
+      const EXCLUDED_COLUMNS = [
+        "userData",
+        "position",
+        "isvisible",
+        "color",
+        "size",
+        "opacity",
+      ];
+      const allColumns = new Set<string>();
+
+      container.forEach((entity) => {
+        Object.keys(entity.getData()).forEach((key) => {
+          if (!EXCLUDED_COLUMNS.includes(key)) {
+            allColumns.add(key);
+          }
+        });
+      });
+
+      const orderedColumns = COLUMN_ORDER.filter((col) => allColumns.has(col));
+      const remainingColumns = Array.from(allColumns).filter(
+        (col) => !COLUMN_ORDER.includes(col)
+      );
+
+      const finalColumns = [...orderedColumns, ...remainingColumns];
+
+      // Create data columns for annotations
+      const dataColumns = finalColumns.map((col) => ({
+        headerName: col === "label" ? "Annotation" : col,
+        field: col,
+        flex: col === "label" ? 2 : 1,
+        minWidth: col === "label" ? 200 : 120,
+        maxWidth: col === "label" ? 500 : 300,
+        sortable: true,
+        resizable: true,
+        filter: "agTextColumnFilter",
+        floatingFilter: true,
+        cellRenderer:
+          col === "label"
+            ? LabelCellRenderer
+            : col === "type"
+              ? TypeCellRenderer
+              : col === "tags"
+                ? TagsCellRendererComponent
+                : undefined,
+        valueGetter: (params: any) => {
+          if (!params.data) return "";
+          const value = (params.data.getData() as any)[col];
+          if (col === "tags" && value instanceof Set) {
+            return Array.from(value);
+          }
+          return formatValue(value);
+        },
+        filterParams: {
+          filterOptions: ["contains", "equals", "startsWith", "endsWith"],
+          buttons: ["reset"],
+          closeOnApply: false,
+          suppressAndOrCondition: true,
+          debounceMs: 200,
+          applyButton: false,
+          clearButton: true,
+        },
+        filterValueGetter: (params: any) => {
+          if (!params.data) return "";
+          const value = (params.data.getData() as any)[col];
+          return value;
+        },
+        cellStyle: {
+          display: "flex",
+          alignItems: "center",
+          padding: "8px",
+          fontSize: "14px",
+          lineHeight: "1.4",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        },
+      }));
+
+      // Create the actions column
+      const actionsColumn = {
+        headerName: "Actions",
+        field: "actions",
+        flex: 0.5,
+        minWidth: 80,
+        maxWidth: 100,
+        sortable: false,
+        resizable: false,
+        filter: false,
+        floatingFilter: false,
+        cellRenderer: ActionsCellRenderer,
+        cellStyle: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4px",
+        },
+      };
+
+      // Create the delete column
+      const deleteColumn = {
+        headerName: "",
+        field: "delete",
+        flex: 0.3,
+        minWidth: 48,
+        maxWidth: 56,
+        sortable: false,
+        resizable: false,
+        filter: false,
+        floatingFilter: false,
+        cellRenderer: DeleteCellRenderer,
+        cellStyle: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          padding: "4px",
+        },
+      };
+
+      return [actionsColumn, ...dataColumns, deleteColumn];
+    }
+
+    // Default column configuration for other entity types
     const COLUMN_ORDER = [
       "label",
       "type",
@@ -1085,7 +1212,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
       "size",
       "opacity",
     ];
-    const EXCLUDED_COLUMNS = ["userData"]; // Exclude userData from columns
+    const EXCLUDED_COLUMNS = ["userData"];
     const allColumns = new Set<string>();
 
     container.forEach((entity) => {

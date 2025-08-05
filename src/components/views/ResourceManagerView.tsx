@@ -1,11 +1,11 @@
+import { useTheme } from "@aesgraph/app-shell";
 import React, { useState } from "react";
-import useAppConfigStore from "../../store/appConfigStore";
-import EntityTableV2 from "../common/EntityTableV2";
-import { SceneGraph } from "../../core/model/SceneGraph";
 import { Graph } from "../../core/model/Graph";
 import { Node } from "../../core/model/Node";
+import { SceneGraph } from "../../core/model/SceneGraph";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
-import { useTheme } from "@aesgraph/app-shell";
+import useAppConfigStore from "../../store/appConfigStore";
+import EntityTableV2 from "../common/EntityTableV2";
 
 type ResourceManagerViewProps = Record<string, never>;
 
@@ -40,27 +40,33 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   }
 
   const graph: Graph = currentSceneGraph.getGraph();
-  
+
   // Create containers for different entity types
   const nodesContainer = graph.getNodes();
   const edgesContainer = graph.getEdges();
-  
+
   // Filter nodes by type for web resources and annotations
   const webResourcesContainer = new EntitiesContainer(
-    nodesContainer.toArray().filter((node: Node) => 
-      node.getType() === "webpage" || 
-      node.getType() === "resource" ||
-      node.getType() === "url" ||
-      (node.getData() as any)?.url
-    )
+    nodesContainer
+      .toArray()
+      .filter(
+        (node: Node) =>
+          node.getType() === "webpage" ||
+          node.getType() === "resource" ||
+          node.getType() === "url" ||
+          (node.getData() as any)?.url
+      )
   );
-  
+
   const annotationsContainer = new EntitiesContainer(
-    nodesContainer.toArray().filter((node: Node) => 
-      node.getType() === "annotation" ||
-      node.getType() === "text_selection" ||
-      node.getType() === "image_annotation"
-    )
+    nodesContainer
+      .toArray()
+      .filter(
+        (node: Node) =>
+          node.getType() === "annotation" ||
+          node.getType() === "text_selection" ||
+          node.getType() === "image_annotation"
+      )
   );
 
   const tabs: TabData[] = [
@@ -73,7 +79,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     },
     {
       id: "edges",
-      label: "Edges", 
+      label: "Edges",
       icon: "🔗",
       container: edgesContainer,
       sceneGraph: currentSceneGraph,
@@ -94,7 +100,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     },
   ];
 
-  const activeTabData = tabs.find(tab => tab.id === activeTab);
+  const activeTabData = tabs.find((tab) => tab.id === activeTab);
 
   return (
     <div
@@ -122,12 +128,12 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
               flex: 1,
               padding: "12px 16px",
               border: "none",
-              backgroundColor: activeTab === tab.id 
-                ? theme.colors.primary 
-                : "transparent",
-              color: activeTab === tab.id 
-                ? theme.colors.textInverse 
-                : theme.colors.text,
+              backgroundColor:
+                activeTab === tab.id ? theme.colors.primary : "transparent",
+              color:
+                activeTab === tab.id
+                  ? theme.colors.textInverse
+                  : theme.colors.text,
               cursor: "pointer",
               fontSize: "14px",
               fontWeight: activeTab === tab.id ? "600" : "400",
@@ -139,7 +145,8 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             }}
             onMouseEnter={(e) => {
               if (activeTab !== tab.id) {
-                e.currentTarget.style.backgroundColor = theme.colors.surfaceHover;
+                e.currentTarget.style.backgroundColor =
+                  theme.colors.surfaceHover;
               }
             }}
             onMouseLeave={(e) => {
@@ -152,12 +159,14 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             <span>{tab.label}</span>
             <span
               style={{
-                backgroundColor: activeTab === tab.id 
-                  ? theme.colors.textInverse 
-                  : theme.colors.textSecondary,
-                color: activeTab === tab.id 
-                  ? theme.colors.primary 
-                  : theme.colors.surface,
+                backgroundColor:
+                  activeTab === tab.id
+                    ? theme.colors.textInverse
+                    : theme.colors.textSecondary,
+                color:
+                  activeTab === tab.id
+                    ? theme.colors.primary
+                    : theme.colors.surface,
                 borderRadius: "12px",
                 padding: "2px 8px",
                 fontSize: "12px",
@@ -185,6 +194,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             container={activeTabData.container}
             sceneGraph={activeTabData.sceneGraph}
             maxHeight="100%"
+            entityType={activeTabData.id}
           />
         ) : (
           <div
@@ -204,4 +214,4 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   );
 };
 
-export default ResourceManagerView; 
+export default ResourceManagerView;
