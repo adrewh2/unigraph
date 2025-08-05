@@ -1238,7 +1238,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         "screenshot_url",
         "id",
       ];
-      EXCLUDED_COLUMNS = ["userData", "title"]; // Exclude title since we have label
+      EXCLUDED_COLUMNS = ["userData", "title", "metadata", "created_at", "last_updated_at", "id"]; // Exclude title since we have label
       console.log("Web-resources configuration - COLUMN_ORDER:", COLUMN_ORDER);
       console.log(
         "Web-resources configuration - EXCLUDED_COLUMNS:",
