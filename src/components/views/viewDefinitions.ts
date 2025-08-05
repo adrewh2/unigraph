@@ -180,6 +180,14 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     description:
       "Interactive 2D map view with custom markers, popups, and multiple map types using OpenStreetMap data",
   },
+  "resource-manager": {
+    id: "resource-manager",
+    title: "Resource Manager",
+    icon: "📊",
+    category: "data",
+    description:
+      "Tabbed interface for managing and viewing different types of entities: nodes, edges, web resources, and annotations",
+  },
 };
 
 // Helper function to get all available view IDs

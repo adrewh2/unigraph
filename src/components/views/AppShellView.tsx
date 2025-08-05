@@ -31,6 +31,7 @@ import Map2DView from "./Map2DView";
 import MonacoEditorView from "./MonacoEditorView";
 import NodeLegendView from "./NodeLegendView";
 import ReactFlowPanelV2 from "./ReactFlowPanelV2";
+import ResourceManagerView from "./ResourceManagerView";
 import SandpackEditorWithFileTree from "./SandpackEditorWithFileTree";
 import SystemMonitorView from "./SystemMonitorView";
 import { VIEW_DEFINITIONS } from "./viewDefinitions";
@@ -816,6 +817,18 @@ const sandpackEditorView = {
   category: VIEW_DEFINITIONS["sandpack-editor"].category,
 };
 
+const ResourceManagerViewWrapper: React.FC = () => {
+  return <ResourceManagerView />;
+};
+
+const resourceManagerView = {
+  id: VIEW_DEFINITIONS["resource-manager"].id,
+  title: VIEW_DEFINITIONS["resource-manager"].title,
+  icon: VIEW_DEFINITIONS["resource-manager"].icon,
+  component: ResourceManagerViewWrapper,
+  category: VIEW_DEFINITIONS["resource-manager"].category,
+};
+
 const MarkdownViewerWrapper: React.FC<any> = (props) => {
   const currentSceneGraph = useAppConfigStore(
     (state) => state.currentSceneGraph
@@ -925,6 +938,7 @@ const allViews = [
   documentationView,
   logViewerView,
   map2DView,
+  resourceManagerView,
 ];
 
 // Example: Create a custom theme for demonstration
