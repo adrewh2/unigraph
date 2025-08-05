@@ -2,6 +2,7 @@ import { useTheme } from "@aesgraph/app-shell";
 import { RefreshCw } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
+import { Document, listDocuments } from "../../api/documentsApi";
 import {
   checkWebpagesContent,
   listWebpages,
@@ -31,6 +32,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [activeTab, setActiveTab] = useState<string>("nodes");
   const [webpages, setWebpages] = useState<Webpage[]>([]);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
@@ -40,6 +42,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [dataCache, setDataCache] = useState<{
     webpages: Webpage[] | null;
     annotations: Annotation[] | null;
+    documents: Document[] | null;
     webpageContentAvailability: {
       [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
     } | null;
@@ -47,6 +50,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   }>({
     webpages: null,
     annotations: null,
+    documents: null,
     webpageContentAvailability: null,
     lastFetched: null,
   });
@@ -67,12 +71,14 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         !forceRefresh &&
         dataCache.webpages &&
         dataCache.annotations &&
+        dataCache.documents &&
         dataCache.webpageContentAvailability &&
         cacheValid
       ) {
         console.log("Using cached data, age:", cacheAge, "ms");
         setWebpages(dataCache.webpages);
         setAnnotations(dataCache.annotations);
+        setDocuments(dataCache.documents);
         setWebpageContentAvailability(dataCache.webpageContentAvailability);
         setLoading(false);
         return;
@@ -98,15 +104,22 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           includeContent: false,
         });
 
+        // Fetch documents (metadata only)
+        const documentsData = await listDocuments({
+          userId: user.id,
+        });
+
         // Update state
         setWebpages(webpagesData || []);
         setAnnotations(annotationsData || []);
+        setDocuments(documentsData || []);
         setWebpageContentAvailability(contentAvailability);
 
         // Update cache
         setDataCache({
           webpages: webpagesData || [],
           annotations: annotationsData || [],
+          documents: documentsData || [],
           webpageContentAvailability: contentAvailability,
           lastFetched: now,
         });
@@ -337,6 +350,42 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     })
   );
 
+  const documentsContainer = new EntitiesContainer(
+    documents.map((document) => {
+      // Create a mock entity for documents that implements the required interface
+      return {
+        getId: () => document.id,
+        getType: () => "document",
+        getLabel: () => document.title,
+        getTags: () => new Set(),
+        getData: () => ({
+          id: document.id,
+          label: document.title,
+          type: "document",
+          extension: document.extension || "md",
+          metadata: document.metadata,
+          project_id: document.project_id || "",
+          parent_id: document.parent_id,
+          created_at: document.created_at,
+          last_updated_at: document.last_updated_at,
+          userData: document,
+        }),
+        getEntityType: () => "node",
+        getFullyQualifiedId: () => document.id,
+        setId: () => {},
+        setData: () => {},
+        setType: () => {},
+        setLabel: () => {},
+        setTags: () => {},
+        addTag: () => {},
+        removeTag: () => {},
+        hasTag: () => false,
+        toJSON: () => "",
+        fromJSON: () => {},
+      } as any;
+    })
+  );
+
   const tabs: TabData[] = [
     {
       id: "nodes",
@@ -364,6 +413,13 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       label: "Annotations",
       icon: "📝",
       container: annotationsContainer,
+      sceneGraph: currentSceneGraph,
+    },
+    {
+      id: "documents",
+      label: "Documents",
+      icon: "📄",
+      container: documentsContainer,
       sceneGraph: currentSceneGraph,
     },
   ];

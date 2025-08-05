@@ -1258,6 +1258,22 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
         "Web-resources configuration - EXCLUDED_COLUMNS:",
         EXCLUDED_COLUMNS
       );
+    } else if (entityType === "documents") {
+      // Documents specific configuration
+      COLUMN_ORDER = ["label", "type", "extension", "project_id"];
+      EXCLUDED_COLUMNS = [
+        "userData",
+        "metadata",
+        "created_at",
+        "last_updated_at",
+        "parent_id",
+        "id",
+      ];
+      console.log("Documents configuration - COLUMN_ORDER:", COLUMN_ORDER);
+      console.log(
+        "Documents configuration - EXCLUDED_COLUMNS:",
+        EXCLUDED_COLUMNS
+      );
     } else {
       // Default configuration for other entity types
       COLUMN_ORDER = [
