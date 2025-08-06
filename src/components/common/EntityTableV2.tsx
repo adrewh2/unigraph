@@ -1762,51 +1762,30 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                         last_updated_at: entityData.last_updated_at,
                       };
 
-                      const rect = row.getBoundingClientRect();
                       const cardWidth = 400; // Approximate width of the preview card
                       const cardHeight = 300; // Approximate height of the preview card
 
-                      // Calculate available space
-                      const spaceRight = window.innerWidth - rect.right;
-                      const spaceLeft = rect.left;
-                      const spaceBelow = window.innerHeight - rect.bottom;
-                      const spaceAbove = rect.top;
+                      // Position relative to mouse cursor
+                      let x = e.clientX + 30; // 20px to the right of mouse
+                      let y = e.clientY + 30; // 20px below mouse
 
-                      let x, y;
-
-                      // Prefer positioning below the row
-                      if (spaceBelow >= cardHeight + 20) {
-                        y = rect.bottom + 10;
-                        // Center horizontally relative to the row
-                        x = Math.max(
-                          10,
-                          rect.left + rect.width / 2 - cardWidth / 2
-                        );
-                      } else if (spaceAbove >= cardHeight + 20) {
-                        // Position above the row
-                        y = rect.top - cardHeight - 10;
-                        x = Math.max(
-                          10,
-                          rect.left + rect.width / 2 - cardWidth / 2
-                        );
-                      } else {
-                        // Fallback: position to the right if there's space
-                        if (spaceRight >= cardWidth + 20) {
-                          x = rect.right + 10;
-                          y = rect.top;
-                        } else if (spaceLeft >= cardWidth + 20) {
-                          // Position to the left
-                          x = rect.left - cardWidth - 10;
-                          y = rect.top;
-                        } else {
-                          // Last resort: center in viewport
-                          x = Math.max(10, (window.innerWidth - cardWidth) / 2);
-                          y = Math.max(
-                            10,
-                            (window.innerHeight - cardHeight) / 2
-                          );
-                        }
+                      // Ensure the card doesn't overflow the viewport
+                      if (x + cardWidth > window.innerWidth) {
+                        x = e.clientX - cardWidth - 20; // Position to the left of mouse
                       }
+                      if (y + cardHeight > window.innerHeight) {
+                        y = e.clientY - cardHeight - 20; // Position above mouse
+                      }
+
+                      // Ensure minimum margins
+                      x = Math.max(
+                        10,
+                        Math.min(window.innerWidth - cardWidth - 10, x)
+                      );
+                      y = Math.max(
+                        10,
+                        Math.min(window.innerHeight - cardHeight - 10, y)
+                      );
 
                       setHoveredWebResource({
                         webpage,
