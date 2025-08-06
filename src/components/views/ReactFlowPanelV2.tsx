@@ -611,22 +611,27 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
 
   // Function to zoom to a specific node
   const zoomToNode = useCallback((nodeId: string) => {
-    if (reactFlowInstance.current) {
-      // Find the node in the current nodes
-      const node = reactFlowInstance.current
-        .getNodes()
-        .find((n) => n.id === nodeId);
-      if (node) {
-        console.log("ReactFlowPanelV2: Zooming to node:", nodeId);
-        // Zoom to the specific node with padding
-        reactFlowInstance.current.fitView({
-          padding: 0.3,
-          includeHiddenNodes: false,
-          minZoom: 0.1,
-          maxZoom: 2,
-          nodes: [node], // Only fit to this specific node
-        });
-      }
+    if (!reactFlowInstance.current) {
+      console.log("ReactFlowPanelV2: ReactFlow instance not ready for zoom");
+      return;
+    }
+    
+    // Find the node in the current nodes
+    const node = reactFlowInstance.current
+      .getNodes()
+      .find((n) => n.id === nodeId);
+    if (node) {
+      console.log("ReactFlowPanelV2: Zooming to node:", nodeId);
+      // Zoom to the specific node with padding
+      reactFlowInstance.current.fitView({
+        padding: 0.3,
+        includeHiddenNodes: false,
+        minZoom: 0.1,
+        maxZoom: 2,
+        nodes: [node], // Only fit to this specific node
+      });
+    } else {
+      console.log("ReactFlowPanelV2: Node not found for zoom:", nodeId);
     }
   }, []);
 
@@ -687,22 +692,21 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     legendMode,
   ]);
 
-  // Effect to zoom to selected node when selection changes from external sources (like resource manager)
+  // Expose the zoom function globally so it can be called from anywhere
   useEffect(() => {
-    // Only zoom if there's exactly one selected node (single selection)
-    if (selectedNodeIds.size === 1) {
-      const selectedNodeId = Array.from(selectedNodeIds)[0];
-      console.log(
-        "ReactFlowPanelV2: Single node selected, zooming to:",
-        selectedNodeId
-      );
-
-      // Add a small delay to ensure the node is properly rendered
+    // Add the zoom function to the window object for global access
+    (window as any).reactFlowZoomToNode = (nodeId: string) => {
+      console.log("ReactFlowPanelV2: Global zoom to node:", nodeId);
       setTimeout(() => {
-        zoomToNode(selectedNodeId);
+        zoomToNode(nodeId);
       }, 100);
-    }
-  }, [selectedNodeIds, zoomToNode]);
+    };
+
+    // Cleanup function to remove the global function
+    return () => {
+      delete (window as any).reactFlowZoomToNode;
+    };
+  }, [zoomToNode]);
 
   // Don't sync selection state automatically - let ReactFlow and our handlers manage it
   // The sync effect was causing conflicts with ReactFlow's internal selection management

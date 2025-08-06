@@ -122,6 +122,11 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       if (value instanceof Set) return `[${Array.from(value).join(", ")}]`;
       if (Array.isArray(value)) return `[${value.join(", ")}]`;
 
+      // Special handling for SPARQL result objects with {type, value} structure
+      if (typeof value === "object" && value !== null && "value" in value && "type" in value) {
+        return String(value.value);
+      }
+
       if (typeof value === "object") {
         // Special handling for empty objects
         if (Object.keys(value).length === 0) return "{}";
@@ -328,6 +333,11 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
           // Select the node in the graph interaction store
           setSelectedNodeId(entityId as NodeId);
+
+          // Call the global zoom function if available
+          if ((window as any).reactFlowZoomToNode) {
+            (window as any).reactFlowZoomToNode(entityId);
+          }
 
           // Call the original onEntityClick if provided
           if (onEntityClick && props.data) {
