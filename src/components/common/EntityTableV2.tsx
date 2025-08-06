@@ -123,7 +123,12 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       if (Array.isArray(value)) return `[${value.join(", ")}]`;
 
       // Special handling for SPARQL result objects with {type, value} structure
-      if (typeof value === "object" && value !== null && "value" in value && "type" in value) {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "value" in value &&
+        "type" in value
+      ) {
         return String(value.value);
       }
 
@@ -1878,8 +1883,8 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                 (row as any)._hoverHandler = (e: MouseEvent) => {
                   if (entityData && entityData.id) {
                     // Handle node hover - update graph interaction store
-                    console.log("Node hover - entityData:", entityData);
-                    console.log("Setting hovered node ID:", entityData.id);
+                    // console.log("Node hover - entityData:", entityData);
+                    // console.log("Setting hovered node ID:", entityData.id);
                     setHoveredNodeId(entityData.id as NodeId);
                   }
                 };

@@ -224,9 +224,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
   // Handle text selection and context menu
   const handleIframeLoad = useCallback(() => {
-    console.log("Iframe loaded");
+    console.log("Iframe loaded with version:", iframeVersion);
     console.log("Current HTML content length:", currentHtmlContent.length);
     console.log("Current annotations count:", annotations.length);
+    console.log("Content hash:", contentHash);
     if (!iframeRef.current) return;
 
     try {
@@ -273,6 +274,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       annotationsCount: annotations.length,
       hasHighlightedContent: hasHighlightedContent.current,
       currentHtmlContentLength: currentHtmlContent.length,
+      iframeVersion,
+      contentHash,
     });
 
     // Only set content if we have HTML
@@ -316,20 +319,14 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
         setCurrentHtmlContent(result.html);
 
-        // Update content hash to force iframe reload
+        // Force iframe to reload when content changes (always, not just when highlights are added)
         const newHash = `${loadedResourceId}-${annotations.length}-${result.highlightsAdded > 0}`;
         setContentHash(newHash);
         console.log("Updated content hash:", newHash);
 
-        // Force iframe to reload when highlights are added
-        if (result.highlightsAdded > 0) {
-          console.log(
-            "Highlights added to HTML content:",
-            result.highlightsAdded
-          );
-          setIframeVersion((prev) => prev + 1);
-          console.log("Incrementing iframe version to force reload");
-        }
+        // Always increment iframe version when content changes
+        setIframeVersion(Date.now());
+        console.log("Setting iframe version to timestamp to force reload");
       } else {
         console.log("HTML available but no annotations yet, setting raw HTML");
         setCurrentHtmlContent(html);
@@ -338,6 +335,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         const newHash = `${loadedResourceId}-0-false`;
         setContentHash(newHash);
         console.log("Updated content hash for raw HTML:", newHash);
+
+        // Also increment iframe version for raw HTML
+        setIframeVersion(Date.now());
+        console.log("Setting iframe version to timestamp for raw HTML");
       }
     } else {
       console.log("No HTML content available for processing");
@@ -1017,9 +1018,30 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             title={currentTitle || title || "HTML Content"}
             sandbox="allow-scripts allow-same-origin"
             onLoad={handleIframeLoad}
-            key={contentHash}
+            key={`${contentHash}-${iframeVersion}-${Date.now()}`}
+            data-debug={`hash:${contentHash}-version:${iframeVersion}`}
           />
         )}
+        {/* Debug info */}
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            background: "white",
+            padding: 10,
+            fontSize: 12,
+            zIndex: 1000,
+          }}
+        >
+          <div>Content Hash: {contentHash}</div>
+          <div>Iframe Version: {iframeVersion}</div>
+          <div>HTML Length: {currentHtmlContent.length}</div>
+          <div>Annotations: {annotations.length}</div>
+          <div>
+            Has Highlights: {hasHighlightedContent.current ? "Yes" : "No"}
+          </div>
+        </div>
       </div>
 
       {/* Context Menu */}
