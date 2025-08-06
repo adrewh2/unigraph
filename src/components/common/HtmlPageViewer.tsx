@@ -1022,11 +1022,12 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 cursor: "pointer",
                 userSelect: "none",
                 fontWeight: "500",
-                padding: "6px 12px",
+                padding: "4px 8px",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 transition: "color 0.2s ease",
+                lineHeight: "1",
               }}
             >
               <input
@@ -1036,10 +1037,12 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 style={{
                   marginRight: "8px",
                   cursor: "pointer",
-                  width: "14px",
-                  height: "14px",
+                  width: "12px",
+                  height: "12px",
                   accentColor: "#0078d4",
-                  marginTop: "1px",
+                  margin: "0",
+                  padding: "0",
+                  transform: "translateY(1px)",
                 }}
               />
               Annotations
