@@ -206,6 +206,29 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         },
       },
       {
+        label: "Rename",
+        action: () => {
+          if (contextMenu?.entity) {
+            // For web resources, use the inline editing approach
+            if (entityType === "web-resources") {
+              // Store the entity to edit in a way that LabelCellRenderer can access
+              // We'll use a custom approach that doesn't rely on the general editing system
+              const entityId = contextMenu.entity.getId();
+              // Trigger a custom event that the LabelCellRenderer can listen for
+              window.dispatchEvent(
+                new CustomEvent("startWebResourceRename", {
+                  detail: { entityId, entity: contextMenu.entity },
+                })
+              );
+            } else {
+              // For other entity types, use the general editing system
+              setEditingEntity(contextMenu.entity);
+            }
+          }
+          handleClose();
+        },
+      },
+      {
         label: "View as JSON",
         action: () => {
           if (contextMenu?.entity) {
@@ -350,6 +373,26 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           }
         };
 
+        const handleRename = (e: React.MouseEvent) => {
+          e.stopPropagation();
+          if (props.data) {
+            // For web resources, use the inline editing approach
+            if (entityType === "web-resources") {
+              const entityId = props.data.getId();
+              // Trigger a custom event that the LabelCellRenderer can listen for
+              window.dispatchEvent(
+                new CustomEvent("startWebResourceRename", {
+                  detail: { entityId, entity: props.data },
+                })
+              );
+            } else {
+              // For other entity types, use the general editing system
+              setEditingEntity(props.data);
+            }
+          }
+          setShowMoreOptions(false);
+        };
+
         const handleMoreOptionsClick = (e: React.MouseEvent) => {
           e.stopPropagation();
           setShowMoreOptions(!showMoreOptions);
@@ -464,6 +507,29 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
               >
                 Go to Entity
               </button>
+              <button
+                onClick={handleRename}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "none",
+                  background: "none",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  color: theme.colors.primary,
+                  borderTop: `1px solid ${theme.colors.border}`,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    theme.colors.surfaceHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                Rename
+              </button>
             </div>,
             document.body
           );
@@ -563,16 +629,31 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       const [editValue, setEditValue] = useState(props.value || "");
       const inputRef = useRef<HTMLInputElement>(null);
 
-      const handleDoubleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setIsEditing(true);
-        setEditValue(props.value || "");
-        // Focus the input after a brief delay to ensure it's rendered
-        setTimeout(() => {
-          inputRef.current?.focus();
-          inputRef.current?.select();
-        }, 10);
-      };
+      // Listen for custom rename events
+      useEffect(() => {
+        const handleRenameEvent = (event: CustomEvent) => {
+          if (event.detail.entityId === props.data.getId()) {
+            setIsEditing(true);
+            setEditValue(props.value || "");
+            // Focus the input after a brief delay to ensure it's rendered
+            setTimeout(() => {
+              inputRef.current?.focus();
+              inputRef.current?.select();
+            }, 10);
+          }
+        };
+
+        window.addEventListener(
+          "startWebResourceRename",
+          handleRenameEvent as EventListener
+        );
+        return () => {
+          window.removeEventListener(
+            "startWebResourceRename",
+            handleRenameEvent as EventListener
+          );
+        };
+      }, [props.data.getId(), props.value]);
 
       const handleSave = async () => {
         if (props.data && editValue !== props.value) {
@@ -692,7 +773,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
       return (
         <div
-          onDoubleClick={handleDoubleClick}
           style={{
             width: "100%",
             height: "100%",
@@ -702,7 +782,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             cursor: "text",
             userSelect: "text",
           }}
-          title="Double-click to edit"
         >
           {props.value || ""}
         </div>
@@ -1797,14 +1876,46 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     }, []);
 
     // Handle row double click
-    // const onRowDoubleClicked = useCallback(
-    //   (event: any) => {
-    //     if (onEntityClick && event.data) {
-    //       onEntityClick(event.data);
-    //     }
-    //   },
-    //   [onEntityClick]
-    // );
+    const onRowDoubleClicked = useCallback(
+      (event: any) => {
+        if (event.data) {
+          const entityData = event.data.getData
+            ? event.data.getData()
+            : event.data;
+
+          // For web resources, double-click should open the saved page
+          if (entityType === "web-resources" && entityData) {
+            const resourceId = entityData.id;
+            const url = entityData.url;
+            const title =
+              entityData.label || entityData.title || entityData.url;
+
+            if (resourceId) {
+              const tabId = `html-page-viewer-${resourceId}`;
+              const tabTitle = title || `Page Viewer - ${resourceId}`;
+
+              addViewAsTab({
+                viewId: "html-page-viewer",
+                pane: "center",
+                tabId: tabId,
+                title: tabTitle,
+                props: {
+                  resourceId: resourceId,
+                  title: title,
+                  url: url,
+                  tabId: tabId,
+                },
+                activate: true,
+              });
+            }
+          } else if (onEntityClick) {
+            // For other entity types, use the default click handler
+            onEntityClick(event.data);
+          }
+        }
+      },
+      [entityType, onEntityClick]
+    );
 
     // Handle context menu
     const onCellContextMenu = useCallback(
@@ -1915,6 +2026,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           suppressMenuHide={false} // Make sure menus are visible
           getRowStyle={getRowStyle}
           onRowClicked={onRowClicked}
+          onRowDoubleClicked={onRowDoubleClicked}
           onCellContextMenu={onCellContextMenu}
           onFilterChanged={onFilterChanged}
           onModelUpdated={onModelUpdated}
@@ -1935,6 +2047,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         defaultColDef,
         getRowStyle,
         onRowClicked,
+        onRowDoubleClicked,
         onCellContextMenu,
         onFilterChanged,
         onModelUpdated,
