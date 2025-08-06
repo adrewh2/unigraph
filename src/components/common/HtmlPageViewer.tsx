@@ -298,24 +298,26 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           "HTML and annotations available, processing content with highlights"
         );
 
-        // Convert annotations to the expected type
+        // Convert annotations to the expected type with position data
         const annotationHighlights = annotations
           .filter(
             (annotation) =>
-              (annotation.data as TextSelectionAnnotationData)?.selected_text
+              (annotation.data as any)?.selected_text
           )
-          .map((annotation) => ({
-            id: annotation.id,
-            data: {
-              selected_text: (annotation.data as TextSelectionAnnotationData)
-                .selected_text!,
-              comment: (annotation.data as TextSelectionAnnotationData).comment,
-              secondary_comment: (
-                annotation.data as TextSelectionAnnotationData
-              ).secondary_comment,
-              tags: (annotation.data as TextSelectionAnnotationData).tags,
-            },
-          }));
+          .map((annotation) => {
+            const data = annotation.data as any;
+            return {
+              id: annotation.id,
+              data: {
+                selected_text: data.selected_text!,
+                start_position: data.start_position,
+                end_position: data.end_position,
+                comment: data.comment,
+                secondary_comment: data.secondary_comment,
+                tags: data.tags,
+              },
+            };
+          });
 
         const result = processHtmlWithHighlights(html, annotationHighlights);
         processedHtml = result.html;
@@ -370,7 +372,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } else {
       console.log("No HTML content available for processing");
     }
-  }, [html, annotations, loadedResourceId, showAnnotations]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [html, annotations, loadedResourceId, showAnnotations]); // contentHash and currentHtmlContent.length are derived values
 
   // Force iframe update when content hash changes
   useEffect(() => {
@@ -800,6 +803,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } else {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     resourceId,
     url,
@@ -810,7 +814,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     tabId,
     getContent,
     fetchWebpageContent,
-  ]); // Only depend on props and loadedResourceId
+  ]); // currentHtmlContent.length and setHtmlWithDebug are derived/stable - intentionally omitted
 
   // Component lifecycle debugging
   useEffect(() => {
