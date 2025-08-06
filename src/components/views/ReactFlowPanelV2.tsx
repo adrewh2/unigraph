@@ -41,6 +41,8 @@ import {
 import useAppConfigStore, { getLegendMode } from "../../store/appConfigStore";
 import { useDocumentStore } from "../../store/documentStore";
 import useGraphInteractionStore, {
+  getSelectedNodeId,
+  getSelectedNodeIds,
   setHoveredNodeId,
   setSelectedNodeId,
   setSelectedNodeIds,
@@ -259,6 +261,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const selectionChangeRef = useRef(false);
   const viewportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitializingRef = useRef(true);
 
   const {
     currentSceneGraph,
@@ -410,6 +413,8 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       if (viewportTimeoutRef.current) {
         clearTimeout(viewportTimeoutRef.current);
       }
+      // Reset initialization flag
+      isInitializingRef.current = true;
     };
   }, []);
 
@@ -422,6 +427,27 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   useEffect(() => {
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
+
+  // Sync initial selection state with ReactFlow after initialization
+  useEffect(() => {
+    if (!isInitializingRef.current && reactFlowInstance.current) {
+      const currentSelectedNodeIds = getSelectedNodeIds();
+      const currentSelectedNodeId = getSelectedNodeId();
+
+      if (currentSelectedNodeIds.size > 0 || currentSelectedNodeId) {
+        console.log("ReactFlowPanelV2: Syncing initial selection state");
+        // Update ReactFlow nodes to reflect current selection state
+        reactFlowInstance.current.setNodes((currentNodes) =>
+          currentNodes.map((node) => ({
+            ...node,
+            selected:
+              currentSelectedNodeIds.has(node.id as NodeId) ||
+              node.id === currentSelectedNodeId,
+          }))
+        );
+      }
+    }
+  }, [isInitializingRef.current, getSelectedNodeIds, getSelectedNodeId]);
 
   // Update nodes and edges when layout result changes
   useEffect(() => {
@@ -510,6 +536,11 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       } else {
         console.log("ReactFlowPanelV2: No saved viewport state, using default");
       }
+
+      // Mark initialization as complete after a short delay
+      setTimeout(() => {
+        isInitializingRef.current = false;
+      }, 100);
     },
     [getReactFlowViewportState]
   );
@@ -758,31 +789,57 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
         return;
       }
 
+      // Skip if we're still initializing to prevent conflicts during mount
+      if (isInitializingRef.current) {
+        console.log("Skipping selection change - still initializing");
+        return;
+      }
+
+      // Get current selection state to compare
+      const currentSelectedNodeIds = getSelectedNodeIds();
+      const currentSelectedNodeId = getSelectedNodeId();
+
       if (!params.nodes || params.nodes.length === 0) {
-        console.log("Clearing selection in handleSelectionChange");
-        setSelectedNodeIds(new EntityIds([]));
-        setSelectedNodeId(null);
+        // Only clear if there's actually a selection to clear
+        if (currentSelectedNodeIds.size > 0 || currentSelectedNodeId) {
+          console.log("Clearing selection in handleSelectionChange");
+          setSelectedNodeIds(new EntityIds([]));
+          setSelectedNodeId(null);
+        }
         return;
       }
 
       const newSelectedNodeIds = new EntityIds(
         params.nodes.map((node) => createNodeId(node.id))
       );
-      console.log(
-        "Setting selection from handleSelectionChange:",
-        newSelectedNodeIds
-      );
-      setSelectedNodeIds(newSelectedNodeIds);
 
-      if (params.nodes.length === 1) {
-        // Single node selection
-        console.log("Single node selection - setting selected node ID");
-        setSelectedNodeId(createNodeId(params.nodes[0].id));
+      // Only update if the selection has actually changed
+      if (
+        currentSelectedNodeIds.size !== newSelectedNodeIds.size ||
+        !Array.from(currentSelectedNodeIds).every((id) =>
+          newSelectedNodeIds.has(id)
+        )
+      ) {
+        console.log(
+          "Setting selection from handleSelectionChange:",
+          newSelectedNodeIds
+        );
+        setSelectedNodeIds(newSelectedNodeIds);
+
+        if (params.nodes.length === 1) {
+          // Single node selection
+          const newSelectedNodeId = createNodeId(params.nodes[0].id);
+          if (newSelectedNodeId !== currentSelectedNodeId) {
+            console.log("Single node selection - setting selected node ID");
+            setSelectedNodeId(newSelectedNodeId);
+          }
+        } else {
+          // Multi-node selection - clear single node ID
+          if (currentSelectedNodeId) {
+            setSelectedNodeId(null);
+          }
+        }
       }
-      // For multi-node selection, don't touch the single node ID at all
-
-      // Always open the node details panel for any selection
-      // setRightActiveSection("node-details");
     },
     []
   );
