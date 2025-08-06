@@ -1,8 +1,25 @@
 import { useTheme } from "@aesgraph/app-shell";
-import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  MessageSquare,
+  RefreshCw,
+  Tag,
+  X,
+} from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Annotation,
+  listAnnotations,
+  saveAnnotation,
+  TextSelectionAnnotationData,
+} from "../../api/annotationsApi";
 import { getWebpage } from "../../api/webpagesApi";
+import useAppConfigStore from "../../store/appConfigStore";
 import { useHtmlPageViewerStore } from "../../store/htmlPageViewerStore";
+import { addNotification } from "../../store/notificationStore";
+import { useUserStore } from "../../store/userStore";
+import AnnotationDialog from "./AnnotationDialog";
 
 interface HtmlPageViewerProps {
   resourceId?: string;
@@ -10,6 +27,12 @@ interface HtmlPageViewerProps {
   title?: string;
   tabId?: string;
   onClose?: () => void;
+}
+
+interface ContextMenuPosition {
+  x: number;
+  y: number;
+  text: string;
 }
 
 const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
@@ -26,9 +49,22 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [currentUrl, setCurrentUrl] = useState<string>(url || "");
   const [currentTitle, setCurrentTitle] = useState<string>(title || "");
   const [loadedResourceId, setLoadedResourceId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuPosition | null>(
+    null
+  );
+  const [showAnnotationDialog, setShowAnnotationDialog] = useState(false);
+  const [selectedText, setSelectedText] = useState("");
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [showAnnotationCard, setShowAnnotationCard] =
+    useState<Annotation | null>(null);
 
-  // Ref to track processed resourceIds to prevent unnecessary re-renders
+  // Refs
   const processedResourceIds = useRef<Set<string>>(new Set());
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Store hooks
+  const { user } = useUserStore();
+  const { currentSceneGraph } = useAppConfigStore();
 
   // Get store functions
   const {
@@ -38,6 +74,80 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     setError: setStoreError,
     hasValidContent,
   } = useHtmlPageViewerStore();
+
+  // Inject script to capture selection in iframe
+  const injectSelectionScript = useCallback(() => {
+    if (!iframeRef.current) return;
+
+    try {
+      const iframe = iframeRef.current;
+      const iframeWindow = iframe.contentWindow;
+
+      if (!iframeWindow) return;
+
+      // Inject a script that captures selection and communicates with parent
+      const script = `
+        (function() {
+          let lastSelection = '';
+          
+          // Capture selection on mouseup
+          document.addEventListener('mouseup', function(e) {
+            const selection = window.getSelection();
+            if (selection && selection.toString().trim()) {
+              lastSelection = selection.toString().trim();
+              console.log('Selection captured in iframe:', lastSelection);
+            }
+          });
+          
+          // Capture selection on contextmenu
+          document.addEventListener('contextmenu', function(e) {
+            const selection = window.getSelection();
+            if (selection && selection.toString().trim()) {
+              lastSelection = selection.toString().trim();
+              console.log('Context menu selection in iframe:', lastSelection);
+              
+              // Send message to parent
+              window.parent.postMessage({
+                type: 'iframe-selection',
+                selection: lastSelection,
+                x: e.clientX,
+                y: e.clientY
+              }, '*');
+            }
+          });
+          
+          // Expose function to get last selection
+          window.getLastSelection = function() {
+            return lastSelection;
+          };
+        })();
+      `;
+
+      // Execute the script in the iframe
+      (iframeWindow as any).eval(script);
+      console.log("Selection script injected into iframe");
+    } catch (error) {
+      console.warn("Could not inject selection script:", error);
+    }
+  }, []);
+
+  // Load annotations for the current webpage
+  const loadAnnotations = useCallback(async () => {
+    if (!user?.id || !currentUrl) return;
+
+    try {
+      const webpageAnnotations = await listAnnotations({
+        userId: user.id,
+        parentResourceType: "webpage",
+        parentResourceId: currentUrl,
+      });
+
+      console.log("Loaded annotations for webpage:", webpageAnnotations);
+      setAnnotations(webpageAnnotations);
+    } catch (error) {
+      console.error("Failed to load annotations:", error);
+    }
+  }, [user?.id, currentUrl]);
 
   // Define fetchWebpageContent function with useCallback
   const fetchWebpageContent = useCallback(
@@ -96,6 +206,409 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     },
     [setContent, setStoreLoading, setStoreError]
   );
+
+  // Handle text selection and context menu
+  const handleIframeLoad = useCallback(() => {
+    console.log("Iframe loaded");
+    if (!iframeRef.current) return;
+
+    try {
+      const iframe = iframeRef.current;
+      const iframeDoc =
+        iframe.contentDocument || iframe.contentWindow?.document;
+
+      if (!iframeDoc) {
+        console.log("No iframe document available");
+        return;
+      }
+
+      console.log("Adding event listeners to iframe document");
+      // Add event listeners to the iframe document
+      iframeDoc.addEventListener("mouseup", handleTextSelection);
+      iframeDoc.addEventListener("contextmenu", handleContextMenu);
+
+      // Close context menu when clicking outside
+      iframeDoc.addEventListener("click", () => {
+        setContextMenu(null);
+      });
+
+      // Close context menu on escape key
+      iframeDoc.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          setContextMenu(null);
+        }
+      });
+    } catch (error) {
+      console.warn(
+        "Could not access iframe content due to CORS restrictions:",
+        error
+      );
+    }
+
+    // Try to inject selection script as fallback
+    setTimeout(() => {
+      injectSelectionScript();
+    }, 100);
+
+    // Load annotations and inject highlighting
+    loadAnnotations();
+  }, [injectSelectionScript, loadAnnotations]);
+
+  // Inject highlighting script for existing annotations
+  const injectHighlightingScript = useCallback(() => {
+    if (!iframeRef.current || annotations.length === 0) return;
+
+    try {
+      const iframe = iframeRef.current;
+      const iframeWindow = iframe.contentWindow;
+
+      if (!iframeWindow) return;
+
+      // Create highlighting script
+      const annotationsJson = JSON.stringify(annotations);
+      const script =
+        "(function() {" +
+        "const annotations = " +
+        annotationsJson +
+        ";" +
+        "function highlightAnnotations() {" +
+        "annotations.forEach(function(annotation) {" +
+        "if (annotation.data && annotation.data.selected_text) {" +
+        "const text = annotation.data.selected_text;" +
+        "highlightText(text, annotation.id);" +
+        "}" +
+        "});" +
+        "}" +
+        "function highlightText(searchText, annotationId) {" +
+        "const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);" +
+        "const textNodes = [];" +
+        "let node;" +
+        "while (node = walker.nextNode()) { textNodes.push(node); }" +
+        "textNodes.forEach(function(textNode) {" +
+        "const text = textNode.textContent;" +
+        "if (text && text.includes(searchText)) {" +
+        "const span = document.createElement('span');" +
+        "span.className = 'annotation-highlight';" +
+        "span.setAttribute('data-annotation-id', annotationId);" +
+        "span.style.backgroundColor = '#ffeb3b';" +
+        "span.style.cursor = 'pointer';" +
+        "span.style.borderRadius = '2px';" +
+        "span.style.padding = '1px 2px';" +
+        "span.textContent = searchText;" +
+        "const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\\\\]\\\\]/g, '\\\\\\\\$&'), 'g');" +
+        "const newText = text.replace(regex, span.outerHTML);" +
+        "if (newText !== text) {" +
+        "textNode.parentNode.innerHTML = textNode.parentNode.innerHTML.replace(regex, span.outerHTML);" +
+        "}" +
+        "}" +
+        "});" +
+        "}" +
+        "document.addEventListener('click', function(e) {" +
+        "if (e.target.classList.contains('annotation-highlight')) {" +
+        "const annotationId = e.target.getAttribute('data-annotation-id');" +
+        "if (annotationId) {" +
+        "window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');" +
+        "}" +
+        "}" +
+        "});" +
+        "if (document.readyState === 'loading') {" +
+        "document.addEventListener('DOMContentLoaded', highlightAnnotations);" +
+        "} else {" +
+        "highlightAnnotations();" +
+        "}" +
+        "})();";
+
+      // Execute the script in the iframe
+      (iframeWindow as any).eval(script);
+      console.log(
+        "Highlighting script injected for",
+        annotations.length,
+        "annotations"
+      );
+    } catch (error) {
+      console.warn("Could not inject highlighting script:", error);
+    }
+  }, [annotations]);
+
+  // Inject highlighting script when annotations change
+  useEffect(() => {
+    if (annotations.length > 0 && iframeRef.current) {
+      setTimeout(() => {
+        injectHighlightingScript();
+      }, 500); // Give iframe time to load
+    }
+  }, [annotations, injectHighlightingScript]);
+
+  // Add event listeners to the main document as fallback
+  useEffect(() => {
+    const handleMainDocumentMouseUp = (event: MouseEvent) => {
+      // Only handle if we're clicking inside the iframe area
+      if (iframeRef.current) {
+        const iframeRect = iframeRef.current.getBoundingClientRect();
+        console.log("Mouse up event at:", event.clientX, event.clientY);
+        console.log("Iframe rect:", iframeRect);
+
+        if (
+          event.clientX >= iframeRect.left &&
+          event.clientX <= iframeRect.right &&
+          event.clientY >= iframeRect.top &&
+          event.clientY <= iframeRect.bottom
+        ) {
+          console.log(
+            "Mouse up inside iframe area, calling handleTextSelection"
+          );
+          handleTextSelection(event);
+        }
+      }
+    };
+
+    const handleMainDocumentContextMenu = (event: MouseEvent) => {
+      // Only handle if we're right-clicking inside the iframe area
+      if (iframeRef.current) {
+        const iframeRect = iframeRef.current.getBoundingClientRect();
+        console.log("Context menu event at:", event.clientX, event.clientY);
+        console.log("Iframe rect:", iframeRect);
+
+        if (
+          event.clientX >= iframeRect.left &&
+          event.clientX <= iframeRect.right &&
+          event.clientY >= iframeRect.top &&
+          event.clientY <= iframeRect.bottom
+        ) {
+          console.log(
+            "Context menu inside iframe area, calling handleContextMenu"
+          );
+          handleContextMenu(event);
+        }
+      }
+    };
+
+    const handleMainDocumentClick = () => {
+      setContextMenu(null);
+    };
+
+    const handleMainDocumentKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setContextMenu(null);
+      }
+    };
+
+    // Handle messages from iframe
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === "iframe-selection") {
+        console.log("Received selection from iframe:", event.data);
+        setSelectedText(event.data.selection);
+        setContextMenu({
+          x: event.data.x,
+          y: event.data.y,
+          text: event.data.selection,
+        });
+      } else if (event.data && event.data.type === "show-annotation") {
+        console.log("Show annotation request:", event.data);
+        const annotation = annotations.find(
+          (a) => a.id === event.data.annotationId
+        );
+        if (annotation) {
+          setShowAnnotationCard(annotation);
+        }
+      }
+    };
+
+    // Add listeners to main document
+    document.addEventListener("mouseup", handleMainDocumentMouseUp);
+    document.addEventListener("contextmenu", handleMainDocumentContextMenu);
+    document.addEventListener("click", handleMainDocumentClick);
+    document.addEventListener("keydown", handleMainDocumentKeyDown);
+    window.addEventListener("message", handleMessage);
+
+    return () => {
+      document.removeEventListener("mouseup", handleMainDocumentMouseUp);
+      document.removeEventListener(
+        "contextmenu",
+        handleMainDocumentContextMenu
+      );
+      document.removeEventListener("click", handleMainDocumentClick);
+      document.removeEventListener("keydown", handleMainDocumentKeyDown);
+      window.removeEventListener("message", handleMessage);
+    };
+  }, []);
+
+  const handleTextSelection = useCallback((event: MouseEvent) => {
+    console.log("handleTextSelection called", event);
+
+    // Try to get selection from iframe document first
+    let selection: Selection | null = null;
+    let selectedText = "";
+
+    try {
+      if (iframeRef.current) {
+        const iframeDoc =
+          iframeRef.current.contentDocument ||
+          iframeRef.current.contentWindow?.document;
+        if (iframeDoc) {
+          selection = iframeDoc.getSelection();
+          console.log("Iframe selection:", selection?.toString());
+        }
+      }
+    } catch (error) {
+      console.log("Could not access iframe selection:", error);
+    }
+
+    // Fallback to main window selection
+    if (!selection || !selection.toString().trim()) {
+      selection = window.getSelection();
+      console.log("Main window selection:", selection?.toString());
+    }
+
+    if (!selection || selection.toString().trim() === "") {
+      setContextMenu(null);
+      return;
+    }
+
+    selectedText = selection.toString().trim();
+    if (selectedText) {
+      console.log("Setting context menu with text:", selectedText);
+      setSelectedText(selectedText);
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        text: selectedText,
+      });
+    }
+  }, []);
+
+  const handleContextMenu = useCallback((event: MouseEvent) => {
+    console.log("handleContextMenu called", event);
+    event.preventDefault();
+
+    // Try to get selection from iframe document first
+    let selection: Selection | null = null;
+    let selectedText = "";
+
+    try {
+      if (iframeRef.current) {
+        const iframeDoc =
+          iframeRef.current.contentDocument ||
+          iframeRef.current.contentWindow?.document;
+        if (iframeDoc) {
+          selection = iframeDoc.getSelection();
+          console.log("Iframe context menu selection:", selection?.toString());
+        }
+      }
+    } catch (error) {
+      console.log("Could not access iframe selection for context menu:", error);
+    }
+
+    // Fallback to main window selection
+    if (!selection || !selection.toString().trim()) {
+      selection = window.getSelection();
+      console.log("Main window context menu selection:", selection?.toString());
+    }
+
+    if (!selection || selection.toString().trim() === "") {
+      setContextMenu(null);
+      return;
+    }
+
+    selectedText = selection.toString().trim();
+    if (selectedText) {
+      console.log(
+        "Setting context menu from right-click with text:",
+        selectedText
+      );
+      setSelectedText(selectedText);
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        text: selectedText,
+      });
+    }
+  }, []);
+
+  const handleCreateAnnotation = useCallback(() => {
+    setShowAnnotationDialog(true);
+    setContextMenu(null);
+  }, []);
+
+  const handleAnnotationSubmit = useCallback(
+    async (annotationData: TextSelectionAnnotationData) => {
+      if (!user?.id) return;
+
+      try {
+        // Create annotation object
+        const annotation = {
+          id: crypto.randomUUID(),
+          title: annotationData.comment,
+          data: annotationData,
+          user_id: user.id,
+          parent_resource_type: "webpage",
+          parent_resource_id: currentUrl,
+        };
+
+        // Save to database
+        await saveAnnotation(annotation);
+
+        // Also save to scene graph if available
+        if (currentSceneGraph) {
+          const graph = currentSceneGraph.getGraph();
+          const annotationNode = graph.createNode({
+            id: annotation.id,
+            type: "annotation",
+            label: annotation.title,
+            position: { x: 0, y: 0, z: 0 },
+            userData: {
+              annotationData: annotationData,
+              annotation: annotation,
+            },
+          });
+
+          // Create webpage node if it doesn't exist
+          const webpageNode = graph.createNodeIfMissing(currentUrl, {
+            id: currentUrl,
+            type: "webpage",
+            label: currentTitle,
+            position: { x: 0, y: 0, z: 0 },
+          });
+
+          // Create edge between annotation and webpage
+          graph.createEdge(annotationNode.getId(), webpageNode.getId(), {
+            type: "annotation-parent",
+          });
+
+          // Notify graph change
+          currentSceneGraph.notifyGraphChanged();
+        }
+
+        // Show success notification
+        addNotification({
+          message: `Annotation created successfully from "${currentTitle}"`,
+          type: "success",
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error("Failed to create annotation:", error);
+        addNotification({
+          message: `Failed to create annotation: ${error instanceof Error ? error.message : "Unknown error"}`,
+          type: "error",
+          duration: 5000,
+        });
+      }
+    },
+    [currentUrl, currentTitle, user?.id, currentSceneGraph]
+  );
+
+  const handleCopyText = useCallback(() => {
+    navigator.clipboard.writeText(selectedText);
+    setContextMenu(null);
+  }, [selectedText]);
+
+  const handleSearchGoogle = useCallback(() => {
+    window.open(
+      `https://www.google.com/search?q=${encodeURIComponent(selectedText)}`,
+      "_blank"
+    );
+    setContextMenu(null);
+  }, [selectedText]);
 
   // Initialize component from props or URL parameters
   useEffect(() => {
@@ -159,7 +672,17 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } else {
       setLoading(false);
     }
-  }, [resourceId, url, title, loadedResourceId]); // Only depend on props and loadedResourceId
+  }, [
+    resourceId,
+    url,
+    title,
+    loadedResourceId,
+    hasValidContent,
+    html,
+    tabId,
+    getContent,
+    fetchWebpageContent,
+  ]); // Only depend on props and loadedResourceId
 
   // Component lifecycle debugging
   useEffect(() => {
@@ -256,6 +779,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         display: "flex",
         flexDirection: "column",
         backgroundColor: "white",
+        position: "relative",
       }}
     >
       {/* Header */}
@@ -332,6 +856,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       >
         {html && (
           <iframe
+            ref={iframeRef}
             srcDoc={html}
             style={{
               width: "100%",
@@ -341,9 +866,341 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             }}
             title={currentTitle || title || "HTML Content"}
             sandbox="allow-scripts allow-same-origin"
+            onLoad={handleIframeLoad}
           />
         )}
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          style={{
+            position: "fixed",
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+            zIndex: 10000,
+            backgroundColor: theme.colors.surface,
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: "8px",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+            padding: "4px",
+            minWidth: "160px",
+          }}
+        >
+          <div
+            style={{
+              padding: "8px 12px",
+              fontSize: "12px",
+              color: theme.colors.textMuted,
+              borderBottom: `1px solid ${theme.colors.border}`,
+              marginBottom: "4px",
+            }}
+          >
+            &ldquo;
+            {contextMenu.text.length > 50
+              ? contextMenu.text.substring(0, 50) + "..."
+              : contextMenu.text}
+            &rdquo;
+          </div>
+
+          <button
+            onClick={handleCreateAnnotation}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "14px",
+              color: theme.colors.text,
+              borderRadius: "4px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.surfaceHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <MessageSquare size={16} />
+            Create Annotation
+          </button>
+
+          <button
+            onClick={handleCopyText}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "14px",
+              color: theme.colors.text,
+              borderRadius: "4px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.surfaceHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <Tag size={16} />
+            Copy Text
+          </button>
+
+          <button
+            onClick={handleSearchGoogle}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "14px",
+              color: theme.colors.text,
+              borderRadius: "4px",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.surfaceHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <ExternalLink size={16} />
+            Search Google
+          </button>
+        </div>
+      )}
+
+      {/* Annotation Dialog */}
+      <AnnotationDialog
+        isOpen={showAnnotationDialog}
+        onClose={() => setShowAnnotationDialog(false)}
+        onSubmit={handleAnnotationSubmit}
+        selectedText={selectedText}
+        pageUrl={currentUrl}
+        pageTitle={currentTitle}
+      />
+
+      {/* Annotation Card */}
+      {showAnnotationCard && (
+        <div
+          style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "white",
+            borderRadius: "12px",
+            padding: "24px",
+            width: "500px",
+            maxWidth: "90vw",
+            maxHeight: "80vh",
+            overflow: "auto",
+            boxShadow:
+              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            zIndex: 10002,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "20px",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "18px",
+                fontWeight: "600",
+                color: "#1f2937",
+              }}
+            >
+              Annotation Details
+            </h2>
+            <button
+              onClick={() => setShowAnnotationCard(null)}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: "4px",
+                borderRadius: "4px",
+                color: "#6b7280",
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "#374151",
+                marginBottom: "8px",
+              }}
+            >
+              Selected Text
+            </label>
+            <div
+              style={{
+                padding: "12px",
+                backgroundColor: "#f9fafb",
+                borderRadius: "6px",
+                fontSize: "14px",
+                color: "#6b7280",
+                border: "1px solid #e5e7eb",
+                maxHeight: "100px",
+                overflow: "auto",
+              }}
+            >
+              {(showAnnotationCard.data as TextSelectionAnnotationData)
+                ?.selected_text || "No text selected"}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: "#374151",
+                marginBottom: "8px",
+              }}
+            >
+              Comment
+            </label>
+            <div
+              style={{
+                padding: "12px",
+                backgroundColor: "#f9fafb",
+                borderRadius: "6px",
+                fontSize: "14px",
+                color: "#374151",
+                border: "1px solid #e5e7eb",
+                minHeight: "60px",
+              }}
+            >
+              {(showAnnotationCard.data as TextSelectionAnnotationData)
+                ?.comment || "No comment"}
+            </div>
+          </div>
+
+          {(showAnnotationCard.data as TextSelectionAnnotationData)
+            ?.secondary_comment && (
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: "8px",
+                }}
+              >
+                Secondary Comment
+              </label>
+              <div
+                style={{
+                  padding: "12px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  color: "#374151",
+                  border: "1px solid #e5e7eb",
+                  minHeight: "40px",
+                }}
+              >
+                {(showAnnotationCard.data as TextSelectionAnnotationData)
+                  ?.secondary_comment || ""}
+              </div>
+            </div>
+          )}
+
+          {(showAnnotationCard.data as TextSelectionAnnotationData)?.tags &&
+            (showAnnotationCard.data as TextSelectionAnnotationData)?.tags
+              ?.length > 0 && (
+              <div style={{ marginBottom: "20px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: "#374151",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Tags
+                </label>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                  }}
+                >
+                  {(
+                    showAnnotationCard.data as TextSelectionAnnotationData
+                  )?.tags?.map((tag: string) => (
+                    <span
+                      key={tag}
+                      style={{
+                        padding: "4px 8px",
+                        backgroundColor: "#e0e7ff",
+                        color: "#3730a3",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "flex-end",
+            }}
+          >
+            <button
+              onClick={() => setShowAnnotationCard(null)}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: "transparent",
+                color: "#6b7280",
+                border: "1px solid #d1d5db",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
