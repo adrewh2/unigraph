@@ -57,6 +57,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [showAnnotationCard, setShowAnnotationCard] =
     useState<Annotation | null>(null);
+  const [cardPosition, setCardPosition] = useState({ x: 50, y: 50 });
+  const [cardSize, setCardSize] = useState({ width: 400, height: 300 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Refs
   const processedResourceIds = useRef<Set<string>>(new Set());
@@ -183,7 +188,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } catch (error) {
       console.error("Failed to load annotations:", error);
     }
-  }, [user?.id, currentUrl]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, currentUrl]); // Only need user.id, not the full user object
 
   // Define fetchWebpageContent function with useCallback
   const fetchWebpageContent = useCallback(
@@ -285,7 +291,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     setTimeout(() => {
       injectSelectionScript();
     }, 100);
-  }, [injectSelectionScript, loadAnnotations]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [injectSelectionScript]); // handleTextSelection and handleContextMenu are defined below and are stable
 
   // Inject highlighting script for existing annotations
   const injectHighlightingScript = useCallback(() => {
@@ -473,7 +480,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       document.removeEventListener("keydown", handleMainDocumentKeyDown);
       window.removeEventListener("message", handleMessage);
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
 
   const handleTextSelection = useCallback((event: MouseEvent) => {
     console.log("handleTextSelection called", event);
@@ -729,12 +737,13 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   // Component lifecycle debugging
   useEffect(() => {
     console.log("HtmlPageViewer mounted");
+    // Capture the ref value at mount time
+    const currentProcessedIds = processedResourceIds.current;
     return () => {
       console.log("HtmlPageViewer unmounted");
       // Reset document title when component unmounts
       document.title = "Unigraph";
-      // Clear processed resourceIds - capture the ref value
-      const currentProcessedIds = processedResourceIds.current;
+      // Clear processed resourceIds using the captured value
       currentProcessedIds.clear();
     };
   }, []);
@@ -762,6 +771,51 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const handleGoBack = () => {
     onClose?.();
   };
+
+  // Drag and resize handlers
+  const handleMouseDown = (e: React.MouseEvent, type: 'drag' | 'resize') => {
+    e.preventDefault();
+    if (type === 'drag') {
+      setIsDragging(true);
+      setDragOffset({
+        x: e.clientX - cardPosition.x,
+        y: e.clientY - cardPosition.y,
+      });
+    } else {
+      setIsResizing(true);
+    }
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isDragging) {
+      setCardPosition({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y,
+      });
+    } else if (isResizing) {
+      setCardSize({
+        width: Math.max(300, e.clientX - cardPosition.x),
+        height: Math.max(200, e.clientY - cardPosition.y),
+      });
+    }
+  }, [isDragging, isResizing, dragOffset, cardPosition]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    setIsResizing(false);
+  }, []);
+
+  // Add global mouse event listeners for drag/resize
+  useEffect(() => {
+    if (isDragging || isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
 
   // Only show loading if we're actually loading and don't have content yet
   if (loading && !html) {
@@ -1044,46 +1098,34 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
       {/* Annotation Card */}
       {showAnnotationCard && (
-        <>
-          {/* Backdrop */}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              zIndex: 10001,
-            }}
-            onClick={() => setShowAnnotationCard(null)}
-          />
-          {/* Modal */}
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              backgroundColor: "white",
-              borderRadius: "12px",
-              padding: "24px",
-              width: "500px",
-              maxWidth: "90%",
-              maxHeight: "80%",
-              overflow: "auto",
-              boxShadow:
-                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-              zIndex: 10002,
-            }}
-          >
+        <div
+          style={{
+            position: "absolute",
+            top: cardPosition.y,
+            left: cardPosition.x,
+            width: cardSize.width,
+            height: cardSize.height,
+            backgroundColor: "white",
+            borderRadius: "12px",
+            border: "1px solid #e5e7eb",
+            boxShadow:
+              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+            zIndex: 10002,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 marginBottom: "20px",
+                padding: "16px 16px 0 16px",
+                cursor: "move",
               }}
+              onMouseDown={(e) => handleMouseDown(e, 'drag')}
             >
               <h2
                 style={{
@@ -1110,7 +1152,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               </button>
             </div>
 
-            <div style={{ marginBottom: "20px" }}>
+            <div style={{ marginBottom: "20px", padding: "0 16px", flex: 1, overflow: "auto" }}>
               <label
                 style={{
                   display: "block",
@@ -1248,6 +1290,9 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 display: "flex",
                 gap: "12px",
                 justifyContent: "flex-end",
+                padding: "0 16px 16px 16px",
+                flex: 1,
+                alignItems: "flex-end",
               }}
             >
               <button
@@ -1265,8 +1310,21 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 Close
               </button>
             </div>
-          </div>
-        </>
+
+          {/* Resize handle */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "0",
+              right: "0",
+              width: "20px",
+              height: "20px",
+              cursor: "nw-resize",
+              background: "linear-gradient(-45deg, transparent 30%, #e5e7eb 30%, #e5e7eb 40%, transparent 40%)",
+            }}
+            onMouseDown={(e) => handleMouseDown(e, 'resize')}
+          />
+        </div>
       )}
     </div>
   );
