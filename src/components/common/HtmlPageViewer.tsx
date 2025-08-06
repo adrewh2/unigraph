@@ -57,8 +57,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [showAnnotationCard, setShowAnnotationCard] =
     useState<Annotation | null>(null);
-  const [cardPosition, setCardPosition] = useState({ x: 50, y: 50 });
-  const [cardSize, setCardSize] = useState({ width: 400, height: 300 });
+  const [cardPosition, setCardPosition] = useState({ x: 100, y: 100 });
+  const [cardSize, setCardSize] = useState({ width: 450, height: 400 });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -311,10 +311,21 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "const annotations = " +
         annotationsJson +
         ";" +
+        "console.log('Highlighting script executing with', annotations.length, 'annotations');" +
+        "function clearExistingHighlights() {" +
+        "const existingHighlights = document.querySelectorAll('.annotation-highlight');" +
+        "existingHighlights.forEach(function(highlight) {" +
+        "const parent = highlight.parentNode;" +
+        "parent.replaceChild(document.createTextNode(highlight.textContent), highlight);" +
+        "parent.normalize();" +
+        "});" +
+        "}" +
         "function highlightAnnotations() {" +
+        "clearExistingHighlights();" +
         "annotations.forEach(function(annotation) {" +
         "if (annotation.data && annotation.data.selected_text) {" +
         "const text = annotation.data.selected_text;" +
+        "console.log('Highlighting text for annotation:', annotation.id, 'text:', text);" +
         "highlightText(text, annotation.id);" +
         "}" +
         "});" +
@@ -346,9 +357,13 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "span.style.borderRadius = '2px';" +
         "span.textContent = text.match(regex)[matchIndex];" +
         "span.addEventListener('click', function() {" +
+        "console.log('Annotation span clicked, ID:', this.getAttribute('data-annotation-id'));" +
         "const annotationId = this.getAttribute('data-annotation-id');" +
         "if (annotationId) {" +
+        "console.log('Sending show-annotation message for ID:', annotationId);" +
         "window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');" +
+        "} else {" +
+        "console.warn('No annotation ID found on clicked element');" +
         "}" +
         "});" +
         "fragment.appendChild(span);" +
@@ -446,6 +461,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
     // Handle messages from iframe
     const handleMessage = (event: MessageEvent) => {
+      console.log("Received message:", event.data);
+      
       if (event.data && event.data.type === "iframe-selection") {
         setSelectedText(event.data.selection);
         setContextMenu({
@@ -454,11 +471,20 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           text: event.data.selection,
         });
       } else if (event.data && event.data.type === "show-annotation") {
+        console.log("Show annotation message received for ID:", event.data.annotationId);
+        console.log("Current annotations:", annotations);
+        
         const annotation = annotations.find(
           (a) => a.id === event.data.annotationId
         );
+        
+        console.log("Found annotation:", annotation);
+        
         if (annotation) {
           setShowAnnotationCard(annotation);
+          console.log("Annotation card should be shown");
+        } else {
+          console.warn("Annotation not found in local state, ID:", event.data.annotationId);
         }
       }
     };
@@ -598,6 +624,9 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         // Save to database
         await saveAnnotation(annotation);
 
+        // Immediately add to local annotations state for optimistic update
+        setAnnotations(prevAnnotations => [...prevAnnotations, annotation]);
+
         // Also save to scene graph if available
         if (currentSceneGraph) {
           const graph = currentSceneGraph.getGraph();
@@ -635,6 +664,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           type: "success",
           duration: 3000,
         });
+
+        // Reload annotations to get the latest from server (optional, but ensures consistency)
+        setTimeout(() => {
+          loadAnnotations();
+        }, 100);
       } catch (error) {
         console.error("Failed to create annotation:", error);
         addNotification({
@@ -644,7 +678,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         });
       }
     },
-    [currentUrl, currentTitle, user?.id, currentSceneGraph]
+    [currentUrl, currentTitle, user?.id, currentSceneGraph, loadAnnotations]
   );
 
   const handleCopyText = useCallback(() => {
@@ -789,18 +823,42 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (isDragging) {
+        // Calculate new position
+        const newX = e.clientX - dragOffset.x;
+        const newY = e.clientY - dragOffset.y;
+        
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Constrain position to keep card within viewport
+        const constrainedX = Math.max(0, Math.min(newX, viewportWidth - cardSize.width));
+        const constrainedY = Math.max(0, Math.min(newY, viewportHeight - cardSize.height));
+        
         setCardPosition({
-          x: e.clientX - dragOffset.x,
-          y: e.clientY - dragOffset.y,
+          x: constrainedX,
+          y: constrainedY,
         });
       } else if (isResizing) {
+        // Calculate new size
+        const newWidth = Math.max(350, e.clientX - cardPosition.x);
+        const newHeight = Math.max(250, e.clientY - cardPosition.y);
+        
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Constrain size to fit within viewport
+        const constrainedWidth = Math.min(newWidth, viewportWidth - cardPosition.x);
+        const constrainedHeight = Math.min(newHeight, viewportHeight - cardPosition.y);
+        
         setCardSize({
-          width: Math.max(300, e.clientX - cardPosition.x),
-          height: Math.max(200, e.clientY - cardPosition.y),
+          width: constrainedWidth,
+          height: constrainedHeight,
         });
       }
     },
-    [isDragging, isResizing, dragOffset, cardPosition]
+    [isDragging, isResizing, dragOffset, cardPosition, cardSize]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -1103,42 +1161,47 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       {showAnnotationCard && (
         <div
           style={{
-            position: "absolute",
+            position: "fixed",
             top: cardPosition.y,
             left: cardPosition.x,
             width: cardSize.width,
             height: cardSize.height,
             backgroundColor: "white",
             borderRadius: "12px",
-            border: "1px solid #e5e7eb",
+            border: "1px solid #d1d5db",
             boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)",
             zIndex: 10002,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            backdropFilter: "blur(10px)",
           }}
         >
+          {/* Title Bar */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              marginBottom: "20px",
-              padding: "16px 16px 0 16px",
+              padding: "16px 20px",
+              borderBottom: "1px solid #e5e7eb",
+              backgroundColor: "#f8fafc",
               cursor: "move",
+              borderRadius: "12px 12px 0 0",
             }}
             onMouseDown={(e) => handleMouseDown(e, "drag")}
           >
             <h2
               style={{
                 margin: 0,
-                fontSize: "18px",
+                fontSize: "16px",
                 fontWeight: "600",
                 color: "#1f2937",
+                letterSpacing: "-0.025em",
               }}
             >
-              Annotation Details
+              📝 Annotation Details
             </h2>
             <button
               onClick={() => setShowAnnotationCard(null)}
@@ -1147,174 +1210,216 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 border: "none",
                 cursor: "pointer",
                 padding: "4px",
-                borderRadius: "4px",
+                borderRadius: "6px",
                 color: "#6b7280",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#f3f4f6";
+                e.currentTarget.style.color = "#374151";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#6b7280";
               }}
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
+          {/* Content Area */}
           <div
             style={{
-              marginBottom: "20px",
-              padding: "0 16px",
               flex: 1,
+              padding: "20px",
               overflow: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
             }}
           >
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#374151",
-                marginBottom: "8px",
-              }}
-            >
-              Selected Text
-            </label>
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#f9fafb",
-                borderRadius: "6px",
-                fontSize: "14px",
-                color: "#6b7280",
-                border: "1px solid #e5e7eb",
-                maxHeight: "100px",
-                overflow: "auto",
-              }}
-            >
-              {(showAnnotationCard.data as TextSelectionAnnotationData)
-                ?.selected_text || "No text selected"}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#374151",
-                marginBottom: "8px",
-              }}
-            >
-              Comment
-            </label>
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#f9fafb",
-                borderRadius: "6px",
-                fontSize: "14px",
-                color: "#374151",
-                border: "1px solid #e5e7eb",
-                minHeight: "60px",
-              }}
-            >
-              {(showAnnotationCard.data as TextSelectionAnnotationData)
-                ?.comment || "No comment"}
-            </div>
-          </div>
-
-          {(showAnnotationCard.data as TextSelectionAnnotationData)
-            ?.secondary_comment && (
-            <div style={{ marginBottom: "20px" }}>
+            {/* Selected Text Section */}
+            <div>
               <label
                 style={{
                   display: "block",
-                  fontSize: "14px",
-                  fontWeight: "500",
+                  fontSize: "13px",
+                  fontWeight: "600",
                   color: "#374151",
                   marginBottom: "8px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
                 }}
               >
-                Secondary Comment
+                Selected Text
               </label>
               <div
                 style={{
-                  padding: "12px",
-                  backgroundColor: "#f9fafb",
-                  borderRadius: "6px",
+                  padding: "12px 16px",
+                  backgroundColor: "#f8fafc",
+                  borderRadius: "8px",
                   fontSize: "14px",
-                  color: "#374151",
+                  color: "#4b5563",
                   border: "1px solid #e5e7eb",
-                  minHeight: "40px",
+                  maxHeight: "120px",
+                  overflow: "auto",
+                  lineHeight: "1.5",
+                  fontStyle: "italic",
+                }}
+              >
+                &ldquo;{(showAnnotationCard.data as TextSelectionAnnotationData)
+                  ?.selected_text || "No text selected"}&rdquo;
+              </div>
+            </div>
+
+            {/* Comment Section */}
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: "#374151",
+                  marginBottom: "8px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Comment
+              </label>
+              <div
+                style={{
+                  padding: "12px 16px",
+                  backgroundColor: "#ffffff",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  color: "#1f2937",
+                  border: "1px solid #e5e7eb",
+                  minHeight: "80px",
+                  lineHeight: "1.6",
                 }}
               >
                 {(showAnnotationCard.data as TextSelectionAnnotationData)
-                  ?.secondary_comment || ""}
+                  ?.comment || "No comment"}
               </div>
             </div>
-          )}
 
-          {Array.isArray(
-            (showAnnotationCard.data as TextSelectionAnnotationData)?.tags
-          ) &&
-            ((showAnnotationCard.data as TextSelectionAnnotationData)?.tags
-              ?.length ?? 0) > 0 && (
-              <div style={{ marginBottom: "20px" }}>
+            {/* Secondary Comment Section */}
+            {(showAnnotationCard.data as TextSelectionAnnotationData)
+              ?.secondary_comment && (
+              <div>
                 <label
                   style={{
                     display: "block",
-                    fontSize: "14px",
-                    fontWeight: "500",
+                    fontSize: "13px",
+                    fontWeight: "600",
                     color: "#374151",
                     marginBottom: "8px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
                   }}
                 >
-                  Tags
+                  Additional Notes
                 </label>
                 <div
                   style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "8px",
+                    padding: "12px 16px",
+                    backgroundColor: "#ffffff",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    color: "#1f2937",
+                    border: "1px solid #e5e7eb",
+                    minHeight: "60px",
+                    lineHeight: "1.6",
                   }}
                 >
-                  {(
-                    showAnnotationCard.data as TextSelectionAnnotationData
-                  )?.tags?.map((tag: string) => (
-                    <span
-                      key={tag}
-                      style={{
-                        padding: "4px 8px",
-                        backgroundColor: "#e0e7ff",
-                        color: "#3730a3",
-                        borderRadius: "12px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {(showAnnotationCard.data as TextSelectionAnnotationData)
+                    ?.secondary_comment || ""}
                 </div>
               </div>
             )}
 
+            {/* Tags Section */}
+            {Array.isArray(
+              (showAnnotationCard.data as TextSelectionAnnotationData)?.tags
+            ) &&
+              ((showAnnotationCard.data as TextSelectionAnnotationData)?.tags
+                ?.length ?? 0) > 0 && (
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      color: "#374151",
+                      marginBottom: "8px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    Tags
+                  </label>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    {(
+                      showAnnotationCard.data as TextSelectionAnnotationData
+                    )?.tags?.map((tag: string) => (
+                      <span
+                        key={tag}
+                        style={{
+                          padding: "6px 12px",
+                          backgroundColor: "#dbeafe",
+                          color: "#1e40af",
+                          borderRadius: "20px",
+                          fontSize: "12px",
+                          fontWeight: "500",
+                          border: "1px solid #bfdbfe",
+                        }}
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+          </div>
+
+          {/* Footer with Close Button */}
           <div
             style={{
+              padding: "16px 20px",
+              borderTop: "1px solid #e5e7eb",
+              backgroundColor: "#f8fafc",
               display: "flex",
-              gap: "12px",
               justifyContent: "flex-end",
-              padding: "0 16px 16px 16px",
-              flex: 1,
-              alignItems: "flex-end",
+              borderRadius: "0 0 12px 12px",
             }}
           >
             <button
               onClick={() => setShowAnnotationCard(null)}
               style={{
                 padding: "8px 16px",
-                backgroundColor: "transparent",
-                color: "#6b7280",
+                backgroundColor: "#f3f4f6",
+                color: "#374151",
                 border: "1px solid #d1d5db",
                 borderRadius: "6px",
                 cursor: "pointer",
-                fontSize: "14px",
+                fontSize: "13px",
+                fontWeight: "500",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e5e7eb";
+                e.currentTarget.style.borderColor = "#9ca3af";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#f3f4f6";
+                e.currentTarget.style.borderColor = "#d1d5db";
               }}
             >
               Close
@@ -1331,7 +1436,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               height: "20px",
               cursor: "nw-resize",
               background:
-                "linear-gradient(-45deg, transparent 30%, #e5e7eb 30%, #e5e7eb 40%, transparent 40%)",
+                "linear-gradient(-45deg, transparent 30%, #d1d5db 30%, #d1d5db 40%, transparent 40%, transparent 60%, #d1d5db 60%, #d1d5db 70%, transparent 70%)",
+              borderRadius: "0 0 12px 0",
             }}
             onMouseDown={(e) => handleMouseDown(e, "resize")}
           />
