@@ -222,6 +222,7 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
                       resourceId: resourceId,
                       title: title,
                       url: url,
+                      tabId: tabId,
                     },
                     activate: true,
                   });
@@ -264,6 +265,13 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
                       const tabText = tab.textContent;
                       console.log("Debug - Tab:", { tabId, tabText });
                     });
+
+                    // // Debug cache information
+                    // import("../../utils/htmlPageViewerUtils").then(
+                    //   ({ debugCache }) => {
+                    //     debugCache();
+                    //   }
+                    // );
                   }, 100);
                 }
               }

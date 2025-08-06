@@ -2,12 +2,7 @@ import { useTheme } from "@aesgraph/app-shell";
 import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { getWebpage } from "../../api/webpagesApi";
-
-// Global cache to persist content across all tab instances
-const globalContentCache = new Map<
-  string,
-  { html: string; url: string; title: string }
->();
+import { useHtmlPageViewerStore } from "../../store/htmlPageViewerStore";
 
 interface HtmlPageViewerProps {
   resourceId?: string;
@@ -31,6 +26,15 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [currentUrl, setCurrentUrl] = useState<string>(url || "");
   const [currentTitle, setCurrentTitle] = useState<string>(title || "");
   const [loadedResourceId, setLoadedResourceId] = useState<string | null>(null);
+
+  // Get store functions
+  const {
+    getContent,
+    setContent,
+    setLoading: setStoreLoading,
+    setError: setStoreError,
+    hasValidContent,
+  } = useHtmlPageViewerStore();
 
   // Initialize component from props or URL parameters
   useEffect(() => {
@@ -56,21 +60,27 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
     console.log("HtmlPageViewer - Debug:", {
       finalResourceId,
-      hasCached: finalResourceId
-        ? globalContentCache.has(finalResourceId)
-        : false,
-      cacheSize: globalContentCache.size,
-      cacheKeys: Array.from(globalContentCache.keys()),
+      hasCached: finalResourceId ? hasValidContent(finalResourceId) : false,
       loadedResourceId,
       html: html ? html.length : 0,
       tabId,
     });
 
-    // Always fetch fresh data for now to debug
-    if (finalResourceId && loadedResourceId !== finalResourceId) {
-      console.log("Fetching from server for resourceId:", finalResourceId);
-      fetchWebpageContent(finalResourceId);
-    } else if (!finalResourceId) {
+    // Check if we have cached content first
+    if (finalResourceId) {
+      const cachedContent = getContent(finalResourceId);
+      if (cachedContent && hasValidContent(finalResourceId)) {
+        console.log("Using cached content for resourceId:", finalResourceId);
+        setHtml(cachedContent.html);
+        setCurrentUrl(cachedContent.url);
+        setCurrentTitle(cachedContent.title);
+        setLoadedResourceId(finalResourceId);
+        setLoading(false);
+      } else if (loadedResourceId !== finalResourceId) {
+        console.log("Fetching from server for resourceId:", finalResourceId);
+        fetchWebpageContent(finalResourceId);
+      }
+    } else {
       setLoading(false);
     }
   }, [resourceId, url, title, loadedResourceId]); // Use loadedResourceId instead of html
@@ -88,7 +98,9 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const fetchWebpageContent = async (webpageId: string) => {
     console.log("fetchWebpageContent called with webpageId:", webpageId);
     setLoading(true);
+    setStoreLoading(webpageId, true);
     setError(null);
+    setStoreError(webpageId, null);
 
     try {
       const webpage = await getWebpage(webpageId);
@@ -104,30 +116,46 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           webpage.url
         );
 
+        // Cache the content in the store
+        setContent(webpageId, {
+          html: webpage.html_content,
+          url: webpage.url,
+          title: webpage.title || webpage.url,
+          resourceId: webpageId,
+        });
+
         setHtml(webpage.html_content);
         setCurrentUrl(webpage.url);
         setCurrentTitle(webpage.title || webpage.url);
         document.title = webpage.title || webpage.url;
-        setLoadedResourceId(webpageId); // Mark this resourceId as loaded
+        setLoadedResourceId(webpageId);
       } else {
         console.log(
           "No webpage or html_content found for webpageId:",
           webpageId
         );
-        setError("No HTML content available for this webpage");
+        const errorMsg = "No HTML content available for this webpage";
+        setError(errorMsg);
+        setStoreError(webpageId, errorMsg);
       }
     } catch (err) {
       console.error("Error in fetchWebpageContent:", err);
-      setError(
-        `Error loading webpage: ${err instanceof Error ? err.message : String(err)}`
-      );
+      const errorMsg = `Error loading webpage: ${err instanceof Error ? err.message : String(err)}`;
+      setError(errorMsg);
+      setStoreError(webpageId, errorMsg);
     } finally {
       setLoading(false);
+      setStoreLoading(webpageId, false);
     }
   };
 
   const handleRefresh = () => {
-    setCurrentUrl(currentUrl);
+    if (loadedResourceId) {
+      // Clear the cache for this resource and refetch
+      const { clearContent } = useHtmlPageViewerStore.getState();
+      clearContent(loadedResourceId);
+      fetchWebpageContent(loadedResourceId);
+    }
   };
 
   const handleOpenInNewTab = () => {
