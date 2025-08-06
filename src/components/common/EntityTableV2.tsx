@@ -276,9 +276,9 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                       title: tabTitle,
                       props: {
                         documentId: documentId,
-                        title: documentTitle,
-                        extension: documentExtension,
-                        tabId: tabId,
+                        filename: `${documentTitle}.${documentExtension}`,
+                        userId: entityData.userId,
+                        projectId: entityData.project_id,
                       },
                       activate: true,
                     });
