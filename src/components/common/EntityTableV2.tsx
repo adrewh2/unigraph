@@ -1,4 +1,4 @@
-import { useTheme } from "@aesgraph/app-shell";
+import { addViewAsTab, useTheme } from "@aesgraph/app-shell";
 import type { ColDef } from "ag-grid-community";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
@@ -200,24 +200,71 @@ const EntityTableV2: React.FC<EntityTableV2Props> = ({
                   entityData.label || entityData.title || entityData.url;
 
                 if (resourceId) {
-                  // Store the resource data in sessionStorage for the HTML Page Viewer to access
-                  sessionStorage.setItem(
-                    "htmlPageViewerData",
-                    JSON.stringify({
+                  // Try both approaches to see which one works
+                  const tabId = `html-page-viewer-${resourceId}`;
+                  const tabTitle = title || `Page Viewer - ${resourceId}`;
+
+                  console.log("Debug - Opening HTML Page Viewer:", {
+                    resourceId,
+                    title,
+                    tabTitle,
+                    url,
+                  });
+
+                  // Try the new addViewAsTab approach first
+                  console.log("Debug - Trying addViewAsTab approach...");
+                  const success = addViewAsTab({
+                    viewId: "html-page-viewer",
+                    pane: "center",
+                    tabId: tabId,
+                    title: tabTitle,
+                    props: {
                       resourceId: resourceId,
                       title: title,
                       url: url,
-                    })
-                  );
-
-                  // Open HTML Page Viewer in a new tab using the app shell
-                  const event = new CustomEvent("add-tab", {
-                    detail: {
-                      viewId: "html-page-viewer",
-                      panelId: "center",
                     },
+                    activate: true,
                   });
-                  document.dispatchEvent(event);
+
+                  console.log("Debug - addViewAsTab result:", success);
+
+                  // If addViewAsTab fails or doesn't set the title properly, try the old approach
+                  if (!success) {
+                    console.log(
+                      "Debug - addViewAsTab failed, trying old approach..."
+                    );
+
+                    // Store the resource data in sessionStorage for the HTML Page Viewer to access
+                    sessionStorage.setItem(
+                      "htmlPageViewerData",
+                      JSON.stringify({
+                        resourceId: resourceId,
+                        title: title,
+                        url: url,
+                      })
+                    );
+
+                    // Open HTML Page Viewer in a new tab using the app shell
+                    const event = new CustomEvent("add-tab", {
+                      detail: {
+                        viewId: "html-page-viewer",
+                        panelId: "center",
+                      },
+                    });
+                    document.dispatchEvent(event);
+                  }
+
+                  // Check if the tab was actually created with our title
+                  setTimeout(() => {
+                    const tabElements =
+                      document.querySelectorAll("[data-tab-id]");
+                    console.log("Debug - All tab elements:", tabElements);
+                    tabElements.forEach((tab) => {
+                      const tabId = tab.getAttribute("data-tab-id");
+                      const tabText = tab.textContent;
+                      console.log("Debug - Tab:", { tabId, tabText });
+                    });
+                  }, 100);
                 }
               }
               handleClose();
