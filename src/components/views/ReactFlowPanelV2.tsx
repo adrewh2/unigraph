@@ -609,6 +609,27 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     };
   }, []);
 
+  // Function to zoom to a specific node
+  const zoomToNode = useCallback((nodeId: string) => {
+    if (reactFlowInstance.current) {
+      // Find the node in the current nodes
+      const node = reactFlowInstance.current
+        .getNodes()
+        .find((n) => n.id === nodeId);
+      if (node) {
+        console.log("ReactFlowPanelV2: Zooming to node:", nodeId);
+        // Zoom to the specific node with padding
+        reactFlowInstance.current.fitView({
+          padding: 0.3,
+          includeHiddenNodes: false,
+          minZoom: 0.1,
+          maxZoom: 2,
+          nodes: [node], // Only fit to this specific node
+        });
+      }
+    }
+  }, []);
+
   // Simple hover effect - only update styling, not positions
   useEffect(() => {
     console.log("ReactFlowPanelV2: Hover state changed", {
@@ -665,6 +686,23 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     nodeLegendConfig,
     legendMode,
   ]);
+
+  // Effect to zoom to selected node when selection changes from external sources (like resource manager)
+  useEffect(() => {
+    // Only zoom if there's exactly one selected node (single selection)
+    if (selectedNodeIds.size === 1) {
+      const selectedNodeId = Array.from(selectedNodeIds)[0];
+      console.log(
+        "ReactFlowPanelV2: Single node selected, zooming to:",
+        selectedNodeId
+      );
+
+      // Add a small delay to ensure the node is properly rendered
+      setTimeout(() => {
+        zoomToNode(selectedNodeId);
+      }, 100);
+    }
+  }, [selectedNodeIds, zoomToNode]);
 
   // Don't sync selection state automatically - let ReactFlow and our handlers manage it
   // The sync effect was causing conflicts with ReactFlow's internal selection management
