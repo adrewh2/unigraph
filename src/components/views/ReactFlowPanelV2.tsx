@@ -492,15 +492,10 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
             .slice(0, 3)
             .map((n) => ({ id: n.id, position: n.position }))
         );
+
+        // Only update if the nodes/edges have actually changed to prevent infinite loops
         setNodes(nodesWithNewPositions);
         setEdges(edgesWithStyling);
-
-        // Force ReactFlow to update if instance is available
-        if (reactFlowInstance.current) {
-          console.log("ReactFlowPanelV2: Forcing ReactFlow instance update");
-          reactFlowInstance.current.setNodes(nodesWithNewPositions);
-          reactFlowInstance.current.setEdges(edgesWithStyling);
-        }
       } else {
         console.log("ReactFlowPanelV2: No scene graph available");
       }
@@ -514,8 +509,6 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     edgeLegendConfig,
     legendMode,
     selectedNodeIds,
-    setNodes,
-    setEdges,
   ]);
 
   // Fix the onInit handler to use the correct type and avoid camera flickering
@@ -615,7 +608,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       console.log("ReactFlowPanelV2: ReactFlow instance not ready for zoom");
       return;
     }
-    
+
     // Find the node in the current nodes
     const node = reactFlowInstance.current
       .getNodes()
