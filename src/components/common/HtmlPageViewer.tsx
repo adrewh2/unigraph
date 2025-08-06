@@ -815,6 +815,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   // Drag and resize handlers
   const handleMouseDown = (e: React.MouseEvent, type: "drag" | "resize") => {
     e.preventDefault();
+    e.stopPropagation();
+
     if (type === "drag") {
       setIsDragging(true);
       setDragOffset({
@@ -887,11 +889,23 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   // Add global mouse event listeners for drag/resize
   useEffect(() => {
     if (isDragging || isResizing) {
+      // Prevent iframe events from interfering
+      const iframe = iframeRef.current;
+      if (iframe) {
+        iframe.style.pointerEvents = "none";
+      }
+
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
+
       return () => {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+
+        // Re-enable iframe events
+        if (iframe) {
+          iframe.style.pointerEvents = "auto";
+        }
       };
     }
   }, [isDragging, isResizing, handleMouseMove, handleMouseUp]);
@@ -1211,7 +1225,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             border: "1px solid #0078d4",
             boxShadow:
               "0 4px 12px rgba(0, 120, 212, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)",
-            zIndex: 10002,
+            zIndex: 10004,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
@@ -1440,15 +1454,33 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               position: "absolute",
               bottom: "0",
               right: "0",
-              width: "16px",
-              height: "16px",
+              width: "24px",
+              height: "24px",
               cursor: "nw-resize",
-              background:
-                "repeating-conic-gradient(from 0deg, #0078d4 0deg 90deg, transparent 90deg 180deg)",
-              backgroundSize: "4px 4px",
+              backgroundColor: "transparent",
+              zIndex: 10003,
             }}
             onMouseDown={(e) => handleMouseDown(e, "resize")}
-          />
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(0, 0, 0, 0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                bottom: "4px",
+                right: "4px",
+                width: "12px",
+                height: "12px",
+                backgroundColor: "#0078d4",
+                borderTop: "1px solid #ffffff",
+                borderLeft: "1px solid #ffffff",
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
