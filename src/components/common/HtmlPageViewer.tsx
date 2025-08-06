@@ -1035,12 +1035,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 checked={showAnnotations}
                 onChange={(e) => setShowAnnotations(e.target.checked)}
                 style={{
-                  marginRight: "8px",
                   cursor: "pointer",
                   width: "12px",
                   height: "12px",
                   accentColor: "#0078d4",
-                  margin: "0",
+                  margin: "0 4px 0 0",
                   padding: "0",
                   transform: "translateY(1px)",
                 }}
