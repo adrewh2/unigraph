@@ -1852,6 +1852,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                   if (entityData && entityData.id) {
                     // Handle node hover - update graph interaction store
                     console.log("Node hover - entityData:", entityData);
+                    console.log("Setting hovered node ID:", entityData.id);
                     setHoveredNodeId(entityData.id as NodeId);
                   }
                 };

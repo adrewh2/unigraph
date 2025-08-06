@@ -16,7 +16,13 @@ import {
   useEdgesState,
   useNodesState,
 } from "@xyflow/react";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { SelectionMode } from "reactflow";
 import { RenderingManager } from "../../controllers/RenderingManager";
 import {
@@ -257,8 +263,14 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const sceneGraph = currentSceneGraph;
   const reactFlowConfig = getReactFlowConfig();
   const { setActiveDocument } = useDocumentStore();
-  const { selectedNodeIds, selectedEdgeIds } = useGraphInteractionStore();
+  const { selectedNodeIds, selectedEdgeIds, hoveredNodeIds } =
+    useGraphInteractionStore();
   const { getActiveSection } = useWorkspaceConfigStore();
+
+  // Simple hover state - no debouncing for now
+  const [currentHoveredNodeId, setCurrentHoveredNodeId] = useState<
+    string | null
+  >(null);
   const {
     setActiveView: setAppActiveView,
     activeView,
@@ -298,6 +310,10 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     console.log("ReactFlowPanelV2: Scene graph positions", sceneGraphPositions);
 
     const data = exportGraphDataForReactFlow(sceneGraph);
+    console.log(
+      "ReactFlowPanelV2: Available node IDs in graph:",
+      data.nodes.map((n) => n.id)
+    );
 
     // Apply the same styling as ReactFlow v1
     const nodesWithPositions = data.nodes.map((node) => ({
@@ -345,6 +361,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     edgeLegendConfig,
     legendMode,
     currentLayoutResult,
+    selectedNodeIds,
   ]);
 
   // PRE-PROCESS nodes without selection state - let ReactFlow handle selection internally
@@ -418,21 +435,31 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
           "nodes"
         );
 
-        const nodesWithNewPositions = data.nodes.map((node) => ({
-          ...node,
-          type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
-          style: {
-            background: RenderingManager.getColor(
-              sceneGraph.getGraph().getNode(node.id as NodeId),
-              nodeLegendConfig,
-              legendMode
-            ),
-            color: "#000000",
-          },
-          sourcePosition: Position.Right,
-          targetPosition: Position.Left,
-          selected: selectedNodeIds.has(node.id as NodeId),
-        }));
+        const nodesWithNewPositions = data.nodes.map((node) => {
+          const isSelected = selectedNodeIds.has(node.id as NodeId);
+
+          return {
+            ...node,
+            type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
+            style: {
+              background: RenderingManager.getColor(
+                sceneGraph.getGraph().getNode(node.id as NodeId),
+                nodeLegendConfig,
+                legendMode
+              ),
+              color: "#000000",
+              // Default border - hover styling will be applied by the hover effect
+              border: `2px solid ${RenderingManager.getColor(
+                sceneGraph.getGraph().getNode(node.id as NodeId),
+                nodeLegendConfig,
+                legendMode
+              )}`,
+            },
+            sourcePosition: Position.Right,
+            targetPosition: Position.Left,
+            selected: isSelected,
+          };
+        });
 
         const edgesWithStyling = data.edges.map((edge) => ({
           ...edge,
@@ -582,24 +609,58 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     };
   }, []);
 
-  // Critical effect: Update ReactFlow nodes when global selection state changes
-  // This ensures selections from other views (like ForceGraph3D) are reflected here
+  // Simple hover effect - only update styling, not positions
   useEffect(() => {
+    console.log("ReactFlowPanelV2: Hover state changed", {
+      hoveredNodeIds: Array.from(hoveredNodeIds),
+      size: hoveredNodeIds.size,
+    });
+
+    // Get the first (and should be only) hovered node ID
+    const hoveredNodeId =
+      hoveredNodeIds.size > 0 ? Array.from(hoveredNodeIds)[0] : null;
+    setCurrentHoveredNodeId(hoveredNodeId);
+
+    // Only update styling, not positions
     if (reactFlowInstance.current) {
       reactFlowInstance.current.setNodes((currentNodes) =>
-        currentNodes.map((n) => ({
-          ...n,
-          selected: selectedNodeIds.has(n.id as NodeId),
-        }))
-      );
-      reactFlowInstance.current.setEdges((currentEdges) =>
-        currentEdges.map((e) => ({
-          ...e,
-          selected: selectedEdgeIds.has(e.id as EdgeId),
-        }))
+        currentNodes.map((n) => {
+          const isHovered = n.id === hoveredNodeId;
+          const isSelected = selectedNodeIds.has(n.id as NodeId);
+
+          // Get the original node color for proper border reset
+          const originalNodeColor = RenderingManager.getColor(
+            sceneGraph?.getGraph().getNode(n.id as NodeId),
+            nodeLegendConfig,
+            legendMode
+          );
+
+          return {
+            ...n,
+            selected: isSelected,
+            // Only update style, preserve position
+            style: {
+              ...n.style,
+              // Only apply hover effect to the exact node that's hovered
+              border: isHovered
+                ? `3px solid ${MOUSE_HOVERED_NODE_COLOR}`
+                : `2px solid ${originalNodeColor}`,
+              // Reset background color for non-hovered nodes
+              background: isHovered
+                ? `${n.style?.background || "#ccc"}dd` // Add transparency for hover
+                : n.style?.background,
+            },
+          };
+        })
       );
     }
-  }, [selectedNodeIds, selectedEdgeIds]);
+  }, [
+    hoveredNodeIds,
+    selectedNodeIds,
+    sceneGraph,
+    nodeLegendConfig,
+    legendMode,
+  ]);
 
   // Don't sync selection state automatically - let ReactFlow and our handlers manage it
   // The sync effect was causing conflicts with ReactFlow's internal selection management

@@ -242,6 +242,12 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const nodesContainer = graph.getNodes();
   const edgesContainer = graph.getEdges();
 
+  // Debug: Log the node IDs in the resource manager
+  console.log(
+    "ResourceManager: Node IDs in container:",
+    Array.from(nodesContainer).map((node) => node.getId())
+  );
+
   // Create containers for Supabase data
   const webResourcesContainer = new EntitiesContainer(
     webpages.map((webpage) => {
