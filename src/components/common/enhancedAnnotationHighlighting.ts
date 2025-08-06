@@ -1,6 +1,6 @@
 // Note: This file uses its own implementation instead of the utility functions
 // to provide better control over the highlighting process within iframe contexts
-// 
+//
 // Enhanced with improved text node mapping and highlighting using best practices:
 // ✅ Uses TreeWalker for efficient text node traversal
 // ✅ Builds comprehensive text index mapping
@@ -760,7 +760,7 @@ function generateAnnotationScript(
   endPosition?: number
 ): string {
   const escapedSearchText = searchText.replace(/'/g, "\\'");
-  
+
   // Use position-based highlighting if positions are available
   if (startPosition !== undefined && endPosition !== undefined) {
     return `

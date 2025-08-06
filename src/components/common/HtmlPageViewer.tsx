@@ -300,10 +300,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
         // Convert annotations to the expected type with position data
         const annotationHighlights = annotations
-          .filter(
-            (annotation) =>
-              (annotation.data as any)?.selected_text
-          )
+          .filter((annotation) => (annotation.data as any)?.selected_text)
           .map((annotation) => {
             const data = annotation.data as any;
             return {
@@ -372,7 +369,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } else {
       console.log("No HTML content available for processing");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [html, annotations, loadedResourceId, showAnnotations]); // contentHash and currentHtmlContent.length are derived values
 
   // Force iframe update when content hash changes
@@ -803,7 +800,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } else {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     resourceId,
     url,
