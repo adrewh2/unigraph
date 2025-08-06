@@ -5,7 +5,6 @@ import {
   MessageSquare,
   RefreshCw,
   Tag,
-  X,
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -79,7 +78,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [currentHtmlContent, setCurrentHtmlContent] = useState<string>("");
-  const [iframeVersion, setIframeVersion] = useState<number>(0);
   const [contentHash, setContentHash] = useState<string>("");
 
   // Debug HTML state changes
@@ -89,9 +87,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       hasHighlightedContent: hasHighlightedContent.current,
       currentHtmlContentLength: currentHtmlContent.length,
       annotationsCount: annotations.length,
-      iframeVersion,
     });
-  }, [html, currentHtmlContent, annotations.length, iframeVersion]);
+  }, [html, currentHtmlContent, annotations.length]);
 
   // Refs
   const processedResourceIds = useRef<Set<string>>(new Set());
@@ -158,7 +155,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       if (webpageAnnotations.length > 0) {
         console.log("Annotations loaded, will trigger HTML processing effect");
         console.log("Current HTML length:", html?.length || 0);
-        console.log("Current annotations state before setting:", annotations.length);
+        console.log(
+          "Current annotations state before setting:",
+          annotations.length
+        );
       }
 
       // Note: highlighting will be triggered by the useEffect that watches annotations
@@ -204,8 +204,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           setCurrentTitle(webpage.title || webpage.url);
           document.title = webpage.title || webpage.url;
           setLoadedResourceId(webpageId);
-          setIframeVersion(Date.now()); // Use timestamp to ensure iframe updates
           setContentHash(`${webpageId}-0-false`);
+
+          // Don't set content immediately - let the processing effect handle it
+          // This ensures we wait for annotations to be available before setting content
         } else {
           console.log(
             "No webpage or html_content found for webpageId:",
@@ -230,7 +232,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
   // Handle text selection and context menu
   const handleIframeLoad = useCallback(() => {
-    console.log("Iframe loaded with version:", iframeVersion);
+    console.log("Iframe loaded");
     console.log("Current HTML content length:", currentHtmlContent.length);
     console.log("Current annotations count:", annotations.length);
     console.log("Content hash:", contentHash);
@@ -270,7 +272,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentHtmlContent, annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
+  }, [currentHtmlContent, annotations, contentHash]); // handleTextSelection and handleContextMenu are defined below and are stable
 
   // Process HTML content when HTML or annotations change
   useEffect(() => {
@@ -280,13 +282,16 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       annotationsCount: annotations.length,
       hasHighlightedContent: hasHighlightedContent.current,
       currentHtmlContentLength: currentHtmlContent.length,
-      iframeVersion,
       contentHash,
       loadedResourceId,
     });
 
     // Only set content if we have HTML
     if (html && html.length > 0) {
+      // Always process with annotations if available, otherwise use raw HTML
+      let processedHtml = html;
+      let hasHighlights = false;
+
       if (annotations.length > 0) {
         console.log("HTML and annotations available, processing content");
 
@@ -310,6 +315,9 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           }));
 
         const result = processHtmlWithHighlights(html, annotationHighlights);
+        processedHtml = result.html;
+        hasHighlights = result.highlightsAdded > 0;
+
         console.log(
           "Processed HTML length:",
           result.html.length,
@@ -317,49 +325,45 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           result.highlightsAdded
         );
 
-        // Update the ref to track if we have highlighted content
-        hasHighlightedContent.current = result.highlightsAdded > 0;
-        console.log(
-          "Set hasHighlightedContent to:",
-          hasHighlightedContent.current
-        );
-
-        setCurrentHtmlContent(result.html);
-
-        // Force iframe to reload when content changes (always, not just when highlights are added)
-        const newHash = `${loadedResourceId}-${annotations.length}-${result.highlightsAdded > 0}`;
-        setContentHash(newHash);
-        console.log("Updated content hash:", newHash);
-
-        // Always increment iframe version when content changes
-        setIframeVersion(Date.now());
-        console.log("Setting iframe version to timestamp to force reload");
         console.log("Content being set in iframe:", {
           htmlLength: result.html.length,
           highlightsAdded: result.highlightsAdded,
-          newHash,
-          containsHighlightClass: result.html.includes('class="annotation-highlight"'),
-          firstHighlightIndex: result.html.indexOf('class="annotation-highlight"'),
+          containsHighlightClass: result.html.includes(
+            'class="annotation-highlight"'
+          ),
+          firstHighlightIndex: result.html.indexOf(
+            'class="annotation-highlight"'
+          ),
           annotationsProcessed: annotationHighlights.length,
         });
-        
-        // Also set the current HTML content so we can debug what's actually in the iframe
-        console.log("Setting currentHtmlContent with highlights, first 500 chars:", 
-          result.html.substring(0, 500));
       } else {
-        console.log("HTML available but no annotations yet, setting raw HTML");
-        setCurrentHtmlContent(html);
-
-        // Update content hash for raw HTML
-        const newHash = `${loadedResourceId}-0-false`;
-        setContentHash(newHash);
-        console.log("Updated content hash for raw HTML:", newHash);
-
-        // Also increment iframe version for raw HTML
-        setIframeVersion(Date.now());
-        console.log("Setting iframe version to timestamp for raw HTML");
-        console.log("Setting iframe version to timestamp for raw HTML");
+        console.log("HTML available but no annotations yet, using raw HTML");
       }
+
+      // Update the ref to track if we have highlighted content
+      hasHighlightedContent.current = hasHighlights;
+      console.log(
+        "Set hasHighlightedContent to:",
+        hasHighlightedContent.current
+      );
+
+      // Update content smoothly without forcing iframe remount
+      setCurrentHtmlContent(processedHtml);
+
+      // Update content hash for tracking
+      const newHash = `${loadedResourceId}-${annotations.length}-${hasHighlights}`;
+      setContentHash(newHash);
+      console.log("Updated content hash:", newHash);
+
+      // Update iframe content smoothly using srcdoc
+      if (iframeRef.current) {
+        iframeRef.current.srcdoc = processedHtml;
+      }
+
+      console.log(
+        "Setting currentHtmlContent, first 500 chars:",
+        processedHtml.substring(0, 500)
+      );
     } else {
       console.log("No HTML content available for processing");
     }
@@ -736,11 +740,13 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         setCurrentUrl(cachedContent.url);
         setCurrentTitle(cachedContent.title);
         setLoadedResourceId(finalResourceId);
-        setIframeVersion(Date.now()); // Use timestamp to ensure iframe updates
         setContentHash(`${finalResourceId}-0-false`);
         setLoading(false);
         setError(null);
         processedResourceIds.current.add(finalResourceId);
+
+        // Don't set content immediately - let the processing effect handle it
+        // This ensures we wait for annotations to be available before setting content
         return; // Exit early to prevent any flickering
       } else if (loadedResourceId !== finalResourceId) {
         console.log("Fetching from server for resourceId:", finalResourceId);
@@ -1044,8 +1050,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             title={currentTitle || title || "HTML Content"}
             sandbox="allow-scripts allow-same-origin"
             onLoad={handleIframeLoad}
-            key={`${contentHash}-${iframeVersion}`}
-            data-debug={`hash:${contentHash}-version:${iframeVersion}`}
+            data-debug={`hash:${contentHash}`}
           />
         )}
         {/* Debug info */}
@@ -1061,7 +1066,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           }}
         >
           <div>Content Hash: {contentHash}</div>
-          <div>Iframe Version: {iframeVersion}</div>
+          <div>Content Hash: {contentHash}</div>
           <div>HTML Length: {currentHtmlContent.length}</div>
           <div>Annotations: {annotations.length}</div>
           <div>
@@ -1201,16 +1206,16 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             left: cardPosition.x,
             width: cardSize.width,
             height: cardSize.height,
-            backgroundColor: "white",
-            borderRadius: "12px",
-            border: "1px solid #d1d5db",
+            backgroundColor: "#ffffff",
+            borderRadius: "0px",
+            border: "1px solid #0078d4",
             boxShadow:
-              "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)",
+              "0 4px 12px rgba(0, 120, 212, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)",
             zIndex: 10002,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            backdropFilter: "blur(10px)",
+            fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
           }}
         >
           {/* Title Bar */}
@@ -1219,46 +1224,49 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "16px 20px",
-              borderBottom: "1px solid #e5e7eb",
-              backgroundColor: "#f8fafc",
+              padding: "4px 8px",
+              borderBottom: "1px solid #0078d4",
+              backgroundColor: "#0078d4",
               cursor: "move",
-              borderRadius: "12px 12px 0 0",
+              height: "24px",
             }}
             onMouseDown={(e) => handleMouseDown(e, "drag")}
           >
-            <h2
+            <div
               style={{
-                margin: 0,
-                fontSize: "16px",
+                fontSize: "12px",
                 fontWeight: "600",
-                color: "#1f2937",
-                letterSpacing: "-0.025em",
+                color: "#ffffff",
+                fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
               }}
             >
-              📝 Annotation Details
-            </h2>
+              Annotation Details
+            </div>
             <button
               onClick={() => setShowAnnotationCard(null)}
               style={{
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
-                padding: "4px",
-                borderRadius: "6px",
-                color: "#6b7280",
-                transition: "all 0.2s ease",
+                padding: "2px",
+                width: "16px",
+                height: "16px",
+                color: "#ffffff",
+                fontSize: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f3f4f6";
-                e.currentTarget.style.color = "#374151";
+                e.currentTarget.style.backgroundColor = "#ff0000";
+                e.currentTarget.style.color = "#ffffff";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#6b7280";
+                e.currentTarget.style.color = "#ffffff";
               }}
             >
-              <X size={18} />
+              ×
             </button>
           </div>
 
@@ -1266,11 +1274,12 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           <div
             style={{
               flex: 1,
-              padding: "20px",
+              padding: "12px",
               overflow: "auto",
               display: "flex",
               flexDirection: "column",
-              gap: "16px",
+              gap: "8px",
+              backgroundColor: "#ffffff",
             }}
           >
             {/* Selected Text Section */}
@@ -1278,34 +1287,31 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               <label
                 style={{
                   display: "block",
-                  fontSize: "13px",
+                  fontSize: "11px",
                   fontWeight: "600",
-                  color: "#374151",
-                  marginBottom: "8px",
+                  color: "#000000",
+                  marginBottom: "4px",
                   textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                 }}
               >
                 Selected Text
               </label>
               <div
                 style={{
-                  padding: "12px 16px",
-                  backgroundColor: "#f8fafc",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  color: "#4b5563",
-                  border: "1px solid #e5e7eb",
-                  maxHeight: "120px",
+                  padding: "6px 8px",
+                  backgroundColor: "#f8f9fa",
+                  fontSize: "12px",
+                  color: "#212529",
+                  border: "1px solid #dee2e6",
+                  maxHeight: "80px",
                   overflow: "auto",
-                  lineHeight: "1.5",
-                  fontStyle: "italic",
+                  lineHeight: "1.3",
+                  fontFamily: "Consolas, 'Courier New', monospace",
                 }}
               >
-                &ldquo;
                 {(showAnnotationCard.data as TextSelectionAnnotationData)
                   ?.selected_text || "No text selected"}
-                &rdquo;
               </div>
             </div>
 
@@ -1314,26 +1320,26 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               <label
                 style={{
                   display: "block",
-                  fontSize: "13px",
+                  fontSize: "11px",
                   fontWeight: "600",
-                  color: "#374151",
-                  marginBottom: "8px",
+                  color: "#000000",
+                  marginBottom: "4px",
                   textTransform: "uppercase",
-                  letterSpacing: "0.05em",
+                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                 }}
               >
                 Comment
               </label>
               <div
                 style={{
-                  padding: "12px 16px",
+                  padding: "6px 8px",
                   backgroundColor: "#ffffff",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  color: "#1f2937",
-                  border: "1px solid #e5e7eb",
-                  minHeight: "80px",
-                  lineHeight: "1.6",
+                  fontSize: "12px",
+                  color: "#212529",
+                  border: "1px solid #dee2e6",
+                  minHeight: "60px",
+                  lineHeight: "1.3",
+                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                 }}
               >
                 {(showAnnotationCard.data as TextSelectionAnnotationData)
@@ -1348,26 +1354,26 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 <label
                   style={{
                     display: "block",
-                    fontSize: "13px",
+                    fontSize: "11px",
                     fontWeight: "600",
-                    color: "#374151",
-                    marginBottom: "8px",
+                    color: "#000000",
+                    marginBottom: "4px",
                     textTransform: "uppercase",
-                    letterSpacing: "0.05em",
+                    fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                   }}
                 >
                   Additional Notes
                 </label>
                 <div
                   style={{
-                    padding: "12px 16px",
+                    padding: "6px 8px",
                     backgroundColor: "#ffffff",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    color: "#1f2937",
-                    border: "1px solid #e5e7eb",
-                    minHeight: "60px",
-                    lineHeight: "1.6",
+                    fontSize: "12px",
+                    color: "#212529",
+                    border: "1px solid #dee2e6",
+                    minHeight: "40px",
+                    lineHeight: "1.3",
+                    fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                   }}
                 >
                   {(showAnnotationCard.data as TextSelectionAnnotationData)
@@ -1386,12 +1392,13 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                   <label
                     style={{
                       display: "block",
-                      fontSize: "13px",
+                      fontSize: "11px",
                       fontWeight: "600",
-                      color: "#374151",
-                      marginBottom: "8px",
+                      color: "#000000",
+                      marginBottom: "4px",
                       textTransform: "uppercase",
-                      letterSpacing: "0.05em",
+                      fontFamily:
+                        "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                     }}
                   >
                     Tags
@@ -1400,7 +1407,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                     style={{
                       display: "flex",
                       flexWrap: "wrap",
-                      gap: "8px",
+                      gap: "4px",
                     }}
                   >
                     {(
@@ -1409,58 +1416,22 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                       <span
                         key={tag}
                         style={{
-                          padding: "6px 12px",
-                          backgroundColor: "#dbeafe",
-                          color: "#1e40af",
-                          borderRadius: "20px",
-                          fontSize: "12px",
+                          padding: "2px 6px",
+                          backgroundColor: "#e3f2fd",
+                          color: "#1976d2",
+                          fontSize: "10px",
                           fontWeight: "500",
-                          border: "1px solid #bfdbfe",
+                          border: "1px solid #bbdefb",
+                          fontFamily:
+                            "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
                         }}
                       >
-                        #{tag}
+                        {tag}
                       </span>
                     ))}
                   </div>
                 </div>
               )}
-          </div>
-
-          {/* Footer with Close Button */}
-          <div
-            style={{
-              padding: "16px 20px",
-              borderTop: "1px solid #e5e7eb",
-              backgroundColor: "#f8fafc",
-              display: "flex",
-              justifyContent: "flex-end",
-              borderRadius: "0 0 12px 12px",
-            }}
-          >
-            <button
-              onClick={() => setShowAnnotationCard(null)}
-              style={{
-                padding: "8px 16px",
-                backgroundColor: "#f3f4f6",
-                color: "#374151",
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "13px",
-                fontWeight: "500",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e5e7eb";
-                e.currentTarget.style.borderColor = "#9ca3af";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f3f4f6";
-                e.currentTarget.style.borderColor = "#d1d5db";
-              }}
-            >
-              Close
-            </button>
           </div>
 
           {/* Resize handle */}
@@ -1469,12 +1440,12 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               position: "absolute",
               bottom: "0",
               right: "0",
-              width: "20px",
-              height: "20px",
+              width: "16px",
+              height: "16px",
               cursor: "nw-resize",
               background:
-                "linear-gradient(-45deg, transparent 30%, #d1d5db 30%, #d1d5db 40%, transparent 40%, transparent 60%, #d1d5db 60%, #d1d5db 70%, transparent 70%)",
-              borderRadius: "0 0 12px 0",
+                "repeating-conic-gradient(from 0deg, #0078d4 0deg 90deg, transparent 90deg 180deg)",
+              backgroundSize: "4px 4px",
             }}
             onMouseDown={(e) => handleMouseDown(e, "resize")}
           />
