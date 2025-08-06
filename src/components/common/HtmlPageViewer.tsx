@@ -984,7 +984,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       {/* Header */}
       <div
         style={{
-          padding: "12px 16px",
+          padding: "6px 16px",
           borderBottom: "1px solid #e0e0e0",
           backgroundColor: "#f8f9fa",
           display: "flex",
