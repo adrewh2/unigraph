@@ -200,11 +200,11 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           handleClose();
         },
       },
-      // Add "View Page" option for web resources
+      // Add web resource specific options
       ...(entityType === "web-resources" && contextMenu?.entity
         ? [
             {
-              label: "View Page",
+              label: "View saved page",
               action: () => {
                 if (contextMenu?.entity) {
                   const entityData = contextMenu.entity.getData() as any;
@@ -214,20 +214,10 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                     entityData.label || entityData.title || entityData.url;
 
                   if (resourceId) {
-                    // Try both approaches to see which one works
                     const tabId = `html-page-viewer-${resourceId}`;
                     const tabTitle = title || `Page Viewer - ${resourceId}`;
 
-                    console.log("Debug - Opening HTML Page Viewer:", {
-                      resourceId,
-                      title,
-                      tabTitle,
-                      url,
-                    });
-
-                    // Try the new addViewAsTab approach first
-                    console.log("Debug - Trying addViewAsTab approach...");
-                    const success = addViewAsTab({
+                    addViewAsTab({
                       viewId: "html-page-viewer",
                       pane: "center",
                       tabId: tabId,
@@ -240,53 +230,21 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                       },
                       activate: true,
                     });
+                  }
+                }
+                handleClose();
+              },
+            } as ContextMenuItem,
+            {
+              label: "Open link",
+              action: () => {
+                if (contextMenu?.entity) {
+                  const entityData = contextMenu.entity.getData() as any;
+                  const url = entityData.url;
 
-                    console.log("Debug - addViewAsTab result:", success);
-
-                    // If addViewAsTab fails or doesn't set the title properly, try the old approach
-                    if (!success) {
-                      console.log(
-                        "Debug - addViewAsTab failed, trying old approach..."
-                      );
-
-                      // Store the resource data in sessionStorage for the HTML Page Viewer to access
-                      sessionStorage.setItem(
-                        "htmlPageViewerData",
-                        JSON.stringify({
-                          resourceId: resourceId,
-                          title: title,
-                          url: url,
-                        })
-                      );
-
-                      // Open HTML Page Viewer in a new tab using the app shell
-                      const event = new CustomEvent("add-tab", {
-                        detail: {
-                          viewId: "html-page-viewer",
-                          panelId: "center",
-                        },
-                      });
-                      document.dispatchEvent(event);
-                    }
-
-                    // Check if the tab was actually created with our title
-                    setTimeout(() => {
-                      const tabElements =
-                        document.querySelectorAll("[data-tab-id]");
-                      console.log("Debug - All tab elements:", tabElements);
-                      tabElements.forEach((tab) => {
-                        const tabId = tab.getAttribute("data-tab-id");
-                        const tabText = tab.textContent;
-                        console.log("Debug - Tab:", { tabId, tabText });
-                      });
-
-                      // // Debug cache information
-                      // import("../../utils/htmlPageViewerUtils").then(
-                      //   ({ debugCache }) => {
-                      //     debugCache();
-                      //   }
-                      // );
-                    }, 100);
+                  if (url) {
+                    // Open the URL in a new tab outside of Unigraph
+                    window.open(url, "_blank");
                   }
                 }
                 handleClose();
