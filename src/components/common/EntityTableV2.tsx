@@ -533,14 +533,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     const LabelCellRenderer = (props: { data: Entity; value: string }) => {
       const [isEditing, setIsEditing] = useState(false);
       const [editValue, setEditValue] = useState(props.value || "");
-      const [displayValue, setDisplayValue] = useState(props.value || "");
-      const [forceUpdate, setForceUpdate] = useState(0);
       const inputRef = useRef<HTMLInputElement>(null);
-
-      // Update display value when props change
-      useEffect(() => {
-        setDisplayValue(props.value || "");
-      }, [props.value]);
 
       const handleDoubleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -559,12 +552,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
           // Optimistically update the local entity immediately
           props.data.setLabel(editValue);
-
-          // Update the display value immediately for this cell
-          setDisplayValue(editValue);
-
-          // Force a re-render of this cell
-          setForceUpdate((prev) => prev + 1);
 
           // Update the model data that AG Grid uses
           const entityData = props.data.getData() as any;
@@ -622,7 +609,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             console.error("Error saving webpage label:", error);
             // Revert the local change if Supabase save failed
             props.data.setLabel(originalValue);
-            setDisplayValue(originalValue);
 
             // Refresh the row again to show the reverted value
             if (gridRef.current?.api) {
@@ -647,7 +633,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
       const handleCancel = () => {
         setEditValue(props.value || "");
-        setDisplayValue(props.value || "");
         setIsEditing(false);
       };
 
@@ -702,9 +687,8 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             userSelect: "text",
           }}
           title="Double-click to edit"
-          key={`label-${props.data.getId()}-${displayValue}-${forceUpdate}`} // Force re-render when displayValue or forceUpdate changes
         >
-          {displayValue || ""}
+          {props.value || ""}
         </div>
       );
     };
