@@ -251,7 +251,8 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                     entityData.label || entityData.title || entityData.url;
 
                   if (resourceId) {
-                    const tabId = `html-page-viewer-${resourceId}`;
+                    const timestamp = Date.now();
+                    const tabId = `html-page-viewer-${resourceId}-${timestamp}`;
                     const tabTitle = title || `Page Viewer - ${resourceId}`;
 
                     addViewAsTab({
@@ -1903,12 +1904,12 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           }
 
           if (col === "tags") {
-            console.log(
-              "Tags valueGetter called - value:",
-              value,
-              "type:",
-              typeof value
-            );
+            // console.log(
+            //   "Tags valueGetter called - value:",
+            //   value,
+            //   "type:",
+            //   typeof value
+            // );
             if (value instanceof Set) {
               return Array.from(value);
             }
@@ -2030,7 +2031,8 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
               entityData.label || entityData.title || entityData.url;
 
             if (resourceId) {
-              const tabId = `html-page-viewer-${resourceId}`;
+              const timestamp = Date.now();
+              const tabId = `html-page-viewer-${resourceId}-${timestamp}`;
               const tabTitle = title || `Page Viewer - ${resourceId}`;
 
               addViewAsTab({
