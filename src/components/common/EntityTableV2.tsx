@@ -574,38 +574,8 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             entityData.title = editValue; // Also update title for web resources
           }
 
-          // Force immediate grid refresh by directly updating the row data
-          if (gridRef.current?.api) {
-            // Get the specific row node
-            const rowNode = gridRef.current.api.getRowNode(props.data.getId());
-            if (rowNode) {
-              // Update the row data directly
-              const updatedData = { ...rowNode.data } as any;
-              updatedData.label = editValue;
-              updatedData.title = editValue;
-              rowNode.setData(updatedData);
-
-              // Force refresh this specific row
-              gridRef.current.api.refreshCells({
-                rowNodes: [rowNode],
-                force: true,
-                suppressFlash: true,
-              });
-            }
-          }
-
-          // Force a complete re-render by updating rowData with a new array
-          const newRowData = container.toArray().map((entity) => {
-            if (entity.getId() === props.data.getId()) {
-              // Create a new entity instance to force React to detect the change
-              const entityData = entity.getData() as any;
-              entityData.label = editValue;
-              entityData.title = editValue;
-              return entity;
-            }
-            return entity;
-          });
-          setRowData(newRowData);
+          // No need to refresh cells since valueGetter reads directly from entity
+          // The cell will automatically show the updated value on next render
 
           try {
             // For web resources, also save to Supabase
