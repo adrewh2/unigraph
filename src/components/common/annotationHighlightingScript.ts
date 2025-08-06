@@ -24,8 +24,18 @@ export const processHtmlWithHighlights = (
     annotations.map((a) => ({
       id: a.id,
       selected_text: a.data.selected_text,
+      selected_text_length: a.data.selected_text?.length || 0,
     }))
   );
+
+  // Log the first few characters of each annotation text for debugging
+  annotations.forEach((annotation, index) => {
+    if (annotation.data.selected_text) {
+      console.log(
+        `Annotation ${index + 1} text preview: "${annotation.data.selected_text.substring(0, 100)}..."`
+      );
+    }
+  });
 
   let processedHtml = htmlContent;
   let highlightsAdded = 0;
@@ -91,14 +101,40 @@ export const processHtmlWithHighlights = (
         // Create the highlighted span
         const highlightedSpan = `<span class="annotation-highlight" data-annotation-id="${annotationId}" style="background-color: #ffeb3b; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;" onclick="window.parent.postMessage({type: 'show-annotation', annotationId: '${annotationId}'}, '*')">${searchText}</span>`;
 
-        // Replace the text in the HTML
-        const regex = new RegExp(
-          searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        // Normalize the search text and HTML content for better matching
+        const normalizedSearchText = searchText
+          .replace(/\s+/g, " ") // Replace multiple whitespace with single space
+          .trim();
+
+        // Create a normalized version of the HTML for searching
+        const normalizedHtml = processedHtml
+          .replace(/<[^>]*>/g, "") // Remove HTML tags temporarily
+          .replace(/\s+/g, " ") // Replace multiple whitespace with single space
+          .trim();
+
+        console.log(`Searching for normalized text: "${normalizedSearchText}"`);
+        console.log(
+          `Normalized HTML preview: "${normalizedHtml.substring(0, 200)}..."`
+        );
+
+        // Try exact match first
+        let regex = new RegExp(
+          normalizedSearchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
           "g"
         );
-        const matches = processedHtml.match(regex);
+        let matches = processedHtml.match(regex);
+
+        // If no exact match, try with flexible whitespace
+        if (!matches || matches.length === 0) {
+          const flexibleSearchText = normalizedSearchText
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&") // Escape regex special characters first
+            .replace(/\s+/g, "\\s+"); // Then replace whitespace with flexible pattern
+          regex = new RegExp(flexibleSearchText, "g");
+          matches = processedHtml.match(regex);
+        }
+
         console.log(
-          `Searching for "${searchText}" - found ${matches ? matches.length : 0} matches`
+          `Found ${matches ? matches.length : 0} matches for "${searchText}"`
         );
 
         if (matches && matches.length > 0) {

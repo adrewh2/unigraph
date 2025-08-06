@@ -47,13 +47,19 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const { theme } = useTheme();
   const [html, setHtml] = useState<string>("");
 
-  // Debug HTML state changes
-  useEffect(() => {
-    console.log("HTML state changed:", {
-      htmlLength: html.length,
-      hasHighlightedContent: hasHighlightedContent.current,
-    });
-  }, [html]);
+  // Create a wrapped setHtml function for debugging
+  const setHtmlWithDebug = useCallback(
+    (newHtml: string) => {
+      console.log("setHtml called:", {
+        newHtmlLength: newHtml.length,
+        currentHtmlLength: html.length,
+        hasHighlightedContent: hasHighlightedContent.current,
+      });
+      setHtml(newHtml);
+    },
+    [html]
+  );
+
   const [loading, setLoading] = useState<boolean>(false); // Start with false to prevent flicker
   const [error, setError] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string>(url || "");
@@ -73,6 +79,21 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [currentHtmlContent, setCurrentHtmlContent] = useState<string>("");
+
+  // Debug HTML state changes
+  useEffect(() => {
+    console.log("HTML state changed:", {
+      htmlLength: html.length,
+      hasHighlightedContent: hasHighlightedContent.current,
+      currentHtmlContentLength: currentHtmlContent.length,
+    });
+
+    // Reset highlighted content flag when HTML changes (new page load)
+    if (html && html !== currentHtmlContent) {
+      console.log("HTML content changed, resetting hasHighlightedContent");
+      hasHighlightedContent.current = false;
+    }
+  }, [html, currentHtmlContent]);
 
   // Refs
   const processedResourceIds = useRef<Set<string>>(new Set());
@@ -187,7 +208,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             resourceId: webpageId,
           });
 
-          setHtml(webpage.html_content);
+          setHtmlWithDebug(webpage.html_content);
           setCurrentUrl(webpage.url);
           setCurrentTitle(webpage.title || webpage.url);
           document.title = webpage.title || webpage.url;
@@ -264,9 +285,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       htmlLength: html?.length || 0,
       annotationsCount: annotations.length,
       hasHighlightedContent: hasHighlightedContent.current,
+      currentHtmlContentLength: currentHtmlContent.length,
     });
 
-    if (html && annotations.length > 0) {
+    // Only process if we have raw HTML (not already processed)
+    if (html && annotations.length > 0 && !hasHighlightedContent.current) {
       console.log("HTML and annotations available, processing content");
 
       // Convert annotations to the expected type
@@ -297,11 +320,18 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
       // Update the ref to track if we have highlighted content
       hasHighlightedContent.current = result.highlightsAdded > 0;
+      console.log(
+        "Set hasHighlightedContent to:",
+        hasHighlightedContent.current
+      );
 
       setCurrentHtmlContent(result.html);
     } else if (html && !hasHighlightedContent.current) {
       console.log("HTML available but no annotations, setting raw HTML");
       setCurrentHtmlContent(html);
+    } else if (hasHighlightedContent.current) {
+      console.log("Skipping processing - already have highlighted content");
+      return; // Don't do anything if we already have highlights
     } else {
       console.log("No HTML content available for processing");
     }
@@ -676,7 +706,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           return;
         }
 
-        setHtml(cachedContent.html);
+        setHtmlWithDebug(cachedContent.html);
         setCurrentUrl(cachedContent.url);
         setCurrentTitle(cachedContent.title);
         setLoadedResourceId(finalResourceId);
