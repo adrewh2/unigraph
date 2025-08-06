@@ -8,207 +8,107 @@ export interface AnnotationHighlight {
   };
 }
 
-export const createAnnotationHighlightingScript = (annotations: any[]) => {
-  const annotationsJson = JSON.stringify(annotations);
+export interface ProcessedHtmlResult {
+  html: string;
+  highlightsAdded: number;
+}
 
-  return `
-    (function() {
-      const annotations = ${annotationsJson};
-      
-      function highlightAnnotations() {
-        console.log('Annotation highlighting function executing with', annotations.length, 'annotations');
+export const processHtmlWithHighlights = (
+  htmlContent: string,
+  annotations: AnnotationHighlight[]
+): ProcessedHtmlResult => {
+  console.log("Processing HTML with", annotations.length, "annotations");
+  console.log("HTML content length:", htmlContent.length);
+  console.log(
+    "Annotations:",
+    annotations.map((a) => ({
+      id: a.id,
+      selected_text: a.data.selected_text,
+    }))
+  );
+
+  let processedHtml = htmlContent;
+  let highlightsAdded = 0;
+
+  // Add selection script to the HTML
+  const selectionScript = `
+    <script>
+      (function() {
+        let lastSelection = '';
         
-        let isHighlighting = false;
-        let textNodesCache = null;
-        let highlightTimeout = null;
-        
-        function debounceHighlight(fn, delay) {
-          return function() {
-            if (highlightTimeout) {
-              clearTimeout(highlightTimeout);
-            }
-            highlightTimeout = setTimeout(fn, delay);
-          };
-        }
-        
-        function clearExistingHighlights() {
-          const existingHighlights = document.querySelectorAll('.annotation-highlight');
-          if (existingHighlights.length > 0) {
-            console.log('Clearing', existingHighlights.length, 'existing highlights');
-            existingHighlights.forEach(function(highlight) {
-              const parent = highlight.parentNode;
-              if (parent) {
-                parent.replaceChild(document.createTextNode(highlight.textContent || ''), highlight);
-                parent.normalize();
-              }
-            });
-            textNodesCache = null;
+        // Capture selection on mouseup
+        document.addEventListener('mouseup', function(e) {
+          const selection = window.getSelection();
+          if (selection && selection.toString().trim()) {
+            lastSelection = selection.toString().trim();
+            console.log('Selection captured in iframe:', lastSelection);
           }
-        }
-        
-        function getAllTextNodes() {
-          if (textNodesCache) {
-            console.log('Using cached text nodes:', textNodesCache.length);
-            return textNodesCache;
-          }
-          if (!document.body) {
-            console.warn('Document body not available');
-            return [];
-          }
-          const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-          const textNodes = [];
-          let node;
-          while ((node = walker.nextNode()) !== null) {
-            textNodes.push(node);
-          }
-          textNodesCache = textNodes;
-          console.log('Cached', textNodes.length, 'text nodes');
-          return textNodes;
-        }
-        
-        function highlightAnnotationsBatch() {
-          if (isHighlighting) {
-            console.log('Highlighting already in progress, skipping');
-            return;
-          }
-          isHighlighting = true;
-          console.log('Starting batch highlighting for', annotations.length, 'annotations');
-          
-          try {
-            clearExistingHighlights();
-            const textNodes = getAllTextNodes();
-            
-            if (textNodes.length === 0) {
-              console.warn('No text nodes found for highlighting');
-              return;
-            }
-            
-            console.log('Sample text from document:', textNodes[0]?.textContent?.substring(0, 200) + '...');
-            
-            let totalHighlights = 0;
-            annotations.forEach(function(annotation, index) {
-              if (annotation.data && annotation.data.selected_text) {
-                const searchText = annotation.data.selected_text;
-                const annotationId = annotation.id;
-                console.log('Processing annotation', index + 1, '/', annotations.length, ':', annotationId);
-                console.log('Searching for text:', searchText);
-                
-                try {
-                  let highlightCount = 0;
-                  let foundNodes = 0;
-                  
-                  textNodes.forEach(function(textNode) {
-                    const text = textNode.textContent;
-                    if (text && text.includes(searchText)) {
-                      foundNodes++;
-                      console.log('Found text match in node:', text.substring(0, 200) + '...');
-                      
-                      // Simple string replacement approach
-                      const index = text.indexOf(searchText);
-                      if (index !== -1) {
-                        const before = text.substring(0, index);
-                        const after = text.substring(index + searchText.length);
-                        
-                        const fragment = document.createDocumentFragment();
-                        if (before) {
-                          fragment.appendChild(document.createTextNode(before));
-                        }
-                        
-                        const span = document.createElement('span');
-                        span.className = 'annotation-highlight';
-                        span.setAttribute('data-annotation-id', annotationId);
-                        span.style.backgroundColor = '#ffeb3b';
-                        span.style.cursor = 'pointer';
-                        span.style.borderRadius = '2px';
-                        span.style.padding = '1px 2px';
-                        span.style.transition = 'background-color 0.2s ease';
-                        span.textContent = searchText;
-                        span.addEventListener('click', function() {
-                          console.log('Annotation clicked:', annotationId);
-                          window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');
-                        });
-                        fragment.appendChild(span);
-                        
-                        if (after) {
-                          fragment.appendChild(document.createTextNode(after));
-                        }
-                        
-                        if (textNode.parentNode) {
-                          textNode.parentNode.replaceChild(fragment, textNode);
-                        }
-                        
-                        highlightCount++;
-                      }
-                    }
-                  });
-                  
-                  totalHighlights += highlightCount;
-                  console.log('Found', foundNodes, 'matching nodes for annotation:', annotationId);
-                  if (highlightCount > 0) {
-                    console.log('Highlighted', highlightCount, 'instances for annotation:', annotationId);
-                  } else if (foundNodes === 0) {
-                    console.warn('No text nodes contained the search text for annotation:', annotationId);
-                    console.warn('Search text was:', searchText);
-                  }
-                } catch (error) {
-                  console.error('Error processing annotation', annotationId, ':', error);
-                  console.warn('Problematic search text:', searchText);
-                  console.warn('Skipping this annotation due to error');
-                }
-              }
-            });
-            
-            console.log('Batch highlighting completed:', totalHighlights, 'total highlights created');
-            if (totalHighlights === 0) {
-              console.warn('No highlights were created - text may not match exactly');
-            }
-          } catch (error) {
-            console.error('Error during batch highlighting:', error);
-          } finally {
-            isHighlighting = false;
-          }
-        }
-        
-        const debouncedHighlight = debounceHighlight(highlightAnnotationsBatch, 100);
-        
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', debouncedHighlight);
-        } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
-          console.log('Document ready, starting highlighting');
-          setTimeout(debouncedHighlight, 50);
-        }
-        
-        window.addEventListener('load', function() {
-          console.log('Window loaded, re-highlighting if needed');
-          setTimeout(function() {
-            if (document.querySelectorAll('.annotation-highlight').length === 0 && annotations.length > 0) {
-              debouncedHighlight();
-            }
-          }, 200);
         });
         
-        // Additional retry for fresh loads
-        setTimeout(function() {
-          if (document.querySelectorAll('.annotation-highlight').length === 0 && annotations.length > 0) {
-            console.log('Fresh load retry - no highlights found, trying again');
-            debouncedHighlight();
+        // Capture selection on contextmenu
+        document.addEventListener('contextmenu', function(e) {
+          const selection = window.getSelection();
+          if (selection && selection.toString().trim()) {
+            lastSelection = selection.toString().trim();
+            console.log('Context menu selection in iframe:', lastSelection);
+            
+            // Send message to parent
+            window.parent.postMessage({
+              type: 'iframe-selection',
+              selection: lastSelection,
+              x: e.clientX,
+              y: e.clientY
+            }, '*');
           }
-        }, 1000);
+        });
         
-        // Final retry for stubborn cases
-        setTimeout(function() {
-          if (document.querySelectorAll('.annotation-highlight').length === 0 && annotations.length > 0) {
-            console.log('Final retry - forcing highlighting');
-            debouncedHighlight();
-          }
-        }, 3000);
-        
-        // Expose the function globally so it can be called from outside
-        window.highlightAnnotations = debouncedHighlight;
-        console.log('Annotation highlighting function setup complete');
-      }
-      
-      highlightAnnotations();
-    })();
+        // Expose function to get last selection
+        window.getLastSelection = function() {
+          return lastSelection;
+        };
+      })();
+    </script>
   `;
+
+  // Insert the script before the closing </head> tag
+  if (processedHtml.includes("</head>")) {
+    processedHtml = processedHtml.replace(
+      "</head>",
+      `${selectionScript}</head>`
+    );
+  } else {
+    // If no head tag, add it after the opening body tag
+    processedHtml = processedHtml.replace("<body>", `<body>${selectionScript}`);
+  }
+
+  // Add highlighting for annotations
+  if (annotations.length > 0) {
+    annotations.forEach((annotation) => {
+      if (annotation.data && annotation.data.selected_text) {
+        const searchText = annotation.data.selected_text;
+        const annotationId = annotation.id;
+
+        // Create the highlighted span
+        const highlightedSpan = `<span class="annotation-highlight" data-annotation-id="${annotationId}" style="background-color: #ffeb3b; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;" onclick="window.parent.postMessage({type: 'show-annotation', annotationId: '${annotationId}'}, '*')">${searchText}</span>`;
+
+        // Replace the text in the HTML
+        const regex = new RegExp(
+          searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+          "g"
+        );
+        const matches = processedHtml.match(regex);
+        console.log(
+          `Searching for "${searchText}" - found ${matches ? matches.length : 0} matches`
+        );
+
+        if (matches && matches.length > 0) {
+          processedHtml = processedHtml.replace(regex, highlightedSpan);
+          highlightsAdded += matches.length;
+        }
+      }
+    });
+  }
+
+  console.log("HTML processing complete, highlights added:", highlightsAdded);
+  return { html: processedHtml, highlightsAdded };
 };

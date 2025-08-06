@@ -20,6 +20,7 @@ import { useHtmlPageViewerStore } from "../../store/htmlPageViewerStore";
 import { addNotification } from "../../store/notificationStore";
 import { useUserStore } from "../../store/userStore";
 import AnnotationDialog from "./AnnotationDialog";
+import { processHtmlWithHighlights } from "./annotationHighlightingScript";
 
 interface HtmlPageViewerProps {
   resourceId?: string;
@@ -42,8 +43,17 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   tabId,
   onClose,
 }) => {
+  console.log("HtmlPageViewer render:", { resourceId, url, title, tabId });
   const { theme } = useTheme();
   const [html, setHtml] = useState<string>("");
+
+  // Debug HTML state changes
+  useEffect(() => {
+    console.log("HTML state changed:", {
+      htmlLength: html.length,
+      hasHighlightedContent: hasHighlightedContent.current,
+    });
+  }, [html]);
   const [loading, setLoading] = useState<boolean>(false); // Start with false to prevent flicker
   const [error, setError] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string>(url || "");
@@ -67,6 +77,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   // Refs
   const processedResourceIds = useRef<Set<string>>(new Set());
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hasHighlightedContent = useRef<boolean>(false);
 
   // Store hooks
   const { user } = useUserStore();
@@ -92,6 +103,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       });
       return;
     }
+
+    console.log("loadAnnotations: proceeding with valid user and URL");
 
     console.log("Loading annotations for:", {
       userId: user.id,
@@ -204,6 +217,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   // Handle text selection and context menu
   const handleIframeLoad = useCallback(() => {
     console.log("Iframe loaded");
+    console.log("Current HTML content length:", currentHtmlContent.length);
+    console.log("Current annotations count:", annotations.length);
     if (!iframeRef.current) return;
 
     try {
@@ -242,106 +257,55 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
 
-  // Process HTML content to add highlighting
-  const processHtmlWithHighlights = useCallback(
-    (htmlContent: string) => {
-      console.log("Processing HTML with", annotations.length, "annotations");
-
-      let processedHtml = htmlContent;
-
-      // Add selection script to the HTML
-      const selectionScript = `
-        <script>
-          (function() {
-            let lastSelection = '';
-            
-            // Capture selection on mouseup
-            document.addEventListener('mouseup', function(e) {
-              const selection = window.getSelection();
-              if (selection && selection.toString().trim()) {
-                lastSelection = selection.toString().trim();
-                console.log('Selection captured in iframe:', lastSelection);
-              }
-            });
-            
-            // Capture selection on contextmenu
-            document.addEventListener('contextmenu', function(e) {
-              const selection = window.getSelection();
-              if (selection && selection.toString().trim()) {
-                lastSelection = selection.toString().trim();
-                console.log('Context menu selection in iframe:', lastSelection);
-                
-                // Send message to parent
-                window.parent.postMessage({
-                  type: 'iframe-selection',
-                  selection: lastSelection,
-                  x: e.clientX,
-                  y: e.clientY
-                }, '*');
-              }
-            });
-            
-            // Expose function to get last selection
-            window.getLastSelection = function() {
-              return lastSelection;
-            };
-          })();
-        </script>
-      `;
-
-      // Insert the script before the closing </head> tag
-      if (processedHtml.includes("</head>")) {
-        processedHtml = processedHtml.replace(
-          "</head>",
-          `${selectionScript}</head>`
-        );
-      } else {
-        // If no head tag, add it after the opening body tag
-        processedHtml = processedHtml.replace(
-          "<body>",
-          `<body>${selectionScript}`
-        );
-      }
-
-      // Add highlighting for annotations
-      if (annotations.length > 0) {
-        annotations.forEach((annotation) => {
-          const textData = annotation.data as TextSelectionAnnotationData;
-          if (annotation.data && textData?.selected_text) {
-            const searchText = textData.selected_text;
-            const annotationId = annotation.id;
-
-            // Create the highlighted span
-            const highlightedSpan = `<span class="annotation-highlight" data-annotation-id="${annotationId}" style="background-color: #ffeb3b; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;" onclick="window.parent.postMessage({type: 'show-annotation', annotationId: '${annotationId}'}, '*')">${searchText}</span>`;
-
-            // Replace the text in the HTML
-            processedHtml = processedHtml.replace(
-              new RegExp(
-                searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-                "g"
-              ),
-              highlightedSpan
-            );
-          }
-        });
-      }
-
-      console.log("HTML processing complete");
-      return processedHtml;
-    },
-    [annotations]
-  );
-
-  // Process HTML content when annotations change
+  // Process HTML content when HTML or annotations change
   useEffect(() => {
-    if (annotations.length > 0 && html) {
-      console.log("Annotations changed, reprocessing HTML content");
-      const processedHtml = processHtmlWithHighlights(html);
-      setCurrentHtmlContent(processedHtml);
-    } else if (html) {
+    console.log("HTML processing effect triggered", {
+      hasHtml: !!html,
+      htmlLength: html?.length || 0,
+      annotationsCount: annotations.length,
+      hasHighlightedContent: hasHighlightedContent.current,
+    });
+
+    if (html && annotations.length > 0) {
+      console.log("HTML and annotations available, processing content");
+
+      // Convert annotations to the expected type
+      const annotationHighlights = annotations
+        .filter(
+          (annotation) =>
+            (annotation.data as TextSelectionAnnotationData)?.selected_text
+        )
+        .map((annotation) => ({
+          id: annotation.id,
+          data: {
+            selected_text: (annotation.data as TextSelectionAnnotationData)
+              .selected_text!,
+            comment: (annotation.data as TextSelectionAnnotationData).comment,
+            secondary_comment: (annotation.data as TextSelectionAnnotationData)
+              .secondary_comment,
+            tags: (annotation.data as TextSelectionAnnotationData).tags,
+          },
+        }));
+
+      const result = processHtmlWithHighlights(html, annotationHighlights);
+      console.log(
+        "Processed HTML length:",
+        result.html.length,
+        "highlights added:",
+        result.highlightsAdded
+      );
+
+      // Update the ref to track if we have highlighted content
+      hasHighlightedContent.current = result.highlightsAdded > 0;
+
+      setCurrentHtmlContent(result.html);
+    } else if (html && !hasHighlightedContent.current) {
+      console.log("HTML available but no annotations, setting raw HTML");
       setCurrentHtmlContent(html);
+    } else {
+      console.log("No HTML content available for processing");
     }
-  }, [annotations, html, processHtmlWithHighlights]);
+  }, [html, annotations]);
 
   // Debug annotation card state
   useEffect(() => {
@@ -693,6 +657,25 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       const cachedContent = getContent(finalResourceId);
       if (cachedContent && hasValidContent(finalResourceId)) {
         console.log("Using cached content for resourceId:", finalResourceId);
+        console.log("Setting HTML content, length:", cachedContent.html.length);
+        console.log(
+          "Current processed HTML length:",
+          currentHtmlContent.length
+        );
+        console.log("Has highlighted content:", hasHighlightedContent.current);
+
+        // Don't overwrite highlighted content with raw HTML
+        if (hasHighlightedContent.current) {
+          console.log("Skipping HTML update - preserving highlighted content");
+          setCurrentUrl(cachedContent.url);
+          setCurrentTitle(cachedContent.title);
+          setLoadedResourceId(finalResourceId);
+          setLoading(false);
+          setError(null);
+          processedResourceIds.current.add(finalResourceId);
+          return;
+        }
+
         setHtml(cachedContent.html);
         setCurrentUrl(cachedContent.url);
         setCurrentTitle(cachedContent.title);
