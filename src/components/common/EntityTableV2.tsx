@@ -533,7 +533,14 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     const LabelCellRenderer = (props: { data: Entity; value: string }) => {
       const [isEditing, setIsEditing] = useState(false);
       const [editValue, setEditValue] = useState(props.value || "");
+      const [displayValue, setDisplayValue] = useState(props.value || "");
+      const [forceUpdate, setForceUpdate] = useState(0);
       const inputRef = useRef<HTMLInputElement>(null);
+
+      // Update display value when props change
+      useEffect(() => {
+        setDisplayValue(props.value || "");
+      }, [props.value]);
 
       const handleDoubleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -546,16 +553,39 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         }, 10);
       };
 
-      const handleSave = () => {
+      const handleSave = async () => {
         if (props.data && editValue !== props.value) {
-          // Update the entity's label using the proper setter method
+          const originalValue = props.value || "";
+
+          // Optimistically update the local entity immediately
           props.data.setLabel(editValue);
 
-          // Force refresh the entire row to update all cell values
+          // Update the display value immediately for this cell
+          setDisplayValue(editValue);
+
+          // Force a re-render of this cell
+          setForceUpdate((prev) => prev + 1);
+
+          // Update the model data that AG Grid uses
+          const entityData = props.data.getData() as any;
+          if (entityData) {
+            // Update the label in the model data
+            entityData.label = editValue;
+            entityData.title = editValue; // Also update title for web resources
+          }
+
+          // Force immediate grid refresh by directly updating the row data
           if (gridRef.current?.api) {
+            // Get the specific row node
             const rowNode = gridRef.current.api.getRowNode(props.data.getId());
             if (rowNode) {
-              // Refresh the entire row to ensure all cells get updated values
+              // Update the row data directly
+              const updatedData = { ...rowNode.data } as any;
+              updatedData.label = editValue;
+              updatedData.title = editValue;
+              rowNode.setData(updatedData);
+
+              // Force refresh this specific row
               gridRef.current.api.refreshCells({
                 rowNodes: [rowNode],
                 force: true,
@@ -563,14 +593,91 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
               });
             }
           }
-          // Update rowData state to trigger AG Grid re-render
-          setRowData(container.toArray());
+
+          // Force a complete re-render by updating rowData with a new array
+          const newRowData = container.toArray().map((entity) => {
+            if (entity.getId() === props.data.getId()) {
+              // Create a new entity instance to force React to detect the change
+              const entityData = entity.getData() as any;
+              entityData.label = editValue;
+              entityData.title = editValue;
+              return entity;
+            }
+            return entity;
+          });
+          setRowData(newRowData);
+
+          try {
+            // For web resources, also save to Supabase
+            if (entityType === "web-resources") {
+              const entityData = props.data.getData() as any;
+              console.log("Entity data for save:", entityData);
+
+              // Get current user for authentication
+              const { supabase } = await import("../../utils/supabaseClient");
+              const { data: userData, error: userError } =
+                await supabase.auth.getUser();
+
+              if (userError || !userData?.user?.id) {
+                console.error("User authentication error:", userError);
+                throw new Error("User not authenticated");
+              }
+
+              const webpage: Webpage = {
+                id: entityData.id || props.data.getId(),
+                url: entityData.url,
+                user_id: userData.user.id, // Use current user ID
+                title: editValue, // Use the new label as the title
+                html_content: entityData.html_content,
+                screenshot_url: entityData.screenshot_url,
+                metadata: entityData.metadata,
+                created_at: entityData.created_at,
+                last_updated_at: entityData.last_updated_at,
+              };
+
+              console.log("Webpage object to save:", webpage);
+
+              // Import the saveWebpage function
+              const { saveWebpage } = await import("../../api/webpagesApi");
+              try {
+                const result = await saveWebpage(webpage);
+                console.log("Save result:", result);
+                console.log("Webpage label updated in Supabase:", editValue);
+              } catch (saveError) {
+                console.error("SaveWebpage error:", saveError);
+                throw saveError;
+              }
+            }
+          } catch (error) {
+            console.error("Error saving webpage label:", error);
+            // Revert the local change if Supabase save failed
+            props.data.setLabel(originalValue);
+            setDisplayValue(originalValue);
+
+            // Refresh the row again to show the reverted value
+            if (gridRef.current?.api) {
+              const rowNode = gridRef.current.api.getRowNode(
+                props.data.getId()
+              );
+              if (rowNode) {
+                gridRef.current.api.refreshCells({
+                  rowNodes: [rowNode],
+                  force: true,
+                  suppressFlash: true,
+                });
+              }
+            }
+            setRowData([...container.toArray()]);
+
+            alert("Failed to save changes. Please try again.");
+          }
         }
         setIsEditing(false);
       };
 
       const handleCancel = () => {
         setEditValue(props.value || "");
+        setDisplayValue(props.value || "");
         setIsEditing(false);
       };
 
@@ -625,8 +732,9 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             userSelect: "text",
           }}
           title="Double-click to edit"
+          key={`label-${props.data.getId()}-${displayValue}-${forceUpdate}`} // Force re-render when displayValue or forceUpdate changes
         >
-          {props.value || ""}
+          {displayValue || ""}
         </div>
       );
     };
@@ -1516,6 +1624,12 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                   : undefined,
         valueGetter: (params: any) => {
           if (!params.data) return "";
+
+          // For label column, always get the current value from the entity
+          if (col === "label") {
+            return params.data.getLabel() || "";
+          }
+
           const value = (params.data.getData() as any)[col];
 
           // Debug logging for annotation fields

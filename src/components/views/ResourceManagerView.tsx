@@ -58,6 +58,17 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     lastFetched: null,
   });
 
+  // Callback to update webpage data when saved
+  const updateWebpageData = useCallback((id: string, newTitle: string) => {
+    setWebpages(prevWebpages => 
+      prevWebpages.map(webpage => 
+        webpage.id === id 
+          ? { ...webpage, title: newTitle }
+          : webpage
+      )
+    );
+  }, []);
+
   // Fetch data from Supabase
   const fetchData = useCallback(
     async (forceRefresh = false) => {
@@ -300,7 +311,10 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         setId: () => {},
         setData: () => {},
         setType: () => {},
-        setLabel: () => {},
+        setLabel: (newLabel: string) => {
+          // Update the webpage data in the parent state
+          updateWebpageData(webpage.id, newLabel);
+        },
         setTags: () => {},
         addTag: () => {},
         removeTag: () => {},
