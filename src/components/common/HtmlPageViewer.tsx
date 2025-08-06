@@ -87,12 +87,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       hasHighlightedContent: hasHighlightedContent.current,
       currentHtmlContentLength: currentHtmlContent.length,
     });
-
-    // Reset highlighted content flag when HTML changes (new page load)
-    if (html && html !== currentHtmlContent) {
-      console.log("HTML content changed, resetting hasHighlightedContent");
-      hasHighlightedContent.current = false;
-    }
   }, [html, currentHtmlContent]);
 
   // Refs
@@ -125,6 +119,9 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       return;
     }
 
+    // Reset highlighting when loading annotations for a new URL
+    hasHighlightedContent.current = false;
+
     console.log("loadAnnotations: proceeding with valid user and URL");
 
     console.log("Loading annotations for:", {
@@ -134,22 +131,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     });
 
     try {
-      // First, let's try to get all annotations for the user to see if there are any
-      const allUserAnnotations = await listAnnotations({
-        userId: user.id,
-      });
-      console.log("All user annotations:", allUserAnnotations);
-
-      // Check if any annotations have URLs that might match
-      if (allUserAnnotations.length > 0) {
-        console.log("URLs from existing annotations:");
-        allUserAnnotations.forEach((ann: Annotation) => {
-          if (ann.parent_resource_id) {
-            console.log("  -", ann.parent_resource_id);
-          }
-        });
-      }
-
       // Then try the specific webpage query
       const webpageAnnotations = await listAnnotations({
         userId: user.id,
@@ -232,7 +213,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         setStoreLoading(webpageId, false);
       }
     },
-    [setContent, setStoreLoading, setStoreError]
+    [setStoreLoading, setStoreError, setContent, setHtmlWithDebug]
   );
 
   // Handle text selection and context menu
@@ -288,8 +269,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       currentHtmlContentLength: currentHtmlContent.length,
     });
 
-    // Only process if we have raw HTML (not already processed)
-    if (html && annotations.length > 0 && !hasHighlightedContent.current) {
+    // Process if we have both HTML and annotations
+    if (html && annotations.length > 0) {
       console.log("HTML and annotations available, processing content");
 
       // Convert annotations to the expected type
@@ -329,13 +310,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } else if (html && !hasHighlightedContent.current) {
       console.log("HTML available but no annotations, setting raw HTML");
       setCurrentHtmlContent(html);
-    } else if (hasHighlightedContent.current) {
-      console.log("Skipping processing - already have highlighted content");
-      return; // Don't do anything if we already have highlights
     } else {
       console.log("No HTML content available for processing");
     }
-  }, [html, annotations]);
+  }, [html, annotations, currentHtmlContent.length]);
 
   // Debug annotation card state
   useEffect(() => {
