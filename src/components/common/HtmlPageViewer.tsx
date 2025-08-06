@@ -79,6 +79,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [currentHtmlContent, setCurrentHtmlContent] = useState<string>("");
   const [contentHash, setContentHash] = useState<string>("");
+  const [showAnnotations, setShowAnnotations] = useState<boolean>(true);
 
   // Debug HTML state changes
   useEffect(() => {
@@ -288,12 +289,14 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
     // Only set content if we have HTML
     if (html && html.length > 0) {
-      // Always process with annotations if available, otherwise use raw HTML
+      // Process with annotations if available and toggle is on, otherwise use raw HTML
       let processedHtml = html;
       let hasHighlights = false;
 
-      if (annotations.length > 0) {
-        console.log("HTML and annotations available, processing content");
+      if (annotations.length > 0 && showAnnotations) {
+        console.log(
+          "HTML and annotations available, processing content with highlights"
+        );
 
         // Convert annotations to the expected type
         const annotationHighlights = annotations
@@ -337,7 +340,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           annotationsProcessed: annotationHighlights.length,
         });
       } else {
-        console.log("HTML available but no annotations yet, using raw HTML");
+        console.log("Using raw HTML (annotations disabled or not available)");
       }
 
       // Update the ref to track if we have highlighted content
@@ -367,7 +370,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     } else {
       console.log("No HTML content available for processing");
     }
-  }, [html, annotations, loadedResourceId]);
+  }, [html, annotations, loadedResourceId, showAnnotations]);
 
   // Force iframe update when content hash changes
   useEffect(() => {
@@ -1009,7 +1012,39 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             {currentTitle || title || currentUrl}
           </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Annotation Toggle */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <label
+              style={{
+                fontSize: "12px",
+                color: showAnnotations ? "#0078d4" : "#666",
+                cursor: "pointer",
+                userSelect: "none",
+                fontWeight: showAnnotations ? "600" : "400",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                backgroundColor: showAnnotations
+                  ? "rgba(0, 120, 212, 0.1)"
+                  : "transparent",
+                border: showAnnotations
+                  ? "1px solid #0078d4"
+                  : "1px solid transparent",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={showAnnotations}
+                onChange={(e) => setShowAnnotations(e.target.checked)}
+                style={{
+                  marginRight: "4px",
+                  cursor: "pointer",
+                }}
+              />
+              {showAnnotations ? "✓ Annotations" : "Annotations"}
+            </label>
+          </div>
+
           <button
             onClick={handleRefresh}
             style={{
@@ -1067,26 +1102,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             data-debug={`hash:${contentHash}`}
           />
         )}
-        {/* Debug info */}
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10,
-            background: "white",
-            padding: 10,
-            fontSize: 12,
-            zIndex: 1000,
-          }}
-        >
-          <div>Content Hash: {contentHash}</div>
-          <div>Content Hash: {contentHash}</div>
-          <div>HTML Length: {currentHtmlContent.length}</div>
-          <div>Annotations: {annotations.length}</div>
-          <div>
-            Has Highlights: {hasHighlightedContent.current ? "Yes" : "No"}
-          </div>
-        </div>
       </div>
 
       {/* Context Menu */}
