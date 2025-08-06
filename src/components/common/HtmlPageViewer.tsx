@@ -438,11 +438,16 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         });
       } else if (event.data && event.data.type === "show-annotation") {
         console.log("Show annotation request:", event.data);
+        console.log("Available annotations:", annotations);
         const annotation = annotations.find(
           (a) => a.id === event.data.annotationId
         );
+        console.log("Found annotation:", annotation);
         if (annotation) {
+          console.log("Setting showAnnotationCard to:", annotation);
           setShowAnnotationCard(annotation);
+        } else {
+          console.log("Annotation not found for ID:", event.data.annotationId);
         }
       }
     };
@@ -1037,116 +1042,72 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
       {/* Annotation Card */}
       {showAnnotationCard && (
-        <div
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "white",
-            borderRadius: "12px",
-            padding: "24px",
-            width: "500px",
-            maxWidth: "90vw",
-            maxHeight: "80vh",
-            overflow: "auto",
-            boxShadow:
-              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            zIndex: 10002,
-          }}
-        >
+        <>
+          {/* Backdrop */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "20px",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              zIndex: 10001,
+            }}
+            onClick={() => setShowAnnotationCard(null)}
+          />
+          {/* Modal */}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "500px",
+              maxWidth: "90%",
+              maxHeight: "80%",
+              overflow: "auto",
+              boxShadow:
+                "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              zIndex: 10002,
             }}
           >
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "#1f2937",
-              }}
-            >
-              Annotation Details
-            </h2>
-            <button
-              onClick={() => setShowAnnotationCard(null)}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: "4px",
-                borderRadius: "4px",
-                color: "#6b7280",
-              }}
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#374151",
-                marginBottom: "8px",
-              }}
-            >
-              Selected Text
-            </label>
             <div
               style={{
-                padding: "12px",
-                backgroundColor: "#f9fafb",
-                borderRadius: "6px",
-                fontSize: "14px",
-                color: "#6b7280",
-                border: "1px solid #e5e7eb",
-                maxHeight: "100px",
-                overflow: "auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "20px",
               }}
             >
-              {(showAnnotationCard.data as TextSelectionAnnotationData)
-                ?.selected_text || "No text selected"}
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "18px",
+                  fontWeight: "600",
+                  color: "#1f2937",
+                }}
+              >
+                Annotation Details
+              </h2>
+              <button
+                onClick={() => setShowAnnotationCard(null)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  borderRadius: "4px",
+                  color: "#6b7280",
+                }}
+              >
+                <X size={20} />
+              </button>
             </div>
-          </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#374151",
-                marginBottom: "8px",
-              }}
-            >
-              Comment
-            </label>
-            <div
-              style={{
-                padding: "12px",
-                backgroundColor: "#f9fafb",
-                borderRadius: "6px",
-                fontSize: "14px",
-                color: "#374151",
-                border: "1px solid #e5e7eb",
-                minHeight: "60px",
-              }}
-            >
-              {(showAnnotationCard.data as TextSelectionAnnotationData)
-                ?.comment || "No comment"}
-            </div>
-          </div>
-
-          {(showAnnotationCard.data as TextSelectionAnnotationData)
-            ?.secondary_comment && (
             <div style={{ marginBottom: "20px" }}>
               <label
                 style={{
@@ -1157,7 +1118,36 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                   marginBottom: "8px",
                 }}
               >
-                Secondary Comment
+                Selected Text
+              </label>
+              <div
+                style={{
+                  padding: "12px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  color: "#6b7280",
+                  border: "1px solid #e5e7eb",
+                  maxHeight: "100px",
+                  overflow: "auto",
+                }}
+              >
+                {(showAnnotationCard.data as TextSelectionAnnotationData)
+                  ?.selected_text || "No text selected"}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#374151",
+                  marginBottom: "8px",
+                }}
+              >
+                Comment
               </label>
               <div
                 style={{
@@ -1167,20 +1157,16 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                   fontSize: "14px",
                   color: "#374151",
                   border: "1px solid #e5e7eb",
-                  minHeight: "40px",
+                  minHeight: "60px",
                 }}
               >
                 {(showAnnotationCard.data as TextSelectionAnnotationData)
-                  ?.secondary_comment || ""}
+                  ?.comment || "No comment"}
               </div>
             </div>
-          )}
 
-          {Array.isArray(
-            (showAnnotationCard.data as TextSelectionAnnotationData)?.tags
-          ) &&
-            ((showAnnotationCard.data as TextSelectionAnnotationData)?.tags
-              ?.length ?? 0) > 0 && (
+            {(showAnnotationCard.data as TextSelectionAnnotationData)
+              ?.secondary_comment && (
               <div style={{ marginBottom: "20px" }}>
                 <label
                   style={{
@@ -1191,59 +1177,94 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                     marginBottom: "8px",
                   }}
                 >
-                  Tags
+                  Secondary Comment
                 </label>
                 <div
                   style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "8px",
+                    padding: "12px",
+                    backgroundColor: "#f9fafb",
+                    borderRadius: "6px",
+                    fontSize: "14px",
+                    color: "#374151",
+                    border: "1px solid #e5e7eb",
+                    minHeight: "40px",
                   }}
                 >
-                  {(
-                    showAnnotationCard.data as TextSelectionAnnotationData
-                  )?.tags?.map((tag: string) => (
-                    <span
-                      key={tag}
-                      style={{
-                        padding: "4px 8px",
-                        backgroundColor: "#e0e7ff",
-                        color: "#3730a3",
-                        borderRadius: "12px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {(showAnnotationCard.data as TextSelectionAnnotationData)
+                    ?.secondary_comment || ""}
                 </div>
               </div>
             )}
 
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              justifyContent: "flex-end",
-            }}
-          >
-            <button
-              onClick={() => setShowAnnotationCard(null)}
+            {Array.isArray(
+              (showAnnotationCard.data as TextSelectionAnnotationData)?.tags
+            ) &&
+              ((showAnnotationCard.data as TextSelectionAnnotationData)?.tags
+                ?.length ?? 0) > 0 && (
+                <div style={{ marginBottom: "20px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      color: "#374151",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Tags
+                  </label>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    {(
+                      showAnnotationCard.data as TextSelectionAnnotationData
+                    )?.tags?.map((tag: string) => (
+                      <span
+                        key={tag}
+                        style={{
+                          padding: "4px 8px",
+                          backgroundColor: "#e0e7ff",
+                          color: "#3730a3",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            <div
               style={{
-                padding: "8px 16px",
-                backgroundColor: "transparent",
-                color: "#6b7280",
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "14px",
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
               }}
             >
-              Close
-            </button>
+              <button
+                onClick={() => setShowAnnotationCard(null)}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "transparent",
+                  color: "#6b7280",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
