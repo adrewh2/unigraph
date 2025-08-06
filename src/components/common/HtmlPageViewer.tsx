@@ -314,119 +314,194 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         return;
       }
 
-      console.log("Injecting highlighting script for annotations:", annotations);
+      console.log("Injecting optimized highlighting script for annotations:", annotations);
 
-      // Create highlighting script
+      // Create optimized highlighting script
       const annotationsJson = JSON.stringify(annotations);
       const script =
         "(function() {" +
         "const annotations = " +
         annotationsJson +
         ";" +
-        "console.log('Highlighting script executing with', annotations.length, 'annotations');" +
+        "console.log('Optimized highlighting script executing with', annotations.length, 'annotations');" +
+        "let isHighlighting = false;" +
+        "let textNodesCache = null;" +
+        "let highlightTimeout = null;" +
+        
+        "function debounceHighlight(fn, delay) {" +
+        "return function() {" +
+        "const context = this;" +
+        "const args = arguments;" +
+        "clearTimeout(highlightTimeout);" +
+        "highlightTimeout = setTimeout(function() {" +
+        "fn.apply(context, args);" +
+        "}, delay);" +
+        "};" +
+        "}" +
+        
         "function clearExistingHighlights() {" +
         "const existingHighlights = document.querySelectorAll('.annotation-highlight');" +
+        "if (existingHighlights.length > 0) {" +
+        "console.log('Clearing', existingHighlights.length, 'existing highlights');" +
         "existingHighlights.forEach(function(highlight) {" +
         "const parent = highlight.parentNode;" +
+        "if (parent) {" +
         "parent.replaceChild(document.createTextNode(highlight.textContent), highlight);" +
         "parent.normalize();" +
-        "});" +
-        "}" +
-        "function highlightAnnotations() {" +
-        "console.log('highlightAnnotations called, document ready state:', document.readyState);" +
-        "clearExistingHighlights();" +
-        "annotations.forEach(function(annotation) {" +
-        "if (annotation.data && annotation.data.selected_text) {" +
-        "const text = annotation.data.selected_text;" +
-        "console.log('Highlighting text for annotation:', annotation.id, 'text:', text);" +
-        "highlightText(text, annotation.id);" +
         "}" +
         "});" +
-        "console.log('Highlighting completed for', annotations.length, 'annotations');" +
+        "textNodesCache = null;" +
         "}" +
-        "function highlightText(searchText, annotationId) {" +
-        "console.log('highlightText called with:', searchText, 'annotationId:', annotationId);" +
+        "}" +
+        
+        "function getAllTextNodes() {" +
+        "if (textNodesCache) {" +
+        "console.log('Using cached text nodes:', textNodesCache.length);" +
+        "return textNodesCache;" +
+        "}" +
         "if (!document.body) {" +
-        "console.warn('Document body not available for highlighting');" +
-        "return;" +
+        "console.warn('Document body not available');" +
+        "return [];" +
         "}" +
         "const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);" +
         "const textNodes = [];" +
         "let node;" +
         "while (node = walker.nextNode()) { textNodes.push(node); }" +
-        "console.log('Found', textNodes.length, 'text nodes to search');" +
+        "textNodesCache = textNodes;" +
+        "console.log('Cached', textNodes.length, 'text nodes');" +
+        "return textNodes;" +
+        "}" +
+        
+        "function highlightAnnotationsBatch() {" +
+        "if (isHighlighting) {" +
+        "console.log('Highlighting already in progress, skipping');" +
+        "return;" +
+        "}" +
+        "isHighlighting = true;" +
+        "console.log('Starting batch highlighting for', annotations.length, 'annotations');" +
+        
+        "try {" +
+        "clearExistingHighlights();" +
+        "const textNodes = getAllTextNodes();" +
+        
+        "if (textNodes.length === 0) {" +
+        "console.warn('No text nodes found for highlighting');" +
+        "return;" +
+        "}" +
+        
+        "console.log('Sample text from document:', textNodes[0]?.textContent?.substring(0, 200) + '...');" +
+        
+        "let totalHighlights = 0;" +
+        "annotations.forEach(function(annotation, index) {" +
+        "if (annotation.data && annotation.data.selected_text) {" +
+        "const searchText = annotation.data.selected_text;" +
+        "const annotationId = annotation.id;" +
+        "console.log('Processing annotation', index + 1, '/', annotations.length, ':', annotationId);" +
+        "console.log('Searching for text:', searchText);" +
+        
+        "try {" +
+        "const escapedText = searchText.replace(/[.*+?^${}()|[\\\\]\\\\]/g, '\\\\\\\\$&');" +
+        "const regex = new RegExp(escapedText, 'g');" +
         "let highlightCount = 0;" +
+        "let foundNodes = 0;" +
+        
         "textNodes.forEach(function(textNode) {" +
         "const text = textNode.textContent;" +
         "if (text && text.includes(searchText)) {" +
-        "console.log('Found matching text in node:', text.substring(0, 100), '...');" +
-        "const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\\\\]\\\\]/g, '\\\\\\\\$&'), 'g');" +
+        "foundNodes++;" +
+        "console.log('Found text match in node:', text.substring(0, 200) + '...');" +
         "const parts = text.split(regex);" +
         "if (parts.length > 1) {" +
-        "highlightCount++;" +
         "const fragment = document.createDocumentFragment();" +
         "let partIndex = 0;" +
         "let matchIndex = 0;" +
+        "const matches = text.match(regex) || [];" +
+        
         "while (partIndex < parts.length) {" +
         "if (parts[partIndex]) {" +
         "fragment.appendChild(document.createTextNode(parts[partIndex]));" +
         "}" +
-        "if (matchIndex < text.match(regex).length) {" +
+        "if (matchIndex < matches.length) {" +
         "const span = document.createElement('span');" +
         "span.className = 'annotation-highlight';" +
         "span.setAttribute('data-annotation-id', annotationId);" +
         "span.style.backgroundColor = '#ffeb3b';" +
         "span.style.cursor = 'pointer';" +
         "span.style.borderRadius = '2px';" +
-        "span.textContent = text.match(regex)[matchIndex];" +
+        "span.style.padding = '1px 2px';" +
+        "span.style.transition = 'background-color 0.2s ease';" +
+        "span.textContent = matches[matchIndex];" +
         "span.addEventListener('click', function() {" +
-        "console.log('Annotation span clicked, ID:', this.getAttribute('data-annotation-id'));" +
-        "const annotationId = this.getAttribute('data-annotation-id');" +
-        "if (annotationId) {" +
-        "console.log('Sending show-annotation message for ID:', annotationId);" +
+        "console.log('Annotation clicked:', annotationId);" +
         "window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');" +
-        "} else {" +
-        "console.warn('No annotation ID found on clicked element');" +
-        "}" +
         "});" +
         "fragment.appendChild(span);" +
+        "highlightCount++;" +
         "matchIndex++;" +
         "}" +
         "partIndex++;" +
         "}" +
+        
+        "if (textNode.parentNode) {" +
         "textNode.parentNode.replaceChild(fragment, textNode);" +
         "}" +
         "}" +
-        "});" +
-        "console.log('Highlighted', highlightCount, 'text instances for annotation:', annotationId);" +
         "}" +
+        "});" +
+        
+        "totalHighlights += highlightCount;" +
+        "console.log('Found', foundNodes, 'matching nodes for annotation:', annotationId);" +
+        "if (highlightCount > 0) {" +
+        "console.log('Highlighted', highlightCount, 'instances for annotation:', annotationId);" +
+        "} else if (foundNodes === 0) {" +
+        "console.warn('No text nodes contained the search text for annotation:', annotationId);" +
+        "console.warn('Search text was:', searchText);" +
+        "}" +
+        "} catch (regexError) {" +
+        "console.error('Error processing annotation', annotationId, ':', regexError);" +
+        "console.warn('Problematic search text:', searchText);" +
+        "console.warn('Skipping this annotation due to regex error');" +
+        "}" +
+        "}" +
+        "});" +
+        
+        "console.log('Batch highlighting completed:', totalHighlights, 'total highlights created');" +
+        "if (totalHighlights === 0) {" +
+        "console.warn('No highlights were created - text may not match exactly');" +
+        "}" +
+        "} catch (error) {" +
+        "console.error('Error during batch highlighting:', error);" +
+        "} finally {" +
+        "isHighlighting = false;" +
+        "}" +
+        "}" +
+        
+        "const debouncedHighlight = debounceHighlight(highlightAnnotationsBatch, 100);" +
+        
         "if (document.readyState === 'loading') {" +
-        "document.addEventListener('DOMContentLoaded', function() {" +
-        "console.log('DOMContentLoaded event fired, running highlightAnnotations');" +
-        "setTimeout(highlightAnnotations, 100);" +
-        "});" +
+        "document.addEventListener('DOMContentLoaded', debouncedHighlight);" +
         "} else if (document.readyState === 'interactive' || document.readyState === 'complete') {" +
-        "console.log('Document already loaded, running highlightAnnotations immediately');" +
-        "setTimeout(highlightAnnotations, 100);" +
+        "console.log('Document ready, starting highlighting');" +
+        "setTimeout(debouncedHighlight, 50);" +
         "}" +
+        
         "window.addEventListener('load', function() {" +
-        "console.log('Window load event fired, running highlightAnnotations again');" +
-        "setTimeout(highlightAnnotations, 200);" +
-        "});" +
-        "setInterval(function() {" +
-        "const highlights = document.querySelectorAll('.annotation-highlight');" +
-        "if (highlights.length === 0 && annotations.length > 0) {" +
-        "console.log('No highlights found but annotations exist, re-highlighting');" +
-        "highlightAnnotations();" +
+        "console.log('Window loaded, re-highlighting if needed');" +
+        "setTimeout(function() {" +
+        "if (document.querySelectorAll('.annotation-highlight').length === 0 && annotations.length > 0) {" +
+        "debouncedHighlight();" +
         "}" +
-        "}, 2000);" +
-        "console.log('Highlighting script setup complete');" +
+        "}, 200);" +
+        "});" +
+        
+        "window.highlightAnnotations = debouncedHighlight;" +
+        "console.log('Optimized highlighting script setup complete');" +
         "})();";
 
       // Execute the script in the iframe
       (iframeWindow as any).eval(script);
       console.log(
-        "Highlighting script injected for",
+        "Optimized highlighting script injected for",
         annotations.length,
         "annotations"
       );
@@ -438,10 +513,13 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   // Inject highlighting script when annotations change
   useEffect(() => {
     if (annotations.length > 0 && iframeRef.current) {
-      // Give iframe more time to load and stabilize
-      setTimeout(() => {
+      console.log("Annotations changed, triggering highlighting in 500ms");
+      // Give iframe time to load and stabilize, but be more responsive
+      const timeoutId = setTimeout(() => {
         injectHighlightingScript();
-      }, 1000); // Increased from 500ms to 1000ms
+      }, 500);
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [annotations, injectHighlightingScript]);
 
@@ -452,9 +530,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
     const handleLoad = () => {
       console.log("Iframe load detected, re-injecting highlighting script");
+      // Use a longer delay only for iframe load events to ensure content is stable
       setTimeout(() => {
         injectHighlightingScript();
-      }, 500);
+      }, 800);
     };
 
     iframe.addEventListener('load', handleLoad);
@@ -1060,7 +1139,25 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                   id: a.id,
                   selected_text: (a.data as TextSelectionAnnotationData)?.selected_text || 'N/A'
                 })));
-                injectHighlightingScript();
+                
+                // Try to use the optimized highlighting function if available
+                const iframe = iframeRef.current;
+                if (iframe && iframe.contentWindow) {
+                  try {
+                    if ((iframe.contentWindow as any).highlightAnnotations) {
+                      console.log("Using optimized highlighting function");
+                      (iframe.contentWindow as any).highlightAnnotations();
+                    } else {
+                      console.log("Optimized function not available, re-injecting script");
+                      injectHighlightingScript();
+                    }
+                  } catch (error) {
+                    console.log("Error calling optimized function, fallback to re-injection:", error);
+                    injectHighlightingScript();
+                  }
+                } else {
+                  injectHighlightingScript();
+                }
               }}
               style={{
                 background: "transparent",
