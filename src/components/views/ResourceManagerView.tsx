@@ -28,7 +28,7 @@ interface TabData {
 const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const { currentSceneGraph } = useAppConfigStore();
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, isSignedIn } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("nodes");
   const [webpages, setWebpages] = useState<Webpage[]>([]);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -60,11 +60,9 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
   // Callback to update webpage data when saved
   const updateWebpageData = useCallback((id: string, newTitle: string) => {
-    setWebpages(prevWebpages => 
-      prevWebpages.map(webpage => 
-        webpage.id === id 
-          ? { ...webpage, title: newTitle }
-          : webpage
+    setWebpages((prevWebpages) =>
+      prevWebpages.map((webpage) =>
+        webpage.id === id ? { ...webpage, title: newTitle } : webpage
       )
     );
   }, []);
@@ -203,6 +201,23 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       console.error("Error during silent refresh:", error);
     }
   }, [user?.id]);
+
+  if (!isSignedIn) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: theme.colors.text,
+        }}
+      >
+        <p>Please log in to view user resources</p>
+      </div>
+    );
+  }
 
   if (!currentSceneGraph) {
     return (

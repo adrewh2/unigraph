@@ -113,3 +113,10 @@ export async function checkWebpagesContent(ids: string[]) {
 
   return results;
 }
+
+// Delete a webpage by id
+export async function deleteWebpage(id: string) {
+  const { error } = await supabase.from("webpages").delete().eq("id", id);
+  if (error) throw error;
+  return true;
+}

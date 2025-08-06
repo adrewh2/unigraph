@@ -1144,32 +1144,101 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
     // Delete cell renderer component
     const DeleteCellRenderer = (props: { data: Entity }) => {
-      const handleDelete = () => {
+      const handleDelete = async () => {
         if (props.data) {
-          // Use the sceneGraph.getGraph().deleteNode() method
-          try {
-            const nodeId = props.data.getId() as NodeId;
+          const entityData = props.data.getData() as any;
+          const entityId = props.data.getId();
+
+          // For web resources, show confirmation dialog
+          if (entityType === "web-resources") {
+            const title =
+              entityData.title ||
+              entityData.label ||
+              entityData.url ||
+              "this webpage";
+            const confirmed = window.confirm(
+              `Are you sure you want to delete "${title}"? This will permanently remove it from your saved pages.`
+            );
+
+            if (!confirmed) {
+              return;
+            }
+
+            // Store original data for potential revert
+            const originalEntity = props.data;
+            const originalRowData = container.toArray();
+
+            // Optimistically remove from the table immediately
+            if (gridRef.current?.api) {
+              gridRef.current.api.applyTransaction({
+                remove: [props.data],
+              });
+            }
+
+            // Delete from the graph immediately
+            const nodeId = entityId as NodeId;
             if (nodeId) {
               console.log(`Deleting node: ${nodeId}`);
               sceneGraph.getGraph().deleteNode(nodeId);
-
-              // Refresh the grid to reflect the deleted node
-              if (gridRef.current?.api) {
-                // Remove the deleted row from the grid
-                gridRef.current.api.applyTransaction({
-                  remove: [props.data],
-                });
-
-                // Update rowData state to trigger AG Grid re-render
-                setRowData(container.toArray());
-              }
               sceneGraph.notifyGraphChanged();
             }
-          } catch (error) {
-            console.error(
-              `Error deleting entity: ${props.data.getId()}`,
-              error
-            );
+
+            // Then delete from Supabase in the background
+            (async () => {
+              try {
+                const { deleteWebpage } = await import("../../api/webpagesApi");
+                await deleteWebpage(entityId);
+                console.log(`Deleted webpage from Supabase: ${entityId}`);
+              } catch (error) {
+                console.error(
+                  `Error deleting webpage from Supabase: ${entityId}`,
+                  error
+                );
+
+                // Revert the optimistic change if Supabase deletion failed
+                if (gridRef.current?.api) {
+                  // Add the row back to the grid
+                  gridRef.current.api.applyTransaction({
+                    add: [originalEntity],
+                  });
+                }
+
+                // Restore the node in the graph
+                if (nodeId) {
+                  sceneGraph
+                    .getGraph()
+                    .addNode(nodeId, originalEntity.getData());
+                  sceneGraph.notifyGraphChanged();
+                }
+
+                alert(
+                  "Failed to delete webpage from server. The item has been restored."
+                );
+              }
+            })();
+          } else {
+            // For non-web resources, use the original delete logic
+            try {
+              const nodeId = entityId as NodeId;
+              if (nodeId) {
+                console.log(`Deleting node: ${nodeId}`);
+                sceneGraph.getGraph().deleteNode(nodeId);
+
+                // Refresh the grid to reflect the deleted node
+                if (gridRef.current?.api) {
+                  // Remove the deleted row from the grid
+                  gridRef.current.api.applyTransaction({
+                    remove: [props.data],
+                  });
+
+                  // Update rowData state to trigger AG Grid re-render
+                  setRowData(container.toArray());
+                }
+                sceneGraph.notifyGraphChanged();
+              }
+            } catch (error) {
+              console.error(`Error deleting entity: ${entityId}`, error);
+            }
           }
         }
       };
