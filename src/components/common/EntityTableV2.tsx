@@ -12,7 +12,7 @@ import React, {
   useState,
 } from "react";
 import ReactDOM from "react-dom";
-import { Webpage } from "../../api/webpagesApi";
+
 import { useAppContext } from "../../context/AppContext";
 import { RenderingManager } from "../../controllers/RenderingManager";
 import { Entity } from "../../core/model/entity/abstractEntity";
@@ -64,7 +64,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
     // Hover preview state for web resources
     const [hoveredWebResource, setHoveredWebResource] = useState<{
-      webpage: Webpage;
+      webpage: any;
       position: { x: number; y: number };
     } | null>(null);
 
@@ -703,24 +703,15 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                           return;
                         }
 
-                        const webpage: Webpage = {
-                          id: entityData.id || props.data.getId(),
-                          url: entityData.url,
-                          user_id: userData.user.id,
-                          title: currentValue,
-                          html_content: entityData.html_content,
-                          screenshot_url: entityData.screenshot_url,
-                          metadata: entityData.metadata,
-                          created_at: entityData.created_at,
-                          last_updated_at: entityData.last_updated_at,
-                        };
-
-                        const { saveWebpage } = await import(
+                        const { updateWebpageTitle } = await import(
                           "../../api/webpagesApi"
                         );
-                        await saveWebpage(webpage);
+                        await updateWebpageTitle(
+                          entityData.id || props.data.getId(),
+                          currentValue
+                        );
                         console.log(
-                          "Webpage label updated in Supabase:",
+                          "Webpage title updated in Supabase:",
                           currentValue
                         );
                       } catch (error) {
@@ -804,29 +795,22 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                 throw new Error("User not authenticated");
               }
 
-              const webpage: Webpage = {
-                id: entityData.id || props.data.getId(),
-                url: entityData.url,
-                user_id: userData.user.id, // Use current user ID
-                title: editValue, // Use the new label as the title
-                html_content: entityData.html_content,
-                screenshot_url: entityData.screenshot_url,
-                metadata: entityData.metadata,
-                created_at: entityData.created_at,
-                last_updated_at: entityData.last_updated_at,
-              };
+              console.log("Webpage title to update:", editValue);
 
-              console.log("Webpage object to save:", webpage);
-
-              // Import the saveWebpage function
-              const { saveWebpage } = await import("../../api/webpagesApi");
+              // Import the updateWebpageTitle function
+              const { updateWebpageTitle } = await import(
+                "../../api/webpagesApi"
+              );
               try {
-                const result = await saveWebpage(webpage);
-                console.log("Save result:", result);
-                console.log("Webpage label updated in Supabase:", editValue);
-              } catch (saveError) {
-                console.error("SaveWebpage error:", saveError);
-                throw saveError;
+                const result = await updateWebpageTitle(
+                  entityData.id || props.data.getId(),
+                  editValue
+                );
+                console.log("Update result:", result);
+                console.log("Webpage title updated in Supabase:", editValue);
+              } catch (updateError) {
+                console.error("UpdateWebpageTitle error:", updateError);
+                throw updateError;
               }
             }
           } catch (error) {

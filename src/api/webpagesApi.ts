@@ -114,6 +114,17 @@ export async function checkWebpagesContent(ids: string[]) {
   return results;
 }
 
+// Update only the title of a webpage
+export async function updateWebpageTitle(id: string, title: string) {
+  const { data, error } = await supabase
+    .from("webpages")
+    .update({ title, last_updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("id, title");
+  if (error) throw error;
+  return data?.[0];
+}
+
 // Delete a webpage by id
 export async function deleteWebpage(id: string) {
   const { error } = await supabase.from("webpages").delete().eq("id", id);
