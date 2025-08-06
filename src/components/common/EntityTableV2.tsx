@@ -19,6 +19,7 @@ import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { Node as ModelNode, NodeId } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";
+import { setHoveredNodeId } from "../../store/graphInteractionStore";
 import { createThemedAgGridContainer } from "../../utils/aggridThemeUtils";
 import { ContextMenuItem } from "./ContextMenu";
 import EntityJsonViewer from "./EntityJsonViewer";
@@ -1821,120 +1822,50 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       []
     );
 
-    // Handle row hover for web resources using onModelUpdated
+    // Handle row hover for web resources and nodes using onModelUpdated
     const onModelUpdated = useCallback(
       (event: any) => {
-        if (entityType === "web-resources") {
-          // Add hover listeners to all rows
-          setTimeout(() => {
-            const rows = document.querySelectorAll(".ag-row");
-            rows.forEach((row) => {
-              const rowId = row.getAttribute("row-id");
-              if (rowId) {
-                const rowData = event.api.getDisplayedRowAtIndex(
-                  parseInt(rowId)
-                );
-                if (rowData && rowData.data) {
-                  const entityData = rowData.data.getData
-                    ? rowData.data.getData()
-                    : rowData.data;
-                  if (entityData && entityData.url) {
-                    // Remove existing listeners
-                    const existingHoverHandler = (row as any)._hoverHandler;
-                    const existingLeaveHandler = (row as any)._leaveHandler;
-                    if (existingHoverHandler) {
-                      row.removeEventListener(
-                        "mouseenter",
-                        existingHoverHandler
-                      );
-                    }
-                    if (existingLeaveHandler) {
-                      row.removeEventListener(
-                        "mouseleave",
-                        existingLeaveHandler
-                      );
-                    }
+        // Add hover listeners to all rows
+        setTimeout(() => {
+          const rows = document.querySelectorAll(".ag-row");
+          rows.forEach((row) => {
+            const rowId = row.getAttribute("row-id");
+            if (rowId) {
+              const rowData = event.api.getDisplayedRowAtIndex(parseInt(rowId));
+              if (rowData && rowData.data) {
+                const entityData = rowData.data.getData
+                  ? rowData.data.getData()
+                  : rowData.data;
 
-                    // Add new listeners
-                    (row as any)._hoverHandler = (e: MouseEvent) => {
-                      console.log("Hover handler - entityData:", entityData);
-                      console.log(
-                        "Hover handler - screenshot_url:",
-                        entityData.screenshot_url
-                      );
-                      console.log(
-                        "Hover handler - screenshot_url type:",
-                        typeof entityData.screenshot_url
-                      );
-                      console.log(
-                        "Hover handler - screenshot_url length:",
-                        entityData.screenshot_url?.length
-                      );
-
-                      const webpage: Webpage = {
-                        id: entityData.id || rowData.data.getId(),
-                        url: entityData.url,
-                        user_id: entityData.user_id || "",
-                        title:
-                          entityData.title ||
-                          entityData.label ||
-                          entityData.url,
-                        html_content: entityData.html_content,
-                        screenshot_url: entityData.screenshot_url,
-                        metadata: entityData.metadata,
-                        created_at: entityData.created_at,
-                        last_updated_at: entityData.last_updated_at,
-                      };
-
-                      const cardWidth = 400; // Approximate width of the preview card
-                      const cardHeight = 300; // Approximate height of the preview card
-
-                      // Position relative to mouse cursor
-                      let x = e.clientX + 30; // 20px to the right of mouse
-                      let y = e.clientY + 30; // 20px below mouse
-
-                      // Ensure the card doesn't overflow the viewport
-                      if (x + cardWidth > window.innerWidth) {
-                        x = e.clientX - cardWidth - 20; // Position to the left of mouse
-                      }
-                      if (y + cardHeight > window.innerHeight) {
-                        y = e.clientY - cardHeight - 20; // Position above mouse
-                      }
-
-                      // Ensure minimum margins
-                      x = Math.max(
-                        10,
-                        Math.min(window.innerWidth - cardWidth - 10, x)
-                      );
-                      y = Math.max(
-                        10,
-                        Math.min(window.innerHeight - cardHeight - 10, y)
-                      );
-
-                      setHoveredWebResource({
-                        webpage,
-                        position: { x, y },
-                      });
-                    };
-
-                    (row as any)._leaveHandler = () => {
-                      setHoveredWebResource(null);
-                    };
-
-                    row.addEventListener(
-                      "mouseenter",
-                      (row as any)._hoverHandler
-                    );
-                    row.addEventListener(
-                      "mouseleave",
-                      (row as any)._leaveHandler
-                    );
-                  }
+                // Remove existing listeners
+                const existingHoverHandler = (row as any)._hoverHandler;
+                const existingLeaveHandler = (row as any)._leaveHandler;
+                if (existingHoverHandler) {
+                  row.removeEventListener("mouseenter", existingHoverHandler);
                 }
+                if (existingLeaveHandler) {
+                  row.removeEventListener("mouseleave", existingLeaveHandler);
+                }
+
+                // Add new listeners
+                (row as any)._hoverHandler = (e: MouseEvent) => {
+                  if (entityData && entityData.id) {
+                    // Handle node hover - update graph interaction store
+                    console.log("Node hover - entityData:", entityData);
+                    setHoveredNodeId(entityData.id as NodeId);
+                  }
+                };
+
+                (row as any)._leaveHandler = () => {
+                  setHoveredNodeId(null);
+                };
+
+                row.addEventListener("mouseenter", (row as any)._hoverHandler);
+                row.addEventListener("mouseleave", (row as any)._leaveHandler);
               }
-            });
-          }, 100);
-        }
+            }
+          });
+        }, 100);
       },
       [entityType]
     );
