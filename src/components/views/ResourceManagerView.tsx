@@ -1,6 +1,6 @@
 import { useTheme } from "@aesgraph/app-shell";
 import { RefreshCw } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
 import { Document, listDocuments } from "../../api/documentsApi";
 import {
@@ -37,6 +37,9 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
   }>({});
+
+  // Ref to access the EntityTableV2 grid API for silent refresh
+  const entityTableRef = useRef<any>(null);
 
   // Cache for storing fetched data
   const [dataCache, setDataCache] = useState<{
@@ -140,6 +143,55 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const refreshData = useCallback(() => {
     fetchData(true);
   }, [fetchData]);
+
+  // Function to silently refresh data without triggering loading states
+  const silentRefreshData = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      console.log("Silently refreshing data from server");
+
+      // Fetch data without setting loading state
+      const webpagesData = await listWebpages({
+        userId: user.id,
+        includeContent: false,
+      });
+
+      const webpageIds = webpagesData?.map((w: Webpage) => w.id) || [];
+      const contentAvailability = await checkWebpagesContent(webpageIds);
+
+      const annotationsData = await listAnnotations({
+        userId: user.id,
+        includeContent: false,
+      });
+
+      const documentsData = await listDocuments({
+        userId: user.id,
+      });
+
+      // Update state silently (no loading state)
+      setWebpages(webpagesData || []);
+      setAnnotations(annotationsData || []);
+      setDocuments(documentsData || []);
+      setWebpageContentAvailability(contentAvailability);
+
+      // Update cache
+      setDataCache({
+        webpages: webpagesData || [],
+        annotations: annotationsData || [],
+        documents: documentsData || [],
+        webpageContentAvailability: contentAvailability,
+        lastFetched: Date.now(),
+      });
+
+      // Note: Grid will automatically refresh when container data changes
+      console.log("Data updated, grid should refresh automatically");
+
+      console.log("Silent refresh completed");
+    } catch (error) {
+      console.error("Error during silent refresh:", error);
+    }
+  }, [user?.id]);
 
   if (!currentSceneGraph) {
     return (
@@ -530,7 +582,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
         {/* Refresh Button */}
         <button
-          onClick={refreshData}
+          onClick={silentRefreshData}
           style={{
             padding: "6px",
             border: "none",
@@ -551,7 +603,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             e.currentTarget.style.backgroundColor = "transparent";
             e.currentTarget.style.color = theme.colors.textSecondary;
           }}
-          title="Refresh data from server"
+          title="Silently refresh data from server"
         >
           <RefreshCw size={16} />
         </button>
