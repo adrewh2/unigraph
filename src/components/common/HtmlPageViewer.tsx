@@ -203,7 +203,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           setHtmlWithDebug(webpage.html_content);
           setCurrentUrl(webpage.url);
           setCurrentTitle(webpage.title || webpage.url);
-          document.title = webpage.title || webpage.url;
+          // Don't change document.title for iframe-based viewer
           setLoadedResourceId(webpageId);
           setContentHash(`${webpageId}-0-false`);
 
@@ -453,6 +453,25 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           y: event.data.y,
           text: event.data.selection,
         });
+
+        // Store position data for annotation creation
+        if (
+          event.data.startPosition !== undefined &&
+          event.data.endPosition !== undefined
+        ) {
+          console.log("Position data received:", {
+            start: event.data.startPosition,
+            end: event.data.endPosition,
+          });
+          // Store position data in sessionStorage for annotation creation
+          sessionStorage.setItem(
+            "annotationPositionData",
+            JSON.stringify({
+              startPosition: event.data.startPosition,
+              endPosition: event.data.endPosition,
+            })
+          );
+        }
       } else if (event.data && event.data.type === "show-annotation") {
         console.log(
           "Show annotation message received for ID:",
@@ -605,11 +624,29 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       if (!user?.id) return;
 
       try {
+        // Get position data if available
+        let positionData: { startPosition?: number; endPosition?: number } = {};
+        try {
+          const storedPositionData = sessionStorage.getItem(
+            "annotationPositionData"
+          );
+          if (storedPositionData) {
+            positionData = JSON.parse(storedPositionData);
+            sessionStorage.removeItem("annotationPositionData"); // Clean up
+          }
+        } catch (error) {
+          console.warn("Failed to parse position data:", error);
+        }
+
         // Create annotation object
         const annotation = {
           id: crypto.randomUUID(),
           title: annotationData.comment,
-          data: annotationData,
+          data: {
+            ...annotationData,
+            start_position: positionData.startPosition,
+            end_position: positionData.endPosition,
+          },
           user_id: user.id,
           parent_resource_type: "webpage",
           parent_resource_id: currentUrl,
@@ -706,9 +743,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     setCurrentUrl(finalUrl);
     setCurrentTitle(finalTitle);
 
-    if (finalTitle) {
-      document.title = finalTitle;
-    }
+    // Don't change document.title for iframe-based viewer
 
     console.log("HtmlPageViewer - Debug:", {
       finalResourceId,
@@ -782,10 +817,34 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     console.log("HtmlPageViewer mounted");
     // Capture the ref value at mount time
     const currentProcessedIds = processedResourceIds.current;
+
+    // Set favicon for HTML page viewer tabs
+    const setFavicon = () => {
+      const link = document.querySelector(
+        "link[rel*='icon']"
+      ) as HTMLLinkElement;
+      if (link) {
+        link.href = "/favicon-simple.svg";
+      } else {
+        const newLink = document.createElement("link");
+        newLink.rel = "icon";
+        newLink.type = "image/svg+xml";
+        newLink.href = "/favicon-simple.svg";
+        document.head.appendChild(newLink);
+      }
+    };
+
+    setFavicon();
+
     return () => {
       console.log("HtmlPageViewer unmounted");
-      // Reset document title when component unmounts
-      document.title = "Unigraph";
+      // Reset favicon to default when component unmounts
+      const link = document.querySelector(
+        "link[rel*='icon']"
+      ) as HTMLLinkElement;
+      if (link) {
+        link.href = "/favicon-simple.svg";
+      }
       // Clear processed resourceIds using the captured value
       currentProcessedIds.clear();
     };
