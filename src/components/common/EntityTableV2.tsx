@@ -609,21 +609,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             console.error("Error saving webpage label:", error);
             // Revert the local change if Supabase save failed
             props.data.setLabel(originalValue);
-
-            // Refresh the row again to show the reverted value
-            if (gridRef.current?.api) {
-              const rowNode = gridRef.current.api.getRowNode(
-                props.data.getId()
-              );
-              if (rowNode) {
-                gridRef.current.api.refreshCells({
-                  rowNodes: [rowNode],
-                  force: true,
-                  suppressFlash: true,
-                });
-              }
-            }
-            setRowData([...container.toArray()]);
+            // No need to refresh - valueGetter will automatically show the reverted value
 
             alert("Failed to save changes. Please try again.");
           }
