@@ -550,7 +550,10 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         if (props.data && editValue !== props.value) {
           const originalValue = props.value || "";
 
-          // Optimistically update the local entity immediately
+          // Exit edit mode first to prevent flicker
+          setIsEditing(false);
+
+          // Then update the entity data
           props.data.setLabel(editValue);
 
           // Update the model data that AG Grid uses
@@ -614,7 +617,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             alert("Failed to save changes. Please try again.");
           }
         }
-        setIsEditing(false);
       };
 
       const handleCancel = () => {
