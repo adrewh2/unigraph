@@ -1021,15 +1021,12 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 color: showAnnotations ? "#0078d4" : "#666",
                 cursor: "pointer",
                 userSelect: "none",
-                fontWeight: showAnnotations ? "600" : "400",
-                padding: "4px 8px",
-                borderRadius: "4px",
-                backgroundColor: showAnnotations
-                  ? "rgba(0, 120, 212, 0.1)"
-                  : "transparent",
-                border: showAnnotations
-                  ? "1px solid #0078d4"
-                  : "1px solid transparent",
+                fontWeight: "500",
+                padding: "6px 12px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "color 0.2s ease",
               }}
             >
               <input
@@ -1037,11 +1034,15 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                 checked={showAnnotations}
                 onChange={(e) => setShowAnnotations(e.target.checked)}
                 style={{
-                  marginRight: "4px",
+                  marginRight: "8px",
                   cursor: "pointer",
+                  width: "14px",
+                  height: "14px",
+                  accentColor: "#0078d4",
+                  marginTop: "1px",
                 }}
               />
-              {showAnnotations ? "✓ Annotations" : "Annotations"}
+              Annotations
             </label>
           </div>
 
