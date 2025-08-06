@@ -259,7 +259,11 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const selectionChangeRef = useRef(false);
 
-  const { currentSceneGraph } = useAppConfigStore();
+  const {
+    currentSceneGraph,
+    setReactFlowViewportState,
+    getReactFlowViewportState,
+  } = useAppConfigStore();
   const sceneGraph = currentSceneGraph;
   const reactFlowConfig = getReactFlowConfig();
   const { setActiveDocument } = useDocumentStore();
@@ -517,26 +521,23 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       reactFlowInstance.current = instance;
       // setReactFlowInstance(instance); // This line was removed as per the edit hint
 
-      // Custom fit view for large graphs
-      setTimeout(() => {
-        if (nodes.length > 50) {
-          // For large graphs, use a more aggressive fit
-          instance.fitView({
-            padding: 0.3,
-            includeHiddenNodes: false,
-            minZoom: 0.01,
-            maxZoom: 2,
-          });
-        } else {
-          // For smaller graphs, use standard fit
-          instance.fitView({
-            padding: 0.2,
-            includeHiddenNodes: false,
-          });
-        }
-      }, 100);
+      // Restore viewport state if available
+      const savedViewportState = getReactFlowViewportState();
+      if (savedViewportState) {
+        console.log(
+          "ReactFlowPanelV2: Restoring viewport state",
+          savedViewportState
+        );
+        instance.setViewport({
+          x: savedViewportState.x,
+          y: savedViewportState.y,
+          zoom: savedViewportState.zoom,
+        });
+      } else {
+        console.log("ReactFlowPanelV2: No saved viewport state, using default");
+      }
     },
-    [nodes.length]
+    [getReactFlowViewportState]
   );
 
   // Subscribe to ReactFlowConfig changes
@@ -581,18 +582,8 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     if (!reactFlowWrapper.current || !reactFlowInstance.current) return;
 
     const resizeObserver = new ResizeObserver(() => {
-      // Trigger ReactFlow to recalculate its dimensions
-      if (reactFlowInstance.current) {
-        // Small delay to ensure DOM has updated
-        setTimeout(() => {
-          reactFlowInstance.current?.fitView({
-            padding: 0.2,
-            includeHiddenNodes: false,
-            minZoom: 0.01,
-            maxZoom: 2,
-          });
-        }, 50);
-      }
+      // Don't automatically fit view on resize - let the user control the camera
+      // ReactFlow will handle the resize internally without changing the view
     });
 
     resizeObserver.observe(reactFlowWrapper.current);
@@ -695,11 +686,24 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       }, 100);
     };
 
-    // Cleanup function to remove the global function
+    // Add fit view function for tab system
+    (window as any).reactFlowFitView = () => {
+      console.log("ReactFlowPanelV2: Global fit view called");
+      if (reactFlowInstance.current) {
+        setReactFlowViewportState(null); // Clear saved state
+        reactFlowInstance.current.fitView({
+          padding: 0.2,
+          includeHiddenNodes: false,
+        });
+      }
+    };
+
+    // Cleanup function to remove the global functions
     return () => {
       delete (window as any).reactFlowZoomToNode;
+      delete (window as any).reactFlowFitView;
     };
-  }, [zoomToNode]);
+  }, [zoomToNode, setReactFlowViewportState]);
 
   // Don't sync selection state automatically - let ReactFlow and our handlers manage it
   // The sync effect was causing conflicts with ReactFlow's internal selection management
@@ -740,6 +744,23 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     },
     [setActiveDocument, setAppActiveView]
   );
+
+  // Save viewport state when it changes
+  const handleViewportChange = useCallback(
+    (viewport: { x: number; y: number; zoom: number }) => {
+      console.log("ReactFlowPanelV2: Viewport changed", viewport);
+      setReactFlowViewportState(viewport);
+    },
+    [setReactFlowViewportState]
+  );
+
+  // Handle fit view button click - clear saved viewport state
+  const handleFitView = useCallback(() => {
+    console.log(
+      "ReactFlowPanelV2: Fit view button clicked - clearing saved viewport state"
+    );
+    setReactFlowViewportState(null);
+  }, [setReactFlowViewportState]);
 
   const handleSelectionChange = useCallback(
     (params: OnSelectionChangeParams) => {
@@ -865,7 +886,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
             onNodeClick={handleNodeClick}
             onSelectionChange={handleSelectionChange}
             onNodeDoubleClick={handleNodeDoubleClick}
-            fitView={true}
+            onViewportChange={handleViewportChange}
             minZoom={0.01}
             maxZoom={1000}
             connectionLineType={ConnectionLineType.Bezier}
@@ -908,6 +929,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
               showZoom={true}
               showFitView={true}
               showInteractive={true}
+              onFitView={handleFitView}
               fitViewOptions={{
                 padding: 0.3,
                 includeHiddenNodes: false,
