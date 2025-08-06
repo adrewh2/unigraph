@@ -1,6 +1,6 @@
 import { useTheme } from "@aesgraph/app-shell";
 import { ArrowLeft, ExternalLink, RefreshCw } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getWebpage } from "../../api/webpagesApi";
 import { useHtmlPageViewerStore } from "../../store/htmlPageViewerStore";
 
@@ -21,11 +21,14 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 }) => {
   const { theme } = useTheme();
   const [html, setHtml] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false); // Start with false to prevent flicker
   const [error, setError] = useState<string | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string>(url || "");
   const [currentTitle, setCurrentTitle] = useState<string>(title || "");
   const [loadedResourceId, setLoadedResourceId] = useState<string | null>(null);
+
+  // Ref to track processed resourceIds to prevent unnecessary re-renders
+  const processedResourceIds = useRef<Set<string>>(new Set());
 
   // Get store functions
   const {
@@ -35,6 +38,64 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     setError: setStoreError,
     hasValidContent,
   } = useHtmlPageViewerStore();
+
+  // Define fetchWebpageContent function with useCallback
+  const fetchWebpageContent = useCallback(
+    async (webpageId: string) => {
+      console.log("fetchWebpageContent called with webpageId:", webpageId);
+      setLoading(true);
+      setStoreLoading(webpageId, true);
+      setError(null);
+      setStoreError(webpageId, null);
+
+      try {
+        const webpage = await getWebpage(webpageId);
+        console.log("getWebpage result:", webpage);
+
+        if (webpage && webpage.html_content) {
+          console.log(
+            "Setting content for resourceId:",
+            webpageId,
+            "Content length:",
+            webpage.html_content.length,
+            "URL:",
+            webpage.url
+          );
+
+          // Cache the content in the store
+          setContent(webpageId, {
+            html: webpage.html_content,
+            url: webpage.url,
+            title: webpage.title || webpage.url,
+            resourceId: webpageId,
+          });
+
+          setHtml(webpage.html_content);
+          setCurrentUrl(webpage.url);
+          setCurrentTitle(webpage.title || webpage.url);
+          document.title = webpage.title || webpage.url;
+          setLoadedResourceId(webpageId);
+        } else {
+          console.log(
+            "No webpage or html_content found for webpageId:",
+            webpageId
+          );
+          const errorMsg = "No HTML content available for this webpage";
+          setError(errorMsg);
+          setStoreError(webpageId, errorMsg);
+        }
+      } catch (err) {
+        console.error("Error in fetchWebpageContent:", err);
+        const errorMsg = `Error loading webpage: ${err instanceof Error ? err.message : String(err)}`;
+        setError(errorMsg);
+        setStoreError(webpageId, errorMsg);
+      } finally {
+        setLoading(false);
+        setStoreLoading(webpageId, false);
+      }
+    },
+    [setContent, setStoreLoading, setStoreError]
+  );
 
   // Initialize component from props or URL parameters
   useEffect(() => {
@@ -68,6 +129,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
     // Check if we have cached content first
     if (finalResourceId) {
+      // Skip if we've already processed this resourceId in this render cycle
+      if (processedResourceIds.current.has(finalResourceId)) {
+        return;
+      }
+
       const cachedContent = getContent(finalResourceId);
       if (cachedContent && hasValidContent(finalResourceId)) {
         console.log("Using cached content for resourceId:", finalResourceId);
@@ -76,14 +142,24 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         setCurrentTitle(cachedContent.title);
         setLoadedResourceId(finalResourceId);
         setLoading(false);
+        setError(null);
+        processedResourceIds.current.add(finalResourceId);
+        return; // Exit early to prevent any flickering
       } else if (loadedResourceId !== finalResourceId) {
         console.log("Fetching from server for resourceId:", finalResourceId);
+        setLoading(true); // Only set loading to true if we need to fetch
         fetchWebpageContent(finalResourceId);
+        processedResourceIds.current.add(finalResourceId);
+      } else if (loadedResourceId === finalResourceId && html) {
+        // Content is already loaded for this resourceId, just ensure loading is false
+        setLoading(false);
+      } else {
+        setLoading(false);
       }
     } else {
       setLoading(false);
     }
-  }, [resourceId, url, title, loadedResourceId]); // Use loadedResourceId instead of html
+  }, [resourceId, url, title, loadedResourceId]); // Only depend on props and loadedResourceId
 
   // Component lifecycle debugging
   useEffect(() => {
@@ -92,62 +168,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       console.log("HtmlPageViewer unmounted");
       // Reset document title when component unmounts
       document.title = "Unigraph";
+      // Clear processed resourceIds - capture the ref value
+      const currentProcessedIds = processedResourceIds.current;
+      currentProcessedIds.clear();
     };
   }, []);
-
-  const fetchWebpageContent = async (webpageId: string) => {
-    console.log("fetchWebpageContent called with webpageId:", webpageId);
-    setLoading(true);
-    setStoreLoading(webpageId, true);
-    setError(null);
-    setStoreError(webpageId, null);
-
-    try {
-      const webpage = await getWebpage(webpageId);
-      console.log("getWebpage result:", webpage);
-
-      if (webpage && webpage.html_content) {
-        console.log(
-          "Setting content for resourceId:",
-          webpageId,
-          "Content length:",
-          webpage.html_content.length,
-          "URL:",
-          webpage.url
-        );
-
-        // Cache the content in the store
-        setContent(webpageId, {
-          html: webpage.html_content,
-          url: webpage.url,
-          title: webpage.title || webpage.url,
-          resourceId: webpageId,
-        });
-
-        setHtml(webpage.html_content);
-        setCurrentUrl(webpage.url);
-        setCurrentTitle(webpage.title || webpage.url);
-        document.title = webpage.title || webpage.url;
-        setLoadedResourceId(webpageId);
-      } else {
-        console.log(
-          "No webpage or html_content found for webpageId:",
-          webpageId
-        );
-        const errorMsg = "No HTML content available for this webpage";
-        setError(errorMsg);
-        setStoreError(webpageId, errorMsg);
-      }
-    } catch (err) {
-      console.error("Error in fetchWebpageContent:", err);
-      const errorMsg = `Error loading webpage: ${err instanceof Error ? err.message : String(err)}`;
-      setError(errorMsg);
-      setStoreError(webpageId, errorMsg);
-    } finally {
-      setLoading(false);
-      setStoreLoading(webpageId, false);
-    }
-  };
 
   const handleRefresh = () => {
     if (loadedResourceId) {
@@ -166,7 +191,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     onClose?.();
   };
 
-  if (loading) {
+  // Only show loading if we're actually loading and don't have content yet
+  if (loading && !html) {
     return (
       <div
         style={{
