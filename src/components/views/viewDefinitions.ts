@@ -164,8 +164,8 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     description:
       "Real-time application log viewer with filtering, search, and export capabilities",
   },
-  "markdown-editor": {
-    id: "markdown-editor",
+  "document-editor": {
+    id: "document-editor",
     title: "Document Editor",
     icon: "📝",
     category: "editing",

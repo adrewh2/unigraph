@@ -940,11 +940,11 @@ const logViewerView = {
 };
 
 const documentEditorView = {
-  id: VIEW_DEFINITIONS["markdown-editor"].id,
+  id: VIEW_DEFINITIONS["document-editor"].id,
   title: "Document Editor", // Update title to reflect new name
-  icon: VIEW_DEFINITIONS["markdown-editor"].icon,
+  icon: VIEW_DEFINITIONS["document-editor"].icon,
   component: (props: any) => <DocumentEditorView {...props} />,
-  category: VIEW_DEFINITIONS["markdown-editor"].category,
+  category: VIEW_DEFINITIONS["document-editor"].category,
 };
 
 const map2DView = {

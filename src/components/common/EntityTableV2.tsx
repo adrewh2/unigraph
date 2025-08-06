@@ -252,6 +252,43 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             } as ContextMenuItem,
           ]
         : []),
+      // Add document specific options
+      ...(entityType === "documents" && contextMenu?.entity
+        ? [
+            {
+              label: "Open in Document Editor",
+              action: () => {
+                if (contextMenu?.entity) {
+                  const entityData = contextMenu.entity.getData() as any;
+                  const documentId = entityData.id;
+                  const documentTitle =
+                    entityData.label || entityData.title || "Document";
+                  const documentExtension = entityData.extension || "txt";
+
+                  if (documentId) {
+                    const tabId = `document-editor-${documentId}`;
+                    const tabTitle = `${documentTitle}.${documentExtension}`;
+
+                    addViewAsTab({
+                      viewId: "document-editor",
+                      pane: "center",
+                      tabId: tabId,
+                      title: tabTitle,
+                      props: {
+                        documentId: documentId,
+                        title: documentTitle,
+                        extension: documentExtension,
+                        tabId: tabId,
+                      },
+                      activate: true,
+                    });
+                  }
+                }
+                handleClose();
+              },
+            } as ContextMenuItem,
+          ]
+        : []),
     ];
 
     // Actions cell renderer component with improved stability
@@ -1205,9 +1242,13 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
                 // Restore the node in the graph
                 if (nodeId) {
-                  sceneGraph
-                    .getGraph()
-                    .addNode(nodeId, originalEntity.getData());
+                  const entityData = originalEntity.getData();
+                  const { id, ...nodeData } = entityData; // Remove id from data to avoid duplication
+                  const restoredNode = new ModelNode({
+                    id: nodeId,
+                    ...nodeData,
+                  });
+                  sceneGraph.getGraph().addNode(restoredNode);
                   sceneGraph.notifyGraphChanged();
                 }
 
