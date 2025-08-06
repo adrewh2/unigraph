@@ -19,7 +19,10 @@ import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { Node as ModelNode, NodeId } from "../../core/model/Node";
 import { SceneGraph } from "../../core/model/SceneGraph";
-import { setHoveredNodeId } from "../../store/graphInteractionStore";
+import {
+  setHoveredNodeId,
+  setSelectedNodeId,
+} from "../../store/graphInteractionStore";
 import { createThemedAgGridContainer } from "../../utils/aggridThemeUtils";
 import { ContextMenuItem } from "./ContextMenu";
 import EntityJsonViewer from "./EntityJsonViewer";
@@ -313,6 +316,20 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
         const handleGoTo = (e: React.MouseEvent) => {
           e.stopPropagation();
+
+          // Get the entity ID
+          const entityId = props.data?.getId();
+          if (!entityId) {
+            console.warn("No entity ID found for go to action");
+            return;
+          }
+
+          console.log("Go to entity:", entityId);
+
+          // Select the node in the graph interaction store
+          setSelectedNodeId(entityId as NodeId);
+
+          // Call the original onEntityClick if provided
           if (onEntityClick && props.data) {
             onEntityClick(props.data);
           }
