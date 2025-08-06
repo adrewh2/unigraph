@@ -79,6 +79,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [currentHtmlContent, setCurrentHtmlContent] = useState<string>("");
+  const [iframeVersion, setIframeVersion] = useState<number>(0);
+  const [contentHash, setContentHash] = useState<string>("");
 
   // Debug HTML state changes
   useEffect(() => {
@@ -86,8 +88,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       htmlLength: html.length,
       hasHighlightedContent: hasHighlightedContent.current,
       currentHtmlContentLength: currentHtmlContent.length,
+      annotationsCount: annotations.length,
+      iframeVersion,
     });
-  }, [html, currentHtmlContent]);
+  }, [html, currentHtmlContent, annotations.length, iframeVersion]);
 
   // Refs
   const processedResourceIds = useRef<Set<string>>(new Set());
@@ -194,6 +198,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           setCurrentTitle(webpage.title || webpage.url);
           document.title = webpage.title || webpage.url;
           setLoadedResourceId(webpageId);
+          setIframeVersion(0);
+          setContentHash(`${webpageId}-0-false`);
         } else {
           console.log(
             "No webpage or html_content found for webpageId:",
@@ -257,7 +263,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
+  }, [currentHtmlContent, annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
 
   // Process HTML content when HTML or annotations change
   useEffect(() => {
@@ -269,51 +275,74 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       currentHtmlContentLength: currentHtmlContent.length,
     });
 
-    // Always process if we have both HTML and annotations
-    if (html && annotations.length > 0) {
-      console.log("HTML and annotations available, processing content");
+    // Only set content if we have HTML
+    if (html) {
+      if (annotations.length > 0) {
+        console.log("HTML and annotations available, processing content");
 
-      // Convert annotations to the expected type
-      const annotationHighlights = annotations
-        .filter(
-          (annotation) =>
-            (annotation.data as TextSelectionAnnotationData)?.selected_text
-        )
-        .map((annotation) => ({
-          id: annotation.id,
-          data: {
-            selected_text: (annotation.data as TextSelectionAnnotationData)
-              .selected_text!,
-            comment: (annotation.data as TextSelectionAnnotationData).comment,
-            secondary_comment: (annotation.data as TextSelectionAnnotationData)
-              .secondary_comment,
-            tags: (annotation.data as TextSelectionAnnotationData).tags,
-          },
-        }));
+        // Convert annotations to the expected type
+        const annotationHighlights = annotations
+          .filter(
+            (annotation) =>
+              (annotation.data as TextSelectionAnnotationData)?.selected_text
+          )
+          .map((annotation) => ({
+            id: annotation.id,
+            data: {
+              selected_text: (annotation.data as TextSelectionAnnotationData)
+                .selected_text!,
+              comment: (annotation.data as TextSelectionAnnotationData).comment,
+              secondary_comment: (
+                annotation.data as TextSelectionAnnotationData
+              ).secondary_comment,
+              tags: (annotation.data as TextSelectionAnnotationData).tags,
+            },
+          }));
 
-      const result = processHtmlWithHighlights(html, annotationHighlights);
-      console.log(
-        "Processed HTML length:",
-        result.html.length,
-        "highlights added:",
-        result.highlightsAdded
-      );
+        const result = processHtmlWithHighlights(html, annotationHighlights);
+        console.log(
+          "Processed HTML length:",
+          result.html.length,
+          "highlights added:",
+          result.highlightsAdded
+        );
 
-      // Update the ref to track if we have highlighted content
-      hasHighlightedContent.current = result.highlightsAdded > 0;
-      console.log(
-        "Set hasHighlightedContent to:",
-        hasHighlightedContent.current
-      );
+        // Update the ref to track if we have highlighted content
+        hasHighlightedContent.current = result.highlightsAdded > 0;
+        console.log(
+          "Set hasHighlightedContent to:",
+          hasHighlightedContent.current
+        );
 
-      setCurrentHtmlContent(result.html);
-    } else if (html) {
-      console.log("HTML available but no annotations, setting raw HTML");
-      setCurrentHtmlContent(html);
+        setCurrentHtmlContent(result.html);
+
+        // Update content hash to force iframe reload
+        const newHash = `${loadedResourceId}-${annotations.length}-${result.highlightsAdded > 0}`;
+        setContentHash(newHash);
+        console.log("Updated content hash:", newHash);
+
+        // Force iframe to reload when highlights are added
+        if (result.highlightsAdded > 0) {
+          console.log(
+            "Highlights added to HTML content:",
+            result.highlightsAdded
+          );
+          setIframeVersion((prev) => prev + 1);
+          console.log("Incrementing iframe version to force reload");
+        }
+      } else {
+        console.log("HTML available but no annotations yet, setting raw HTML");
+        setCurrentHtmlContent(html);
+
+        // Update content hash for raw HTML
+        const newHash = `${loadedResourceId}-0-false`;
+        setContentHash(newHash);
+        console.log("Updated content hash for raw HTML:", newHash);
+      }
     } else {
       console.log("No HTML content available for processing");
     }
-  }, [html, annotations]);
+  }, [html, annotations, loadedResourceId]);
 
   // Debug annotation card state
   useEffect(() => {
@@ -680,6 +709,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         setCurrentUrl(cachedContent.url);
         setCurrentTitle(cachedContent.title);
         setLoadedResourceId(finalResourceId);
+        setIframeVersion(0);
+        setContentHash(`${finalResourceId}-0-false`);
         setLoading(false);
         setError(null);
         processedResourceIds.current.add(finalResourceId);
@@ -986,6 +1017,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             title={currentTitle || title || "HTML Content"}
             sandbox="allow-scripts allow-same-origin"
             onLoad={handleIframeLoad}
+            key={contentHash}
           />
         )}
       </div>
