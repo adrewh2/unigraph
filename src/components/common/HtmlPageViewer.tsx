@@ -181,7 +181,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             webpage.url
           );
 
-          // Cache the content in the store
+          // Cache the raw content in the store (we'll process it when annotations are available)
           setContent(webpageId, {
             html: webpage.html_content,
             url: webpage.url,
@@ -269,7 +269,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       currentHtmlContentLength: currentHtmlContent.length,
     });
 
-    // Process if we have both HTML and annotations
+    // Always process if we have both HTML and annotations
     if (html && annotations.length > 0) {
       console.log("HTML and annotations available, processing content");
 
@@ -307,13 +307,13 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       );
 
       setCurrentHtmlContent(result.html);
-    } else if (html && !hasHighlightedContent.current) {
+    } else if (html) {
       console.log("HTML available but no annotations, setting raw HTML");
       setCurrentHtmlContent(html);
     } else {
       console.log("No HTML content available for processing");
     }
-  }, [html, annotations, currentHtmlContent.length]);
+  }, [html, annotations]);
 
   // Debug annotation card state
   useEffect(() => {
@@ -672,18 +672,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         );
         console.log("Has highlighted content:", hasHighlightedContent.current);
 
-        // Don't overwrite highlighted content with raw HTML
-        if (hasHighlightedContent.current) {
-          console.log("Skipping HTML update - preserving highlighted content");
-          setCurrentUrl(cachedContent.url);
-          setCurrentTitle(cachedContent.title);
-          setLoadedResourceId(finalResourceId);
-          setLoading(false);
-          setError(null);
-          processedResourceIds.current.add(finalResourceId);
-          return;
-        }
-
+        // Always load raw content from store, process when annotations are available
+        console.log(
+          "Loading raw content from store, will process when annotations load"
+        );
         setHtmlWithDebug(cachedContent.html);
         setCurrentUrl(cachedContent.url);
         setCurrentTitle(cachedContent.title);
