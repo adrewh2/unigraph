@@ -54,12 +54,67 @@ import ResizerNode from "./ReactFlow/nodes/resizerNode";
 
 import "@xyflow/react/dist/style.css";
 import { EdgeId } from "../../core/model/Edge";
+import { Annotation } from "../../api/annotationsApi";
+import ResizableAnnotationCard from "../annotations/ResizableAnnotationCard";
+import ResizableClassCard from "../annotations/ResizableClassCard";
+import ResizableDefinitionCard from "../annotations/ResizableDefinitionCard";
+
+// AnnotationNode component for annotation nodes
+const AnnotationNode = (props: any) => {
+  const annotation: Annotation | undefined = props.data?.annotation;
+  if (!annotation) return <div>Invalid annotation</div>;
+  return (
+    <ResizableAnnotationCard
+      annotation={annotation}
+      dimensions={props.data?.dimensions}
+      onResizeEnd={props.data?.onResizeEnd}
+      style={props.style}
+    />
+  );
+};
+
+// DefinitionNode component for definition nodes
+const DefinitionNode = (props: any) => {
+  const data = props.data;
+  if (!data || !data.definition) return <div>Invalid definition</div>;
+  return (
+    <ResizableDefinitionCard
+      name={data.definition.name}
+      kind={data.definition.kind}
+      fields={data.definition.fields}
+      description={data.definition.description}
+      dimensions={data.dimensions}
+      onResizeEnd={data.onResizeEnd}
+      style={props.style}
+    />
+  );
+};
+
+// ClassNode component for class nodes
+const ClassNode = (props: any) => {
+  const data = props.data;
+  if (!data || !data.classData) return <div>Invalid class</div>;
+  return (
+    <ResizableClassCard
+      name={data.classData.name}
+      description={data.classData.description}
+      fields={data.classData.fields}
+      methods={data.classData.methods}
+      dimensions={data.dimensions}
+      onResizeEnd={data.onResizeEnd}
+      style={props.style}
+    />
+  );
+};
 
 // Node types mapping - using the exact same as ReactFlowPanel
 const nodeTypes = {
   customNode: CustomNode,
   resizerNode: ResizerNode,
   webpage: WebpageNode,
+  annotation: AnnotationNode,
+  definition: DefinitionNode,
+  class: ClassNode,
 };
 
 // CSS styles for node selection and container constraints
