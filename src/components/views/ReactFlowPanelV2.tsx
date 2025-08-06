@@ -53,8 +53,8 @@ import WebpageNode from "./ReactFlow/nodes/WebpageNode";
 import ResizerNode from "./ReactFlow/nodes/resizerNode";
 
 import "@xyflow/react/dist/style.css";
-import { EdgeId } from "../../core/model/Edge";
 import { Annotation } from "../../api/annotationsApi";
+import { EdgeId } from "../../core/model/Edge";
 import ResizableAnnotationCard from "../annotations/ResizableAnnotationCard";
 import ResizableClassCard from "../annotations/ResizableClassCard";
 import ResizableDefinitionCard from "../annotations/ResizableDefinitionCard";
@@ -401,13 +401,23 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     console.log("ReactFlowPanelV2: Layout result changed", currentLayoutResult);
     if (currentLayoutResult && currentLayoutResult.positions) {
       console.log("ReactFlowPanelV2: Updating nodes and edges with new layout");
-      console.log("ReactFlowPanelV2: Layout positions", currentLayoutResult.positions);
-      
+      console.log(
+        "ReactFlowPanelV2: Layout positions",
+        currentLayoutResult.positions
+      );
+
       // Regenerate nodes with new positions from the layout result
       if (sceneGraph) {
-        const data = exportGraphDataForReactFlow(sceneGraph, currentLayoutResult.positions);
-        console.log("ReactFlowPanelV2: Exported data with new positions", data.nodes.length, "nodes");
-        
+        const data = exportGraphDataForReactFlow(
+          sceneGraph,
+          currentLayoutResult.positions
+        );
+        console.log(
+          "ReactFlowPanelV2: Exported data with new positions",
+          data.nodes.length,
+          "nodes"
+        );
+
         const nodesWithNewPositions = data.nodes.map((node) => ({
           ...node,
           type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
@@ -444,11 +454,20 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
           },
         }));
 
-        console.log("ReactFlowPanelV2: Setting nodes with new positions", nodesWithNewPositions.length, "nodes");
-        console.log("ReactFlowPanelV2: Sample node positions:", nodesWithNewPositions.slice(0, 3).map(n => ({ id: n.id, position: n.position })));
+        console.log(
+          "ReactFlowPanelV2: Setting nodes with new positions",
+          nodesWithNewPositions.length,
+          "nodes"
+        );
+        console.log(
+          "ReactFlowPanelV2: Sample node positions:",
+          nodesWithNewPositions
+            .slice(0, 3)
+            .map((n) => ({ id: n.id, position: n.position }))
+        );
         setNodes(nodesWithNewPositions);
         setEdges(edgesWithStyling);
-        
+
         // Force ReactFlow to update if instance is available
         if (reactFlowInstance.current) {
           console.log("ReactFlowPanelV2: Forcing ReactFlow instance update");
@@ -461,7 +480,16 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     } else {
       console.log("ReactFlowPanelV2: No layout result or positions available");
     }
-  }, [currentLayoutResult, sceneGraph, nodeLegendConfig, edgeLegendConfig, legendMode, selectedNodeIds, setNodes, setEdges]);
+  }, [
+    currentLayoutResult,
+    sceneGraph,
+    nodeLegendConfig,
+    edgeLegendConfig,
+    legendMode,
+    selectedNodeIds,
+    setNodes,
+    setEdges,
+  ]);
 
   // Fix the onInit handler to use the correct type and avoid camera flickering
   const handleInit: OnInit = useCallback(
