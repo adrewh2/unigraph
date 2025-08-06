@@ -643,12 +643,16 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
               ...n.style,
               // Only apply hover effect to the exact node that's hovered
               border: isHovered
-                ? `3px solid ${MOUSE_HOVERED_NODE_COLOR}`
+                ? `4px solid #ff6b35` // More prominent orange border
                 : `2px solid ${originalNodeColor}`,
               // Reset background color for non-hovered nodes
               background: isHovered
-                ? `${n.style?.background || "#ccc"}dd` // Add transparency for hover
+                ? `${n.style?.background || "#ccc"}ee` // Slightly more opaque for better visibility
                 : n.style?.background,
+              // Add box shadow for more professional look
+              boxShadow: isHovered
+                ? `0 4px 12px rgba(255, 107, 53, 0.4)` // Orange glow effect
+                : "none",
             },
           };
         })
