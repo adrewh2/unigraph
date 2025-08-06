@@ -20,7 +20,6 @@ import { useHtmlPageViewerStore } from "../../store/htmlPageViewerStore";
 import { addNotification } from "../../store/notificationStore";
 import { useUserStore } from "../../store/userStore";
 import AnnotationDialog from "./AnnotationDialog";
-import { createAnnotationHighlightingFunction } from "./annotationHighlightingScript";
 
 interface HtmlPageViewerProps {
   resourceId?: string;
@@ -186,7 +185,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         parentResourceId: currentUrl,
       });
       setAnnotations(webpageAnnotations);
-      
+
       // Note: highlighting will be triggered by the useEffect that watches annotations
     } catch (error) {
       console.error("Failed to load annotations:", error);
@@ -299,10 +298,15 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
   // Inject highlighting script for existing annotations
   const injectHighlightingScript = useCallback(() => {
-    console.log("injectHighlightingScript called with annotations:", annotations.length);
-    
+    console.log(
+      "injectHighlightingScript called with annotations:",
+      annotations.length
+    );
+
     if (!iframeRef.current || annotations.length === 0) {
-      console.log("Cannot inject highlighting: iframe missing or no annotations");
+      console.log(
+        "Cannot inject highlighting: iframe missing or no annotations"
+      );
       return;
     }
 
@@ -315,13 +319,202 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         return;
       }
 
-      console.log("Injecting highlighting script for annotations:", annotations);
+      console.log(
+        "Injecting highlighting script for annotations:",
+        annotations
+      );
 
-      // Use the imported function generator
-      const highlightFunction = createAnnotationHighlightingFunction(annotations);
-      
-      // Execute the function in the iframe context
-      highlightFunction.call(iframeWindow);
+      // Convert annotations to JSON for injection
+      const annotationsJson = JSON.stringify(annotations);
+
+      // Create the script with annotations data embedded
+      const script = `
+        (function() {
+          const annotations = ${annotationsJson};
+          
+          function highlightAnnotations() {
+            console.log('Annotation highlighting function executing with', annotations.length, 'annotations');
+            
+            let isHighlighting = false;
+            let textNodesCache = null;
+            let highlightTimeout = null;
+            
+            function debounceHighlight(fn, delay) {
+              return function() {
+                if (highlightTimeout) {
+                  clearTimeout(highlightTimeout);
+                }
+                highlightTimeout = setTimeout(fn, delay);
+              };
+            }
+            
+            function clearExistingHighlights() {
+              const existingHighlights = document.querySelectorAll('.annotation-highlight');
+              if (existingHighlights.length > 0) {
+                console.log('Clearing', existingHighlights.length, 'existing highlights');
+                existingHighlights.forEach(function(highlight) {
+                  const parent = highlight.parentNode;
+                  if (parent) {
+                    parent.replaceChild(document.createTextNode(highlight.textContent || ''), highlight);
+                    parent.normalize();
+                  }
+                });
+                textNodesCache = null;
+              }
+            }
+            
+            function getAllTextNodes() {
+              if (textNodesCache) {
+                console.log('Using cached text nodes:', textNodesCache.length);
+                return textNodesCache;
+              }
+              if (!document.body) {
+                console.warn('Document body not available');
+                return [];
+              }
+              const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+              const textNodes = [];
+              let node;
+              while ((node = walker.nextNode()) !== null) {
+                textNodes.push(node);
+              }
+              textNodesCache = textNodes;
+              console.log('Cached', textNodes.length, 'text nodes');
+              return textNodes;
+            }
+            
+            function highlightAnnotationsBatch() {
+              if (isHighlighting) {
+                console.log('Highlighting already in progress, skipping');
+                return;
+              }
+              isHighlighting = true;
+              console.log('Starting batch highlighting for', annotations.length, 'annotations');
+              
+              try {
+                clearExistingHighlights();
+                const textNodes = getAllTextNodes();
+                
+                if (textNodes.length === 0) {
+                  console.warn('No text nodes found for highlighting');
+                  return;
+                }
+                
+                console.log('Sample text from document:', textNodes[0]?.textContent?.substring(0, 200) + '...');
+                
+                let totalHighlights = 0;
+                annotations.forEach(function(annotation, index) {
+                  if (annotation.data && annotation.data.selected_text) {
+                    const searchText = annotation.data.selected_text;
+                    const annotationId = annotation.id;
+                    console.log('Processing annotation', index + 1, '/', annotations.length, ':', annotationId);
+                    console.log('Searching for text:', searchText);
+                    
+                    try {
+                      let highlightCount = 0;
+                      let foundNodes = 0;
+                      
+                      textNodes.forEach(function(textNode) {
+                        const text = textNode.textContent;
+                        if (text && text.includes(searchText)) {
+                          foundNodes++;
+                          console.log('Found text match in node:', text.substring(0, 200) + '...');
+                          
+                          // Simple string replacement approach
+                          const index = text.indexOf(searchText);
+                          if (index !== -1) {
+                            const before = text.substring(0, index);
+                            const after = text.substring(index + searchText.length);
+                            
+                            const fragment = document.createDocumentFragment();
+                            if (before) {
+                              fragment.appendChild(document.createTextNode(before));
+                            }
+                            
+                            const span = document.createElement('span');
+                            span.className = 'annotation-highlight';
+                            span.setAttribute('data-annotation-id', annotationId);
+                            span.style.backgroundColor = '#ffeb3b';
+                            span.style.cursor = 'pointer';
+                            span.style.borderRadius = '2px';
+                            span.style.padding = '1px 2px';
+                            span.style.transition = 'background-color 0.2s ease';
+                            span.textContent = searchText;
+                            span.addEventListener('click', function() {
+                              console.log('Annotation clicked:', annotationId);
+                              window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');
+                            });
+                            fragment.appendChild(span);
+                            
+                            if (after) {
+                              fragment.appendChild(document.createTextNode(after));
+                            }
+                            
+                            if (textNode.parentNode) {
+                              textNode.parentNode.replaceChild(fragment, textNode);
+                            }
+                            
+                            highlightCount++;
+                          }
+                        }
+                      });
+                      
+                      totalHighlights += highlightCount;
+                      console.log('Found', foundNodes, 'matching nodes for annotation:', annotationId);
+                      if (highlightCount > 0) {
+                        console.log('Highlighted', highlightCount, 'instances for annotation:', annotationId);
+                      } else if (foundNodes === 0) {
+                        console.warn('No text nodes contained the search text for annotation:', annotationId);
+                        console.warn('Search text was:', searchText);
+                      }
+                    } catch (error) {
+                      console.error('Error processing annotation', annotationId, ':', error);
+                      console.warn('Problematic search text:', searchText);
+                      console.warn('Skipping this annotation due to error');
+                    }
+                  }
+                });
+                
+                console.log('Batch highlighting completed:', totalHighlights, 'total highlights created');
+                if (totalHighlights === 0) {
+                  console.warn('No highlights were created - text may not match exactly');
+                }
+              } catch (error) {
+                console.error('Error during batch highlighting:', error);
+              } finally {
+                isHighlighting = false;
+              }
+            }
+            
+            const debouncedHighlight = debounceHighlight(highlightAnnotationsBatch, 100);
+            
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', debouncedHighlight);
+            } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
+              console.log('Document ready, starting highlighting');
+              setTimeout(debouncedHighlight, 50);
+            }
+            
+            window.addEventListener('load', function() {
+              console.log('Window loaded, re-highlighting if needed');
+              setTimeout(function() {
+                if (document.querySelectorAll('.annotation-highlight').length === 0 && annotations.length > 0) {
+                  debouncedHighlight();
+                }
+              }, 200);
+            });
+            
+            // Expose the function globally so it can be called from outside
+            window.highlightAnnotations = debouncedHighlight;
+            console.log('Annotation highlighting function setup complete');
+          }
+          
+          highlightAnnotations();
+        })();
+      `;
+
+      // Execute the script in the iframe
+      (iframeWindow as any).eval(script);
       console.log(
         "Highlighting script injected for",
         annotations.length,
@@ -340,7 +533,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       const timeoutId = setTimeout(() => {
         injectHighlightingScript();
       }, 500);
-      
+
       return () => clearTimeout(timeoutId);
     }
   }, [annotations, injectHighlightingScript]);
@@ -358,9 +551,9 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       }, 800);
     };
 
-    iframe.addEventListener('load', handleLoad);
+    iframe.addEventListener("load", handleLoad);
     return () => {
-      iframe.removeEventListener('load', handleLoad);
+      iframe.removeEventListener("load", handleLoad);
     };
   }, [annotations, injectHighlightingScript]);
 
@@ -431,7 +624,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     // Handle messages from iframe
     const handleMessage = (event: MessageEvent) => {
       console.log("Received message:", event.data);
-      
+
       if (event.data && event.data.type === "iframe-selection") {
         setSelectedText(event.data.selection);
         setContextMenu({
@@ -440,22 +633,31 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           text: event.data.selection,
         });
       } else if (event.data && event.data.type === "show-annotation") {
-        console.log("Show annotation message received for ID:", event.data.annotationId);
+        console.log(
+          "Show annotation message received for ID:",
+          event.data.annotationId
+        );
         console.log("Current annotations:", annotations);
-        
+
         const annotation = annotations.find(
           (a) => a.id === event.data.annotationId
         );
-        
+
         console.log("Found annotation:", annotation);
-        
+
         if (annotation) {
           console.log("Setting showAnnotationCard to:", annotation);
           setShowAnnotationCard(annotation);
           console.log("Annotation card should be shown");
         } else {
-          console.warn("Annotation not found in local state, ID:", event.data.annotationId);
-          console.warn("Available annotation IDs:", annotations.map(a => a.id));
+          console.warn(
+            "Annotation not found in local state, ID:",
+            event.data.annotationId
+          );
+          console.warn(
+            "Available annotation IDs:",
+            annotations.map((a) => a.id)
+          );
         }
       }
     };
@@ -596,7 +798,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         await saveAnnotation(annotation);
 
         // Immediately add to local annotations state for optimistic update
-        setAnnotations(prevAnnotations => [...prevAnnotations, annotation]);
+        setAnnotations((prevAnnotations) => [...prevAnnotations, annotation]);
 
         // Also save to scene graph if available
         if (currentSceneGraph) {
@@ -797,15 +999,21 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         // Calculate new position
         const newX = e.clientX - dragOffset.x;
         const newY = e.clientY - dragOffset.y;
-        
+
         // Get viewport dimensions
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
+
         // Constrain position to keep card within viewport
-        const constrainedX = Math.max(0, Math.min(newX, viewportWidth - cardSize.width));
-        const constrainedY = Math.max(0, Math.min(newY, viewportHeight - cardSize.height));
-        
+        const constrainedX = Math.max(
+          0,
+          Math.min(newX, viewportWidth - cardSize.width)
+        );
+        const constrainedY = Math.max(
+          0,
+          Math.min(newY, viewportHeight - cardSize.height)
+        );
+
         setCardPosition({
           x: constrainedX,
           y: constrainedY,
@@ -814,15 +1022,21 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         // Calculate new size
         const newWidth = Math.max(350, e.clientX - cardPosition.x);
         const newHeight = Math.max(250, e.clientY - cardPosition.y);
-        
+
         // Get viewport dimensions
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
+
         // Constrain size to fit within viewport
-        const constrainedWidth = Math.min(newWidth, viewportWidth - cardPosition.x);
-        const constrainedHeight = Math.min(newHeight, viewportHeight - cardPosition.y);
-        
+        const constrainedWidth = Math.min(
+          newWidth,
+          viewportWidth - cardPosition.x
+        );
+        const constrainedHeight = Math.min(
+          newHeight,
+          viewportHeight - cardPosition.y
+        );
+
         setCardSize({
           width: constrainedWidth,
           height: constrainedHeight,
@@ -968,11 +1182,16 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
               onClick={() => {
                 console.log("Manual highlight trigger");
                 console.log("Current annotations:", annotations);
-                console.log("Annotations data:", annotations.map(a => ({
-                  id: a.id,
-                  selected_text: (a.data as TextSelectionAnnotationData)?.selected_text || 'N/A'
-                })));
-                
+                console.log(
+                  "Annotations data:",
+                  annotations.map((a) => ({
+                    id: a.id,
+                    selected_text:
+                      (a.data as TextSelectionAnnotationData)?.selected_text ||
+                      "N/A",
+                  }))
+                );
+
                 // Try to use the optimized highlighting function if available
                 const iframe = iframeRef.current;
                 if (iframe && iframe.contentWindow) {
@@ -981,11 +1200,16 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                       console.log("Using optimized highlighting function");
                       (iframe.contentWindow as any).highlightAnnotations();
                     } else {
-                      console.log("Optimized function not available, re-injecting script");
+                      console.log(
+                        "Optimized function not available, re-injecting script"
+                      );
                       injectHighlightingScript();
                     }
                   } catch (error) {
-                    console.log("Error calling optimized function, fallback to re-injection:", error);
+                    console.log(
+                      "Error calling optimized function, fallback to re-injection:",
+                      error
+                    );
                     injectHighlightingScript();
                   }
                 } else {
@@ -1281,8 +1505,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
                   fontStyle: "italic",
                 }}
               >
-                &ldquo;{(showAnnotationCard.data as TextSelectionAnnotationData)
-                  ?.selected_text || "No text selected"}&rdquo;
+                &ldquo;
+                {(showAnnotationCard.data as TextSelectionAnnotationData)
+                  ?.selected_text || "No text selected"}
+                &rdquo;
               </div>
             </div>
 
