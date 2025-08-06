@@ -185,6 +185,8 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         parentResourceId: currentUrl,
       });
       setAnnotations(webpageAnnotations);
+      
+      // Note: highlighting will be triggered by the useEffect that watches annotations
     } catch (error) {
       console.error("Failed to load annotations:", error);
     }
@@ -292,17 +294,27 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       injectSelectionScript();
     }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [injectSelectionScript]); // handleTextSelection and handleContextMenu are defined below and are stable
+  }, [injectSelectionScript, annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
 
   // Inject highlighting script for existing annotations
   const injectHighlightingScript = useCallback(() => {
-    if (!iframeRef.current || annotations.length === 0) return;
+    console.log("injectHighlightingScript called with annotations:", annotations.length);
+    
+    if (!iframeRef.current || annotations.length === 0) {
+      console.log("Cannot inject highlighting: iframe missing or no annotations");
+      return;
+    }
 
     try {
       const iframe = iframeRef.current;
       const iframeWindow = iframe.contentWindow;
 
-      if (!iframeWindow) return;
+      if (!iframeWindow) {
+        console.log("Cannot inject highlighting: iframe window not available");
+        return;
+      }
+
+      console.log("Injecting highlighting script for annotations:", annotations);
 
       // Create highlighting script
       const annotationsJson = JSON.stringify(annotations);
@@ -321,6 +333,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "});" +
         "}" +
         "function highlightAnnotations() {" +
+        "console.log('highlightAnnotations called, document ready state:', document.readyState);" +
         "clearExistingHighlights();" +
         "annotations.forEach(function(annotation) {" +
         "if (annotation.data && annotation.data.selected_text) {" +
@@ -329,18 +342,28 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "highlightText(text, annotation.id);" +
         "}" +
         "});" +
+        "console.log('Highlighting completed for', annotations.length, 'annotations');" +
         "}" +
         "function highlightText(searchText, annotationId) {" +
+        "console.log('highlightText called with:', searchText, 'annotationId:', annotationId);" +
+        "if (!document.body) {" +
+        "console.warn('Document body not available for highlighting');" +
+        "return;" +
+        "}" +
         "const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);" +
         "const textNodes = [];" +
         "let node;" +
         "while (node = walker.nextNode()) { textNodes.push(node); }" +
+        "console.log('Found', textNodes.length, 'text nodes to search');" +
+        "let highlightCount = 0;" +
         "textNodes.forEach(function(textNode) {" +
         "const text = textNode.textContent;" +
         "if (text && text.includes(searchText)) {" +
+        "console.log('Found matching text in node:', text.substring(0, 100), '...');" +
         "const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\\\\]\\\\]/g, '\\\\\\\\$&'), 'g');" +
         "const parts = text.split(regex);" +
         "if (parts.length > 1) {" +
+        "highlightCount++;" +
         "const fragment = document.createDocumentFragment();" +
         "let partIndex = 0;" +
         "let matchIndex = 0;" +
@@ -375,12 +398,29 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "}" +
         "}" +
         "});" +
+        "console.log('Highlighted', highlightCount, 'text instances for annotation:', annotationId);" +
         "}" +
         "if (document.readyState === 'loading') {" +
-        "document.addEventListener('DOMContentLoaded', highlightAnnotations);" +
-        "} else {" +
+        "document.addEventListener('DOMContentLoaded', function() {" +
+        "console.log('DOMContentLoaded event fired, running highlightAnnotations');" +
+        "setTimeout(highlightAnnotations, 100);" +
+        "});" +
+        "} else if (document.readyState === 'interactive' || document.readyState === 'complete') {" +
+        "console.log('Document already loaded, running highlightAnnotations immediately');" +
+        "setTimeout(highlightAnnotations, 100);" +
+        "}" +
+        "window.addEventListener('load', function() {" +
+        "console.log('Window load event fired, running highlightAnnotations again');" +
+        "setTimeout(highlightAnnotations, 200);" +
+        "});" +
+        "setInterval(function() {" +
+        "const highlights = document.querySelectorAll('.annotation-highlight');" +
+        "if (highlights.length === 0 && annotations.length > 0) {" +
+        "console.log('No highlights found but annotations exist, re-highlighting');" +
         "highlightAnnotations();" +
         "}" +
+        "}, 2000);" +
+        "console.log('Highlighting script setup complete');" +
         "})();";
 
       // Execute the script in the iframe
@@ -391,17 +431,36 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "annotations"
       );
     } catch (error) {
-      console.warn("Could not inject highlighting script:", error);
+      console.error("Error injecting highlighting script:", error);
     }
   }, [annotations]);
 
   // Inject highlighting script when annotations change
   useEffect(() => {
     if (annotations.length > 0 && iframeRef.current) {
+      // Give iframe more time to load and stabilize
       setTimeout(() => {
         injectHighlightingScript();
-      }, 500); // Give iframe time to load
+      }, 1000); // Increased from 500ms to 1000ms
     }
+  }, [annotations, injectHighlightingScript]);
+
+  // Re-inject highlighting when iframe loads and we have annotations
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || annotations.length === 0) return;
+
+    const handleLoad = () => {
+      console.log("Iframe load detected, re-injecting highlighting script");
+      setTimeout(() => {
+        injectHighlightingScript();
+      }, 500);
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+    };
   }, [annotations, injectHighlightingScript]);
 
   // Add event listeners to the main document as fallback
@@ -992,6 +1051,31 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           >
             <RefreshCw size={16} />
           </button>
+          {annotations.length > 0 && (
+            <button
+              onClick={() => {
+                console.log("Manual highlight trigger");
+                console.log("Current annotations:", annotations);
+                console.log("Annotations data:", annotations.map(a => ({
+                  id: a.id,
+                  selected_text: (a.data as TextSelectionAnnotationData)?.selected_text || 'N/A'
+                })));
+                injectHighlightingScript();
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#666",
+                padding: "4px",
+                borderRadius: "4px",
+                fontSize: "12px",
+              }}
+              title="Re-highlight annotations"
+            >
+              🖍️
+            </button>
+          )}
           <button
             onClick={handleOpenInNewTab}
             style={{
