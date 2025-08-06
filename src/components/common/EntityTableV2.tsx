@@ -12,6 +12,7 @@ import React, {
   useState,
 } from "react";
 import ReactDOM from "react-dom";
+import { Webpage } from "../../api/webpagesApi";
 import { useAppContext } from "../../context/AppContext";
 import { RenderingManager } from "../../controllers/RenderingManager";
 import { Entity } from "../../core/model/entity/abstractEntity";
@@ -25,6 +26,7 @@ import styles from "./EntityTableV2.module.css";
 import EntityTagsSelectorDropdown from "./EntityTagsSelectorDropdown";
 import EntityTypeSelectDropdown from "./EntityTypeSelectDropdown";
 import HtmlPageViewer from "./HtmlPageViewer";
+import WebResourcePreviewCard from "./WebResourcePreviewCard";
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -54,6 +56,12 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     const [htmlPageViewerData, setHtmlPageViewerData] = useState<{
       resourceId: string;
       title: string;
+    } | null>(null);
+
+    // Hover preview state for web resources
+    const [hoveredWebResource, setHoveredWebResource] = useState<{
+      webpage: Webpage;
+      position: { x: number; y: number };
     } | null>(null);
 
     const { setEditingEntity, setJsonEditEntity } = useAppContext();
@@ -1659,10 +1667,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     // eslint-disable-next-line unused-imports/no-unused-vars
     const onFilterChanged = useCallback((event: any) => {}, []);
 
-    // Handle model updated
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    const onModelUpdated = useCallback((event: any) => {}, []);
-
     // Handle column resizing to prevent stuck resize mode
     const onColumnResized = useCallback((_e: any) => {
       // Only refresh if there are ongoing operations
@@ -1691,6 +1695,145 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         suppressColumnVirtualisation: false,
       }),
       []
+    );
+
+    // Handle row hover for web resources using onModelUpdated
+    const onModelUpdated = useCallback(
+      (event: any) => {
+        if (entityType === "web-resources") {
+          // Add hover listeners to all rows
+          setTimeout(() => {
+            const rows = document.querySelectorAll(".ag-row");
+            rows.forEach((row) => {
+              const rowId = row.getAttribute("row-id");
+              if (rowId) {
+                const rowData = event.api.getDisplayedRowAtIndex(
+                  parseInt(rowId)
+                );
+                if (rowData && rowData.data) {
+                  const entityData = rowData.data.getData
+                    ? rowData.data.getData()
+                    : rowData.data;
+                  if (entityData && entityData.url) {
+                    // Remove existing listeners
+                    const existingHoverHandler = (row as any)._hoverHandler;
+                    const existingLeaveHandler = (row as any)._leaveHandler;
+                    if (existingHoverHandler) {
+                      row.removeEventListener(
+                        "mouseenter",
+                        existingHoverHandler
+                      );
+                    }
+                    if (existingLeaveHandler) {
+                      row.removeEventListener(
+                        "mouseleave",
+                        existingLeaveHandler
+                      );
+                    }
+
+                    // Add new listeners
+                    (row as any)._hoverHandler = (e: MouseEvent) => {
+                      console.log("Hover handler - entityData:", entityData);
+                      console.log(
+                        "Hover handler - screenshot_url:",
+                        entityData.screenshot_url
+                      );
+                      console.log(
+                        "Hover handler - screenshot_url type:",
+                        typeof entityData.screenshot_url
+                      );
+                      console.log(
+                        "Hover handler - screenshot_url length:",
+                        entityData.screenshot_url?.length
+                      );
+
+                      const webpage: Webpage = {
+                        id: entityData.id || rowData.data.getId(),
+                        url: entityData.url,
+                        user_id: entityData.user_id || "",
+                        title:
+                          entityData.title ||
+                          entityData.label ||
+                          entityData.url,
+                        html_content: entityData.html_content,
+                        screenshot_url: entityData.screenshot_url,
+                        metadata: entityData.metadata,
+                        created_at: entityData.created_at,
+                        last_updated_at: entityData.last_updated_at,
+                      };
+
+                      const rect = row.getBoundingClientRect();
+                      const cardWidth = 400; // Approximate width of the preview card
+                      const cardHeight = 300; // Approximate height of the preview card
+
+                      // Calculate available space
+                      const spaceRight = window.innerWidth - rect.right;
+                      const spaceLeft = rect.left;
+                      const spaceBelow = window.innerHeight - rect.bottom;
+                      const spaceAbove = rect.top;
+
+                      let x, y;
+
+                      // Prefer positioning below the row
+                      if (spaceBelow >= cardHeight + 20) {
+                        y = rect.bottom + 10;
+                        // Center horizontally relative to the row
+                        x = Math.max(
+                          10,
+                          rect.left + rect.width / 2 - cardWidth / 2
+                        );
+                      } else if (spaceAbove >= cardHeight + 20) {
+                        // Position above the row
+                        y = rect.top - cardHeight - 10;
+                        x = Math.max(
+                          10,
+                          rect.left + rect.width / 2 - cardWidth / 2
+                        );
+                      } else {
+                        // Fallback: position to the right if there's space
+                        if (spaceRight >= cardWidth + 20) {
+                          x = rect.right + 10;
+                          y = rect.top;
+                        } else if (spaceLeft >= cardWidth + 20) {
+                          // Position to the left
+                          x = rect.left - cardWidth - 10;
+                          y = rect.top;
+                        } else {
+                          // Last resort: center in viewport
+                          x = Math.max(10, (window.innerWidth - cardWidth) / 2);
+                          y = Math.max(
+                            10,
+                            (window.innerHeight - cardHeight) / 2
+                          );
+                        }
+                      }
+
+                      setHoveredWebResource({
+                        webpage,
+                        position: { x, y },
+                      });
+                    };
+
+                    (row as any)._leaveHandler = () => {
+                      setHoveredWebResource(null);
+                    };
+
+                    row.addEventListener(
+                      "mouseenter",
+                      (row as any)._hoverHandler
+                    );
+                    row.addEventListener(
+                      "mouseleave",
+                      (row as any)._leaveHandler
+                    );
+                  }
+                }
+              }
+            });
+          }, 100);
+        }
+      },
+      [entityType]
     );
 
     // Make the grid more stable against unnecessary rerenders
@@ -1830,6 +1973,16 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
               />
             </div>
           </div>
+        )}
+
+        {/* Web Resource Preview Card */}
+        {hoveredWebResource && (
+          <WebResourcePreviewCard
+            webpage={hoveredWebResource.webpage}
+            isVisible={true}
+            position={hoveredWebResource.position}
+            onClose={() => setHoveredWebResource(null)}
+          />
         )}
       </div>
     );
