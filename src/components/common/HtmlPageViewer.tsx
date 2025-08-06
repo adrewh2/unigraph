@@ -18,6 +18,7 @@ import useAppConfigStore from "../../store/appConfigStore";
 import { useHtmlPageViewerStore } from "../../store/htmlPageViewerStore";
 import { addNotification } from "../../store/notificationStore";
 import { useUserStore } from "../../store/userStore";
+import EditableAnnotationCard from "../annotations/EditableAnnotationCard";
 import AnnotationDialog from "./AnnotationDialog";
 import { processHtmlWithHighlights } from "./annotationHighlightingScript";
 
@@ -1299,7 +1300,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             width: cardSize.width,
             height: cardSize.height,
             backgroundColor: "#ffffff",
-            borderRadius: "0px",
+            borderRadius: "8px",
             border: "1px solid #0078d4",
             boxShadow:
               "0 4px 12px rgba(0, 120, 212, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1)",
@@ -1366,164 +1367,30 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           <div
             style={{
               flex: 1,
-              padding: "12px",
+              padding: "8px",
               overflow: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
               backgroundColor: "#ffffff",
             }}
           >
-            {/* Selected Text Section */}
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "11px",
-                  fontWeight: "600",
-                  color: "#000000",
-                  marginBottom: "4px",
-                  textTransform: "uppercase",
-                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                }}
-              >
-                Selected Text
-              </label>
-              <div
-                style={{
-                  padding: "6px 8px",
-                  backgroundColor: "#f8f9fa",
-                  fontSize: "12px",
-                  color: "#212529",
-                  border: "1px solid #dee2e6",
-                  maxHeight: "80px",
-                  overflow: "auto",
-                  lineHeight: "1.3",
-                  fontFamily: "Consolas, 'Courier New', monospace",
-                }}
-              >
-                {(showAnnotationCard.data as TextSelectionAnnotationData)
-                  ?.selected_text || "No text selected"}
-              </div>
-            </div>
-
-            {/* Comment Section */}
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "11px",
-                  fontWeight: "600",
-                  color: "#000000",
-                  marginBottom: "4px",
-                  textTransform: "uppercase",
-                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                }}
-              >
-                Comment
-              </label>
-              <div
-                style={{
-                  padding: "6px 8px",
-                  backgroundColor: "#ffffff",
-                  fontSize: "12px",
-                  color: "#212529",
-                  border: "1px solid #dee2e6",
-                  minHeight: "60px",
-                  lineHeight: "1.3",
-                  fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                }}
-              >
-                {(showAnnotationCard.data as TextSelectionAnnotationData)
-                  ?.comment || "No comment"}
-              </div>
-            </div>
-
-            {/* Secondary Comment Section */}
-            {(showAnnotationCard.data as TextSelectionAnnotationData)
-              ?.secondary_comment && (
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    color: "#000000",
-                    marginBottom: "4px",
-                    textTransform: "uppercase",
-                    fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                  }}
-                >
-                  Additional Notes
-                </label>
-                <div
-                  style={{
-                    padding: "6px 8px",
-                    backgroundColor: "#ffffff",
-                    fontSize: "12px",
-                    color: "#212529",
-                    border: "1px solid #dee2e6",
-                    minHeight: "40px",
-                    lineHeight: "1.3",
-                    fontFamily: "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                  }}
-                >
-                  {(showAnnotationCard.data as TextSelectionAnnotationData)
-                    ?.secondary_comment || ""}
-                </div>
-              </div>
-            )}
-
-            {/* Tags Section */}
-            {Array.isArray(
-              (showAnnotationCard.data as TextSelectionAnnotationData)?.tags
-            ) &&
-              ((showAnnotationCard.data as TextSelectionAnnotationData)?.tags
-                ?.length ?? 0) > 0 && (
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "11px",
-                      fontWeight: "600",
-                      color: "#000000",
-                      marginBottom: "4px",
-                      textTransform: "uppercase",
-                      fontFamily:
-                        "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                    }}
-                  >
-                    Tags
-                  </label>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "4px",
-                    }}
-                  >
-                    {(
-                      showAnnotationCard.data as TextSelectionAnnotationData
-                    )?.tags?.map((tag: string) => (
-                      <span
-                        key={tag}
-                        style={{
-                          padding: "2px 6px",
-                          backgroundColor: "#e3f2fd",
-                          color: "#1976d2",
-                          fontSize: "10px",
-                          fontWeight: "500",
-                          border: "1px solid #bbdefb",
-                          fontFamily:
-                            "Segoe UI, Tahoma, Geneva, Verdana, sans-serif",
-                        }}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <EditableAnnotationCard
+              annotation={showAnnotationCard}
+              compact={true}
+              onUpdate={(updatedAnnotation: Annotation) => {
+                // Update the annotation in the local state
+                setAnnotations((prevAnnotations) =>
+                  prevAnnotations.map((ann) =>
+                    ann.id === updatedAnnotation.id ? updatedAnnotation : ann
+                  )
+                );
+                // Update the displayed annotation card
+                setShowAnnotationCard(updatedAnnotation);
+              }}
+              style={{
+                width: "100%",
+                height: "100%",
+                boxSizing: "border-box",
+              }}
+            />
           </div>
 
           {/* Resize handle */}
