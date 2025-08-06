@@ -401,13 +401,67 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     console.log("ReactFlowPanelV2: Layout result changed", currentLayoutResult);
     if (currentLayoutResult && currentLayoutResult.positions) {
       console.log("ReactFlowPanelV2: Updating nodes and edges with new layout");
-      console.log("ReactFlowPanelV2: Current processedNodes", processedNodes);
-      console.log("ReactFlowPanelV2: Current initialEdges", initialEdges);
-      // Force a refresh of the React Flow state when layout changes
-      setNodes(processedNodes);
-      setEdges(initialEdges);
+      console.log("ReactFlowPanelV2: Layout positions", currentLayoutResult.positions);
+      
+      // Regenerate nodes with new positions from the layout result
+      if (sceneGraph) {
+        const data = exportGraphDataForReactFlow(sceneGraph, currentLayoutResult.positions);
+        console.log("ReactFlowPanelV2: Exported data with new positions", data.nodes.length, "nodes");
+        
+        const nodesWithNewPositions = data.nodes.map((node) => ({
+          ...node,
+          type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
+          style: {
+            background: RenderingManager.getColor(
+              sceneGraph.getGraph().getNode(node.id as NodeId),
+              nodeLegendConfig,
+              legendMode
+            ),
+            color: "#000000",
+          },
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+          selected: selectedNodeIds.has(node.id as NodeId),
+        }));
+
+        const edgesWithStyling = data.edges.map((edge) => ({
+          ...edge,
+          type: "default",
+          style: {
+            stroke: RenderingManager.getColor(
+              sceneGraph.getGraph().getEdge(edge.id as EdgeId),
+              edgeLegendConfig,
+              legendMode
+            ),
+          },
+          labelStyle: {
+            fill: RenderingManager.getColor(
+              sceneGraph.getGraph().getEdge(edge.id as EdgeId),
+              edgeLegendConfig,
+              legendMode
+            ),
+            fontWeight: 700,
+          },
+        }));
+
+        console.log("ReactFlowPanelV2: Setting nodes with new positions", nodesWithNewPositions.length, "nodes");
+        console.log("ReactFlowPanelV2: Sample node positions:", nodesWithNewPositions.slice(0, 3).map(n => ({ id: n.id, position: n.position })));
+        setNodes(nodesWithNewPositions);
+        setEdges(edgesWithStyling);
+        
+        // Force ReactFlow to update if instance is available
+        if (reactFlowInstance.current) {
+          console.log("ReactFlowPanelV2: Forcing ReactFlow instance update");
+          reactFlowInstance.current.setNodes(nodesWithNewPositions);
+          reactFlowInstance.current.setEdges(edgesWithStyling);
+        }
+      } else {
+        console.log("ReactFlowPanelV2: No scene graph available");
+      }
+    } else {
+      console.log("ReactFlowPanelV2: No layout result or positions available");
     }
-  }, [currentLayoutResult, processedNodes, initialEdges, setNodes, setEdges]);
+  }, [currentLayoutResult, sceneGraph, nodeLegendConfig, edgeLegendConfig, legendMode, selectedNodeIds, setNodes, setEdges]);
 
   // Fix the onInit handler to use the correct type and avoid camera flickering
   const handleInit: OnInit = useCallback(
