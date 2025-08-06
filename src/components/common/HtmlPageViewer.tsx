@@ -133,9 +133,40 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
   // Load annotations for the current webpage
   const loadAnnotations = useCallback(async () => {
-    if (!user?.id || !currentUrl) return;
+    console.log("loadAnnotations called with:", { user: user?.id, currentUrl });
+
+    if (!user?.id || !currentUrl) {
+      console.log("loadAnnotations: missing user or currentUrl", {
+        user: user?.id,
+        currentUrl,
+      });
+      return;
+    }
+
+    console.log("Loading annotations for:", {
+      userId: user.id,
+      currentUrl: currentUrl,
+      user: user,
+    });
 
     try {
+      // First, let's try to get all annotations for the user to see if there are any
+      const allUserAnnotations = await listAnnotations({
+        userId: user.id,
+      });
+      console.log("All user annotations:", allUserAnnotations);
+
+      // Check if any annotations have URLs that might match
+      if (allUserAnnotations.length > 0) {
+        console.log("URLs from existing annotations:");
+        allUserAnnotations.forEach((ann: Annotation) => {
+          if (ann.parent_resource_id) {
+            console.log("  -", ann.parent_resource_id);
+          }
+        });
+      }
+
+      // Then try the specific webpage query
       const webpageAnnotations = await listAnnotations({
         userId: user.id,
         parentResourceType: "webpage",
@@ -143,6 +174,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       });
 
       console.log("Loaded annotations for webpage:", webpageAnnotations);
+      console.log("Annotation query params:", {
+        userId: user.id,
+        parentResourceType: "webpage",
+        parentResourceId: currentUrl,
+      });
       setAnnotations(webpageAnnotations);
     } catch (error) {
       console.error("Failed to load annotations:", error);
@@ -249,9 +285,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     setTimeout(() => {
       injectSelectionScript();
     }, 100);
-
-    // Load annotations and inject highlighting
-    loadAnnotations();
   }, [injectSelectionScript, loadAnnotations]);
 
   // Inject highlighting script for existing annotations
@@ -697,6 +730,15 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     };
   }, []);
 
+  // Load annotations when currentUrl changes
+  useEffect(() => {
+    console.log("currentUrl changed:", currentUrl);
+    if (currentUrl && user?.id) {
+      console.log("Calling loadAnnotations due to currentUrl change");
+      loadAnnotations();
+    }
+  }, [currentUrl, user?.id, loadAnnotations]);
+
   const handleRefresh = () => {
     if (loadedResourceId) {
       // Clear the cache for this resource and refetch
@@ -1134,9 +1176,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             </div>
           )}
 
-          {(showAnnotationCard.data as TextSelectionAnnotationData)?.tags &&
+          {Array.isArray(
             (showAnnotationCard.data as TextSelectionAnnotationData)?.tags
-              ?.length > 0 && (
+          ) &&
+            ((showAnnotationCard.data as TextSelectionAnnotationData)?.tags
+              ?.length ?? 0) > 0 && (
               <div style={{ marginBottom: "20px" }}>
                 <label
                   style={{
