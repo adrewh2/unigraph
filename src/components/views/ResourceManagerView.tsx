@@ -28,7 +28,7 @@ interface TabData {
 const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const { currentSceneGraph } = useAppConfigStore();
   const { theme } = useTheme();
-  const { user, isSignedIn } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("nodes");
   const [webpages, setWebpages] = useState<Webpage[]>([]);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -202,23 +202,6 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     }
   }, [user?.id]);
 
-  if (!isSignedIn) {
-    return (
-      <div
-        style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: theme.colors.text,
-        }}
-      >
-        <p>Please log in to view user resources</p>
-      </div>
-    );
-  }
-
   if (!currentSceneGraph) {
     return (
       <div
@@ -241,12 +224,6 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   // Create containers for different entity types
   const nodesContainer = graph.getNodes();
   const edgesContainer = graph.getEdges();
-
-  // Debug: Log the node IDs in the resource manager
-  console.log(
-    "ResourceManager: Node IDs in container:",
-    Array.from(nodesContainer).map((node) => node.getId())
-  );
 
   // Create containers for Supabase data
   const webResourcesContainer = new EntitiesContainer(

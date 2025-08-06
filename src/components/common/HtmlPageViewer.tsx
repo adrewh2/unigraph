@@ -155,6 +155,12 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "annotations"
       );
 
+      if (webpageAnnotations.length > 0) {
+        console.log("Annotations loaded, will trigger HTML processing effect");
+        console.log("Current HTML length:", html?.length || 0);
+        console.log("Current annotations state before setting:", annotations.length);
+      }
+
       // Note: highlighting will be triggered by the useEffect that watches annotations
     } catch (error) {
       console.error("Failed to load annotations:", error);
@@ -198,7 +204,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           setCurrentTitle(webpage.title || webpage.url);
           document.title = webpage.title || webpage.url;
           setLoadedResourceId(webpageId);
-          setIframeVersion(0);
+          setIframeVersion(Date.now()); // Use timestamp to ensure iframe updates
           setContentHash(`${webpageId}-0-false`);
         } else {
           console.log(
@@ -276,10 +282,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       currentHtmlContentLength: currentHtmlContent.length,
       iframeVersion,
       contentHash,
+      loadedResourceId,
     });
 
     // Only set content if we have HTML
-    if (html) {
+    if (html && html.length > 0) {
       if (annotations.length > 0) {
         console.log("HTML and annotations available, processing content");
 
@@ -327,6 +334,18 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         // Always increment iframe version when content changes
         setIframeVersion(Date.now());
         console.log("Setting iframe version to timestamp to force reload");
+        console.log("Content being set in iframe:", {
+          htmlLength: result.html.length,
+          highlightsAdded: result.highlightsAdded,
+          newHash,
+          containsHighlightClass: result.html.includes('class="annotation-highlight"'),
+          firstHighlightIndex: result.html.indexOf('class="annotation-highlight"'),
+          annotationsProcessed: annotationHighlights.length,
+        });
+        
+        // Also set the current HTML content so we can debug what's actually in the iframe
+        console.log("Setting currentHtmlContent with highlights, first 500 chars:", 
+          result.html.substring(0, 500));
       } else {
         console.log("HTML available but no annotations yet, setting raw HTML");
         setCurrentHtmlContent(html);
@@ -339,11 +358,18 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         // Also increment iframe version for raw HTML
         setIframeVersion(Date.now());
         console.log("Setting iframe version to timestamp for raw HTML");
+        console.log("Setting iframe version to timestamp for raw HTML");
       }
     } else {
       console.log("No HTML content available for processing");
     }
   }, [html, annotations, loadedResourceId]);
+
+  // Force iframe update when content hash changes
+  useEffect(() => {
+    console.log("Content hash changed, ensuring iframe updates:", contentHash);
+    // The iframe key includes contentHash, so it will re-mount when this changes
+  }, [contentHash]);
 
   // Debug annotation card state
   useEffect(() => {
@@ -710,7 +736,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         setCurrentUrl(cachedContent.url);
         setCurrentTitle(cachedContent.title);
         setLoadedResourceId(finalResourceId);
-        setIframeVersion(0);
+        setIframeVersion(Date.now()); // Use timestamp to ensure iframe updates
         setContentHash(`${finalResourceId}-0-false`);
         setLoading(false);
         setError(null);
@@ -1018,7 +1044,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             title={currentTitle || title || "HTML Content"}
             sandbox="allow-scripts allow-same-origin"
             onLoad={handleIframeLoad}
-            key={`${contentHash}-${iframeVersion}-${Date.now()}`}
+            key={`${contentHash}-${iframeVersion}`}
             data-debug={`hash:${contentHash}-version:${iframeVersion}`}
           />
         )}
