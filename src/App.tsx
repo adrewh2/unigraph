@@ -775,8 +775,12 @@ const AppContentInner = ({
     handleBackgroundRightClick,
   ]);
 
-  const { saveCurrentLayout, applyWorkspaceLayout, getAllWorkspaces } =
-    useAppShell();
+  const {
+    saveCurrentLayout,
+    applyWorkspaceLayout,
+    getAllWorkspaces,
+    getCurrentWorkspace,
+  } = useAppShell();
 
   const [graphModelUpdateTime, setGraphModelUpdateTime] = useState<number>(0);
 
@@ -1648,6 +1652,7 @@ const AppContentInner = ({
         saveCurrentLayout,
         applyWorkspaceLayout,
         getAllWorkspaces,
+        getCurrentWorkspace,
       },
     };
     return new MenuConfig(
@@ -1656,19 +1661,20 @@ const AppContentInner = ({
       forceGraphInstance
     );
   }, [
+    handleSetSceneGraph,
+    handleImportConfig,
+    handleFitToView,
     GraphMenuActions,
     SimulationMenuActions,
-    currentSceneGraph,
-    forceGraphInstance,
-    handleFitToView,
-    handleImportConfig,
-    handleSetSceneGraph,
     setShowEntityTables,
-    setShowLayoutManager,
-    setShowSceneGraphDetailView,
     saveCurrentLayout,
     applyWorkspaceLayout,
     getAllWorkspaces,
+    getCurrentWorkspace,
+    currentSceneGraph,
+    forceGraphInstance,
+    setShowLayoutManager,
+    setShowSceneGraphDetailView,
   ]);
 
   const menuConfig = useMemo(

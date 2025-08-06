@@ -150,6 +150,7 @@ export interface IMenuConfigCallbacks {
     saveCurrentLayout: (name: string) => Promise<any>;
     applyWorkspaceLayout: (id: string) => Promise<boolean>;
     getAllWorkspaces: () => any[];
+    getCurrentWorkspace: () => any;
   };
 }
 
@@ -409,7 +410,7 @@ export class MenuConfig {
           },
           "Print AppShell Workspace Layout": {
             action: async () => {
-              const { getAllWorkspaces, saveCurrentLayout } =
+              const { getAllWorkspaces } =
                 this.callbacks.appShellWorkspaceFunctions || {};
               if (getAllWorkspaces) {
                 const workspaces = getAllWorkspaces();
@@ -423,10 +424,9 @@ export class MenuConfig {
                 // Get the current workspace layout configuration
                 try {
                   // Try to get the current workspace data from the app shell
-                  const { getAllWorkspaces, saveCurrentLayout } =
+                  const { getAllWorkspaces, getCurrentWorkspace } =
                     this.callbacks.appShellWorkspaceFunctions || {};
-
-                  if (getAllWorkspaces && saveCurrentLayout) {
+                  if (getAllWorkspaces) {
                     const workspaces = getAllWorkspaces();
                     console.log("=== Available Workspaces ===");
                     console.log("Workspaces:", workspaces);
@@ -438,12 +438,11 @@ export class MenuConfig {
                     console.log("Saving current layout as:", tempWorkspaceName);
 
                     try {
-                      const savedWorkspace =
-                        await saveCurrentLayout(tempWorkspaceName);
+                      const savedWorkspace = getCurrentWorkspace?.();
                       console.log(
                         "=== Current Workspace Layout Data Structure ==="
                       );
-                      console.log("Saved workspace data:", savedWorkspace);
+                      console.log("Current workspace:", savedWorkspace);
                       console.log(
                         "=== End Current Workspace Layout Data Structure ==="
                       );
