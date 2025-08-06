@@ -320,30 +320,40 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         "textNodes.forEach(function(textNode) {" +
         "const text = textNode.textContent;" +
         "if (text && text.includes(searchText)) {" +
+        "const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\\\\]\\\\]/g, '\\\\\\\\$&'), 'g');" +
+        "const parts = text.split(regex);" +
+        "if (parts.length > 1) {" +
+        "const fragment = document.createDocumentFragment();" +
+        "let partIndex = 0;" +
+        "let matchIndex = 0;" +
+        "while (partIndex < parts.length) {" +
+        "if (parts[partIndex]) {" +
+        "fragment.appendChild(document.createTextNode(parts[partIndex]));" +
+        "}" +
+        "if (matchIndex < text.match(regex).length) {" +
         "const span = document.createElement('span');" +
         "span.className = 'annotation-highlight';" +
         "span.setAttribute('data-annotation-id', annotationId);" +
         "span.style.backgroundColor = '#ffeb3b';" +
         "span.style.cursor = 'pointer';" +
         "span.style.borderRadius = '2px';" +
-        "span.style.padding = '1px 2px';" +
-        "span.textContent = searchText;" +
-        "const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\\\\]\\\\]/g, '\\\\\\\\$&'), 'g');" +
-        "const newText = text.replace(regex, span.outerHTML);" +
-        "if (newText !== text) {" +
-        "textNode.parentNode.innerHTML = textNode.parentNode.innerHTML.replace(regex, span.outerHTML);" +
-        "}" +
-        "}" +
-        "});" +
-        "}" +
-        "document.addEventListener('click', function(e) {" +
-        "if (e.target.classList.contains('annotation-highlight')) {" +
-        "const annotationId = e.target.getAttribute('data-annotation-id');" +
+        "span.textContent = text.match(regex)[matchIndex];" +
+        "span.addEventListener('click', function() {" +
+        "const annotationId = this.getAttribute('data-annotation-id');" +
         "if (annotationId) {" +
         "window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');" +
         "}" +
+        "});" +
+        "fragment.appendChild(span);" +
+        "matchIndex++;" +
+        "}" +
+        "partIndex++;" +
+        "}" +
+        "textNode.parentNode.replaceChild(fragment, textNode);" +
+        "}" +
         "}" +
         "});" +
+        "}" +
         "if (document.readyState === 'loading') {" +
         "document.addEventListener('DOMContentLoaded', highlightAnnotations);" +
         "} else {" +
@@ -378,8 +388,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       // Only handle if we're clicking inside the iframe area
       if (iframeRef.current) {
         const iframeRect = iframeRef.current.getBoundingClientRect();
-        console.log("Mouse up event at:", event.clientX, event.clientY);
-        console.log("Iframe rect:", iframeRect);
 
         if (
           event.clientX >= iframeRect.left &&
@@ -387,9 +395,16 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           event.clientY >= iframeRect.top &&
           event.clientY <= iframeRect.bottom
         ) {
-          console.log(
-            "Mouse up inside iframe area, calling handleTextSelection"
-          );
+          // Check if we clicked on an annotation highlight by checking the target
+          const target = event.target as HTMLElement;
+          if (
+            target &&
+            target.classList &&
+            target.classList.contains("annotation-highlight")
+          ) {
+            return; // Let the iframe handle annotation clicks
+          }
+
           handleTextSelection(event);
         }
       }
@@ -399,8 +414,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       // Only handle if we're right-clicking inside the iframe area
       if (iframeRef.current) {
         const iframeRect = iframeRef.current.getBoundingClientRect();
-        console.log("Context menu event at:", event.clientX, event.clientY);
-        console.log("Iframe rect:", iframeRect);
 
         if (
           event.clientX >= iframeRect.left &&
@@ -408,9 +421,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           event.clientY >= iframeRect.top &&
           event.clientY <= iframeRect.bottom
         ) {
-          console.log(
-            "Context menu inside iframe area, calling handleContextMenu"
-          );
           handleContextMenu(event);
         }
       }
@@ -423,13 +433,13 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     const handleMainDocumentKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setContextMenu(null);
+        setShowAnnotationCard(null);
       }
     };
 
     // Handle messages from iframe
     const handleMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === "iframe-selection") {
-        console.log("Received selection from iframe:", event.data);
         setSelectedText(event.data.selection);
         setContextMenu({
           x: event.data.x,
@@ -437,17 +447,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           text: event.data.selection,
         });
       } else if (event.data && event.data.type === "show-annotation") {
-        console.log("Show annotation request:", event.data);
-        console.log("Available annotations:", annotations);
         const annotation = annotations.find(
           (a) => a.id === event.data.annotationId
         );
-        console.log("Found annotation:", annotation);
         if (annotation) {
-          console.log("Setting showAnnotationCard to:", annotation);
           setShowAnnotationCard(annotation);
-        } else {
-          console.log("Annotation not found for ID:", event.data.annotationId);
         }
       }
     };
@@ -737,9 +741,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
 
   // Load annotations when currentUrl changes
   useEffect(() => {
-    console.log("currentUrl changed:", currentUrl);
     if (currentUrl && user?.id) {
-      console.log("Calling loadAnnotations due to currentUrl change");
       loadAnnotations();
     }
   }, [currentUrl, user?.id, loadAnnotations]);
