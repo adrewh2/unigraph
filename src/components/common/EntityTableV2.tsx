@@ -655,6 +655,117 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         };
       }, [props.data.getId(), props.value]);
 
+      // Intercept keyboard events at document level when input is focused
+      useEffect(() => {
+        if (isEditing && inputRef.current) {
+          const input = inputRef.current;
+
+          const handleKeyDown = (e: KeyboardEvent) => {
+            // Only intercept if the target is our input or its container
+            if (e.target === input || input.contains(e.target as Node)) {
+              e.stopPropagation();
+
+              // Handle Enter and Escape keys
+              if (e.key === "Enter") {
+                e.preventDefault();
+                // Get current value from input element
+                const currentValue = (e.target as HTMLInputElement).value;
+
+                // Trigger save logic directly
+                if (props.data && currentValue !== props.value) {
+                  const originalValue = props.value || "";
+                  setIsEditing(false);
+                  props.data.setLabel(currentValue);
+
+                  const entityData = props.data.getData() as any;
+                  if (entityData) {
+                    entityData.label = currentValue;
+                    entityData.title = currentValue;
+                  }
+
+                  // Save to Supabase for web resources
+                  if (entityType === "web-resources") {
+                    (async () => {
+                      try {
+                        const entityData = props.data.getData() as any;
+                        const { supabase } = await import(
+                          "../../utils/supabaseClient"
+                        );
+                        const { data: userData, error: userError } =
+                          await supabase.auth.getUser();
+
+                        if (userError || !userData?.user?.id) {
+                          console.error(
+                            "User authentication error:",
+                            userError
+                          );
+                          return;
+                        }
+
+                        const webpage: Webpage = {
+                          id: entityData.id || props.data.getId(),
+                          url: entityData.url,
+                          user_id: userData.user.id,
+                          title: currentValue,
+                          html_content: entityData.html_content,
+                          screenshot_url: entityData.screenshot_url,
+                          metadata: entityData.metadata,
+                          created_at: entityData.created_at,
+                          last_updated_at: entityData.last_updated_at,
+                        };
+
+                        const { saveWebpage } = await import(
+                          "../../api/webpagesApi"
+                        );
+                        await saveWebpage(webpage);
+                        console.log(
+                          "Webpage label updated in Supabase:",
+                          currentValue
+                        );
+                      } catch (error) {
+                        console.error("Error saving webpage label:", error);
+                        props.data.setLabel(originalValue);
+                        alert("Failed to save changes. Please try again.");
+                      }
+                    })();
+                  }
+                } else {
+                  setIsEditing(false);
+                }
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                setEditValue(props.value || "");
+                setIsEditing(false);
+              }
+              // Don't prevent default for arrow keys - let the input handle them
+            }
+          };
+
+          const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.target === input || input.contains(e.target as Node)) {
+              e.stopPropagation();
+            }
+          };
+
+          const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.target === input || input.contains(e.target as Node)) {
+              e.stopPropagation();
+            }
+          };
+
+          // Use capture phase to intercept events before AG Grid
+          document.addEventListener("keydown", handleKeyDown, true);
+          document.addEventListener("keyup", handleKeyUp, true);
+          document.addEventListener("keypress", handleKeyPress, true);
+
+          return () => {
+            document.removeEventListener("keydown", handleKeyDown, true);
+            document.removeEventListener("keyup", handleKeyUp, true);
+            document.removeEventListener("keypress", handleKeyPress, true);
+          };
+        }
+      }, [isEditing]);
+
       const handleSave = async () => {
         if (props.data && editValue !== props.value) {
           const originalValue = props.value || "";
@@ -734,11 +845,17 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       };
 
       const handleKeyDown = (e: React.KeyboardEvent) => {
+        // Prevent AG Grid from handling keyboard events when input is focused
+        e.stopPropagation();
+
         if (e.key === "Enter") {
+          e.preventDefault();
           handleSave();
         } else if (e.key === "Escape") {
+          e.preventDefault();
           handleCancel();
         }
+        // For all other keys (including arrow keys), let the input handle them normally
       };
 
       const handleBlur = () => {
@@ -747,27 +864,49 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
       if (isEditing) {
         return (
-          <input
-            ref={inputRef}
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
+          <div
             style={{
               width: "100%",
               height: "100%",
-              border: "2px solid #007acc",
-              borderRadius: "4px",
-              padding: "4px 8px",
-              fontSize: "14px",
-              outline: "none",
-              background: "white",
+              display: "flex",
+              alignItems: "center",
             }}
+            onKeyDown={(e) => e.stopPropagation()}
+            onKeyUp={(e) => e.stopPropagation()}
+            onKeyPress={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
-          />
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onKeyUp={(e) => e.stopPropagation()}
+              onKeyPress={(e) => e.stopPropagation()}
+              onBlur={handleBlur}
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "2px solid #007acc",
+                borderRadius: "4px",
+                padding: "4px 8px",
+                fontSize: "14px",
+                outline: "none",
+                background: "white",
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              onInput={(e) => e.stopPropagation()}
+              onCompositionStart={(e) => e.stopPropagation()}
+              onCompositionEnd={(e) => e.stopPropagation()}
+              onCompositionUpdate={(e) => e.stopPropagation()}
+            />
+          </div>
         );
       }
 
@@ -1506,16 +1645,16 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             if (!params.data) return "";
             const value = (params.data.getData() as any)[col];
             if (col === "tags") {
-              console.log(
-                "Tags valueGetter - col:",
-                col,
-                "value:",
-                value,
-                "type:",
-                typeof value,
-                "isArray:",
-                Array.isArray(value)
-              );
+              // console.log(
+              //   "Tags valueGetter - col:",
+              //   col,
+              //   "value:",
+              //   value,
+              //   "type:",
+              //   typeof value,
+              //   "isArray:",
+              //   Array.isArray(value)
+              // );
               if (value instanceof Set) {
                 return Array.from(value);
               }
