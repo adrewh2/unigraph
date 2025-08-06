@@ -104,7 +104,7 @@ export async function checkWebpagesContent(ids: string[]) {
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
   } = {};
 
-  data?.forEach((webpage) => {
+  data?.forEach((webpage: any) => {
     results[webpage.id] = {
       hasHtml: !!webpage.html_content,
       hasScreenshot: !!webpage.screenshot_url,
