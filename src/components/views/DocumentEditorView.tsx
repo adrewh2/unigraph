@@ -680,7 +680,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
             extension: document.extension,
             fullFilename,
           });
-          setSelectedFile(`/documents/${fullFilename}`);
+          setSelectedFile(`/documents/${document.id}`);
           setSelectedFilename(fullFilename);
           setContent(document.content || "");
           setOriginalContent(document.content || "");
