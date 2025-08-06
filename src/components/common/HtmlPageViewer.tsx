@@ -62,6 +62,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [currentHtmlContent, setCurrentHtmlContent] = useState<string>("");
 
   // Refs
   const processedResourceIds = useRef<Set<string>>(new Set());
@@ -79,62 +80,6 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
     setError: setStoreError,
     hasValidContent,
   } = useHtmlPageViewerStore();
-
-  // Inject script to capture selection in iframe
-  const injectSelectionScript = useCallback(() => {
-    if (!iframeRef.current) return;
-
-    try {
-      const iframe = iframeRef.current;
-      const iframeWindow = iframe.contentWindow;
-
-      if (!iframeWindow) return;
-
-      // Inject a script that captures selection and communicates with parent
-      const script = `
-        (function() {
-          let lastSelection = '';
-          
-          // Capture selection on mouseup
-          document.addEventListener('mouseup', function(e) {
-            const selection = window.getSelection();
-            if (selection && selection.toString().trim()) {
-              lastSelection = selection.toString().trim();
-              console.log('Selection captured in iframe:', lastSelection);
-            }
-          });
-          
-          // Capture selection on contextmenu
-          document.addEventListener('contextmenu', function(e) {
-            const selection = window.getSelection();
-            if (selection && selection.toString().trim()) {
-              lastSelection = selection.toString().trim();
-              console.log('Context menu selection in iframe:', lastSelection);
-              
-              // Send message to parent
-              window.parent.postMessage({
-                type: 'iframe-selection',
-                selection: lastSelection,
-                x: e.clientX,
-                y: e.clientY
-              }, '*');
-            }
-          });
-          
-          // Expose function to get last selection
-          window.getLastSelection = function() {
-            return lastSelection;
-          };
-        })();
-      `;
-
-      // Execute the script in the iframe
-      (iframeWindow as any).eval(script);
-      console.log("Selection script injected into iframe");
-    } catch (error) {
-      console.warn("Could not inject selection script:", error);
-    }
-  }, []);
 
   // Load annotations for the current webpage
   const loadAnnotations = useCallback(async () => {
@@ -185,6 +130,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
         parentResourceId: currentUrl,
       });
       setAnnotations(webpageAnnotations);
+      console.log(
+        "Loaded annotations for webpage:",
+        webpageAnnotations.length,
+        "annotations"
+      );
 
       // Note: highlighting will be triggered by the useEffect that watches annotations
     } catch (error) {
@@ -289,273 +239,109 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
       );
     }
 
-    // Try to inject selection script as fallback
-    setTimeout(() => {
-      injectSelectionScript();
-    }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [injectSelectionScript, annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
+  }, [annotations]); // handleTextSelection and handleContextMenu are defined below and are stable
 
-  // Inject highlighting script for existing annotations
-  const injectHighlightingScript = useCallback(() => {
-    console.log(
-      "injectHighlightingScript called with annotations:",
-      annotations.length
-    );
+  // Process HTML content to add highlighting
+  const processHtmlWithHighlights = useCallback(
+    (htmlContent: string) => {
+      console.log("Processing HTML with", annotations.length, "annotations");
 
-    if (!iframeRef.current || annotations.length === 0) {
-      console.log(
-        "Cannot inject highlighting: iframe missing or no annotations"
-      );
-      return;
-    }
+      let processedHtml = htmlContent;
 
-    try {
-      const iframe = iframeRef.current;
-      const iframeWindow = iframe.contentWindow;
-
-      if (!iframeWindow) {
-        console.log("Cannot inject highlighting: iframe window not available");
-        return;
-      }
-
-      console.log(
-        "Injecting highlighting script for annotations:",
-        annotations
-      );
-
-      // Convert annotations to JSON for injection
-      const annotationsJson = JSON.stringify(annotations);
-
-      // Create the script with annotations data embedded
-      const script = `
-        (function() {
-          const annotations = ${annotationsJson};
-          
-          function highlightAnnotations() {
-            console.log('Annotation highlighting function executing with', annotations.length, 'annotations');
+      // Add selection script to the HTML
+      const selectionScript = `
+        <script>
+          (function() {
+            let lastSelection = '';
             
-            let isHighlighting = false;
-            let textNodesCache = null;
-            let highlightTimeout = null;
-            
-            function debounceHighlight(fn, delay) {
-              return function() {
-                if (highlightTimeout) {
-                  clearTimeout(highlightTimeout);
-                }
-                highlightTimeout = setTimeout(fn, delay);
-              };
-            }
-            
-            function clearExistingHighlights() {
-              const existingHighlights = document.querySelectorAll('.annotation-highlight');
-              if (existingHighlights.length > 0) {
-                console.log('Clearing', existingHighlights.length, 'existing highlights');
-                existingHighlights.forEach(function(highlight) {
-                  const parent = highlight.parentNode;
-                  if (parent) {
-                    parent.replaceChild(document.createTextNode(highlight.textContent || ''), highlight);
-                    parent.normalize();
-                  }
-                });
-                textNodesCache = null;
+            // Capture selection on mouseup
+            document.addEventListener('mouseup', function(e) {
+              const selection = window.getSelection();
+              if (selection && selection.toString().trim()) {
+                lastSelection = selection.toString().trim();
+                console.log('Selection captured in iframe:', lastSelection);
               }
-            }
-            
-            function getAllTextNodes() {
-              if (textNodesCache) {
-                console.log('Using cached text nodes:', textNodesCache.length);
-                return textNodesCache;
-              }
-              if (!document.body) {
-                console.warn('Document body not available');
-                return [];
-              }
-              const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-              const textNodes = [];
-              let node;
-              while ((node = walker.nextNode()) !== null) {
-                textNodes.push(node);
-              }
-              textNodesCache = textNodes;
-              console.log('Cached', textNodes.length, 'text nodes');
-              return textNodes;
-            }
-            
-            function highlightAnnotationsBatch() {
-              if (isHighlighting) {
-                console.log('Highlighting already in progress, skipping');
-                return;
-              }
-              isHighlighting = true;
-              console.log('Starting batch highlighting for', annotations.length, 'annotations');
-              
-              try {
-                clearExistingHighlights();
-                const textNodes = getAllTextNodes();
-                
-                if (textNodes.length === 0) {
-                  console.warn('No text nodes found for highlighting');
-                  return;
-                }
-                
-                console.log('Sample text from document:', textNodes[0]?.textContent?.substring(0, 200) + '...');
-                
-                let totalHighlights = 0;
-                annotations.forEach(function(annotation, index) {
-                  if (annotation.data && annotation.data.selected_text) {
-                    const searchText = annotation.data.selected_text;
-                    const annotationId = annotation.id;
-                    console.log('Processing annotation', index + 1, '/', annotations.length, ':', annotationId);
-                    console.log('Searching for text:', searchText);
-                    
-                    try {
-                      let highlightCount = 0;
-                      let foundNodes = 0;
-                      
-                      textNodes.forEach(function(textNode) {
-                        const text = textNode.textContent;
-                        if (text && text.includes(searchText)) {
-                          foundNodes++;
-                          console.log('Found text match in node:', text.substring(0, 200) + '...');
-                          
-                          // Simple string replacement approach
-                          const index = text.indexOf(searchText);
-                          if (index !== -1) {
-                            const before = text.substring(0, index);
-                            const after = text.substring(index + searchText.length);
-                            
-                            const fragment = document.createDocumentFragment();
-                            if (before) {
-                              fragment.appendChild(document.createTextNode(before));
-                            }
-                            
-                            const span = document.createElement('span');
-                            span.className = 'annotation-highlight';
-                            span.setAttribute('data-annotation-id', annotationId);
-                            span.style.backgroundColor = '#ffeb3b';
-                            span.style.cursor = 'pointer';
-                            span.style.borderRadius = '2px';
-                            span.style.padding = '1px 2px';
-                            span.style.transition = 'background-color 0.2s ease';
-                            span.textContent = searchText;
-                            span.addEventListener('click', function() {
-                              console.log('Annotation clicked:', annotationId);
-                              window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');
-                            });
-                            fragment.appendChild(span);
-                            
-                            if (after) {
-                              fragment.appendChild(document.createTextNode(after));
-                            }
-                            
-                            if (textNode.parentNode) {
-                              textNode.parentNode.replaceChild(fragment, textNode);
-                            }
-                            
-                            highlightCount++;
-                          }
-                        }
-                      });
-                      
-                      totalHighlights += highlightCount;
-                      console.log('Found', foundNodes, 'matching nodes for annotation:', annotationId);
-                      if (highlightCount > 0) {
-                        console.log('Highlighted', highlightCount, 'instances for annotation:', annotationId);
-                      } else if (foundNodes === 0) {
-                        console.warn('No text nodes contained the search text for annotation:', annotationId);
-                        console.warn('Search text was:', searchText);
-                      }
-                    } catch (error) {
-                      console.error('Error processing annotation', annotationId, ':', error);
-                      console.warn('Problematic search text:', searchText);
-                      console.warn('Skipping this annotation due to error');
-                    }
-                  }
-                });
-                
-                console.log('Batch highlighting completed:', totalHighlights, 'total highlights created');
-                if (totalHighlights === 0) {
-                  console.warn('No highlights were created - text may not match exactly');
-                }
-              } catch (error) {
-                console.error('Error during batch highlighting:', error);
-              } finally {
-                isHighlighting = false;
-              }
-            }
-            
-            const debouncedHighlight = debounceHighlight(highlightAnnotationsBatch, 100);
-            
-            if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', debouncedHighlight);
-            } else if (document.readyState === 'interactive' || document.readyState === 'complete') {
-              console.log('Document ready, starting highlighting');
-              setTimeout(debouncedHighlight, 50);
-            }
-            
-            window.addEventListener('load', function() {
-              console.log('Window loaded, re-highlighting if needed');
-              setTimeout(function() {
-                if (document.querySelectorAll('.annotation-highlight').length === 0 && annotations.length > 0) {
-                  debouncedHighlight();
-                }
-              }, 200);
             });
             
-            // Expose the function globally so it can be called from outside
-            window.highlightAnnotations = debouncedHighlight;
-            console.log('Annotation highlighting function setup complete');
-          }
-          
-          highlightAnnotations();
-        })();
+            // Capture selection on contextmenu
+            document.addEventListener('contextmenu', function(e) {
+              const selection = window.getSelection();
+              if (selection && selection.toString().trim()) {
+                lastSelection = selection.toString().trim();
+                console.log('Context menu selection in iframe:', lastSelection);
+                
+                // Send message to parent
+                window.parent.postMessage({
+                  type: 'iframe-selection',
+                  selection: lastSelection,
+                  x: e.clientX,
+                  y: e.clientY
+                }, '*');
+              }
+            });
+            
+            // Expose function to get last selection
+            window.getLastSelection = function() {
+              return lastSelection;
+            };
+          })();
+        </script>
       `;
 
-      // Execute the script in the iframe
-      (iframeWindow as any).eval(script);
-      console.log(
-        "Highlighting script injected for",
-        annotations.length,
-        "annotations"
-      );
-    } catch (error) {
-      console.error("Error injecting highlighting script:", error);
-    }
-  }, [annotations]);
+      // Insert the script before the closing </head> tag
+      if (processedHtml.includes("</head>")) {
+        processedHtml = processedHtml.replace(
+          "</head>",
+          `${selectionScript}</head>`
+        );
+      } else {
+        // If no head tag, add it after the opening body tag
+        processedHtml = processedHtml.replace(
+          "<body>",
+          `<body>${selectionScript}`
+        );
+      }
 
-  // Inject highlighting script when annotations change
+      // Add highlighting for annotations
+      if (annotations.length > 0) {
+        annotations.forEach((annotation) => {
+          const textData = annotation.data as TextSelectionAnnotationData;
+          if (annotation.data && textData?.selected_text) {
+            const searchText = textData.selected_text;
+            const annotationId = annotation.id;
+
+            // Create the highlighted span
+            const highlightedSpan = `<span class="annotation-highlight" data-annotation-id="${annotationId}" style="background-color: #ffeb3b; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;" onclick="window.parent.postMessage({type: 'show-annotation', annotationId: '${annotationId}'}, '*')">${searchText}</span>`;
+
+            // Replace the text in the HTML
+            processedHtml = processedHtml.replace(
+              new RegExp(
+                searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+                "g"
+              ),
+              highlightedSpan
+            );
+          }
+        });
+      }
+
+      console.log("HTML processing complete");
+      return processedHtml;
+    },
+    [annotations]
+  );
+
+  // Process HTML content when annotations change
   useEffect(() => {
-    if (annotations.length > 0 && iframeRef.current) {
-      console.log("Annotations changed, triggering highlighting in 500ms");
-      // Give iframe time to load and stabilize, but be more responsive
-      const timeoutId = setTimeout(() => {
-        injectHighlightingScript();
-      }, 500);
-
-      return () => clearTimeout(timeoutId);
+    if (annotations.length > 0 && html) {
+      console.log("Annotations changed, reprocessing HTML content");
+      const processedHtml = processHtmlWithHighlights(html);
+      setCurrentHtmlContent(processedHtml);
+    } else if (html) {
+      setCurrentHtmlContent(html);
     }
-  }, [annotations, injectHighlightingScript]);
-
-  // Re-inject highlighting when iframe loads and we have annotations
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe || annotations.length === 0) return;
-
-    const handleLoad = () => {
-      console.log("Iframe load detected, re-injecting highlighting script");
-      // Use a longer delay only for iframe load events to ensure content is stable
-      setTimeout(() => {
-        injectHighlightingScript();
-      }, 800);
-    };
-
-    iframe.addEventListener("load", handleLoad);
-    return () => {
-      iframe.removeEventListener("load", handleLoad);
-    };
-  }, [annotations, injectHighlightingScript]);
+  }, [annotations, html, processHtmlWithHighlights]);
 
   // Debug annotation card state
   useEffect(() => {
@@ -1177,59 +963,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           >
             <RefreshCw size={16} />
           </button>
-          {annotations.length > 0 && (
-            <button
-              onClick={() => {
-                console.log("Manual highlight trigger");
-                console.log("Current annotations:", annotations);
-                console.log(
-                  "Annotations data:",
-                  annotations.map((a) => ({
-                    id: a.id,
-                    selected_text:
-                      (a.data as TextSelectionAnnotationData)?.selected_text ||
-                      "N/A",
-                  }))
-                );
 
-                // Try to use the optimized highlighting function if available
-                const iframe = iframeRef.current;
-                if (iframe && iframe.contentWindow) {
-                  try {
-                    if ((iframe.contentWindow as any).highlightAnnotations) {
-                      console.log("Using optimized highlighting function");
-                      (iframe.contentWindow as any).highlightAnnotations();
-                    } else {
-                      console.log(
-                        "Optimized function not available, re-injecting script"
-                      );
-                      injectHighlightingScript();
-                    }
-                  } catch (error) {
-                    console.log(
-                      "Error calling optimized function, fallback to re-injection:",
-                      error
-                    );
-                    injectHighlightingScript();
-                  }
-                } else {
-                  injectHighlightingScript();
-                }
-              }}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "#666",
-                padding: "4px",
-                borderRadius: "4px",
-                fontSize: "12px",
-              }}
-              title="Re-highlight annotations"
-            >
-              🖍️
-            </button>
-          )}
           <button
             onClick={handleOpenInNewTab}
             style={{
@@ -1256,10 +990,10 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
           backgroundColor: "white",
         }}
       >
-        {html && (
+        {currentHtmlContent && (
           <iframe
             ref={iframeRef}
-            srcDoc={html}
+            srcDoc={currentHtmlContent}
             style={{
               width: "100%",
               height: "100%",
