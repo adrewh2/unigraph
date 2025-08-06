@@ -450,6 +450,170 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     })
   );
 
+  // Create container for all tags from web resources and annotations
+  const allTags = new Set<string>();
+
+  // Collect tags from web resources
+  webpages.forEach((webpage) => {
+    let tags: string[] = [];
+    let metadataObj = webpage.metadata;
+
+    if (typeof metadataObj === "string") {
+      try {
+        metadataObj = JSON.parse(metadataObj);
+      } catch (e) {
+        console.warn("Failed to parse metadata as JSON:", metadataObj);
+      }
+    }
+
+    if (metadataObj && typeof metadataObj === "object") {
+      const tagsFromTags = (metadataObj as any).tags;
+      const tagsFromTag = (metadataObj as any).tag;
+      const tagsFromKeywords = (metadataObj as any).keywords;
+      tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+    }
+
+    if (Array.isArray(tags)) {
+      tags.forEach((tag) => allTags.add(tag));
+    }
+  });
+
+  // Collect tags from annotations
+  annotations.forEach((annotation) => {
+    let annotationData = annotation.data;
+    if (typeof annotationData === "string") {
+      try {
+        annotationData = JSON.parse(annotationData);
+      } catch (e) {
+        console.warn(
+          "Failed to parse annotation data as JSON:",
+          annotationData
+        );
+      }
+    }
+
+    const tags = (annotationData as any).tags || [];
+    if (Array.isArray(tags)) {
+      tags.forEach((tag) => allTags.add(tag));
+    }
+  });
+
+  // Create tags container with color and description columns
+  const tagsContainer = new EntitiesContainer(
+    Array.from(allTags).map((tag) => {
+      // Generate a consistent color for each tag
+      const hash = tag.split("").reduce((a, b) => {
+        a = (a << 5) - a + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      const hue = Math.abs(hash) % 360;
+      const color = `hsl(${hue}, 70%, 60%)`;
+
+      return {
+        getId: () => `tag-${tag}`,
+        getType: () => "tag",
+        getLabel: () => tag,
+        getTags: () => new Set(),
+        getData: () => ({
+          id: `tag-${tag}`,
+          label: tag,
+          type: "tag",
+          color: color,
+          description: `Tag used across ${
+            webpages.filter((w) => {
+              let tags: string[] = [];
+              let metadataObj = w.metadata;
+              if (typeof metadataObj === "string") {
+                try {
+                  metadataObj = JSON.parse(metadataObj);
+                } catch (e) {
+                  /* Ignore parse errors */
+                }
+              }
+              if (metadataObj && typeof metadataObj === "object") {
+                const tagsFromTags = (metadataObj as any).tags;
+                const tagsFromTag = (metadataObj as any).tag;
+                const tagsFromKeywords = (metadataObj as any).keywords;
+                tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+              }
+              return Array.isArray(tags) && tags.includes(tag);
+            }).length
+          } web resources and ${
+            annotations.filter((a) => {
+              let annotationData = a.data;
+              if (typeof annotationData === "string") {
+                try {
+                  annotationData = JSON.parse(annotationData);
+                } catch (e) {
+                  /* Ignore parse errors */
+                }
+              }
+              const tags = (annotationData as any).tags || [];
+              return Array.isArray(tags) && tags.includes(tag);
+            }).length
+          } annotations`,
+          usage_count:
+            webpages.filter((w) => {
+              let tags: string[] = [];
+              let metadataObj = w.metadata;
+              if (typeof metadataObj === "string") {
+                try {
+                  metadataObj = JSON.parse(metadataObj);
+                } catch (e) {
+                  /* Ignore parse errors */
+                }
+              }
+              if (metadataObj && typeof metadataObj === "object") {
+                const tagsFromTags = (metadataObj as any).tags;
+                const tagsFromTag = (metadataObj as any).tag;
+                const tagsFromKeywords = (metadataObj as any).keywords;
+                tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+              }
+              return Array.isArray(tags) && tags.includes(tag);
+            }).length +
+            annotations.filter((a) => {
+              let annotationData = a.data;
+              if (typeof annotationData === "string") {
+                try {
+                  annotationData = JSON.parse(annotationData);
+                } catch (e) {
+                  /* Ignore parse errors */
+                }
+              }
+              const tags = (annotationData as any).tags || [];
+              return Array.isArray(tags) && tags.includes(tag);
+            }).length,
+        }),
+        getEntityType: () => "node",
+        getFullyQualifiedId: () => `tag-${tag}`,
+        setId: () => {
+          /* No-op for read-only entities */
+        },
+        setData: () => {
+          /* No-op for read-only entities */
+        },
+        setType: () => {
+          /* No-op for read-only entities */
+        },
+        setLabel: () => {
+          /* No-op for read-only entities */
+        },
+        setTags: () => {
+          /* No-op for read-only entities */
+        },
+        addTag: () => {
+          /* No-op for read-only entities */
+        },
+        removeTag: () => {
+          /* No-op for read-only entities */
+        },
+        hasTag: () => false,
+        toJSON: () => "",
+        fromJSON: () => {},
+      } as any;
+    })
+  );
+
   const tabs: TabData[] = [
     {
       id: "nodes",
@@ -463,6 +627,13 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       label: "Edges",
       icon: "🔗",
       container: edgesContainer,
+      sceneGraph: currentSceneGraph,
+    },
+    {
+      id: "tags",
+      label: "Tags",
+      icon: "🏷️",
+      container: tagsContainer,
       sceneGraph: currentSceneGraph,
     },
     {
