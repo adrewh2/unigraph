@@ -258,6 +258,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const reactFlowWrapper = useRef(null);
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const selectionChangeRef = useRef(false);
+  const viewportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     currentSceneGraph,
@@ -270,6 +271,19 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   const { selectedNodeIds, selectedEdgeIds, hoveredNodeIds } =
     useGraphInteractionStore();
   const { getActiveSection } = useWorkspaceConfigStore();
+
+  // Memoized node types to prevent unnecessary re-renders
+  const nodeTypes = useMemo(
+    () => ({
+      customNode: CustomNode,
+      resizerNode: ResizerNode,
+      webpage: WebpageNode,
+      annotation: AnnotationNode,
+      definition: DefinitionNode,
+      class: ClassNode,
+    }),
+    []
+  );
 
   // Simple hover state - no debouncing for now
   const [currentHoveredNodeId, setCurrentHoveredNodeId] = useState<
@@ -301,23 +315,11 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
 
   // Export graph data for ReactFlow - using same approach as ReactFlow v1
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
-    console.log("ReactFlowPanelV2: Recomputing nodes and edges", {
-      sceneGraph,
-      currentLayoutResult,
-    });
     if (!sceneGraph) {
       return { nodes: [], edges: [] };
     }
 
-    // Check if scene graph positions are being updated
-    const sceneGraphPositions = sceneGraph.getDisplayConfig().nodePositions;
-    console.log("ReactFlowPanelV2: Scene graph positions", sceneGraphPositions);
-
     const data = exportGraphDataForReactFlow(sceneGraph);
-    console.log(
-      "ReactFlowPanelV2: Available node IDs in graph:",
-      data.nodes.map((n) => n.id)
-    );
 
     // Apply the same styling as ReactFlow v1
     const nodesWithPositions = data.nodes.map((node) => ({
@@ -365,7 +367,6 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     edgeLegendConfig,
     legendMode,
     currentLayoutResult,
-    selectedNodeIds,
   ]);
 
   // PRE-PROCESS nodes without selection state - let ReactFlow handle selection internally
@@ -383,18 +384,14 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   // Fix the type mismatch by avoiding direct NodeChange typing - use any as an intermediary
   const handleNodesChange = useCallback(
     (changes: any) => {
-      setTimeout(() => {
-        originalOnNodesChange(changes);
-      });
+      originalOnNodesChange(changes);
     },
     [originalOnNodesChange]
   );
 
   const handleEdgesChange = useCallback(
     (changes: any) => {
-      setTimeout(() => {
-        originalOnEdgesChange(changes);
-      });
+      originalOnEdgesChange(changes);
     },
     [originalOnEdgesChange]
   );
@@ -404,6 +401,15 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     document.head.appendChild(nodeStyles);
     return () => {
       document.head.removeChild(nodeStyles);
+    };
+  }, []);
+
+  // Cleanup viewport timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (viewportTimeoutRef.current) {
+        clearTimeout(viewportTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -419,92 +425,60 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
 
   // Update nodes and edges when layout result changes
   useEffect(() => {
-    console.log("ReactFlowPanelV2: Layout result changed", currentLayoutResult);
-    if (currentLayoutResult && currentLayoutResult.positions) {
-      console.log("ReactFlowPanelV2: Updating nodes and edges with new layout");
-      console.log(
-        "ReactFlowPanelV2: Layout positions",
+    if (currentLayoutResult && currentLayoutResult.positions && sceneGraph) {
+      const data = exportGraphDataForReactFlow(
+        sceneGraph,
         currentLayoutResult.positions
       );
 
-      // Regenerate nodes with new positions from the layout result
-      if (sceneGraph) {
-        const data = exportGraphDataForReactFlow(
-          sceneGraph,
-          currentLayoutResult.positions
-        );
-        console.log(
-          "ReactFlowPanelV2: Exported data with new positions",
-          data.nodes.length,
-          "nodes"
-        );
+      const nodesWithNewPositions = data.nodes.map((node) => {
+        const isSelected = selectedNodeIds.has(node.id as NodeId);
 
-        const nodesWithNewPositions = data.nodes.map((node) => {
-          const isSelected = selectedNodeIds.has(node.id as NodeId);
-
-          return {
-            ...node,
-            type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
-            style: {
-              background: RenderingManager.getColor(
-                sceneGraph.getGraph().getNode(node.id as NodeId),
-                nodeLegendConfig,
-                legendMode
-              ),
-              color: "#000000",
-              // Default border - hover styling will be applied by the hover effect
-              border: `2px solid ${RenderingManager.getColor(
-                sceneGraph.getGraph().getNode(node.id as NodeId),
-                nodeLegendConfig,
-                legendMode
-              )}`,
-            },
-            sourcePosition: Position.Right,
-            targetPosition: Position.Left,
-            selected: isSelected,
-          };
-        });
-
-        const edgesWithStyling = data.edges.map((edge) => ({
-          ...edge,
-          type: "default",
+        return {
+          ...node,
+          type: (node?.type ?? "") in nodeTypes ? node.type : "resizerNode",
           style: {
-            stroke: RenderingManager.getColor(
-              sceneGraph.getGraph().getEdge(edge.id as EdgeId),
-              edgeLegendConfig,
+            background: RenderingManager.getColor(
+              sceneGraph.getGraph().getNode(node.id as NodeId),
+              nodeLegendConfig,
               legendMode
             ),
-          },
-          labelStyle: {
-            fill: RenderingManager.getColor(
-              sceneGraph.getGraph().getEdge(edge.id as EdgeId),
-              edgeLegendConfig,
+            color: "#000000",
+            // Default border - hover styling will be applied by the hover effect
+            border: `2px solid ${RenderingManager.getColor(
+              sceneGraph.getGraph().getNode(node.id as NodeId),
+              nodeLegendConfig,
               legendMode
-            ),
-            fontWeight: 700,
+            )}`,
           },
-        }));
+          sourcePosition: Position.Right,
+          targetPosition: Position.Left,
+          selected: isSelected,
+        };
+      });
 
-        console.log(
-          "ReactFlowPanelV2: Setting nodes with new positions",
-          nodesWithNewPositions.length,
-          "nodes"
-        );
-        console.log(
-          "ReactFlowPanelV2: Sample node positions:",
-          nodesWithNewPositions
-            .slice(0, 3)
-            .map((n) => ({ id: n.id, position: n.position }))
-        );
+      const edgesWithStyling = data.edges.map((edge) => ({
+        ...edge,
+        type: "default",
+        style: {
+          stroke: RenderingManager.getColor(
+            sceneGraph.getGraph().getEdge(edge.id as EdgeId),
+            edgeLegendConfig,
+            legendMode
+          ),
+        },
+        labelStyle: {
+          fill: RenderingManager.getColor(
+            sceneGraph.getGraph().getEdge(edge.id as EdgeId),
+            edgeLegendConfig,
+            legendMode
+          ),
+          fontWeight: 700,
+        },
+      }));
 
-        // Only update if the nodes/edges have actually changed to prevent infinite loops
-        setNodes(nodesWithNewPositions);
-        setEdges(edgesWithStyling);
-      } else {
-        console.log("ReactFlowPanelV2: No scene graph available");
-      }
-    } else {
-      console.log("ReactFlowPanelV2: No layout result or positions available");
+      setNodes(nodesWithNewPositions);
+      setEdges(edgesWithStyling);
     }
   }, [
     currentLayoutResult,
@@ -619,24 +593,27 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     }
   }, []);
 
-  // Simple hover effect - only update styling, not positions
+  // Optimized hover effect - only update the specific node that changed
   useEffect(() => {
-    console.log("ReactFlowPanelV2: Hover state changed", {
-      hoveredNodeIds: Array.from(hoveredNodeIds),
-      size: hoveredNodeIds.size,
-    });
-
-    // Get the first (and should be only) hovered node ID
     const hoveredNodeId =
       hoveredNodeIds.size > 0 ? Array.from(hoveredNodeIds)[0] : null;
     setCurrentHoveredNodeId(hoveredNodeId);
 
-    // Only update styling, not positions
     if (reactFlowInstance.current) {
       reactFlowInstance.current.setNodes((currentNodes) =>
         currentNodes.map((n) => {
           const isHovered = n.id === hoveredNodeId;
           const isSelected = selectedNodeIds.has(n.id as NodeId);
+
+          // Only update if hover state or selection state changed
+          const wasHovered =
+            typeof n.style?.border === "string" &&
+            n.style.border.includes("#ff6b35");
+          const wasSelected = n.selected;
+
+          if (isHovered === wasHovered && isSelected === wasSelected) {
+            return n; // No change needed
+          }
 
           // Get the original node color for proper border reset
           const originalNodeColor = RenderingManager.getColor(
@@ -648,20 +625,16 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
           return {
             ...n,
             selected: isSelected,
-            // Only update style, preserve position
             style: {
               ...n.style,
-              // Only apply hover effect to the exact node that's hovered
               border: isHovered
-                ? `4px solid #ff6b35` // More prominent orange border
+                ? `4px solid #ff6b35`
                 : `2px solid ${originalNodeColor}`,
-              // Reset background color for non-hovered nodes
               background: isHovered
-                ? `${n.style?.background || "#ccc"}ee` // Slightly more opaque for better visibility
+                ? `${n.style?.background || "#ccc"}ee`
                 : n.style?.background,
-              // Add box shadow for more professional look
               boxShadow: isHovered
-                ? `0 4px 12px rgba(255, 107, 53, 0.4)` // Orange glow effect
+                ? `0 4px 12px rgba(255, 107, 53, 0.4)`
                 : "none",
             },
           };
@@ -680,15 +653,11 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   useEffect(() => {
     // Add the zoom function to the window object for global access
     (window as any).reactFlowZoomToNode = (nodeId: string) => {
-      console.log("ReactFlowPanelV2: Global zoom to node:", nodeId);
-      setTimeout(() => {
-        zoomToNode(nodeId);
-      }, 100);
+      zoomToNode(nodeId);
     };
 
     // Add fit view function for tab system
     (window as any).reactFlowFitView = () => {
-      console.log("ReactFlowPanelV2: Global fit view called");
       if (reactFlowInstance.current) {
         setReactFlowViewportState(null); // Clear saved state
         reactFlowInstance.current.fitView({
@@ -745,13 +714,29 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     [setActiveDocument, setAppActiveView]
   );
 
-  // Save viewport state when it changes
+  // Save viewport state when it changes - with debouncing to prevent excessive updates
   const handleViewportChange = useCallback(
     (viewport: { x: number; y: number; zoom: number }) => {
-      console.log("ReactFlowPanelV2: Viewport changed", viewport);
-      setReactFlowViewportState(viewport);
+      // Clear any existing timeout
+      if (viewportTimeoutRef.current) {
+        clearTimeout(viewportTimeoutRef.current);
+      }
+
+      // Set a new timeout to debounce the viewport state update
+      viewportTimeoutRef.current = setTimeout(() => {
+        // Only save if the viewport has changed significantly (avoid saving identical states)
+        const currentState = getReactFlowViewportState();
+        if (
+          !currentState ||
+          Math.abs(currentState.x - viewport.x) > 1 ||
+          Math.abs(currentState.y - viewport.y) > 1 ||
+          Math.abs(currentState.zoom - viewport.zoom) > 0.01
+        ) {
+          setReactFlowViewportState(viewport);
+        }
+      }, 300); // 300ms debounce for even smoother performance
     },
-    [setReactFlowViewportState]
+    [setReactFlowViewportState, getReactFlowViewportState]
   );
 
   // Handle fit view button click - clear saved viewport state
@@ -874,6 +859,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
             panOnDrag={[2]}
             panOnScroll={false}
             multiSelectionKeyCode="Shift"
+            proOptions={{ hideAttribution: true }}
             nodes={nodes}
             edges={edges}
             onNodesChange={handleNodesChange}
@@ -889,6 +875,9 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
             onViewportChange={handleViewportChange}
             minZoom={0.01}
             maxZoom={1000}
+            nodesDraggable={false}
+            nodesConnectable={false}
+            elementsSelectable={true}
             connectionLineType={ConnectionLineType.Bezier}
             snapToGrid={reactFlowConfig.snapToGrid}
             snapGrid={reactFlowConfig.snapGrid}
