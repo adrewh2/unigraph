@@ -74,6 +74,9 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     // Get theme from app-shell
     const { theme } = useTheme();
 
+    // Get tag store functions
+    const { getTagMetadata } = useTagStore();
+
     // Grid API reference - moved up so cell renderers can access it
     const gridRef = useRef<AgGridReact<Entity>>(null);
 
@@ -1277,14 +1280,22 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       const tagName = entityData.label; // For tags, the label is the tag name
 
       const handleDoubleClick = (e: React.MouseEvent) => {
+        console.log("DescriptionCellRenderer handleDoubleClick called", {
+          entityType,
+          tagName,
+          propsValue: props.value
+        });
         e.stopPropagation();
         if (entityType === "tags") {
+          console.log("Setting editing mode to true");
           setIsEditing(true);
           setEditValue(props.value || "");
           setTimeout(() => {
             inputRef.current?.focus();
             inputRef.current?.select();
           }, 10);
+        } else {
+          console.log("Not tags entity type, ignoring double-click");
         }
       };
 
@@ -1335,14 +1346,49 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       }, [isEditing]);
 
       const handleSave = () => {
+        console.log("DescriptionCellRenderer handleSave called", {
+          entityType,
+          tagName,
+          editValue,
+          entityData,
+          propsData: props.data.getData()
+        });
+        
         if (entityType === "tags" && tagName) {
           const currentMetadata = getTagMetadata(tagName);
+          console.log("Current tag metadata before save:", currentMetadata);
+          
           setTagMetadata(tagName, {
             color: currentMetadata?.color || getTagColor(tagName),
             description: editValue,
             usageCount: currentMetadata?.usageCount || 0,
+            isDescriptionUserSet: true, // Mark as user-set
           });
           console.log("Updated tag description in store:", tagName, editValue);
+          
+          // Verify the save worked
+          const updatedMetadata = getTagMetadata(tagName);
+          console.log("Tag metadata after save:", updatedMetadata);
+          
+          // Force refresh the grid to pick up the new description
+          if (gridRef.current?.api) {
+            const rowNode = gridRef.current.api.getRowNode(props.data.getId());
+            if (rowNode) {
+              // Refresh the entire row to ensure all cells get updated values
+              gridRef.current.api.refreshCells({
+                rowNodes: [rowNode],
+                force: true,
+                suppressFlash: true,
+              });
+            }
+            // Also update the entire grid row data to trigger re-render
+            setRowData(container.toArray());
+          }
+        } else {
+          console.log("Save skipped - missing entityType or tagName", {
+            entityType,
+            tagName
+          });
         }
         setIsEditing(false);
       };
@@ -2031,6 +2077,26 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             return params.data.getLabel() || "";
           }
 
+          // For description column in tags entity type, read from tag store
+          if (col === "description" && entityType === "tags") {
+            const entityData = params.data.getData();
+            const tagName = entityData.label;
+            console.log("ValueGetter for description column:", {
+              entityType,
+              tagName,
+              entityData
+            });
+            
+            if (tagName) {
+              const tagMetadata = getTagMetadata(tagName);
+              console.log("Retrieved tag metadata:", tagMetadata);
+              const description = tagMetadata?.description || "";
+              console.log("Returning description:", description);
+              return description;
+            }
+            return "";
+          }
+
           const value = (params.data.getData() as any)[col];
 
           // Debug logging for annotation fields
@@ -2088,7 +2154,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       // unfortunately there is an issue with the cell renderer dependencies
       // and forcegraph3d causing them to rerender on every mouse move
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [container, formatValue, searchInValue]);
+    }, [container, formatValue, searchInValue, getTagMetadata, entityType]);
 
     // Default column definition
     const defaultColDef = useMemo(

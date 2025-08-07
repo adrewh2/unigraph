@@ -31,7 +31,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const { currentSceneGraph } = useAppConfigStore();
   const { theme } = useTheme();
   const { user } = useAuth();
-  const { setTagMetadata, getTagColor } = useTagStore();
+  const { setTagMetadata, getTagColor, getTagMetadata } = useTagStore();
   const [activeTab, setActiveTab] = useState<string>("nodes");
   const [webpages, setWebpages] = useState<Webpage[]>([]);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -232,17 +232,31 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         }).length;
 
         const totalUsage = webResourceCount + annotationCount;
-        const description = `Tag used across ${webResourceCount} web resources and ${annotationCount} annotations`;
 
-        // Store tag metadata in the store
-        setTagMetadata(tag, {
-          color: getTagColor(tag),
-          description,
-          usageCount: totalUsage,
-        });
+        // Store tag metadata in the store, but preserve user-set descriptions
+        const existingMetadata = getTagMetadata(tag);
+        
+        // Only update if this is a new tag OR if we're only updating usage count
+        if (!existingMetadata) {
+          // New tag - set initial metadata with empty description
+          setTagMetadata(tag, {
+            color: getTagColor(tag),
+            description: "", // Start with empty description for user to set
+            usageCount: totalUsage,
+            isDescriptionUserSet: false,
+          });
+        } else {
+          // Existing tag - only update usage count and color, preserve user-set description
+          setTagMetadata(tag, {
+            color: existingMetadata.color || getTagColor(tag),
+            description: existingMetadata.description, // Always keep existing description
+            usageCount: totalUsage, // Update usage count
+            isDescriptionUserSet: existingMetadata.isDescriptionUserSet || false,
+          });
+        }
       });
     }
-  }, [tagCache, loading, webpages, annotations, setTagMetadata, getTagColor]);
+  }, [tagCache, loading, webpages, annotations, setTagMetadata, getTagColor, getTagMetadata]);
 
   // Function to force refresh data
   const refreshData = useCallback(() => {
@@ -591,9 +605,6 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   // Create tags container with color and description columns using cached tags
   const tagsContainer = new EntitiesContainer(
     Array.from(tagCache).map((tag) => {
-      // Get color from tag store
-      const color = getTagColor(tag);
-
       // Calculate usage statistics
       const webResourceCount = webpages.filter((w) => {
         let tags: string[] = [];
@@ -628,21 +639,24 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       }).length;
 
       const totalUsage = webResourceCount + annotationCount;
-      const description = `Tag used across ${webResourceCount} web resources and ${annotationCount} annotations`;
 
       return {
         getId: () => `tag-${tag}`,
         getType: () => "tag",
         getLabel: () => tag,
         getTags: () => new Set(),
-        getData: () => ({
-          id: `tag-${tag}`,
-          label: tag,
-          type: "tag",
-          color: color,
-          description: description,
-          usage_count: totalUsage,
-        }),
+        getData: () => {
+          // Always get the latest description from tag store
+          const currentTagMetadata = getTagMetadata(tag);
+          return {
+            id: `tag-${tag}`,
+            label: tag,
+            type: "tag",
+            color: getTagColor(tag), // Always get current color
+            description: currentTagMetadata?.description || "", // Start with empty description
+            usage_count: totalUsage,
+          };
+        },
         getEntityType: () => "node",
         getFullyQualifiedId: () => `tag-${tag}`,
         setId: () => {
