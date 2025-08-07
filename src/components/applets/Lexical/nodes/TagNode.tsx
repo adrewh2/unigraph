@@ -157,7 +157,7 @@ export class TagNode extends TextNode {
   }
 
   isSimpleText(): boolean {
-    return false;
+    return false; // This makes it behave as a complex node that can be deleted as a unit
   }
 
   isToken(): boolean {
@@ -177,7 +177,34 @@ export class TagNode extends TextNode {
   }
 
   isInert(): boolean {
-    return false; // Allow deletion
+    return true; // Prevent any internal modifications
+  }
+
+  // Override to prevent text editing
+  setTextContent(text: string): this {
+    // Do nothing - prevent text editing
+    console.log("TagNode: Attempted to set text content, ignoring:", text);
+    return this;
+  }
+
+  // Override to prevent text editing
+  setTextContentSelection(
+    text: string,
+    anchorOffset: number,
+    focusOffset: number
+  ): this {
+    // Do nothing - prevent text editing
+    console.log(
+      "TagNode: Attempted to set text content selection, ignoring:",
+      text
+    );
+    return this;
+  }
+
+  // Override to handle deletion of the entire tag
+  remove(): void {
+    console.log("TagNode: Removing entire tag:", this.__tagName);
+    super.remove();
   }
 }
 
