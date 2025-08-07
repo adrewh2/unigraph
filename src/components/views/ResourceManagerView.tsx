@@ -24,6 +24,7 @@ interface TabData {
   icon: string;
   container: EntitiesContainer<any, any>;
   sceneGraph: SceneGraph;
+  entityType?: string;
 }
 
 const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
@@ -693,6 +694,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       icon: "🏷️",
       container: tagsContainer,
       sceneGraph: currentSceneGraph,
+      entityType: "tags",
     },
     {
       id: "web-resources",
@@ -863,7 +865,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             container={activeTabData.container}
             sceneGraph={activeTabData.sceneGraph}
             maxHeight="100%"
-            entityType={activeTabData.id}
+            entityType={activeTabData.entityType || activeTabData.id}
           />
         ) : (
           <div

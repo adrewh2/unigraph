@@ -1076,7 +1076,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     // Tags cell renderer component with portal-based dropdown
     const TagsCellRendererComponent = React.memo(
       (props: { data: Entity; value: string[] }) => {
-        const { getTagColor } = useTagStore();
+        const { getTagColor, setTagColor } = useTagStore();
         const [isEditing, setIsEditing] = useState(false);
         // Use ref to track state across renders
         const isEditingRef = useRef(isEditing);
@@ -1264,6 +1264,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
     // Color cell renderer component
     const ColorCellRenderer = (props: { data: Entity; value: string }) => {
+      const { setTagColor } = useTagStore();
       // For Node entities, color is in the NodeData, for other entities it might be in userData
       const entityData = props.data.getData();
       const colorValue = props.value || (entityData as any)?.color || "";
@@ -1316,16 +1317,25 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         setCurrentColor(newColor);
         console.log("Color changed to:", newColor);
 
-        // Update the entity's color using the proper setter method if available
-        if (
-          props.data &&
-          typeof (props.data as ModelNode).setColor === "function"
-        ) {
-          (props.data as ModelNode).setColor(newColor);
+        // Get the tag name from the entity data
+        const entityData = props.data.getData();
+        const tagName = entityData.label; // For tags, the label is the tag name
+
+        // Update the tag store if this is a tag entity
+        if (entityType === "tags" && tagName) {
+          setTagColor(tagName, newColor);
+          console.log("Updated tag color in store:", tagName, newColor);
         } else {
-          // Fallback: update the data directly
-          const entityData = props.data.getData();
-          (entityData as any).color = newColor;
+          // Update the entity's color using the proper setter method if available
+          if (
+            props.data &&
+            typeof (props.data as ModelNode).setColor === "function"
+          ) {
+            (props.data as ModelNode).setColor(newColor);
+          } else {
+            // Fallback: update the data directly
+            (entityData as any).color = newColor;
+          }
         }
 
         // Force refresh the entire row to update all cell values
@@ -1766,6 +1776,12 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           "Documents configuration - EXCLUDED_COLUMNS:",
           EXCLUDED_COLUMNS
         );
+      } else if (entityType === "tags") {
+        // Tags specific configuration
+        COLUMN_ORDER = ["label", "color", "description", "usage_count"];
+        EXCLUDED_COLUMNS = ["userData", "id", "type"];
+        console.log("Tags configuration - COLUMN_ORDER:", COLUMN_ORDER);
+        console.log("Tags configuration - EXCLUDED_COLUMNS:", EXCLUDED_COLUMNS);
       } else {
         // Default configuration for other entity types
         COLUMN_ORDER = [
