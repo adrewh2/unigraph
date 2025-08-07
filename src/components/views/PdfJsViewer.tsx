@@ -11,7 +11,8 @@ interface PdfJsViewerProps {
 }
 
 const PdfJsViewer: React.FC<PdfJsViewerProps> = ({
-  url = "https://arxiv.org/pdf/1307.5461", // Quantum hyperbolic geometry in loop quantum gravity
+  url = "/test2.pdf",
+  //   url = "https://arxiv.org/pdf/1307.5461", // Quantum hyperbolic geometry in loop quantum gravity
   title = "Quantum hyperbolic geometry in loop quantum gravity with cosmological constant",
   initialPage = 1,
   initialScale = 1.0,
@@ -28,14 +29,9 @@ const PdfJsViewer: React.FC<PdfJsViewerProps> = ({
     const params = new URLSearchParams();
 
     if (url) {
-      // For now, use the regular viewer and test with a local PDF
-      const viewerPath = "/pdfjs/web/viewer.html";
-
-      // Use a local PDF for testing first
-      const testPdfUrl = "/pdfjs/web/compressed.tracemonkey-pldi-09.pdf";
-      params.append("file", testPdfUrl);
-
-      return `${viewerPath}?${params.toString()}`;
+      // Use the provided URL
+      params.append("file", url);
+      return `${baseUrl}?${params.toString()}`;
     }
 
     return baseUrl;
