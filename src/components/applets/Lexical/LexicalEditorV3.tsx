@@ -200,7 +200,26 @@ const EditorStateInitializer: React.FC<{
     );
 
     if (content && content.trim().length > 0) {
-      // Create a simple editor state with the content
+      // Try to parse as serialized Lexical state first
+      try {
+        const parsedState = JSON.parse(content);
+        if (
+          parsedState &&
+          typeof parsedState === "object" &&
+          parsedState.root
+        ) {
+          // This is a serialized Lexical state
+          console.log("LexicalEditorV3: Loading serialized Lexical state");
+          editor.setEditorState(editor.parseEditorState(content));
+          return;
+        }
+      } catch (error) {
+        console.log(
+          "LexicalEditorV3: Content is not serialized Lexical state, treating as plain text"
+        );
+      }
+
+      // Fallback to creating simple text nodes for plain text content
       editor.update(() => {
         const root = $getRoot();
         root.clear();
@@ -350,6 +369,9 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   // Handle editor content changes
   const handleEditorChange = React.useCallback(
     (editorState: EditorState, editor: LexicalEditor) => {
+      // Serialize the editor state to preserve TagNode structure
+      const serializedState = JSON.stringify(editorState.toJSON());
+
       editorState.read(() => {
         const root = $getRoot();
         const textContent = root.getTextContent();
@@ -365,8 +387,8 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
             preview: textContent.substring(0, 50) + "...",
           });
 
-          // Trigger autosave
-          saveToServer(textContent);
+          // Save both text content and serialized state
+          saveToServer(serializedState);
         }
 
         // Call onChange callback if provided
