@@ -31,7 +31,7 @@ import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
 import Map2DView from "./Map2DView";
 import MonacoEditorView from "./MonacoEditorView";
 import NodeLegendView from "./NodeLegendView";
-import PdfViewer from "./PdfViewer";
+import PdfJsViewer from "./PdfJsViewer";
 import ReactFlowPanelV2 from "./ReactFlowPanelV2";
 import ResourceManagerView from "./ResourceManagerView";
 import SandpackEditorWithFileTree from "./SandpackEditorWithFileTree";
@@ -888,7 +888,7 @@ const pdfViewerView = {
   id: VIEW_DEFINITIONS["pdf-viewer"].id,
   title: VIEW_DEFINITIONS["pdf-viewer"].title,
   icon: VIEW_DEFINITIONS["pdf-viewer"].icon,
-  component: (props: any) => <PdfViewer {...props} />,
+  component: (props: any) => <PdfJsViewer {...props} />,
   category: VIEW_DEFINITIONS["pdf-viewer"].category,
 };
 
