@@ -44,7 +44,6 @@ export class TagNode extends TextNode {
     dom.setAttribute("data-tag-name", this.__tagName);
     dom.setAttribute("data-lexical-tag", "true");
     dom.setAttribute("data-lexical-node-type", "tag");
-    dom.setAttribute("contenteditable", "false"); // Make it non-editable
     console.log("TagNode: Created DOM element with class:", dom.className);
     console.log("TagNode: DOM attributes:", {
       className: dom.className,
@@ -67,9 +66,21 @@ export class TagNode extends TextNode {
       );
       dom.style.setProperty("background-color", color, "important");
       dom.style.setProperty("color", "#ffffff", "important");
+      dom.style.setProperty("padding", "2px 6px", "important");
+      dom.style.setProperty("border-radius", "12px", "important");
+      dom.style.setProperty("font-size", "0.9em", "important");
+      dom.style.setProperty("font-weight", "500", "important");
+      dom.style.setProperty("margin", "0 2px", "important");
+      dom.style.setProperty(
+        "border",
+        "1px solid rgba(0, 0, 0, 0.1)",
+        "important"
+      );
       console.log("TagNode: Applied styles to DOM:", {
         backgroundColor: dom.style.backgroundColor,
         color: dom.style.color,
+        padding: dom.style.padding,
+        borderRadius: dom.style.borderRadius,
       });
     } catch (error) {
       console.log("TagNode: Error getting tag color:", error);
@@ -88,9 +99,21 @@ export class TagNode extends TextNode {
       );
       dom.style.setProperty("background-color", color, "important");
       dom.style.setProperty("color", "#ffffff", "important");
+      dom.style.setProperty("padding", "2px 6px", "important");
+      dom.style.setProperty("border-radius", "12px", "important");
+      dom.style.setProperty("font-size", "0.9em", "important");
+      dom.style.setProperty("font-weight", "500", "important");
+      dom.style.setProperty("margin", "0 2px", "important");
+      dom.style.setProperty(
+        "border",
+        "1px solid rgba(0, 0, 0, 0.1)",
+        "important"
+      );
       console.log("TagNode: Applied fallback styles to DOM:", {
         backgroundColor: dom.style.backgroundColor,
         color: dom.style.color,
+        padding: dom.style.padding,
+        borderRadius: dom.style.borderRadius,
       });
     }
 
@@ -139,6 +162,22 @@ export class TagNode extends TextNode {
 
   isToken(): boolean {
     return true;
+  }
+
+  canInsertTextBefore(): boolean {
+    return false;
+  }
+
+  canInsertTextAfter(): boolean {
+    return false;
+  }
+
+  isSegmented(): boolean {
+    return false; // Prevent splitting the node
+  }
+
+  isInert(): boolean {
+    return false; // Allow deletion
   }
 }
 
