@@ -40,6 +40,8 @@ import "./LexicalEditor.css";
 import { MentionNode } from "./nodes/MentionNode";
 import { EntityReferenceNode } from "./plugins/EntityReferencePlugin";
 import MentionsPlugin from "./plugins/MentionsPlugin";
+import TagAutocompletePlugin from "./plugins/TagAutocompletePlugin";
+import { TagPlugin } from "./plugins/TagPlugin";
 import { ToolbarPlugin } from "./plugins/ToolbarPlugin";
 
 // Create a separate PlaceholderPlugin component
@@ -595,6 +597,8 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
               <ListPlugin />
               <LinkPlugin />
               <HashtagPlugin />
+              <TagPlugin onTagsChange={() => {}} />
+              <TagAutocompletePlugin />
               <TablePlugin />
               <CheckListPlugin />
               <MarkdownShortcutPlugin transformers={TRANSFORMERS} />

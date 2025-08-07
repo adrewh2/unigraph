@@ -16,6 +16,7 @@ interface TagStore {
   setTagMetadata: (tag: string, metadata: TagInfo) => void;
   getTagColor: (tag: string) => string;
   getTagMetadata: (tag: string) => TagInfo | undefined;
+  getAllTags: () => string[];
   generateTagColor: (tag: string) => string;
   initializeTagColors: (tags: string[]) => void;
   clearTags: () => void;
@@ -63,6 +64,20 @@ export const useTagStore = create<TagStore>((set, get) => ({
     const metadata = state.tagMetadata.get(tag);
     console.log("getTagMetadata called:", tag, "returning:", metadata);
     return metadata;
+  },
+
+  getAllTags: () => {
+    const state = get();
+    // Get all tags from both tagColors and tagMetadata maps
+    const allTags = new Set<string>();
+
+    // Add tags from tagColors
+    state.tagColors.forEach((_, tag) => allTags.add(tag));
+
+    // Add tags from tagMetadata
+    state.tagMetadata.forEach((_, tag) => allTags.add(tag));
+
+    return Array.from(allTags);
   },
 
   generateTagColor: (tag: string) => {
