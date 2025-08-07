@@ -1263,6 +1263,140 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     TagsCellRendererComponent.displayName = "TagsCellRendererComponent";
 
     // Color cell renderer component
+    const DescriptionCellRenderer = (props: {
+      data: Entity;
+      value: string;
+    }) => {
+      const { setTagMetadata, getTagMetadata, getTagColor } = useTagStore();
+      const [isEditing, setIsEditing] = useState(false);
+      const [editValue, setEditValue] = useState(props.value || "");
+      const inputRef = useRef<HTMLInputElement>(null);
+
+      // Get the tag name from the entity data
+      const entityData = props.data.getData();
+      const tagName = entityData.label; // For tags, the label is the tag name
+
+      const handleDoubleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (entityType === "tags") {
+          setIsEditing(true);
+          setEditValue(props.value || "");
+          setTimeout(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+          }, 10);
+        }
+      };
+
+      // Add document-level event listeners to prevent AG Grid interference
+      useEffect(() => {
+        if (!isEditing) return;
+
+        const handleDocumentKeyDown = (e: KeyboardEvent) => {
+          // Only handle events for our input
+          if (e.target !== inputRef.current) return;
+
+          // Stop propagation for all keyboard events
+          e.stopPropagation();
+
+          // Allow arrow keys and other navigation keys to work normally
+          if (
+            e.key === "ArrowLeft" ||
+            e.key === "ArrowRight" ||
+            e.key === "ArrowUp" ||
+            e.key === "ArrowDown" ||
+            e.key === "Home" ||
+            e.key === "End" ||
+            e.key === "Backspace" ||
+            e.key === "Delete"
+          ) {
+            return; // Let these keys work normally
+          }
+
+          // Handle Enter and Escape
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSave();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            handleCancel();
+          }
+        };
+
+        document.addEventListener("keydown", handleDocumentKeyDown, {
+          capture: true,
+        });
+
+        return () => {
+          document.removeEventListener("keydown", handleDocumentKeyDown, {
+            capture: true,
+          });
+        };
+      }, [isEditing]);
+
+      const handleSave = () => {
+        if (entityType === "tags" && tagName) {
+          const currentMetadata = getTagMetadata(tagName);
+          setTagMetadata(tagName, {
+            color: currentMetadata?.color || getTagColor(tagName),
+            description: editValue,
+            usageCount: currentMetadata?.usageCount || 0,
+          });
+          console.log("Updated tag description in store:", tagName, editValue);
+        }
+        setIsEditing(false);
+      };
+
+      const handleCancel = () => {
+        setEditValue(props.value || "");
+        setIsEditing(false);
+      };
+
+      if (isEditing) {
+        return (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={handleSave}
+            onKeyUp={(e) => e.stopPropagation()}
+            onKeyPress={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              padding: "4px 8px",
+              border: `1px solid ${theme.colors.primary}`,
+              borderRadius: "4px",
+              fontSize: "14px",
+              backgroundColor: theme.colors.background,
+              color: theme.colors.text,
+            }}
+          />
+        );
+      }
+
+      return (
+        <div
+          onDoubleClick={handleDoubleClick}
+          style={{
+            cursor: entityType === "tags" ? "pointer" : "default",
+            width: "100%",
+            padding: "4px 8px",
+            fontSize: "14px",
+            color: theme.colors.text,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+          title={
+            entityType === "tags" ? "Double-click to edit description" : ""
+          }
+        >
+          {props.value || ""}
+        </div>
+      );
+    };
+
     const ColorCellRenderer = (props: { data: Entity; value: string }) => {
       const { setTagColor } = useTagStore();
       // For Node entities, color is in the NodeData, for other entities it might be in userData
@@ -1880,13 +2014,15 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         cellRenderer:
           col === "color"
             ? ColorCellRenderer
-            : col === "label"
-              ? LabelCellRenderer
-              : col === "type"
-                ? TypeCellRenderer
-                : col === "tags"
-                  ? TagsCellRendererComponent
-                  : undefined,
+            : col === "description"
+              ? DescriptionCellRenderer
+              : col === "label"
+                ? LabelCellRenderer
+                : col === "type"
+                  ? TypeCellRenderer
+                  : col === "tags"
+                    ? TagsCellRendererComponent
+                    : undefined,
         valueGetter: (params: any) => {
           if (!params.data) return "";
 
