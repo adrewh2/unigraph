@@ -15,9 +15,26 @@ export interface ProcessedHtmlResult {
   highlightsAdded: number;
 }
 
+/**
+ * Helper function to determine highlight color based on tags
+ */
+function getHighlightColorForAnnotation(
+  tags: string[] | undefined,
+  getTagColor?: (tag: string) => string
+): string {
+  if (!tags || tags.length === 0 || !getTagColor) {
+    return "#ffeb3b"; // Default yellow color
+  }
+
+  // For now, use the color of the first tag
+  // Future enhancement: could implement color blending for multiple tags
+  return getTagColor(tags[0]);
+}
+
 export const processHtmlWithHighlights = (
   htmlContent: string,
-  annotations: AnnotationHighlight[]
+  annotations: AnnotationHighlight[],
+  getTagColor?: (tag: string) => string
 ): ProcessedHtmlResult => {
   console.log("Processing HTML with", annotations.length, "annotations");
   console.log("HTML content length:", htmlContent.length);
@@ -156,9 +173,13 @@ export const processHtmlWithHighlights = (
         const annotationId = annotation.id;
         const startPosition = annotation.data.start_position;
         const endPosition = annotation.data.end_position;
+        const tags = annotation.data.tags;
+
+        // Determine highlight color based on tags
+        const highlightColor = getHighlightColorForAnnotation(tags, getTagColor);
 
         // Create the highlighted span
-        const highlightedSpan = `<span class="annotation-highlight" data-annotation-id="${annotationId}" style="background-color: #ffeb3b; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;" onclick="window.parent.postMessage({type: 'show-annotation', annotationId: '${annotationId}'}, '*')">${searchText}</span>`;
+        const highlightedSpan = `<span class="annotation-highlight" data-annotation-id="${annotationId}" style="background-color: ${highlightColor}; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;" onclick="window.parent.postMessage({type: 'show-annotation', annotationId: '${annotationId}'}, '*')">${searchText}</span>`;
 
         console.log(
           `Processing annotation: "${searchText}" at positions ${startPosition}-${endPosition}`
@@ -211,7 +232,7 @@ export const processHtmlWithHighlights = (
                     const span = document.createElement('span');
                     span.className = 'annotation-highlight';
                     span.setAttribute('data-annotation-id', annotationId);
-                    span.style.cssText = 'background-color: #ffeb3b; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;';
+                    span.style.cssText = 'background-color: ${highlightColor}; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;';
                     span.onclick = function() {
                       window.parent.postMessage({type: 'show-annotation', annotationId: annotationId}, '*');
                     };

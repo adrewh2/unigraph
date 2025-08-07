@@ -17,6 +17,7 @@ import { getWebpage } from "../../api/webpagesApi";
 import useAppConfigStore from "../../store/appConfigStore";
 import { useHtmlPageViewerStore } from "../../store/htmlPageViewerStore";
 import { addNotification } from "../../store/notificationStore";
+import { useTagStore } from "../../store/tagStore";
 import { useUserStore } from "../../store/userStore";
 import EditableAnnotationCard from "../annotations/EditableAnnotationCard";
 import AnnotationDialog from "./AnnotationDialog";
@@ -100,6 +101,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
   // Store hooks
   const { user } = useUserStore();
   const { currentSceneGraph } = useAppConfigStore();
+  const { getTagColor } = useTagStore();
 
   // Get store functions
   const {
@@ -317,7 +319,7 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             };
           });
 
-        const result = processHtmlWithHighlights(html, annotationHighlights);
+        const result = processHtmlWithHighlights(html, annotationHighlights, getTagColor);
         processedHtml = result.html;
         hasHighlights = result.highlightsAdded > 0;
 
