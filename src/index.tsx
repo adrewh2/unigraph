@@ -4,9 +4,9 @@ import App from "./App";
 import { LayoutEngineOption } from "./core/layouts/layoutEngineTypes";
 import { decompressSceneGraphJsonFromUrl } from "./core/serializers/toFromJson";
 import "./index.css";
+import Privacy from "./pages/Privacy";
 import SignIn from "./pages/SignIn";
 import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
 import {
   setActiveLayout,
   setActiveSceneGraph,

@@ -31,6 +31,7 @@ import ForceGraph3DViewV2 from "./ForceGraph3DViewV2";
 import Map2DView from "./Map2DView";
 import MonacoEditorView from "./MonacoEditorView";
 import NodeLegendView from "./NodeLegendView";
+import PdfViewer from "./PdfViewer";
 import ReactFlowPanelV2 from "./ReactFlowPanelV2";
 import ResourceManagerView from "./ResourceManagerView";
 import SandpackEditorWithFileTree from "./SandpackEditorWithFileTree";
@@ -883,6 +884,14 @@ const resourceManagerView = {
   category: VIEW_DEFINITIONS["resource-manager"].category,
 };
 
+const pdfViewerView = {
+  id: VIEW_DEFINITIONS["pdf-viewer"].id,
+  title: VIEW_DEFINITIONS["pdf-viewer"].title,
+  icon: VIEW_DEFINITIONS["pdf-viewer"].icon,
+  component: (props: any) => <PdfViewer {...props} />,
+  category: VIEW_DEFINITIONS["pdf-viewer"].category,
+};
+
 const MarkdownViewerWrapper: React.FC<any> = (props) => {
   const currentSceneGraph = useAppConfigStore(
     (state) => state.currentSceneGraph
@@ -994,6 +1003,7 @@ const allViews = [
   logViewerView,
   map2DView,
   resourceManagerView,
+  pdfViewerView,
 ];
 
 // Example: Create a custom theme for demonstration

@@ -195,6 +195,14 @@ export const VIEW_DEFINITIONS: Record<string, ViewDefinition> = {
     category: "content",
     description: "View web pages within the application",
   },
+  "pdf-viewer": {
+    id: "pdf-viewer",
+    title: "PDF Viewer",
+    icon: "📄",
+    category: "content",
+    description:
+      "View and interact with PDF documents with zoom, navigation, and search capabilities",
+  },
 };
 
 // Helper function to get all available view IDs
