@@ -1,5 +1,5 @@
 import { Download, Search, ZoomIn, ZoomOut } from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 
 interface PdfViewerProps {
   url?: string;
@@ -16,29 +16,29 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 }) => {
   console.log("PdfViewer mounting with URL:", url);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchText, setSearchText] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [scale, setScale] = useState(initialScale);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [searchText, setSearchText] = React.useState("");
+  const [searchResults, setSearchResults] = React.useState<any[]>([]);
+  const [scale, setScale] = React.useState(initialScale);
 
   // Simple loading state
-  useEffect(() => {
+  React.useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  const zoomIn = useCallback(() => {
+  const zoomIn = React.useCallback(() => {
     setScale((prev) => Math.min(prev + 0.2, 3.0));
   }, []);
 
-  const zoomOut = useCallback(() => {
+  const zoomOut = React.useCallback(() => {
     setScale((prev) => Math.max(prev - 0.2, 0.5));
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = React.useCallback(() => {
     if (!searchText.trim()) {
       setSearchResults([]);
       return;
@@ -47,7 +47,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     console.log("Searching for:", searchText);
   }, [searchText]);
 
-  const downloadPdf = useCallback(() => {
+  const downloadPdf = React.useCallback(() => {
     const link = document.createElement("a");
     link.href = url;
     link.download = title || "document.pdf";
