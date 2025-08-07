@@ -13,6 +13,7 @@ import { SceneGraph } from "../../core/model/SceneGraph";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { useAuth } from "../../hooks/useAuth";
 import useAppConfigStore from "../../store/appConfigStore";
+import { useTagStore } from "../../store/tagStore";
 import EntityTableV2 from "../common/EntityTableV2";
 
 type ResourceManagerViewProps = Record<string, never>;
@@ -29,6 +30,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const { currentSceneGraph } = useAppConfigStore();
   const { theme } = useTheme();
   const { user } = useAuth();
+  const { setTagMetadata, getTagColor } = useTagStore();
   const [activeTab, setActiveTab] = useState<string>("nodes");
   const [webpages, setWebpages] = useState<Webpage[]>([]);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
@@ -37,6 +39,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
   }>({});
+  const [tagCache, setTagCache] = useState<Set<string>>(new Set());
 
   // Ref to access the EntityTableV2 grid API for silent refresh
   const entityTableRef = useRef<any>(null);
@@ -121,11 +124,53 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           userId: user.id,
         });
 
+        // Collect tags during loading
+        const newTagCache = new Set<string>();
+
+        // Collect tags from webpages
+        (webpagesData || []).forEach((webpage: Webpage) => {
+          let tags: string[] = [];
+          let metadataObj = webpage.metadata;
+          if (typeof metadataObj === "string") {
+            try {
+              metadataObj = JSON.parse(metadataObj);
+            } catch (e) {
+              /* Ignore parse errors */
+            }
+          }
+          if (metadataObj && typeof metadataObj === "object") {
+            const tagsFromTags = (metadataObj as any).tags;
+            const tagsFromTag = (metadataObj as any).tag;
+            const tagsFromKeywords = (metadataObj as any).keywords;
+            tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+          }
+          if (Array.isArray(tags)) {
+            tags.forEach((tag) => newTagCache.add(tag));
+          }
+        });
+
+        // Collect tags from annotations
+        (annotationsData || []).forEach((annotation: Annotation) => {
+          let annotationData = annotation.data;
+          if (typeof annotationData === "string") {
+            try {
+              annotationData = JSON.parse(annotationData);
+            } catch (e) {
+              /* Ignore parse errors */
+            }
+          }
+          const tags = (annotationData as any).tags || [];
+          if (Array.isArray(tags)) {
+            tags.forEach((tag) => newTagCache.add(tag));
+          }
+        });
+
         // Update state
         setWebpages(webpagesData || []);
         setAnnotations(annotationsData || []);
         setDocuments(documentsData || []);
         setWebpageContentAvailability(contentAvailability);
+        setTagCache(newTagCache);
 
         // Update cache
         setDataCache({
@@ -147,6 +192,56 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Store tag metadata after tags container is created
+  useEffect(() => {
+    if (tagCache.size > 0 && !loading) {
+      tagCache.forEach((tag) => {
+        // Calculate usage statistics
+        const webResourceCount = webpages.filter((w) => {
+          let tags: string[] = [];
+          let metadataObj = w.metadata;
+          if (typeof metadataObj === "string") {
+            try {
+              metadataObj = JSON.parse(metadataObj);
+            } catch (e) {
+              /* Ignore parse errors */
+            }
+          }
+          if (metadataObj && typeof metadataObj === "object") {
+            const tagsFromTags = (metadataObj as any).tags;
+            const tagsFromTag = (metadataObj as any).tag;
+            const tagsFromKeywords = (metadataObj as any).keywords;
+            tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+          }
+          return Array.isArray(tags) && tags.includes(tag);
+        }).length;
+
+        const annotationCount = annotations.filter((a) => {
+          let annotationData = a.data;
+          if (typeof annotationData === "string") {
+            try {
+              annotationData = JSON.parse(annotationData);
+            } catch (e) {
+              /* Ignore parse errors */
+            }
+          }
+          const tags = (annotationData as any).tags || [];
+          return Array.isArray(tags) && tags.includes(tag);
+        }).length;
+
+        const totalUsage = webResourceCount + annotationCount;
+        const description = `Tag used across ${webResourceCount} web resources and ${annotationCount} annotations`;
+
+        // Store tag metadata in the store
+        setTagMetadata(tag, {
+          color: getTagColor(tag),
+          description,
+          usageCount: totalUsage,
+        });
+      });
+    }
+  }, [tagCache, loading, webpages, annotations, setTagMetadata, getTagColor]);
 
   // Function to force refresh data
   const refreshData = useCallback(() => {
@@ -178,11 +273,53 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         userId: user.id,
       });
 
+      // Collect tags during silent refresh
+      const newTagCache = new Set<string>();
+
+      // Collect tags from webpages
+      (webpagesData || []).forEach((webpage: Webpage) => {
+        let tags: string[] = [];
+        let metadataObj = webpage.metadata;
+        if (typeof metadataObj === "string") {
+          try {
+            metadataObj = JSON.parse(metadataObj);
+          } catch (e) {
+            /* Ignore parse errors */
+          }
+        }
+        if (metadataObj && typeof metadataObj === "object") {
+          const tagsFromTags = (metadataObj as any).tags;
+          const tagsFromTag = (metadataObj as any).tag;
+          const tagsFromKeywords = (metadataObj as any).keywords;
+          tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+        }
+        if (Array.isArray(tags)) {
+          tags.forEach((tag) => newTagCache.add(tag));
+        }
+      });
+
+      // Collect tags from annotations
+      (annotationsData || []).forEach((annotation: Annotation) => {
+        let annotationData = annotation.data;
+        if (typeof annotationData === "string") {
+          try {
+            annotationData = JSON.parse(annotationData);
+          } catch (e) {
+            /* Ignore parse errors */
+          }
+        }
+        const tags = (annotationData as any).tags || [];
+        if (Array.isArray(tags)) {
+          tags.forEach((tag) => newTagCache.add(tag));
+        }
+      });
+
       // Update state silently (no loading state)
       setWebpages(webpagesData || []);
       setAnnotations(annotationsData || []);
       setDocuments(documentsData || []);
       setWebpageContentAvailability(contentAvailability);
+      setTagCache(newTagCache);
 
       // Update cache
       setDataCache({
@@ -450,64 +587,47 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     })
   );
 
-  // Create container for all tags from web resources and annotations
-  const allTags = new Set<string>();
-
-  // Collect tags from web resources
-  webpages.forEach((webpage) => {
-    let tags: string[] = [];
-    let metadataObj = webpage.metadata;
-
-    if (typeof metadataObj === "string") {
-      try {
-        metadataObj = JSON.parse(metadataObj);
-      } catch (e) {
-        console.warn("Failed to parse metadata as JSON:", metadataObj);
-      }
-    }
-
-    if (metadataObj && typeof metadataObj === "object") {
-      const tagsFromTags = (metadataObj as any).tags;
-      const tagsFromTag = (metadataObj as any).tag;
-      const tagsFromKeywords = (metadataObj as any).keywords;
-      tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
-    }
-
-    if (Array.isArray(tags)) {
-      tags.forEach((tag) => allTags.add(tag));
-    }
-  });
-
-  // Collect tags from annotations
-  annotations.forEach((annotation) => {
-    let annotationData = annotation.data;
-    if (typeof annotationData === "string") {
-      try {
-        annotationData = JSON.parse(annotationData);
-      } catch (e) {
-        console.warn(
-          "Failed to parse annotation data as JSON:",
-          annotationData
-        );
-      }
-    }
-
-    const tags = (annotationData as any).tags || [];
-    if (Array.isArray(tags)) {
-      tags.forEach((tag) => allTags.add(tag));
-    }
-  });
-
-  // Create tags container with color and description columns
+  // Create tags container with color and description columns using cached tags
   const tagsContainer = new EntitiesContainer(
-    Array.from(allTags).map((tag) => {
-      // Generate a consistent color for each tag
-      const hash = tag.split("").reduce((a, b) => {
-        a = (a << 5) - a + b.charCodeAt(0);
-        return a & a;
-      }, 0);
-      const hue = Math.abs(hash) % 360;
-      const color = `hsl(${hue}, 70%, 60%)`;
+    Array.from(tagCache).map((tag) => {
+      // Get color from tag store
+      const color = getTagColor(tag);
+
+      // Calculate usage statistics
+      const webResourceCount = webpages.filter((w) => {
+        let tags: string[] = [];
+        let metadataObj = w.metadata;
+        if (typeof metadataObj === "string") {
+          try {
+            metadataObj = JSON.parse(metadataObj);
+          } catch (e) {
+            /* Ignore parse errors */
+          }
+        }
+        if (metadataObj && typeof metadataObj === "object") {
+          const tagsFromTags = (metadataObj as any).tags;
+          const tagsFromTag = (metadataObj as any).tag;
+          const tagsFromKeywords = (metadataObj as any).keywords;
+          tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+        }
+        return Array.isArray(tags) && tags.includes(tag);
+      }).length;
+
+      const annotationCount = annotations.filter((a) => {
+        let annotationData = a.data;
+        if (typeof annotationData === "string") {
+          try {
+            annotationData = JSON.parse(annotationData);
+          } catch (e) {
+            /* Ignore parse errors */
+          }
+        }
+        const tags = (annotationData as any).tags || [];
+        return Array.isArray(tags) && tags.includes(tag);
+      }).length;
+
+      const totalUsage = webResourceCount + annotationCount;
+      const description = `Tag used across ${webResourceCount} web resources and ${annotationCount} annotations`;
 
       return {
         getId: () => `tag-${tag}`,
@@ -519,70 +639,8 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           label: tag,
           type: "tag",
           color: color,
-          description: `Tag used across ${
-            webpages.filter((w) => {
-              let tags: string[] = [];
-              let metadataObj = w.metadata;
-              if (typeof metadataObj === "string") {
-                try {
-                  metadataObj = JSON.parse(metadataObj);
-                } catch (e) {
-                  /* Ignore parse errors */
-                }
-              }
-              if (metadataObj && typeof metadataObj === "object") {
-                const tagsFromTags = (metadataObj as any).tags;
-                const tagsFromTag = (metadataObj as any).tag;
-                const tagsFromKeywords = (metadataObj as any).keywords;
-                tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
-              }
-              return Array.isArray(tags) && tags.includes(tag);
-            }).length
-          } web resources and ${
-            annotations.filter((a) => {
-              let annotationData = a.data;
-              if (typeof annotationData === "string") {
-                try {
-                  annotationData = JSON.parse(annotationData);
-                } catch (e) {
-                  /* Ignore parse errors */
-                }
-              }
-              const tags = (annotationData as any).tags || [];
-              return Array.isArray(tags) && tags.includes(tag);
-            }).length
-          } annotations`,
-          usage_count:
-            webpages.filter((w) => {
-              let tags: string[] = [];
-              let metadataObj = w.metadata;
-              if (typeof metadataObj === "string") {
-                try {
-                  metadataObj = JSON.parse(metadataObj);
-                } catch (e) {
-                  /* Ignore parse errors */
-                }
-              }
-              if (metadataObj && typeof metadataObj === "object") {
-                const tagsFromTags = (metadataObj as any).tags;
-                const tagsFromTag = (metadataObj as any).tag;
-                const tagsFromKeywords = (metadataObj as any).keywords;
-                tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
-              }
-              return Array.isArray(tags) && tags.includes(tag);
-            }).length +
-            annotations.filter((a) => {
-              let annotationData = a.data;
-              if (typeof annotationData === "string") {
-                try {
-                  annotationData = JSON.parse(annotationData);
-                } catch (e) {
-                  /* Ignore parse errors */
-                }
-              }
-              const tags = (annotationData as any).tags || [];
-              return Array.isArray(tags) && tags.includes(tag);
-            }).length,
+          description: description,
+          usage_count: totalUsage,
         }),
         getEntityType: () => "node",
         getFullyQualifiedId: () => `tag-${tag}`,

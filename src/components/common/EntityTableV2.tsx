@@ -14,7 +14,7 @@ import React, {
 import ReactDOM from "react-dom";
 
 import { useAppContext } from "../../context/AppContext";
-import { RenderingManager } from "../../controllers/RenderingManager";
+
 import { Entity } from "../../core/model/entity/abstractEntity";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
 import { Node as ModelNode, NodeId } from "../../core/model/Node";
@@ -23,6 +23,7 @@ import {
   setHoveredNodeId,
   setSelectedNodeId,
 } from "../../store/graphInteractionStore";
+import { useTagStore } from "../../store/tagStore";
 import { createThemedAgGridContainer } from "../../utils/aggridThemeUtils";
 import { ContextMenuItem } from "./ContextMenu";
 import EntityJsonViewer from "./EntityJsonViewer";
@@ -1075,6 +1076,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     // Tags cell renderer component with portal-based dropdown
     const TagsCellRendererComponent = React.memo(
       (props: { data: Entity; value: string[] }) => {
+        const { getTagColor } = useTagStore();
         const [isEditing, setIsEditing] = useState(false);
         // Use ref to track state across renders
         const isEditingRef = useRef(isEditing);
@@ -1084,7 +1086,11 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
         const [editValue, setEditValue] = useState(
           Array.isArray(props.value)
-            ? props.value.map((tag) => ({ value: tag, label: tag, color: "" }))
+            ? props.value.map((tag) => ({
+                value: tag,
+                label: tag,
+                color: getTagColor(tag),
+              }))
             : []
         );
         const [dropdownPosition, setDropdownPosition] = useState({
@@ -1131,7 +1137,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
               ? props.value.map((tag) => ({
                   value: tag,
                   label: tag,
-                  color: "",
+                  color: getTagColor(tag),
                 }))
               : []
           );
@@ -1234,10 +1240,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                     <span
                       key={tag}
                       style={{
-                        background: RenderingManager.getColorByKeySimple(
-                          tag,
-                          sceneGraph.getDisplayConfig().nodeConfig.tags
-                        ),
+                        background: getTagColor(tag),
                         color: "#fff",
                         borderRadius: 4,
                         padding: "2px 8px",
