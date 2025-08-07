@@ -10,6 +10,7 @@ import type { JSX } from "react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { useTagStore } from "../../../../store/tagStore";
+import { $createTagNode, $isTagNode } from "../nodes/TagNode";
 
 // Simplified regex for :: tag matching
 const TagMentionsRegex = /(^|\s|\()(::([a-zA-Z0-9_-]*))$/;
@@ -24,8 +25,18 @@ const tagLookupService = {
   search(string: string, callback: (results: Array<string>) => void): void {
     try {
       // Get all tags from the tag store
-      const { getAllTags, initializeTagColors } = useTagStore.getState();
+      const { getAllTags, initializeTagColors, getTagColor } =
+        useTagStore.getState();
       let allTags = getAllTags();
+
+      console.log("TagAutocompletePlugin: Available tags:", allTags);
+      if (allTags.length > 0) {
+        console.log("TagAutocompletePlugin: Sample tag colors:");
+        allTags.slice(0, 3).forEach((tag) => {
+          const color = getTagColor(tag);
+          console.log(`  ${tag}: ${color}`);
+        });
+      }
 
       // If no tags are available, initialize with some sample tags
       if (allTags.length === 0) {
@@ -51,8 +62,17 @@ const tagLookupService = {
           "feature",
         ];
 
-        // Initialize the tag store with sample tags
+        // Initialize the tag store with sample tags and colors
         initializeTagColors(sampleTags);
+
+        // Also set some specific colors for testing
+        sampleTags.forEach((tag, index) => {
+          const hue = (index * 25) % 360; // Spread colors around the hue wheel
+          const color = `hsl(${hue}, 70%, 60%)`;
+          const { setTagColor } = useTagStore.getState();
+          setTagColor(tag, color);
+        });
+
         allTags = sampleTags;
       }
 
@@ -243,11 +263,57 @@ export default function TagAutocompletePlugin(): JSX.Element | null {
       closeMenu: () => void
     ) => {
       editor.update(() => {
-        // Replace the ::<tag> with just the tag name
+        // Replace the ::<tag> with a colored tag node
         if (nodeToReplace) {
-          const textNode = new TextNode(selectedOption.name);
-          nodeToReplace.replace(textNode);
-          textNode.select();
+          console.log(
+            "TagAutocompletePlugin: Creating tag node for:",
+            selectedOption.name
+          );
+
+          try {
+            const tagNode = $createTagNode(selectedOption.name);
+            console.log("TagAutocompletePlugin: Created tag node:", tagNode);
+            console.log(
+              "TagAutocompletePlugin: Is tag node?",
+              $isTagNode(tagNode)
+            );
+            console.log(
+              "TagAutocompletePlugin: Tag node type:",
+              tagNode.getType()
+            );
+            console.log(
+              "TagAutocompletePlugin: Node to replace:",
+              nodeToReplace
+            );
+            console.log(
+              "TagAutocompletePlugin: Node to replace type:",
+              nodeToReplace.getType()
+            );
+
+            // Replace the node
+            console.log("TagAutocompletePlugin: Attempting to replace node");
+            nodeToReplace.replace(tagNode);
+            console.log("TagAutocompletePlugin: Successfully replaced node");
+
+            // Check if replacement worked
+            console.log(
+              "TagAutocompletePlugin: After replacement, tag node parent:",
+              tagNode.getParent()
+            );
+
+            tagNode.select();
+          } catch (error) {
+            console.error(
+              "TagAutocompletePlugin: Error creating or replacing tag node:",
+              error
+            );
+
+            // Fallback: create a simple text node
+            console.log("TagAutocompletePlugin: Falling back to text node");
+            const textNode = new TextNode(selectedOption.name);
+            nodeToReplace.replace(textNode);
+            textNode.select();
+          }
         }
         closeMenu();
       });

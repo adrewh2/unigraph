@@ -33,7 +33,7 @@ import {
 } from "lexical";
 import { debounce, throttle } from "lodash";
 import React, { JSX, useEffect, useState } from "react";
-// Add this import
+import { TagNode } from "./nodes/TagNode";
 import { getDocument, updateDocument } from "../../../api/documentsApi";
 
 import useAppConfigStore from "../../../store/appConfigStore";
@@ -680,6 +680,7 @@ const LexicalEditorV2: React.FC<LexicalEditorProps> = ({
         HashtagNode,
         EntityReferenceNode,
         MentionNode,
+        TagNode, // Register TagNode for tag autocompletion
       ],
       onError: (error: Error) => {
         console.error(error);

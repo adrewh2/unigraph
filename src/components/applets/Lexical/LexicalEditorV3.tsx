@@ -38,6 +38,7 @@ import useAppConfigStore from "../../../store/appConfigStore";
 import { addNotification } from "../../../store/notificationStore";
 import "./LexicalEditor.css";
 import { MentionNode } from "./nodes/MentionNode";
+import { TagNode } from "./nodes/TagNode";
 import { EntityReferenceNode } from "./plugins/EntityReferencePlugin";
 import MentionsPlugin from "./plugins/MentionsPlugin";
 import TagAutocompletePlugin from "./plugins/TagAutocompletePlugin";
@@ -487,7 +488,10 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
   const initialConfig = React.useMemo(
     () => ({
       namespace: "LexicalEditorV3",
-      theme,
+      theme: {
+        ...theme,
+        tag: "tag-node",
+      },
       nodes: [
         HeadingNode,
         ListNode,
@@ -502,6 +506,7 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
         HashtagNode,
         EntityReferenceNode,
         MentionNode,
+        TagNode,
       ],
       onError: (error: Error) => {
         console.error("LexicalEditorV3: Lexical error:", error);
