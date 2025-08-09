@@ -42,7 +42,7 @@ export function starWithDecreasingLengthsGraph(
     userData: { depth: 0 },
   });
 
-  // Calculate edge length based on depth from seed
+  // Calculate edge length based on depth from seed (center node)
   const calculateEdgeLength = (depth: number): number => {
     return startingLength * Math.pow(lengthDecayFactor, depth);
   };
@@ -62,14 +62,17 @@ export function starWithDecreasingLengthsGraph(
 
     for (let nodeIndex = 0; nodeIndex < nodesPerString; nodeIndex++) {
       const nodeId = `string_${stringIndex}_node_${nodeIndex}`;
+      const currentDepth = nodeIndex + 1; // Distance from seed (center)
+
       const node = graph.createNode({
         id: nodeId,
         type: "string_node",
         label: `S${stringIndex + 1}N${nodeIndex + 1}`,
-        userData: { depth: nodeIndex + 1, stringIndex, nodeIndex },
+        userData: { depth: currentDepth, stringIndex, nodeIndex },
       });
 
-      // Calculate edge length based on depth from seed
+      // Calculate edge length based on which "step" this edge represents from center
+      // All edges at the same step distance should have the same length
       const edgeLength = calculateEdgeLength(nodeIndex + 1);
 
       // Create edge from previous node to current node
@@ -79,7 +82,7 @@ export function starWithDecreasingLengthsGraph(
       });
 
       // Store node for branching
-      initialNodes.push({ node, depth: nodeIndex + 1, stringIndex });
+      initialNodes.push({ node, depth: currentDepth, stringIndex });
 
       previousNode = node;
     }
@@ -112,20 +115,23 @@ export function starWithDecreasingLengthsGraph(
         break;
       }
 
+      const childDepth = parentDepth + 1; // Child's distance from seed
       const childId = `branch_${stringIndex}_${nextNodeId++}`;
+
       const child = graph.createNode({
         id: childId,
         type: "branch_node",
         label: `B${nextNodeId}`,
         userData: {
-          depth: parentDepth + 1,
+          depth: childDepth,
           stringIndex,
           branchIndex: nextNodeId - 1,
         },
       });
 
-      // Calculate edge length based on child's depth from seed
-      const edgeLength = calculateEdgeLength(parentDepth + 1);
+      // All edges from the same parent should have the same length
+      // Use the parent's depth to determine edge length, not the child's depth
+      const edgeLength = calculateEdgeLength(parentDepth);
 
       graph.createEdge(parentNode.getId(), child.getId(), {
         type: "branch_edge",
@@ -133,7 +139,7 @@ export function starWithDecreasingLengthsGraph(
       });
 
       totalNodesCreated++;
-      frontier.push({ node: child, depth: parentDepth + 1, stringIndex });
+      frontier.push({ node: child, depth: childDepth, stringIndex });
     }
   }
 
