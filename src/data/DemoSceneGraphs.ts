@@ -8,6 +8,7 @@ import { probabilisticBranchingGraph } from "./demo-graphs/random/probabilisticB
 import { randomBigGraph } from "./demo-graphs/random/randomBig";
 import { randomBiggestGraph } from "./demo-graphs/random/randomBiggest";
 import { ringWithChildrenGraph } from "./demo-graphs/random/ringWithChildren";
+import { starWithDecreasingLengthsGraph } from "./demo-graphs/random/starWithDecreasingLengths";
 import { demo_Unigraph_Applications } from "./demo-graphs/story-cards/demo_scenegraph_unigraph_applications";
 import { demo_sceneGraph_academicsKG } from "./graphs/academicsKGraph";
 import { blobMeshGraph } from "./graphs/blobMesh";
@@ -158,6 +159,7 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
       probabilisticBranching: () => probabilisticBranchingGraph(),
       ringWithChildren: () => ringWithChildrenGraph(36, 5),
       lineWithIncreasingLengths: () => lineWithIncreasingLengthsGraph(),
+      starWithDecreasingLengths: () => starWithDecreasingLengthsGraph(),
     },
   },
   "Thinker Graphs": {

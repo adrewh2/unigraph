@@ -7,10 +7,8 @@ export type ProbabilisticBranchingOptions = {
   terminationProbability?: number; // probability to SKIP generating a candidate child [0,1]
   maxDepth?: number; // safety bound on depth
   maxNodes?: number; // safety bound on total nodes
-  // Force-graph edge length controls
-  baseEdgeLength?: number; // base length at depth 0
-  edgeLengthDecay?: number; // multiplicative decay per depth level (0..1]
-  minEdgeLength?: number; // clamp to avoid zero-length
+  startingLength?: number; // length of edges from the seed node
+  lengthDecayFactor?: number; // factor by which edge length decreases with depth (0-1, smaller = faster decay)
 };
 
 /**
@@ -30,9 +28,8 @@ export function probabilisticBranchingGraph(
     terminationProbability = 0.4,
     maxDepth = 20,
     maxNodes = 1000,
-    baseEdgeLength = 1,
-    edgeLengthDecay = 1,
-    minEdgeLength = 1,
+    startingLength = 1,
+    lengthDecayFactor = 0,
   } = options ?? {};
 
   const graph = new Graph();
@@ -57,9 +54,9 @@ export function probabilisticBranchingGraph(
     return Math.floor(Math.random() * (b - a + 1)) + a;
   };
 
-  const edgeLengthForDepth = (d: number): number => {
-    const len = baseEdgeLength * Math.pow(edgeLengthDecay, d);
-    return Math.max(minEdgeLength, len);
+  // Edge length calculation: exponential decay based on depth
+  const calculateEdgeLength = (depth: number): number => {
+    return startingLength * Math.pow(lengthDecayFactor, depth);
   };
 
   while (frontier.length > 0) {
@@ -87,10 +84,11 @@ export function probabilisticBranchingGraph(
         label: `n${nextNodeId}`,
         userData: { depth: depth + 1 },
       });
+      const childDepth = depth + 1;
+      const length = calculateEdgeLength(childDepth);
       graph.createEdge(parentId, child.getId(), {
         type: "branch_edge",
-        // Use the CHILD depth so deeper edges become noticeably shorter
-        length: edgeLengthForDepth(depth + 1),
+        length,
       });
 
       totalNodesCreated++;
@@ -102,7 +100,7 @@ export function probabilisticBranchingGraph(
     graph,
     metadata: {
       name: "Probabilistic Branching",
-      description: `Seeded branching process with branchingFactor=${branchingFactor}, terminationProbability=${terminationProbability}, edgeLength=base(${baseEdgeLength})*decay(${edgeLengthDecay})^depth`,
+      description: `Seeded branching process with branchingFactor=${branchingFactor}, terminationProbability=${terminationProbability}. Edge lengths decay exponentially with depth (startingLength=${startingLength}, decayFactor=${lengthDecayFactor}).`,
     },
   });
 }
