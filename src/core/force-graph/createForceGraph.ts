@@ -261,20 +261,16 @@ export const createForceGraph = (
   const linkForce: any = (graph as any).d3Force("link");
   if (linkForce && typeof linkForce.distance === "function") {
     linkForce.distance((link: any) =>
-      typeof link?.length === "number" ? link.length : undefined
+      typeof link?.length === "number" ? link.length : 1
     );
   }
 
   if (options.nodeTextLabels) {
-    console.log("node text labels enabled", sceneGraph.getGraph());
     graph
       .nodeThreeObject((node: any) => {
-        console.log("EHYYY");
         const n = sceneGraph.getGraph().getNode(node.id as NodeId);
         const imageUrl = n.maybeGetUserData("imageUrl") as string | undefined;
-        console.log("node is ", n);
         if (imageUrl) {
-          console.log("entered");
           const texture = new TextureLoader().load(imageUrl);
           texture.colorSpace = SRGBColorSpace;
           const material = new SpriteMaterial({ map: texture });

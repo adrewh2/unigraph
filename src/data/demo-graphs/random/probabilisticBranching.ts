@@ -7,6 +7,10 @@ export type ProbabilisticBranchingOptions = {
   terminationProbability?: number; // probability to SKIP generating a candidate child [0,1]
   maxDepth?: number; // safety bound on depth
   maxNodes?: number; // safety bound on total nodes
+  // Force-graph edge length controls
+  baseEdgeLength?: number; // base length at depth 0
+  edgeLengthDecay?: number; // multiplicative decay per depth level (0..1]
+  minEdgeLength?: number; // clamp to avoid zero-length
 };
 
 /**
@@ -26,6 +30,9 @@ export function probabilisticBranchingGraph(
     terminationProbability = 0.4,
     maxDepth = 100,
     maxNodes = 1000,
+    baseEdgeLength = 150,
+    edgeLengthDecay = 0.7,
+    minEdgeLength = 1,
   } = options ?? {};
 
   const graph = new Graph();
@@ -48,6 +55,11 @@ export function probabilisticBranchingGraph(
     const a = Math.ceil(min);
     const b = Math.floor(max);
     return Math.floor(Math.random() * (b - a + 1)) + a;
+  };
+
+  const edgeLengthForDepth = (d: number): number => {
+    const len = baseEdgeLength * Math.pow(edgeLengthDecay, d);
+    return Math.max(minEdgeLength, len);
   };
 
   while (frontier.length > 0) {
@@ -75,7 +87,10 @@ export function probabilisticBranchingGraph(
         label: `n${nextNodeId}`,
         userData: { depth: depth + 1 },
       });
-      graph.createEdge(parentId, child.getId(), { type: "branch_edge" });
+      graph.createEdge(parentId, child.getId(), {
+        type: "branch_edge",
+        length: edgeLengthForDepth(depth),
+      });
 
       totalNodesCreated++;
       frontier.push({ id: child.getId(), depth: depth + 1 });
@@ -86,7 +101,7 @@ export function probabilisticBranchingGraph(
     graph,
     metadata: {
       name: "Probabilistic Branching",
-      description: `Seeded branching process with branchingFactor=${branchingFactor}, terminationProbability=${terminationProbability}.`,
+      description: `Seeded branching process with branchingFactor=${branchingFactor}, terminationProbability=${terminationProbability}, edgeLength=base(${baseEdgeLength})*decay(${edgeLengthDecay})^depth`,
     },
   });
 }
