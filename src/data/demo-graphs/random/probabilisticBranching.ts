@@ -28,8 +28,8 @@ export function probabilisticBranchingGraph(
     terminationProbability = 0.4,
     maxDepth = 20,
     maxNodes = 1000,
-    startingLength = 1,
-    lengthDecayFactor = 0,
+    startingLength = 100, // Changed from 1 to match working example
+    lengthDecayFactor = 0.7, // Changed from 0 to match working example
   } = options ?? {};
 
   const graph = new Graph();
@@ -54,14 +54,15 @@ export function probabilisticBranchingGraph(
     return Math.floor(Math.random() * (b - a + 1)) + a;
   };
 
-  // Edge length calculation: exponential decay based on depth
-  const calculateEdgeLength = (depth: number): number => {
-    return startingLength * Math.pow(lengthDecayFactor, depth);
+  // Edge length calculation: decreasing length with distance from seed
+  // Edges closest to seed are longest, edges furthest are shortest
+  const calculateEdgeLength = (parentDepth: number): number => {
+    return startingLength * Math.pow(lengthDecayFactor, parentDepth);
   };
 
   while (frontier.length > 0) {
-    const { id: parentId, depth } = frontier.shift()!;
-    if (depth >= maxDepth) continue;
+    const { id: parentId, depth: parentDepth } = frontier.shift()!;
+    if (parentDepth >= maxDepth) continue;
 
     const attempts = Math.max(
       1,
@@ -78,21 +79,26 @@ export function probabilisticBranchingGraph(
       }
 
       const childId = `${parentId}::${nextNodeId++}`;
+      const childDepth = parentDepth + 1;
+
       const child = graph.createNode({
         id: childId,
         type: "branch_node",
         label: `n${nextNodeId}`,
-        userData: { depth: depth + 1 },
+        userData: { depth: childDepth },
       });
-      const childDepth = depth + 1;
-      const length = calculateEdgeLength(childDepth);
+
+      // KEY FIX: Use parent depth for edge length calculation
+      // This ensures edges emanating from the same parent have the same length
+      const edgeLength = calculateEdgeLength(parentDepth);
+
       graph.createEdge(parentId, child.getId(), {
         type: "branch_edge",
-        length,
+        length: edgeLength,
       });
 
       totalNodesCreated++;
-      frontier.push({ id: child.getId(), depth: depth + 1 });
+      frontier.push({ id: child.getId(), depth: childDepth });
     }
   }
 
@@ -100,7 +106,7 @@ export function probabilisticBranchingGraph(
     graph,
     metadata: {
       name: "Probabilistic Branching",
-      description: `Seeded branching process with branchingFactor=${branchingFactor}, terminationProbability=${terminationProbability}. Edge lengths decay exponentially with depth (startingLength=${startingLength}, decayFactor=${lengthDecayFactor}).`,
+      description: `Seeded branching process with branchingFactor=${branchingFactor}, terminationProbability=${terminationProbability}. Edge lengths decrease exponentially from seed: startingLength=${startingLength} * ${lengthDecayFactor}^parent_depth.`,
     },
   });
 }

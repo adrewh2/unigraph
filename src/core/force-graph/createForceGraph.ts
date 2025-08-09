@@ -395,14 +395,17 @@ export const createForceGraph = (
       controls.update();
     }
   }
-
+  // @TODO: This is a working block of code, but it should only be used when lengths are defined.
+  // Turning off because not sure how to handle the case where some lengths are not defined.
   // Configure link distance using target node depth, following the working example pattern
   // Respect per-link length baked into the edges. Fallback to 1.
-  const linkForce = graph.d3Force("link");
-  if (linkForce && typeof linkForce.distance === "function") {
-    linkForce.distance((link: any) => (link?.length ?? 1) as number);
-  }
-  graph.numDimensions(3);
+  // const linkForce = graph.d3Force("link");
+  // if (linkForce && typeof linkForce.distance === "function") {
+  // linkForce.distance((link: any) => (link?.length ?? 1) as number);
+  // linkForce.strength((link: any) => (link?.length ? 1 : undefined) as number);
+  // linkForce.iterations(4);
+  // }
+  // graph.numDimensions(3);
 
   return graph;
 };
