@@ -101,6 +101,10 @@ class Edge extends AbstractEntity<EdgeId, EdgeData> {
   getOpacity(): number {
     return this.data.opacity;
   }
+
+  getLength(): number | undefined {
+    return this.data.length;
+  }
 }
 
 export { Edge };
