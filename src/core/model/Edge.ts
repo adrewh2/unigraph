@@ -20,6 +20,7 @@ export interface DisplayEdgeData {
   size: number;
   opacity: number;
   drawType?: "arrow" | "line";
+  length?: number;
 }
 
 export type DisplayEdgeDataArgs = Partial<DisplayEdgeData>;

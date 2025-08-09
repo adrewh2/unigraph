@@ -118,11 +118,11 @@ export const createForceGraph = (
     .linkLabel("type")
     .backgroundColor(options.backgroundColor ?? "#1a1a1a")
     .enableNodeDrag(true)
-    .onNodeClick((node) => {
+    .onNodeClick((node: any) => {
       flyToNode(graph, node, layout);
       console.log("node clicked");
     })
-    .onNodeDrag((node, translate: any) => {
+    .onNodeDrag((node: any, translate: any) => {
       setIsDraggingNode(true);
       // console.log("translate is ", translate);
 
@@ -143,7 +143,7 @@ export const createForceGraph = (
         ForceGraphManager.updateNodePositions(graph, forceGraphPositionData);
       }
     })
-    .onNodeDragEnd((node, _translate: any) => {
+    .onNodeDragEnd((node: any, _translate: any) => {
       if (node == undefined || node.id == undefined) {
         setIsDraggingNode(false);
         return;
@@ -257,10 +257,18 @@ export const createForceGraph = (
   // .cooldownTicks(100) // Number of ticks before stopping
   // .d3VelocityDecay(0.1); // "Friction" - lower means more movement
 
+  // Apply per-link distance using d3-force link once the instance is created
+  const linkForce: any = (graph as any).d3Force("link");
+  if (linkForce && typeof linkForce.distance === "function") {
+    linkForce.distance((link: any) =>
+      typeof link?.length === "number" ? link.length : undefined
+    );
+  }
+
   if (options.nodeTextLabels) {
     console.log("node text labels enabled", sceneGraph.getGraph());
     graph
-      .nodeThreeObject((node) => {
+      .nodeThreeObject((node: any) => {
         console.log("EHYYY");
         const n = sceneGraph.getGraph().getNode(node.id as NodeId);
         const imageUrl = n.maybeGetUserData("imageUrl") as string | undefined;

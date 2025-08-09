@@ -89,6 +89,7 @@ export const exportGraphDataForReactFlow = (
       source: edge.getSource(),
       target: edge.getTarget(),
       color: getEdgeColor(edge),
+      length: edge.getData().length,
     }));
   return {
     nodes,
