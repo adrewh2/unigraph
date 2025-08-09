@@ -28,10 +28,10 @@ export function probabilisticBranchingGraph(
     seedId = "seed",
     branchingFactor = 5,
     terminationProbability = 0.4,
-    maxDepth = 100,
+    maxDepth = 20,
     maxNodes = 1000,
-    baseEdgeLength = 150,
-    edgeLengthDecay = 0.7,
+    baseEdgeLength = 1,
+    edgeLengthDecay = 1,
     minEdgeLength = 1,
   } = options ?? {};
 
@@ -89,7 +89,8 @@ export function probabilisticBranchingGraph(
       });
       graph.createEdge(parentId, child.getId(), {
         type: "branch_edge",
-        length: edgeLengthForDepth(depth),
+        // Use the CHILD depth so deeper edges become noticeably shorter
+        length: edgeLengthForDepth(depth + 1),
       });
 
       totalNodesCreated++;

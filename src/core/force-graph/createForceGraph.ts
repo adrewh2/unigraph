@@ -263,6 +263,12 @@ export const createForceGraph = (
     linkForce.distance((link: any) =>
       typeof link?.length === "number" ? link.length : 1
     );
+    if (typeof linkForce.strength === "function") {
+      // Enforce target distances more strictly to reduce distortion from other forces
+      linkForce.strength((link: any) =>
+        typeof link?.length === "number" ? 1 : 0.5
+      );
+    }
   }
 
   if (options.nodeTextLabels) {
