@@ -258,18 +258,18 @@ export const createForceGraph = (
   // .d3VelocityDecay(0.1); // "Friction" - lower means more movement
 
   // Apply per-link distance using d3-force link once the instance is created
-  const linkForce: any = (graph as any).d3Force("link");
-  if (linkForce && typeof linkForce.distance === "function") {
-    linkForce.distance((link: any) =>
-      typeof link?.length === "number" ? link.length : 1
-    );
-    if (typeof linkForce.strength === "function") {
-      // Enforce target distances more strictly to reduce distortion from other forces
-      linkForce.strength((link: any) =>
-        typeof link?.length === "number" ? 1 : 0.5
-      );
-    }
-  }
+  // const linkForce: any = (graph as any).d3Force("link");
+  // if (linkForce && typeof linkForce.distance === "function") {
+  //   linkForce.distance((link: any) =>
+  //     typeof link?.length === "number" ? link.length : 1
+  //   );
+  //   if (typeof linkForce.strength === "function") {
+  //     // Enforce target distances more strictly to reduce distortion from other forces
+  //     linkForce.strength((link: any) =>
+  //       typeof link?.length === "number" ? 1 : 0.5
+  //     );
+  //   }
+  // }
 
   if (options.nodeTextLabels) {
     graph
