@@ -3,6 +3,7 @@ import { demo_scenegraph_ast } from "./demo-graphs/interfaceAstToSceneGraph";
 import { demo_scenegraph_unigraph_overview } from "./graphs/demo_unigraph_overview";
 // import { urlSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { mergeIntoSceneGraph } from "../core/model/mergeSceneGraphs";
+import { probabilisticBranchingGraph } from "./demo-graphs/random/probabilisticBranching";
 import { randomBigGraph } from "./demo-graphs/random/randomBig";
 import { randomBiggestGraph } from "./demo-graphs/random/randomBiggest";
 import { demo_Unigraph_Applications } from "./demo-graphs/story-cards/demo_scenegraph_unigraph_applications";
@@ -152,6 +153,7 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
     graphs: {
       big: randomBigGraph,
       biggest: randomBiggestGraph,
+      probabilisticBranching: () => probabilisticBranchingGraph(),
     },
   },
   "Thinker Graphs": {
