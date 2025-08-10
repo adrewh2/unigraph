@@ -1,6 +1,6 @@
 import { addViewAsTab, useTheme } from "@aesgraph/app-shell";
 import { RefreshCw } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
 import {
   createDocument,
@@ -13,6 +13,7 @@ import {
   listWebpages,
   Webpage,
 } from "../../api/webpagesApi";
+import { listYouTubeVideos, YouTubeVideo } from "../../api/youtubeVideosApi";
 import { Graph } from "../../core/model/Graph";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
@@ -42,6 +43,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [webpages, setWebpages] = useState<Webpage[]>([]);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [youtubeVideos, setYouTubeVideos] = useState<YouTubeVideo[]>([]);
   const [loading, setLoading] = useState(true);
   const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
@@ -57,13 +59,14 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [pdfCreating, setPdfCreating] = useState(false);
 
   // Ref to access the EntityTableV2 grid API for silent refresh
-  const entityTableRef = useRef<any>(null);
+  // const entityTableRef = useRef<any>(null);
 
   // Cache for storing fetched data
   const [dataCache, setDataCache] = useState<{
     webpages: Webpage[] | null;
     annotations: Annotation[] | null;
     documents: Document[] | null;
+    youtubeVideos: YouTubeVideo[] | null;
     webpageContentAvailability: {
       [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
     } | null;
@@ -72,6 +75,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     webpages: null,
     annotations: null,
     documents: null,
+    youtubeVideos: null,
     webpageContentAvailability: null,
     lastFetched: null,
   });
@@ -85,11 +89,60 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     );
   }, []);
 
+  // Helper: recompute tag cache from current webpages and annotations (or provided overrides)
+  const recomputeTagCache = useCallback(
+    (
+      webpagesInput: Webpage[] = webpages,
+      annotationsInput: Annotation[] = annotations
+    ) => {
+      const newTagCache = new Set<string>();
+
+      // Tags from webpages
+      (webpagesInput || []).forEach((webpage: Webpage) => {
+        let tags: string[] = [];
+        let metadataObj = webpage.metadata;
+        if (typeof metadataObj === "string") {
+          try {
+            metadataObj = JSON.parse(metadataObj);
+          } catch {
+            /* ignore */
+          }
+        }
+        if (metadataObj && typeof metadataObj === "object") {
+          const tagsFromTags = (metadataObj as any).tags;
+          const tagsFromTag = (metadataObj as any).tag;
+          const tagsFromKeywords = (metadataObj as any).keywords;
+          tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
+        }
+        if (Array.isArray(tags)) {
+          tags.forEach((tag) => newTagCache.add(tag));
+        }
+      });
+
+      // Tags from annotations
+      (annotationsInput || []).forEach((annotation: Annotation) => {
+        let annotationData = annotation.data as any;
+        if (typeof annotationData === "string") {
+          try {
+            annotationData = JSON.parse(annotationData);
+          } catch {
+            /* ignore */
+          }
+        }
+        const tags = (annotationData as any)?.tags || [];
+        if (Array.isArray(tags)) {
+          tags.forEach((tag) => newTagCache.add(tag));
+        }
+      });
+
+      return newTagCache;
+    },
+    [webpages, annotations]
+  );
+
   // Fetch data from Supabase
   const fetchData = useCallback(
     async (forceRefresh = false) => {
-      if (!user?.id) return;
-
       const now = Date.now();
       const cacheAge = dataCache.lastFetched
         ? now - dataCache.lastFetched
@@ -103,12 +156,14 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         dataCache.annotations &&
         dataCache.documents &&
         dataCache.webpageContentAvailability &&
+        dataCache.youtubeVideos &&
         cacheValid
       ) {
         console.log("Using cached data, age:", cacheAge, "ms");
         setWebpages(dataCache.webpages);
         setAnnotations(dataCache.annotations);
         setDocuments(dataCache.documents);
+        setYouTubeVideos(dataCache.youtubeVideos);
         setWebpageContentAvailability(dataCache.webpageContentAvailability);
         setLoading(false);
         return;
@@ -118,26 +173,40 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       try {
         console.log("Fetching fresh data from server");
 
-        // Fetch webpages (lightweight version without html_content and screenshot_url)
-        const webpagesData = await listWebpages({
-          userId: user.id,
-          includeContent: false,
-        });
+        // Fetch webpages (only when signed in)
+        let webpagesData: Webpage[] = [];
+        let contentAvailability: {
+          [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
+        } = {};
+        if (user?.id) {
+          webpagesData = (await listWebpages({
+            userId: user.id,
+            includeContent: false,
+          })) as Webpage[];
+          const webpageIds = webpagesData?.map((w: Webpage) => w.id) || [];
+          contentAvailability = await checkWebpagesContent(webpageIds);
+        }
 
-        // Check content availability for all webpages
-        const webpageIds = webpagesData?.map((w: Webpage) => w.id) || [];
-        const contentAvailability = await checkWebpagesContent(webpageIds);
+        // Fetch annotations (only when signed in)
+        let annotationsData: Annotation[] = [];
+        if (user?.id) {
+          annotationsData = (await listAnnotations({
+            userId: user.id,
+            includeContent: false,
+          })) as Annotation[];
+        }
 
-        // Fetch annotations (lightweight version without image_url)
-        const annotationsData = await listAnnotations({
-          userId: user.id,
-          includeContent: false,
-        });
+        // Fetch documents (only when signed in)
+        let documentsData: Document[] = [];
+        if (user?.id) {
+          documentsData = (await listDocuments({
+            userId: user.id,
+          })) as Document[];
+        }
 
-        // Fetch documents (metadata only)
-        const documentsData = await listDocuments({
-          userId: user.id,
-        });
+        // Fetch YouTube videos (no user filter, no order to avoid case-sensitive column issues)
+        const youTubeVideosData = await listYouTubeVideos();
+        console.log("YouTube videos fetched:", youTubeVideosData?.length || 0);
 
         // Collect tags during loading
         const newTagCache = new Set<string>();
@@ -149,7 +218,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           if (typeof metadataObj === "string") {
             try {
               metadataObj = JSON.parse(metadataObj);
-            } catch (e) {
+            } catch {
               /* Ignore parse errors */
             }
           }
@@ -170,7 +239,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           if (typeof annotationData === "string") {
             try {
               annotationData = JSON.parse(annotationData);
-            } catch (e) {
+            } catch {
               /* Ignore parse errors */
             }
           }
@@ -180,11 +249,33 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           }
         });
 
+        // Collect tags from YouTube videos (handle CSV or JSON array stored in text)
+        (youTubeVideosData || []).forEach((video: YouTubeVideo) => {
+          let tags: string[] = [];
+          const t = video.tags;
+          if (Array.isArray(t)) {
+            tags = t as string[];
+          } else if (typeof t === "string" && t.trim().length > 0) {
+            const trimmed = t.trim();
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (Array.isArray(parsed)) tags = parsed.filter(Boolean);
+            } catch {
+              tags = trimmed
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
+            }
+          }
+          tags.forEach((tag) => newTagCache.add(tag));
+        });
+
         // Update state
         setWebpages(webpagesData || []);
         setAnnotations(annotationsData || []);
         setDocuments(documentsData || []);
         setWebpageContentAvailability(contentAvailability);
+        setYouTubeVideos(youTubeVideosData || []);
         setTagCache(newTagCache);
 
         // Update cache
@@ -192,6 +283,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           webpages: webpagesData || [],
           annotations: annotationsData || [],
           documents: documentsData || [],
+          youtubeVideos: youTubeVideosData || [],
           webpageContentAvailability: contentAvailability,
           lastFetched: now,
         });
@@ -228,7 +320,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           if (typeof metadataObj === "string") {
             try {
               metadataObj = JSON.parse(metadataObj);
-            } catch (e) {
+            } catch {
               /* Ignore parse errors */
             }
           }
@@ -246,7 +338,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           if (typeof annotationData === "string") {
             try {
               annotationData = JSON.parse(annotationData);
-            } catch (e) {
+            } catch {
               /* Ignore parse errors */
             }
           }
@@ -290,35 +382,48 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     getTagMetadata,
   ]);
 
-  // Function to force refresh data
-  const refreshData = useCallback(() => {
-    fetchData(true);
-  }, [fetchData]);
+  // Function to force refresh data (reserved for future use)
 
   // Function to silently refresh data without triggering loading states
   const silentRefreshData = useCallback(async () => {
-    if (!user?.id) return;
-
     try {
       console.log("Silently refreshing data from server");
 
       // Fetch data without setting loading state
-      const webpagesData = await listWebpages({
-        userId: user.id,
-        includeContent: false,
-      });
+      let webpagesData: Webpage[] = [];
+      let contentAvailability: {
+        [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
+      } = {};
+      if (user?.id) {
+        webpagesData = (await listWebpages({
+          userId: user.id,
+          includeContent: false,
+        })) as Webpage[];
+        const webpageIds = webpagesData?.map((w: Webpage) => w.id) || [];
+        contentAvailability = await checkWebpagesContent(webpageIds);
+      }
 
-      const webpageIds = webpagesData?.map((w: Webpage) => w.id) || [];
-      const contentAvailability = await checkWebpagesContent(webpageIds);
+      let annotationsData: Annotation[] = [];
+      if (user?.id) {
+        annotationsData = (await listAnnotations({
+          userId: user.id,
+          includeContent: false,
+        })) as Annotation[];
+      }
 
-      const annotationsData = await listAnnotations({
-        userId: user.id,
-        includeContent: false,
-      });
+      let documentsData: Document[] = [];
+      if (user?.id) {
+        documentsData = (await listDocuments({
+          userId: user.id,
+        })) as Document[];
+      }
 
-      const documentsData = await listDocuments({
-        userId: user.id,
-      });
+      // Refresh YouTube videos (no user filter)
+      const youTubeVideosData = await listYouTubeVideos();
+      console.log(
+        "YouTube videos fetched (silent):",
+        youTubeVideosData?.length || 0
+      );
 
       // Collect tags during silent refresh
       const newTagCache = new Set<string>();
@@ -330,7 +435,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         if (typeof metadataObj === "string") {
           try {
             metadataObj = JSON.parse(metadataObj);
-          } catch (e) {
+          } catch {
             /* Ignore parse errors */
           }
         }
@@ -351,7 +456,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         if (typeof annotationData === "string") {
           try {
             annotationData = JSON.parse(annotationData);
-          } catch (e) {
+          } catch {
             /* Ignore parse errors */
           }
         }
@@ -361,11 +466,33 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         }
       });
 
+      // Collect tags from YouTube videos
+      (youTubeVideosData || []).forEach((video) => {
+        let tags: string[] = [];
+        const t = (video as any).tags as unknown;
+        if (Array.isArray(t)) {
+          tags = t as string[];
+        } else if (typeof t === "string" && t.trim().length > 0) {
+          const trimmed = t.trim();
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) tags = parsed.filter(Boolean);
+          } catch {
+            tags = trimmed
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+          }
+        }
+        tags.forEach((tag) => newTagCache.add(tag));
+      });
+
       // Update state silently (no loading state)
       setWebpages(webpagesData || []);
       setAnnotations(annotationsData || []);
       setDocuments(documentsData || []);
       setWebpageContentAvailability(contentAvailability);
+      setYouTubeVideos(youTubeVideosData || []);
       setTagCache(newTagCache);
 
       // Update cache
@@ -373,6 +500,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         webpages: webpagesData || [],
         annotations: annotationsData || [],
         documents: documentsData || [],
+        youtubeVideos: youTubeVideosData || [],
         webpageContentAvailability: contentAvailability,
         lastFetched: Date.now(),
       });
@@ -385,6 +513,41 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       console.error("Error during silent refresh:", error);
     }
   }, [user?.id]);
+
+  // Targeted refresh: only annotations slice (avoid refreshing entire resource manager)
+  const refreshAnnotationsOnly = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const annotationsData = (await listAnnotations({
+        userId: user.id,
+        includeContent: false,
+      })) as Annotation[];
+
+      setAnnotations(annotationsData || []);
+      setDataCache((prev) => ({
+        ...prev,
+        annotations: annotationsData || [],
+      }));
+
+      // Recompute tag cache based on updated annotations + current webpages
+      const newTagCache = recomputeTagCache(webpages, annotationsData || []);
+      setTagCache(newTagCache);
+    } catch (err) {
+      console.error("Failed to refresh annotations slice:", err);
+    }
+  }, [user?.id, webpages, recomputeTagCache]);
+
+  // Listen for external annotation updates to refresh the annotations tab
+  useEffect(() => {
+    const handler = () => {
+      // Only refresh when the Annotations tab is active to avoid unnecessary reloads
+      if (activeTab === "annotations") {
+        refreshAnnotationsOnly();
+      }
+    };
+    window.addEventListener("annotationsUpdated", handler);
+    return () => window.removeEventListener("annotationsUpdated", handler);
+  }, [activeTab, refreshAnnotationsOnly]);
 
   if (!currentSceneGraph) {
     return (
@@ -428,9 +591,9 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         try {
           metadataObj = JSON.parse(metadataObj);
           console.log("Successfully parsed metadata from JSON:", metadataObj);
-        } catch (e) {
+        } catch {
           console.warn("Failed to parse metadata as JSON:", metadataObj);
-          console.warn("Parse error:", e);
+          console.warn("Parse error:", "ignored");
         }
       } else {
         console.log("Metadata is not a string, type:", typeof metadataObj);
@@ -518,7 +681,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         try {
           annotationData = JSON.parse(annotationData);
           console.log("Parsed annotation data from JSON:", annotationData);
-        } catch (e) {
+        } catch {
           console.warn(
             "Failed to parse annotation data as JSON:",
             annotationData
@@ -634,6 +797,70 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     })
   );
 
+  // Create container for YouTube videos
+  const youtubeVideosContainer = new EntitiesContainer(
+    youtubeVideos.map((video) => {
+      // Normalize tags from possible CSV string or JSON array in text column
+      let tags: string[] = [];
+      const rawTags = (video as any).tags as unknown;
+      if (Array.isArray(rawTags)) {
+        tags = (rawTags as string[]).filter(Boolean);
+      } else if (typeof rawTags === "string" && rawTags.trim().length > 0) {
+        const trimmed = rawTags.trim();
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) tags = parsed.filter(Boolean);
+        } catch {
+          tags = trimmed
+            .split(",")
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0);
+        }
+      }
+
+      return {
+        getId: () => video.id,
+        getType: () => "youtube_video",
+        getLabel: () => video.title || video.id,
+        getTags: () => new Set(tags),
+        getData: () => ({
+          id: video.id,
+          label: video.title || video.id,
+          type: "youtube_video",
+          title: video.title,
+          description: video.description,
+          publishedAt: video.publishedAt,
+          duration: video.duration,
+          viewCount: video.viewCount,
+          likeCount: video.likeCount,
+          commentCount: video.commentCount,
+          tags,
+          categoryId: video.categoryId,
+          defaultLanguage: video.defaultLanguage,
+          defaultAudioLanguage: video.defaultAudioLanguage,
+          liveBroadcastContent: video.liveBroadcastContent,
+          url: video.url,
+          thumbnail_default_url: video.thumbnail_default_url,
+          thumbnail_medium_url: video.thumbnail_medium_url,
+          thumbnail_high_url: video.thumbnail_high_url,
+          userData: video,
+        }),
+        getEntityType: () => "node",
+        getFullyQualifiedId: () => video.id,
+        setId: () => {},
+        setData: () => {},
+        setType: () => {},
+        setLabel: () => {},
+        setTags: () => {},
+        addTag: () => {},
+        removeTag: () => {},
+        hasTag: () => false,
+        toJSON: () => "",
+        fromJSON: () => {},
+      } as any;
+    })
+  );
+
   // Create tags container with color and description columns using cached tags
   const tagsContainer = new EntitiesContainer(
     Array.from(tagCache).map((tag) => {
@@ -644,7 +871,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         if (typeof metadataObj === "string") {
           try {
             metadataObj = JSON.parse(metadataObj);
-          } catch (e) {
+          } catch {
             /* Ignore parse errors */
           }
         }
@@ -662,7 +889,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         if (typeof annotationData === "string") {
           try {
             annotationData = JSON.parse(annotationData);
-          } catch (e) {
+          } catch {
             /* Ignore parse errors */
           }
         }
@@ -761,6 +988,13 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       label: "Documents",
       icon: "📄",
       container: documentsContainer,
+      sceneGraph: currentSceneGraph,
+    },
+    {
+      id: "youtube-videos",
+      label: "YouTube Videos",
+      icon: "▶️",
+      container: youtubeVideosContainer,
       sceneGraph: currentSceneGraph,
     },
   ];

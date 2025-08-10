@@ -699,7 +699,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             handleRenameEvent as EventListener
           );
         };
-      }, [props.data.getId(), props.value]);
+      }, [props.data, props.value]);
 
       // Intercept keyboard events at document level when input is focused
       useEffect(() => {
@@ -902,7 +902,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             document.removeEventListener("keypress", handleKeyPress, true);
           };
         }
-      }, [isEditing]);
+      }, [isEditing, props.data, props.value]);
 
       const handleSave = async () => {
         if (props.data && editValue !== props.value) {
@@ -1018,7 +1018,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                   title: baseTitle,
                   extension: newExtension || entityData.extension,
                 });
-              } catch (_) {
+              } catch {
                 /* ignore */
               }
             }
@@ -1284,7 +1284,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     // Tags cell renderer component with portal-based dropdown
     const TagsCellRendererComponent = React.memo(
       (props: { data: Entity; value: string[] }) => {
-        const { getTagColor, setTagColor } = useTagStore();
+        const { getTagColor } = useTagStore();
         const [isEditing, setIsEditing] = useState(false);
         // Use ref to track state across renders
         const isEditingRef = useRef(isEditing);
@@ -1548,6 +1548,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             capture: true,
           });
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [isEditing]);
 
       const handleSave = () => {
@@ -1837,7 +1838,6 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
             // Store original data for potential revert
             const originalEntity = props.data;
-            const originalRowData = container.toArray();
 
             // Optimistically remove from the table immediately
             if (gridRef.current?.api) {
@@ -1877,7 +1877,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                 // Restore the node in the graph
                 if (nodeId) {
                   const entityData = originalEntity.getData();
-                  const { id, ...nodeData } = entityData; // Remove id from data to avoid duplication
+                  const { id: _id, ...nodeData } = entityData; // Remove id from data to avoid duplication
                   const restoredNode = new ModelNode({
                     id: nodeId,
                     ...nodeData,
@@ -2554,6 +2554,26 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                 }
               })();
             }
+          }
+          // For YouTube videos, double-click should open the YouTube player
+          else if (entityType === "youtube-videos" && entityData) {
+            const videoId = entityData.id;
+            const title = entityData.label || entityData.title || videoId;
+            if (videoId) {
+              const timestamp = Date.now();
+              const tabId = `youtube-player-${videoId}-${timestamp}`;
+              addViewAsTab({
+                viewId: "youtube-player",
+                pane: "center",
+                tabId,
+                title: title,
+                props: {
+                  videoId,
+                  title,
+                },
+                activate: true,
+              });
+            }
           } else if (onEntityClick) {
             // For other entity types, use the default click handler
             onEntityClick(event.data);
@@ -2612,53 +2632,50 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     );
 
     // Handle row hover for web resources and nodes using onModelUpdated
-    const onModelUpdated = useCallback(
-      (event: any) => {
-        // Add hover listeners to all rows
-        setTimeout(() => {
-          const rows = document.querySelectorAll(".ag-row");
-          rows.forEach((row) => {
-            const rowId = row.getAttribute("row-id");
-            if (rowId) {
-              const rowData = event.api.getDisplayedRowAtIndex(parseInt(rowId));
-              if (rowData && rowData.data) {
-                const entityData = rowData.data.getData
-                  ? rowData.data.getData()
-                  : rowData.data;
+    const onModelUpdated = useCallback((event: any) => {
+      // Add hover listeners to all rows
+      setTimeout(() => {
+        const rows = document.querySelectorAll(".ag-row");
+        rows.forEach((row) => {
+          const rowId = row.getAttribute("row-id");
+          if (rowId) {
+            const rowData = event.api.getDisplayedRowAtIndex(parseInt(rowId));
+            if (rowData && rowData.data) {
+              const entityData = rowData.data.getData
+                ? rowData.data.getData()
+                : rowData.data;
 
-                // Remove existing listeners
-                const existingHoverHandler = (row as any)._hoverHandler;
-                const existingLeaveHandler = (row as any)._leaveHandler;
-                if (existingHoverHandler) {
-                  row.removeEventListener("mouseenter", existingHoverHandler);
-                }
-                if (existingLeaveHandler) {
-                  row.removeEventListener("mouseleave", existingLeaveHandler);
-                }
-
-                // Add new listeners
-                (row as any)._hoverHandler = (e: MouseEvent) => {
-                  if (entityData && entityData.id) {
-                    // Handle node hover - update graph interaction store
-                    // console.log("Node hover - entityData:", entityData);
-                    // console.log("Setting hovered node ID:", entityData.id);
-                    setHoveredNodeId(entityData.id as NodeId);
-                  }
-                };
-
-                (row as any)._leaveHandler = () => {
-                  setHoveredNodeId(null);
-                };
-
-                row.addEventListener("mouseenter", (row as any)._hoverHandler);
-                row.addEventListener("mouseleave", (row as any)._leaveHandler);
+              // Remove existing listeners
+              const existingHoverHandler = (row as any)._hoverHandler;
+              const existingLeaveHandler = (row as any)._leaveHandler;
+              if (existingHoverHandler) {
+                row.removeEventListener("mouseenter", existingHoverHandler);
               }
+              if (existingLeaveHandler) {
+                row.removeEventListener("mouseleave", existingLeaveHandler);
+              }
+
+              // Add new listeners
+              (row as any)._hoverHandler = (_e: MouseEvent) => {
+                if (entityData && entityData.id) {
+                  // Handle node hover - update graph interaction store
+                  // console.log("Node hover - entityData:", entityData);
+                  // console.log("Setting hovered node ID:", entityData.id);
+                  setHoveredNodeId(entityData.id as NodeId);
+                }
+              };
+
+              (row as any)._leaveHandler = () => {
+                setHoveredNodeId(null);
+              };
+
+              row.addEventListener("mouseenter", (row as any)._hoverHandler);
+              row.addEventListener("mouseleave", (row as any)._leaveHandler);
             }
-          });
-        }, 100);
-      },
-      [entityType]
-    );
+          }
+        });
+      }, 100);
+    }, []);
 
     // Make the grid more stable against unnecessary rerenders
     const memoizedAgGrid = useMemo(

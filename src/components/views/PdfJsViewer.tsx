@@ -36,18 +36,21 @@ const PdfJsViewer: React.FC<PdfJsViewerProps> = ({
 
   // Track instance creation
   useEffect(() => {
+    const currentInstanceId = instanceId.current;
     if (!(window as any).__pdfViewerInstanceCount) {
       (window as any).__pdfViewerInstanceCount = 0;
     }
     (window as any).__pdfViewerInstanceCount++;
     console.log(
-      `[PdfViewer-${instanceId.current}] Instance created. Total instances: ${(window as any).__pdfViewerInstanceCount}`
+      `[PdfViewer-${currentInstanceId}] Instance created. Total instances: ${(window as any).__pdfViewerInstanceCount}`
     );
 
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const currentInstanceId = instanceId.current;
       (window as any).__pdfViewerInstanceCount--;
       console.log(
-        `[PdfViewer-${instanceId.current}] Instance destroyed. Remaining instances: ${(window as any).__pdfViewerInstanceCount}`
+        `[PdfViewer-${currentInstanceId}] Instance destroyed. Remaining instances: ${(window as any).__pdfViewerInstanceCount}`
       );
     };
   }, []);

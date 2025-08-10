@@ -190,8 +190,8 @@ export class TagNode extends TextNode {
   // Override to prevent text editing
   setTextContentSelection(
     text: string,
-    anchorOffset: number,
-    focusOffset: number
+    _anchorOffset: number,
+    _focusOffset: number
   ): this {
     // Do nothing - prevent text editing
     console.log(

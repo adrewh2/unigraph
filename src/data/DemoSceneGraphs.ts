@@ -3,8 +3,12 @@ import { demo_scenegraph_ast } from "./demo-graphs/interfaceAstToSceneGraph";
 import { demo_scenegraph_unigraph_overview } from "./graphs/demo_unigraph_overview";
 // import { urlSceneGraph } from "../../hooks/useSvgSceneGraph";
 import { mergeIntoSceneGraph } from "../core/model/mergeSceneGraphs";
+import { alethiometerDemoGraph } from "./demo-graphs/random/alethiometerDemo";
+import { lineWithIncreasingLengthsGraph } from "./demo-graphs/random/lineWithIncreasingLengths";
+import { probabilisticBranchingGraph } from "./demo-graphs/random/probabilisticBranching";
 import { randomBigGraph } from "./demo-graphs/random/randomBig";
 import { randomBiggestGraph } from "./demo-graphs/random/randomBiggest";
+import { starWithDecreasingLengthsGraph } from "./demo-graphs/random/starWithDecreasingLengths";
 import { demo_Unigraph_Applications } from "./demo-graphs/story-cards/demo_scenegraph_unigraph_applications";
 import { demo_sceneGraph_academicsKG } from "./graphs/academicsKGraph";
 import { blobMeshGraph } from "./graphs/blobMesh";
@@ -152,6 +156,10 @@ export const DEMO_SCENE_GRAPHS: { [key: string]: SceneGraphCategory } = {
     graphs: {
       big: randomBigGraph,
       biggest: randomBiggestGraph,
+      probabilisticBranching: () => probabilisticBranchingGraph(),
+      alethiometerDemo: () => alethiometerDemoGraph(36, 5),
+      lineWithIncreasingLengths: () => lineWithIncreasingLengthsGraph(),
+      starWithDecreasingLengths: () => starWithDecreasingLengthsGraph(),
     },
   },
   "Thinker Graphs": {

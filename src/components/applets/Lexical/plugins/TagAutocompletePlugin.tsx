@@ -88,7 +88,7 @@ const tagLookupService = {
       });
 
       callback(results);
-    } catch (error) {
+    } catch {
       console.log(
         "TagAutocompletePlugin: Error accessing tag store, using fallback tags"
       );

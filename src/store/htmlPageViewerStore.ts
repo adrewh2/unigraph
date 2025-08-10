@@ -118,10 +118,10 @@ export const useHtmlPageViewerStore = create<HtmlPageViewerState>(
     clearContent: (tabId) => {
       set((state) => {
         if (tabId) {
-          const { [tabId]: removed, ...restCache } = state.contentCache;
-          const { [tabId]: removedLoading, ...restLoading } =
+          const { [tabId]: _removed, ...restCache } = state.contentCache;
+          const { [tabId]: _removedLoading, ...restLoading } =
             state.loadingStates;
-          const { [tabId]: removedError, ...restError } = state.errorStates;
+          const { [tabId]: _removedError, ...restError } = state.errorStates;
 
           return {
             contentCache: restCache,

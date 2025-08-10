@@ -495,7 +495,7 @@ const AppContentInner = ({
   >();
 
   const handleReactFlowFitView = useCallback(
-    (padding: number = 0.1, duration: number = 0) => {
+    (_padding: number = 0.1, _duration: number = 0) => {
       if (activeView === "ReactFlow" && getAutoFitView()) {
         // Use the global function from ReactFlowPanelV2
         if ((window as any).reactFlowFitView) {
@@ -1099,7 +1099,7 @@ const AppContentInner = ({
         }
       }
     },
-    [forceGraphInstance, graphvizFitToView, handleReactFlowFitView]
+    [forceGraphInstance, graphvizFitToView]
   );
 
   const handleLegendModeChange = useCallback(

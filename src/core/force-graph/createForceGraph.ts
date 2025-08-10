@@ -118,11 +118,11 @@ export const createForceGraph = (
     .linkLabel("type")
     .backgroundColor(options.backgroundColor ?? "#1a1a1a")
     .enableNodeDrag(true)
-    .onNodeClick((node) => {
+    .onNodeClick((node: any) => {
       flyToNode(graph, node, layout);
       console.log("node clicked");
     })
-    .onNodeDrag((node, translate: any) => {
+    .onNodeDrag((node: any, translate: any) => {
       setIsDraggingNode(true);
       // console.log("translate is ", translate);
 
@@ -143,7 +143,7 @@ export const createForceGraph = (
         ForceGraphManager.updateNodePositions(graph, forceGraphPositionData);
       }
     })
-    .onNodeDragEnd((node, _translate: any) => {
+    .onNodeDragEnd((node: any, _translate: any) => {
       if (node == undefined || node.id == undefined) {
         setIsDraggingNode(false);
         return;
@@ -257,16 +257,26 @@ export const createForceGraph = (
   // .cooldownTicks(100) // Number of ticks before stopping
   // .d3VelocityDecay(0.1); // "Friction" - lower means more movement
 
+  // Apply per-link distance using d3-force link once the instance is created
+  // const linkForce: any = (graph as any).d3Force("link");
+  // if (linkForce && typeof linkForce.distance === "function") {
+  //   linkForce.distance((link: any) =>
+  //     typeof link?.length === "number" ? link.length : 1
+  //   );
+  //   if (typeof linkForce.strength === "function") {
+  //     // Enforce target distances more strictly to reduce distortion from other forces
+  //     linkForce.strength((link: any) =>
+  //       typeof link?.length === "number" ? 1 : 0.5
+  //     );
+  //   }
+  // }
+
   if (options.nodeTextLabels) {
-    console.log("node text labels enabled", sceneGraph.getGraph());
     graph
-      .nodeThreeObject((node) => {
-        console.log("EHYYY");
+      .nodeThreeObject((node: any) => {
         const n = sceneGraph.getGraph().getNode(node.id as NodeId);
         const imageUrl = n.maybeGetUserData("imageUrl") as string | undefined;
-        console.log("node is ", n);
         if (imageUrl) {
-          console.log("entered");
           const texture = new TextureLoader().load(imageUrl);
           texture.colorSpace = SRGBColorSpace;
           const material = new SpriteMaterial({ map: texture });
@@ -385,6 +395,17 @@ export const createForceGraph = (
       controls.update();
     }
   }
+  // @TODO: This is a working block of code, but it should only be used when lengths are defined.
+  // Turning off because not sure how to handle the case where some lengths are not defined.
+  // Configure link distance using target node depth, following the working example pattern
+  // Respect per-link length baked into the edges. Fallback to 1.
+  // const linkForce = graph.d3Force("link");
+  // if (linkForce && typeof linkForce.distance === "function") {
+  // linkForce.distance((link: any) => (link?.length ?? 1) as number);
+  // linkForce.strength((link: any) => (link?.length ? 1 : undefined) as number);
+  // linkForce.iterations(4);
+  // }
+  // graph.numDimensions(3);
 
   return graph;
 };

@@ -584,6 +584,7 @@ export class ForceGraphManager {
       sceneGraph.getForceGraphRenderConfig().chargeStrength !==
         config.chargeStrength
     ) {
+      console.log("reheating simulation");
       instance.d3Force("charge")?.strength(config.chargeStrength);
       instance.d3ReheatSimulation();
     }
@@ -630,6 +631,15 @@ export class ForceGraphManager {
         controls.update();
       }
     }
+
+    // console.log("engine:", instance.forceEngine()); // should be 'd3'
+    // console.log("nodes:", instance.graphData()?.nodes?.length); // > 0
+    // console.log("has d3Force(link):", !!instance.d3Force("link")); // true if d3 engine
+
+    // instance.d3Force("link")?.distance(60);
+    // Only reheat simulation if it's safe to do so
+    // Re-heat the simulation as per example
+    // instance.numDimensions(3);
 
     sceneGraph.setForceGraphRenderConfig(config);
   }

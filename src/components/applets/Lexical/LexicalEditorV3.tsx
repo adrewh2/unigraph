@@ -274,7 +274,7 @@ const CustomOnChangePlugin: React.FC<{
 interface LexicalEditorV3Props {
   documentId: string; // Required: Supabase document ID
   initialContent?: string; // Fallback content if document is empty
-  onChange?: (content: string) => void;
+  onChange?: (content: string, serializedState?: string) => void; // Updated to include serialized state
   autoSaveInterval?: number; // Auto-save interval in milliseconds
   onLastSavedChange?: (date: Date | null) => void; // Callback to update parent's last saved timestamp
 }
@@ -391,9 +391,9 @@ const LexicalEditorV3: React.FC<LexicalEditorV3Props> = ({
           saveToServer(serializedState);
         }
 
-        // Call onChange callback if provided
+        // Call onChange callback if provided, passing both text and serialized state
         if (onChange) {
-          onChange(textContent);
+          onChange(textContent, serializedState);
         }
       });
     },

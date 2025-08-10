@@ -364,13 +364,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
       nodes: nodesWithPositions,
       edges: edgesWithStyling,
     };
-  }, [
-    sceneGraph,
-    nodeLegendConfig,
-    edgeLegendConfig,
-    legendMode,
-    currentLayoutResult,
-  ]);
+  }, [sceneGraph, nodeLegendConfig, edgeLegendConfig, legendMode, nodeTypes]);
 
   // PRE-PROCESS nodes without selection state - let ReactFlow handle selection internally
   const processedNodes = useMemo(() => {
@@ -447,7 +441,7 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
         );
       }
     }
-  }, [isInitializingRef.current, getSelectedNodeIds, getSelectedNodeId]);
+  }, []);
 
   // Update nodes and edges when layout result changes
   useEffect(() => {
@@ -513,6 +507,9 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     edgeLegendConfig,
     legendMode,
     selectedNodeIds,
+    nodeTypes,
+    setNodes,
+    setEdges,
   ]);
 
   // Fix the onInit handler to use the correct type and avoid camera flickering

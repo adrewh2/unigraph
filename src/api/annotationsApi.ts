@@ -42,11 +42,27 @@ export interface Annotation {
   parent_resource_id?: string | null;
 }
 
+// Generate a UUID-like string
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Save (upsert) an annotation
-export async function saveAnnotation(annotation: Annotation) {
+export async function saveAnnotation(annotation: Annotation | Omit<Annotation, 'id'>) {
+  console.log("Saving annotation:", annotation);
+  
+  // Always use upsert - it will insert if ID doesn't exist, update if it does
+  const annotationWithId = 'id' in annotation && annotation.id 
+    ? annotation 
+    : { ...annotation, id: generateUUID() } as Annotation;
+    
   const { data, error } = await supabase
     .from("annotations")
-    .upsert([annotation], { onConflict: "id" })
+    .upsert([annotationWithId], { onConflict: "id" })
     .select();
   if (error) throw error;
   return data?.[0];

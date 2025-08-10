@@ -37,6 +37,7 @@ import ResourceManagerView from "./ResourceManagerView";
 import SandpackEditorWithFileTree from "./SandpackEditorWithFileTree";
 import SystemMonitorView from "./SystemMonitorView";
 import { VIEW_DEFINITIONS } from "./viewDefinitions";
+import YouTubePlayerView from "./YouTubePlayerView";
 
 // Create custom views that include our AIChatPanel and SemanticWebQueryPanel
 const aiChatView = {
@@ -892,6 +893,14 @@ const pdfViewerView = {
   category: VIEW_DEFINITIONS["pdf-viewer"].category,
 };
 
+const youtubePlayerView = {
+  id: "youtube-player",
+  title: "YouTube Player",
+  icon: "▶️",
+  component: (props: any) => <YouTubePlayerView {...props} />,
+  category: "media",
+};
+
 const MarkdownViewerWrapper: React.FC<any> = (props) => {
   const currentSceneGraph = useAppConfigStore(
     (state) => state.currentSceneGraph
@@ -1013,6 +1022,7 @@ const allViews = [
   map2DView,
   resourceManagerView,
   pdfViewerView,
+  youtubePlayerView,
 ];
 
 // Example: Create a custom theme for demonstration

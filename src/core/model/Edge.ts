@@ -20,6 +20,7 @@ export interface DisplayEdgeData {
   size: number;
   opacity: number;
   drawType?: "arrow" | "line";
+  length?: number;
 }
 
 export type DisplayEdgeDataArgs = Partial<DisplayEdgeData>;
@@ -99,6 +100,10 @@ class Edge extends AbstractEntity<EdgeId, EdgeData> {
 
   getOpacity(): number {
     return this.data.opacity;
+  }
+
+  getLength(): number | undefined {
+    return this.data.length;
   }
 }
 
