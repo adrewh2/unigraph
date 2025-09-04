@@ -26,7 +26,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
 
   // Add styles for the YouTube iframe
   useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .youtube-iframe {
         width: 100% !important;
@@ -34,7 +34,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
@@ -143,8 +143,8 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
           borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
         }}
       >
-        <YouTube 
-          videoId={videoId} 
+        <YouTube
+          videoId={videoId}
           opts={opts}
           style={{ width: "100%", height: "100%" }}
           iframeClassName="youtube-iframe"

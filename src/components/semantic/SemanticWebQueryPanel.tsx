@@ -217,7 +217,11 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
         if (entityData[property] !== undefined) {
           // Handle SPARQL result objects that have {type, value} structure
           const propertyValue = entityData[property];
-          if (propertyValue && typeof propertyValue === 'object' && 'value' in propertyValue) {
+          if (
+            propertyValue &&
+            typeof propertyValue === "object" &&
+            "value" in propertyValue
+          ) {
             userData[property] = propertyValue.value;
           } else {
             userData[property] = propertyValue;
@@ -228,8 +232,8 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
       // Create the result node
       const resultNode = currentSceneGraph.getGraph().createNode({
         label:
-          (entityData[agGridColumnDefs[0]?.field || "id"]?.value || 
-           entityData[agGridColumnDefs[0]?.field || "id"]) ||
+          entityData[agGridColumnDefs[0]?.field || "id"]?.value ||
+          entityData[agGridColumnDefs[0]?.field || "id"] ||
           `Entity ${index + 1}`,
         type: entityTypeName || "Entity",
         tags: tags,

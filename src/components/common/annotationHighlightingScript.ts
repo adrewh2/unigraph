@@ -176,7 +176,10 @@ export const processHtmlWithHighlights = (
         const tags = annotation.data.tags;
 
         // Determine highlight color based on tags
-        const highlightColor = getHighlightColorForAnnotation(tags, getTagColor);
+        const highlightColor = getHighlightColorForAnnotation(
+          tags,
+          getTagColor
+        );
 
         // Create the highlighted span
         const highlightedSpan = `<span class="annotation-highlight" data-annotation-id="${annotationId}" style="background-color: ${highlightColor}; cursor: pointer; border-radius: 2px; padding: 1px 2px; transition: background-color 0.2s ease;" onclick="window.parent.postMessage({type: 'show-annotation', annotationId: '${annotationId}'}, '*')">${searchText}</span>`;

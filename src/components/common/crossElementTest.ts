@@ -1,6 +1,6 @@
 /**
  * Test HTML file to demonstrate cross-element annotation highlighting
- * 
+ *
  * This file can be used to test how well the enhanced annotation highlighting
  * handles selections that span across different HTML elements.
  */
@@ -123,12 +123,12 @@ const testHtml = `
 
 /**
  * Usage instructions:
- * 
+ *
  * 1. Load this HTML in the HtmlPageViewer
  * 2. Try selecting text that spans across different elements
  * 3. Create annotations for each test case
  * 4. Verify that the highlights appear correctly
- * 
+ *
  * You can also test manually in the browser console:
  * - testHighlight('text with a hyperlink in', 'test-1')
  * - testHighlight('bold text and italic', 'test-2')

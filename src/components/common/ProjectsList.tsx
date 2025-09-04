@@ -549,8 +549,24 @@ const ProjectsList: React.FC<ProjectsListProps> = ({
             gap: "12px",
           }}
         >
-          <svg style={{ animation: "spin 1s linear infinite", width: "24px", height: "24px" }} viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke={getColor(theme.colors, "primary")} strokeWidth="2" strokeDasharray="31.4 31.4" strokeLinecap="round"/>
+          <svg
+            style={{
+              animation: "spin 1s linear infinite",
+              width: "24px",
+              height: "24px",
+            }}
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke={getColor(theme.colors, "primary")}
+              strokeWidth="2"
+              strokeDasharray="31.4 31.4"
+              strokeLinecap="round"
+            />
           </svg>
           <div style={{ fontSize: "14px" }}>Loading projects...</div>
         </div>

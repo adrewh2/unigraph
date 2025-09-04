@@ -319,7 +319,11 @@ const HtmlPageViewer: React.FC<HtmlPageViewerProps> = ({
             };
           });
 
-        const result = processHtmlWithHighlights(html, annotationHighlights, getTagColor);
+        const result = processHtmlWithHighlights(
+          html,
+          annotationHighlights,
+          getTagColor
+        );
         processedHtml = result.html;
         hasHighlights = result.highlightsAdded > 0;
 
