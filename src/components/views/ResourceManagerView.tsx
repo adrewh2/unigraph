@@ -1,3 +1,4 @@
+import { listUserActivities, UserActivity } from "@/api/userActivitiesApi";
 import { addViewAsTab, useTheme } from "@aesgraph/app-shell";
 import { RefreshCw } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
@@ -44,6 +45,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [youtubeVideos, setYouTubeVideos] = useState<YouTubeVideo[]>([]);
+  const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
@@ -70,6 +72,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     webpageContentAvailability: {
       [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
     } | null;
+    userActivities: UserActivity[] | null;
     lastFetched: number | null;
   }>({
     webpages: null,
@@ -77,6 +80,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     documents: null,
     youtubeVideos: null,
     webpageContentAvailability: null,
+    userActivities: null,
     lastFetched: null,
   });
 
@@ -157,6 +161,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         dataCache.documents &&
         dataCache.webpageContentAvailability &&
         dataCache.youtubeVideos &&
+        dataCache.userActivities &&
         cacheValid
       ) {
         console.log("Using cached data, age:", cacheAge, "ms");
@@ -165,6 +170,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         setDocuments(dataCache.documents);
         setYouTubeVideos(dataCache.youtubeVideos);
         setWebpageContentAvailability(dataCache.webpageContentAvailability);
+        setUserActivities(dataCache.userActivities);
         setLoading(false);
         return;
       }
@@ -174,11 +180,16 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         console.log("Fetching fresh data from server");
 
         // Fetch webpages (only when signed in)
+        let activitiesData: UserActivity[] = [];
         let webpagesData: Webpage[] = [];
         let contentAvailability: {
           [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
         } = {};
         if (user?.id) {
+          activitiesData = (await listUserActivities({
+            userId: user.id,
+          })) as UserActivity[];
+
           webpagesData = (await listWebpages({
             userId: user.id,
             includeContent: false,
@@ -271,6 +282,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         });
 
         // Update state
+        setUserActivities(activitiesData || []);
         setWebpages(webpagesData || []);
         setAnnotations(annotationsData || []);
         setDocuments(documentsData || []);
@@ -285,6 +297,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           documents: documentsData || [],
           youtubeVideos: youTubeVideosData || [],
           webpageContentAvailability: contentAvailability,
+          userActivities: activitiesData || [],
           lastFetched: now,
         });
       } catch (error) {
@@ -391,10 +404,15 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
       // Fetch data without setting loading state
       let webpagesData: Webpage[] = [];
+      let activitiesData: UserActivity[] = [];
       let contentAvailability: {
         [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
       } = {};
       if (user?.id) {
+        activitiesData = (await listUserActivities({
+          userId: user.id,
+        })) as UserActivity[];
+
         webpagesData = (await listWebpages({
           userId: user.id,
           includeContent: false,
@@ -502,6 +520,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         documents: documentsData || [],
         youtubeVideos: youTubeVideosData || [],
         webpageContentAvailability: contentAvailability,
+        userActivities: activitiesData || [],
         lastFetched: Date.now(),
       });
 
