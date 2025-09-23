@@ -42,20 +42,46 @@ export interface UserActivityStats {
 export async function createUserActivity(
   params: CreateUserActivityParams
 ): Promise<UserActivity> {
+  console.log("createUserActivity called with params:", params);
+
+  // Get current user to ensure we have a valid user_id
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError) {
+    console.error("Error getting current user:", authError);
+    throw new Error("User not authenticated");
+  }
+
+  if (!user) {
+    console.error("No authenticated user found");
+    throw new Error("User not authenticated");
+  }
+
+  const insertData = {
+    activity_id: params.activity_id,
+    context: params.context || null,
+    log: params.log || null,
+    user_id: params.user_id || user.id,
+  };
+
+  console.log("Inserting data to user_activity table:", insertData);
+  console.log("Current user:", { id: user.id, email: user.email });
+
   const { data, error } = await supabase
     .from("user_activity")
-    .insert([
-      {
-        activity_id: params.activity_id,
-        context: params.context || null,
-        log: params.log || null,
-        user_id: params.user_id || undefined, // Let RLS handle auth.uid() if not provided
-      },
-    ])
+    .insert([insertData])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error creating user activity:", error);
+    throw error;
+  }
+
+  console.log("User activity created successfully:", data);
   return data;
 }
 
@@ -193,7 +219,7 @@ export async function getUserActivityStats(
   const byActivityId: Record<string, number> = {};
   const byDate: Record<string, number> = {};
 
-  activities.forEach((activity) => {
+  activities.forEach((activity: any) => {
     // Count by activity ID
     byActivityId[activity.activity_id] =
       (byActivityId[activity.activity_id] || 0) + 1;
@@ -230,7 +256,14 @@ export async function logYouTubeActivity(
   timestamp?: number,
   context?: any
 ): Promise<UserActivity> {
-  return createUserActivity({
+  console.log("logYouTubeActivity called with:", {
+    activityId,
+    videoId,
+    timestamp,
+    context,
+  });
+
+  const activityData = {
     activity_id: activityId,
     context: {
       video_id: videoId,
@@ -238,7 +271,14 @@ export async function logYouTubeActivity(
       ...context,
     },
     log: `YouTube ${activityId} - Video: ${videoId}${timestamp ? ` at ${timestamp}s` : ""}`,
-  });
+  };
+
+  console.log("Creating user activity with data:", activityData);
+
+  const result = await createUserActivity(activityData);
+  console.log("User activity created successfully:", result);
+
+  return result;
 }
 
 // Log document interactions

@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import YouTube from "react-youtube";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
 import { createDocument, updateDocument } from "../../api/documentsApi";
+import { logYouTubeActivity } from "../../api/userActivitiesApi";
 import { useAuth } from "../../hooks/useAuth";
 import LexicalEditorV3 from "../applets/Lexical/LexicalEditorV3";
 
@@ -31,6 +32,48 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
   const playerRef = useRef<any>(null);
   const insertTimestampRef = useRef<((timestamp: string) => void) | null>(null);
 
+  // Activity logging state
+  const [hasLoggedAccess, setHasLoggedAccess] = useState<boolean>(false);
+  const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
+  const watchTimeRef = useRef<number>(0);
+
+  // Function to log YouTube video access activity
+  const logVideoAccess = async () => {
+    console.log("logVideoAccess called:", {
+      hasLoggedAccess,
+      userId: user?.id,
+      videoId,
+      currentTime,
+      watchTime: watchTimeRef.current,
+    });
+
+    if (!hasLoggedAccess && user?.id) {
+      try {
+        console.log("Attempting to log YouTube video access...");
+        const result = await logYouTubeActivity(
+          "youtube_video_accessed",
+          videoId,
+          currentTime,
+          {
+            video_title: title,
+            watch_duration: watchTimeRef.current,
+            timestamp_accessed: new Date().toISOString(),
+          }
+        );
+        setHasLoggedAccess(true);
+        console.log("Successfully logged YouTube video access:", result);
+      } catch (error) {
+        console.error("Failed to log YouTube video access:", error);
+        console.error("Error details:", error);
+      }
+    } else {
+      console.log("Skipping log - conditions not met:", {
+        hasLoggedAccess,
+        userId: user?.id,
+      });
+    }
+  };
+
   // Helper function to format timestamp
   const formatTimestamp = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -51,22 +94,52 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
   };
 
   const onPlayerStateChange = (event: any) => {
+    console.log("YouTube player state change:", event.data);
+
     // Update current time periodically when playing
     if (event.data === 1) {
-      // Playing
+      // Playing - start tracking watch time
+      if (watchStartTime === null) {
+        const startTime = Date.now();
+        setWatchStartTime(startTime);
+        console.log("Started tracking watch time:", startTime);
+      }
+
       const interval = setInterval(() => {
         if (playerRef.current && playerRef.current.getCurrentTime) {
           const time = playerRef.current.getCurrentTime();
           setCurrentTime(time);
+
+          // Track total watch time
+          if (watchStartTime) {
+            const elapsedMs = Date.now() - watchStartTime;
+            const elapsedSeconds = Math.floor(elapsedMs / 1000);
+            watchTimeRef.current = elapsedSeconds;
+
+            console.log("Watch time tracking:", {
+              elapsedSeconds,
+              hasLoggedAccess,
+              userId: user?.id,
+            });
+
+            // Log activity after 10 seconds of watching
+            if (elapsedSeconds >= 10 && !hasLoggedAccess) {
+              console.log("10 seconds reached, calling logVideoAccess");
+              logVideoAccess();
+            }
+          }
         }
       }, 1000);
 
       // Store interval ID to clear later
       (event.target as any)._timeInterval = interval;
-    } else if (event.target._timeInterval) {
-      // Clear interval when paused/stopped
-      clearInterval(event.target._timeInterval);
-      delete event.target._timeInterval;
+    } else {
+      // Paused/stopped - pause watch time tracking but don't reset
+      if (event.target._timeInterval) {
+        clearInterval(event.target._timeInterval);
+        delete event.target._timeInterval;
+        console.log("Paused watch time tracking");
+      }
     }
   };
 
@@ -96,30 +169,85 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
 
   // Handle timestamp click events for video navigation
   useEffect(() => {
-    const handleTimestampClick = (event: CustomEvent) => {
-      const { timestamp } = event.detail;
+    const handleTimestampClick = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { timestamp } = customEvent.detail;
       const seconds = parseTimestampToSeconds(timestamp);
 
       if (playerRef.current && playerRef.current.seekTo) {
         console.log(`Jumping to timestamp: ${timestamp} (${seconds}s)`);
         playerRef.current.seekTo(seconds, true);
         setCurrentTime(seconds);
+
+        // Log timestamp navigation activity
+        if (user?.id) {
+          try {
+            await logYouTubeActivity(
+              "youtube_timestamp_navigation",
+              videoId,
+              seconds,
+              {
+                video_title: title,
+                timestamp_clicked: timestamp,
+                timestamp_seconds: seconds,
+                navigation_time: new Date().toISOString(),
+              }
+            );
+            console.log(
+              `Logged timestamp navigation: ${timestamp} in video ${videoId}`
+            );
+          } catch (error) {
+            console.error("Failed to log timestamp navigation:", error);
+          }
+        }
       }
     };
 
     // Listen for timestamp click events
-    document.addEventListener(
-      "timestampClick",
-      handleTimestampClick as EventListener
-    );
+    document.addEventListener("timestampClick", handleTimestampClick);
 
     return () => {
-      document.removeEventListener(
-        "timestampClick",
-        handleTimestampClick as EventListener
-      );
+      document.removeEventListener("timestampClick", handleTimestampClick);
     };
-  }, []);
+  }, [title, user?.id, videoId]);
+
+  // Reset activity logging state when video changes
+  useEffect(() => {
+    setHasLoggedAccess(false);
+    setWatchStartTime(null);
+    watchTimeRef.current = 0;
+  }, [videoId]);
+
+  // Test function to manually trigger activity logging (for debugging)
+  const testActivityLogging = React.useCallback(async () => {
+    console.log("Testing activity logging manually...");
+    if (user?.id) {
+      try {
+        const result = await logYouTubeActivity(
+          "test_youtube_activity",
+          videoId,
+          0,
+          {
+            test: true,
+            timestamp: new Date().toISOString(),
+          }
+        );
+        console.log("Test activity logged successfully:", result);
+      } catch (error) {
+        console.error("Test activity logging failed:", error);
+      }
+    } else {
+      console.log("No user ID available for testing");
+    }
+  }, [user?.id, videoId]);
+
+  // Add test function to window for debugging
+  useEffect(() => {
+    (window as any).testActivityLogging = testActivityLogging;
+    return () => {
+      delete (window as any).testActivityLogging;
+    };
+  }, [testActivityLogging]);
 
   // Add styles for the YouTube iframe
   useEffect(() => {
