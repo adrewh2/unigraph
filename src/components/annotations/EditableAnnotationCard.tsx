@@ -1,6 +1,11 @@
 import { Edit2, Plus, Save, Tag, X } from "lucide-react";
 import React, { useState } from "react";
-import { Annotation, saveAnnotation } from "../../api/annotationsApi";
+import { 
+  Annotation, 
+  saveAnnotation, 
+  TextSelectionAnnotationData, 
+  ImageAnnotationData 
+} from "../../api/annotationsApi";
 import { addNotification } from "../../store/notificationStore";
 
 interface EditableAnnotationCardProps {
@@ -41,16 +46,32 @@ const EditableAnnotationCard: React.FC<EditableAnnotationCardProps> = ({
 
   const handleSave = async () => {
     try {
-      const updatedAnnotation: Annotation = {
-        ...annotation,
-        title: editedData.title,
-        data: {
-          ...annotation.data,
+      let updatedData: TextSelectionAnnotationData | ImageAnnotationData;
+      
+      if (editedData.type === "text_selection") {
+        updatedData = {
+          selected_text: (annotation.data as TextSelectionAnnotationData).selected_text,
           comment: editedData.comment,
           secondary_comment: editedData.secondaryComment || undefined,
           tags: editedData.tags.length > 0 ? editedData.tags : undefined,
-          type: editedData.type,
-        },
+          page_url: annotation.data.page_url,
+          type: "text_selection",
+        };
+      } else {
+        updatedData = {
+          image_url: (annotation.data as ImageAnnotationData).image_url,
+          comment: editedData.comment,
+          secondary_comment: editedData.secondaryComment || undefined,
+          tags: editedData.tags.length > 0 ? editedData.tags : undefined,
+          page_url: annotation.data.page_url,
+          type: "image",
+        };
+      }
+
+      const updatedAnnotation: Annotation = {
+        ...annotation,
+        title: editedData.title,
+        data: updatedData,
         last_updated_at: new Date().toISOString(),
       };
 
@@ -621,11 +642,7 @@ const EditableAnnotationCard: React.FC<EditableAnnotationCardProps> = ({
             ? "Image"
             : data.type === "text_selection"
               ? "Text"
-              : data.type === "note"
-                ? "Note"
-                : data.type === "highlight"
-                  ? "Highlight"
-                  : data.type || "Annotation"}
+              : "Annotation"}
         </span>
       </div>
     </div>

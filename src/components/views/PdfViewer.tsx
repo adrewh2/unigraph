@@ -145,7 +145,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         const textContent = await page.getTextContent();
 
         // Simple text layer rendering
-        textContent.items.forEach((item) => {
+        textContent.items.forEach((item: any) => {
           if ("str" in item) {
             const textItem = item as TextItem;
             const div = document.createElement("div");
@@ -154,7 +154,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
             div.style.left = textItem.transform[4] + "px";
             div.style.top = viewport.height - textItem.transform[5] + "px";
             div.style.fontSize = Math.abs(textItem.transform[0]) + "px";
-            div.style.fontFamily = textItem.fontName;
+            // div.style.fontFamily = textItem.fontName; // Comment out as fontName may not be available
             div.style.whiteSpace = "pre";
             textLayerDiv.appendChild(div);
           }
