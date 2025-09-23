@@ -70,6 +70,57 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
     }
   };
 
+  // Helper function to parse timestamp string to seconds
+  const parseTimestampToSeconds = (timestamp: string): number => {
+    // Remove brackets if present
+    const cleanTimestamp = timestamp.replace(/[[\]]/g, "");
+
+    // Split by colon
+    const parts = cleanTimestamp.split(":");
+
+    if (parts.length === 2) {
+      // mm:ss format
+      const minutes = parseInt(parts[0], 10);
+      const seconds = parseInt(parts[1], 10);
+      return minutes * 60 + seconds;
+    } else if (parts.length === 3) {
+      // hh:mm:ss format
+      const hours = parseInt(parts[0], 10);
+      const minutes = parseInt(parts[1], 10);
+      const seconds = parseInt(parts[2], 10);
+      return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    return 0;
+  };
+
+  // Handle timestamp click events for video navigation
+  useEffect(() => {
+    const handleTimestampClick = (event: CustomEvent) => {
+      const { timestamp } = event.detail;
+      const seconds = parseTimestampToSeconds(timestamp);
+
+      if (playerRef.current && playerRef.current.seekTo) {
+        console.log(`Jumping to timestamp: ${timestamp} (${seconds}s)`);
+        playerRef.current.seekTo(seconds, true);
+        setCurrentTime(seconds);
+      }
+    };
+
+    // Listen for timestamp click events
+    document.addEventListener(
+      "timestampClick",
+      handleTimestampClick as EventListener
+    );
+
+    return () => {
+      document.removeEventListener(
+        "timestampClick",
+        handleTimestampClick as EventListener
+      );
+    };
+  }, []);
+
   // Add styles for the YouTube iframe
   useEffect(() => {
     const style = document.createElement("style");
@@ -257,7 +308,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
                   borderRadius: "4px",
                   cursor: "pointer",
                 }}
-                title="Insert current timestamp (timestamps can be deleted with Delete/Backspace keys)"
+                title="Insert current timestamp (click timestamps to jump to video time, delete with Delete/Backspace keys)"
               >
                 Insert Timestamp
               </button>
@@ -273,8 +324,8 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
             borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
           }}
         >
-          💡 Tip: Timestamps can be deleted using Delete or Backspace keys when
-          selected
+          💡 Tip: Click timestamps to jump to that time in the video. Delete
+          with Delete/Backspace keys.
         </div>
         <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
           {documentId ? (

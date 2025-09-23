@@ -62,28 +62,31 @@ export class TimestampNode extends TextNode {
       display: inline-block;
     `;
 
-    // Add click handler to make timestamps clickable
+    // Add click handler to make timestamps clickable for video navigation
     span.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      // Could emit event for parent to handle timestamp navigation
+      // Emit custom event for YouTube player to handle timestamp navigation
       const event = new CustomEvent("timestampClick", {
         detail: { timestamp: this.__timestamp },
       });
       document.dispatchEvent(event);
     });
 
-    // Add hover effect to indicate it's deletable
+    // Add hover effect to indicate it's clickable for navigation
     span.addEventListener("mouseenter", () => {
-      span.style.backgroundColor = "#ffebee";
-      span.style.borderColor = "#f44336";
-      span.style.color = "#d32f2f";
+      span.style.backgroundColor = "#e8f5e8";
+      span.style.borderColor = "#4caf50";
+      span.style.color = "#2e7d32";
+      span.style.transform = "scale(1.05)";
+      span.style.transition = "all 0.2s ease";
     });
 
     span.addEventListener("mouseleave", () => {
       span.style.backgroundColor = "#e3f2fd";
       span.style.borderColor = "#bbdefb";
       span.style.color = "#1976d2";
+      span.style.transform = "scale(1)";
     });
 
     return span;
@@ -134,6 +137,30 @@ export function $createTimestampNode(timestamp: string): TimestampNode {
 // Helper function to check if a node is a timestamp node
 export function $isTimestampNode(node: any): node is TimestampNode {
   return node instanceof TimestampNode;
+}
+
+// Helper function to parse timestamp string to seconds
+export function parseTimestampToSeconds(timestamp: string): number {
+  // Remove brackets if present
+  const cleanTimestamp = timestamp.replace(/[[\]]/g, "");
+
+  // Split by colon
+  const parts = cleanTimestamp.split(":");
+
+  if (parts.length === 2) {
+    // mm:ss format
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return minutes * 60 + seconds;
+  } else if (parts.length === 3) {
+    // hh:mm:ss format
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const seconds = parseInt(parts[2], 10);
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  return 0;
 }
 
 // Plugin component
