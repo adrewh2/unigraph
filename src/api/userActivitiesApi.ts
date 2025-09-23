@@ -167,6 +167,79 @@ export async function listUserActivities(
   return data || [];
 }
 
+// Get user activities with pagination support (returns data and pagination info)
+export interface GetUserActivitiesParams {
+  userId: string;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  activityId?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface GetUserActivitiesResult {
+  data: UserActivity[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export async function getUserActivities(
+  params: GetUserActivitiesParams
+): Promise<GetUserActivitiesResult> {
+  const page = params.page || 1;
+  const pageSize = params.pageSize || 50;
+  const offset = (page - 1) * pageSize;
+
+  // Build the query
+  let query = supabase
+    .from("user_activity")
+    .select("*", { count: "exact" })
+    .eq("user_id", params.userId);
+
+  // Add optional filters
+  if (params.activityId) {
+    query = query.eq("activity_id", params.activityId);
+  }
+
+  if (params.startDate) {
+    query = query.gte("timestamp", params.startDate);
+  }
+
+  if (params.endDate) {
+    query = query.lte("timestamp", params.endDate);
+  }
+
+  // Add sorting
+  const sortBy = params.sortBy || "timestamp";
+  const sortOrder = params.sortOrder || "desc";
+  query = query.order(sortBy, { ascending: sortOrder === "asc" });
+
+  // Add pagination
+  query = query.range(offset, offset + pageSize - 1);
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    console.error("Error fetching user activities:", error);
+    throw error;
+  }
+
+  const total = count || 0;
+  const totalPages = Math.ceil(total / pageSize);
+
+  return {
+    data: data || [],
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
+}
+
 // Get user activities by activity ID
 export async function getUserActivitiesByActivityId(
   activityId: string,
