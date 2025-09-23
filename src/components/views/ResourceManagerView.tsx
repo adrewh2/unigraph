@@ -23,6 +23,7 @@ import useAppConfigStore from "../../store/appConfigStore";
 import { useDocumentEventsStore } from "../../store/documentEventsStore";
 import { useTagStore } from "../../store/tagStore";
 import {
+  getDocumentLastAccessTime,
   UserActivityCache,
   userActivityCache,
 } from "../../utils/userActivityCache";
@@ -50,7 +51,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [youtubeVideos, setYouTubeVideos] = useState<YouTubeVideo[]>([]);
   const [_userActivities, setUserActivities] = useState<UserActivity[]>([]);
-  const [accessTimeCache, setAccessTimeCache] = useState<UserActivityCache>(
+  const [accessTimeCache, _setAccessTimeCache] = useState<UserActivityCache>(
     new UserActivityCache()
   );
   const [loading, setLoading] = useState(true);
@@ -332,7 +333,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         setLoading(false);
       }
     },
-    [user?.id, dataCache]
+    [user?.id, dataCache, accessTimeCache]
   );
 
   useEffect(() => {
@@ -571,7 +572,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     } catch (error) {
       console.error("Error during silent refresh:", error);
     }
-  }, [user?.id]);
+  }, [user?.id, accessTimeCache]);
 
   // Targeted refresh: only annotations slice (avoid refreshing entire resource manager)
   const refreshAnnotationsOnly = useCallback(async () => {
@@ -822,6 +823,9 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
   const documentsContainer = new EntitiesContainer(
     documents.map((document) => {
+      // Get last access time from cache
+      const lastAccessTime = getDocumentLastAccessTime(document.id);
+
       // Create a mock entity for documents that implements the required interface
       return {
         getId: () => document.id,
@@ -838,6 +842,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           parent_id: document.parent_id,
           created_at: document.created_at,
           last_updated_at: document.last_updated_at,
+          lastAccessTime: lastAccessTime ?? "",
           userData: document,
         }),
         getEntityType: () => "node",

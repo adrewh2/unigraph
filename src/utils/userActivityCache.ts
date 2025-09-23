@@ -9,8 +9,16 @@ export interface VideoAccessInfo {
   timestampAccessed?: string;
 }
 
+export interface DocumentAccessInfo {
+  documentId: string;
+  lastAccessTime: string;
+  documentTitle?: string;
+  accessType?: string;
+}
+
 export class UserActivityCache {
   private videoAccessMap: Map<string, VideoAccessInfo> = new Map();
+  private documentAccessMap: Map<string, DocumentAccessInfo> = new Map();
   private lastUpdated: number = 0;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -20,6 +28,7 @@ export class UserActivityCache {
    */
   updateCache(activities: UserActivity[]): void {
     this.videoAccessMap.clear();
+    this.documentAccessMap.clear();
 
     // Filter for YouTube video activities and process them
     const youtubeActivities = activities.filter(
@@ -48,6 +57,39 @@ export class UserActivityCache {
             videoTitle: context.video_title,
             watchDuration: context.watch_duration,
             timestampAccessed: context.timestamp_accessed,
+          });
+        }
+      }
+    });
+
+    // Filter for document activities and process them
+    const documentActivities = activities.filter(
+      (activity) =>
+        (activity.activity_id === "document_accessed" ||
+          activity.activity_id === "document_opened" ||
+          activity.activity_id === "document_viewed") &&
+        activity.context
+    );
+
+    // Group by document_id and keep the most recent access time for each document
+    documentActivities.forEach((activity) => {
+      const context = activity.context as any;
+      const documentId = context?.document_id || context?.resource?.resourceId;
+
+      if (documentId) {
+        const existingEntry = this.documentAccessMap.get(documentId);
+        const activityTime = new Date(activity.timestamp).getTime();
+
+        // Only update if this activity is more recent than existing entry
+        if (
+          !existingEntry ||
+          activityTime > new Date(existingEntry.lastAccessTime).getTime()
+        ) {
+          this.documentAccessMap.set(documentId, {
+            documentId,
+            lastAccessTime: activity.timestamp,
+            documentTitle: context.document_title,
+            accessType: activity.activity_id,
           });
         }
       }
@@ -109,6 +151,65 @@ export class UserActivityCache {
   }
 
   /**
+   * Get the last access info for a specific document
+   * @param documentId Document ID
+   * @returns DocumentAccessInfo or null if not found
+   */
+  getDocumentAccessInfo(documentId: string): DocumentAccessInfo | null {
+    if (this.isExpired()) {
+      return null;
+    }
+    return this.documentAccessMap.get(documentId) || null;
+  }
+
+  /**
+   * Get the last access info for multiple documents
+   * @param documentIds Array of document IDs
+   * @returns Record mapping document IDs to their access info
+   */
+  getMultipleDocumentAccessInfo(
+    documentIds: string[]
+  ): Record<string, DocumentAccessInfo | null> {
+    if (this.isExpired()) {
+      return {};
+    }
+
+    const result: Record<string, DocumentAccessInfo | null> = {};
+    documentIds.forEach((documentId) => {
+      result[documentId] = this.documentAccessMap.get(documentId) || null;
+    });
+    return result;
+  }
+
+  /**
+   * Get the last access time as a timestamp string for a document
+   * @param documentId Document ID
+   * @returns ISO timestamp string or null
+   */
+  getDocumentLastAccessTime(documentId: string): string | null {
+    const accessInfo = this.getDocumentAccessInfo(documentId);
+    return accessInfo?.lastAccessTime || null;
+  }
+
+  /**
+   * Get last access times for multiple documents as timestamp strings
+   * @param documentIds Array of document IDs
+   * @returns Record mapping document IDs to their last access timestamps
+   */
+  getDocumentLastAccessTimes(
+    documentIds: string[]
+  ): Record<string, string | null> {
+    const accessInfoMap = this.getMultipleDocumentAccessInfo(documentIds);
+    const result: Record<string, string | null> = {};
+
+    Object.entries(accessInfoMap).forEach(([documentId, accessInfo]) => {
+      result[documentId] = accessInfo?.lastAccessTime || null;
+    });
+
+    return result;
+  }
+
+  /**
    * Get last access times for multiple videos as timestamp strings
    * @param videoIds Array of YouTube video IDs
    * @returns Record mapping video IDs to their last access timestamps
@@ -137,15 +238,15 @@ export class UserActivityCache {
    * @returns true if cache is empty, false otherwise
    */
   isEmpty(): boolean {
-    return this.videoAccessMap.size === 0;
+    return this.videoAccessMap.size === 0 && this.documentAccessMap.size === 0;
   }
 
   /**
-   * Get the number of cached video access records
-   * @returns number of cached records
+   * Get the number of cached access records
+   * @returns number of cached records (videos + documents)
    */
   size(): number {
-    return this.videoAccessMap.size;
+    return this.videoAccessMap.size + this.documentAccessMap.size;
   }
 
   /**
@@ -153,6 +254,7 @@ export class UserActivityCache {
    */
   clear(): void {
     this.videoAccessMap.clear();
+    this.documentAccessMap.clear();
     this.lastUpdated = 0;
   }
 
@@ -162,12 +264,16 @@ export class UserActivityCache {
    */
   getStats(): {
     size: number;
+    videoCount: number;
+    documentCount: number;
     lastUpdated: number;
     isExpired: boolean;
     cacheAge: number;
   } {
     return {
-      size: this.videoAccessMap.size,
+      size: this.size(),
+      videoCount: this.videoAccessMap.size,
+      documentCount: this.documentAccessMap.size,
       lastUpdated: this.lastUpdated,
       isExpired: this.isExpired(),
       cacheAge: Date.now() - this.lastUpdated,
@@ -246,4 +352,28 @@ export const getMultipleVideoAccessInfo = (
   videoIds: string[]
 ): Record<string, VideoAccessInfo | null> => {
   return userActivityCache.getMultipleVideoAccessInfo(videoIds);
+};
+
+export const getDocumentLastAccessTime = (
+  documentId: string
+): string | null => {
+  return userActivityCache.getDocumentLastAccessTime(documentId);
+};
+
+export const getDocumentLastAccessTimes = (
+  documentIds: string[]
+): Record<string, string | null> => {
+  return userActivityCache.getDocumentLastAccessTimes(documentIds);
+};
+
+export const getDocumentAccessInfo = (
+  documentId: string
+): DocumentAccessInfo | null => {
+  return userActivityCache.getDocumentAccessInfo(documentId);
+};
+
+export const getMultipleDocumentAccessInfo = (
+  documentIds: string[]
+): Record<string, DocumentAccessInfo | null> => {
+  return userActivityCache.getMultipleDocumentAccessInfo(documentIds);
 };

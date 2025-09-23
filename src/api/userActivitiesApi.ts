@@ -376,16 +376,37 @@ export async function logYouTubeActivity(
 export async function logDocumentActivity(
   activityId: string,
   documentId: string,
-  context?: any
+  context?: UserActivityContext
 ): Promise<UserActivity> {
-  return createUserActivity({
+  if (!context) {
+    context = {};
+  }
+
+  if (!context.resource) {
+    context.resource = { resourceType: "document", resourceId: documentId };
+  }
+
+  console.log("logDocumentActivity called with:", {
+    activityId,
+    documentId,
+    context,
+  });
+
+  const activityData = {
     activity_id: activityId,
     context: {
       document_id: documentId,
       ...context,
     },
     log: `Document ${activityId} - ID: ${documentId}`,
-  });
+  };
+
+  console.log("Creating document activity with data:", activityData);
+
+  const result = await createUserActivity(activityData);
+  console.log("Document activity created successfully:", result);
+
+  return result;
 }
 
 // Log annotation interactions
