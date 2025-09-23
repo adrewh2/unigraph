@@ -1,5 +1,5 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import YouTube from "react-youtube";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
 import { createDocument, updateDocument } from "../../api/documentsApi";
@@ -23,6 +23,52 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
     string | null
   >(null);
   const storageKey = useMemo(() => `youtube-note-doc-${videoId}`, [videoId]);
+
+  // YouTube player state tracking
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [_duration, _setDuration] = useState<number>(0);
+  const [playerReady, setPlayerReady] = useState<boolean>(false);
+  const playerRef = useRef<any>(null);
+  const insertTimestampRef = useRef<((timestamp: string) => void) | null>(null);
+
+  // Helper function to format timestamp
+  const formatTimestamp = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    } else {
+      return `${minutes}:${secs.toString().padStart(2, "0")}`;
+    }
+  };
+
+  // YouTube player event handlers
+  const onPlayerReady = (event: any) => {
+    playerRef.current = event.target;
+    setPlayerReady(true);
+  };
+
+  const onPlayerStateChange = (event: any) => {
+    // Update current time periodically when playing
+    if (event.data === 1) {
+      // Playing
+      const interval = setInterval(() => {
+        if (playerRef.current && playerRef.current.getCurrentTime) {
+          const time = playerRef.current.getCurrentTime();
+          setCurrentTime(time);
+        }
+      }, 1000);
+
+      // Store interval ID to clear later
+      (event.target as any)._timeInterval = interval;
+    } else if (event.target._timeInterval) {
+      // Clear interval when paused/stopped
+      clearInterval(event.target._timeInterval);
+      delete event.target._timeInterval;
+    }
+  };
 
   // Add styles for the YouTube iframe
   useEffect(() => {
@@ -158,6 +204,8 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
           opts={opts}
           style={{ width: "100%", height: "100%" }}
           iframeClassName="youtube-iframe"
+          onReady={onPlayerReady}
+          onStateChange={onPlayerStateChange}
         />
       </div>
 
@@ -176,14 +224,53 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
             borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
             fontWeight: 600,
             color: getColor(theme.colors, "text"),
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          Notes
+          <span>Notes</span>
+          {playerReady && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: getColor(theme.colors, "textSecondary"),
+                  fontFamily: "monospace",
+                }}
+              >
+                {formatTimestamp(currentTime)}
+              </span>
+              <button
+                onClick={() => {
+                  const timestamp = formatTimestamp(currentTime);
+                  if (insertTimestampRef.current) {
+                    insertTimestampRef.current(timestamp);
+                  }
+                }}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: "12px",
+                  backgroundColor: getColor(theme.colors, "primary"),
+                  color: getColor(theme.colors, "text"),
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+                title="Insert current timestamp"
+              >
+                Insert Timestamp
+              </button>
+            </div>
+          )}
         </div>
         <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
           {documentId ? (
             <LexicalEditorV3
               documentId={documentId}
+              onTimestampInsert={(insertFn) => {
+                insertTimestampRef.current = insertFn;
+              }}
               onChange={async (text, serializedState) => {
                 try {
                   if (!user?.id) {
@@ -198,22 +285,6 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
                     tags: [],
                     page_url: `https://www.youtube.com/watch?v=${videoId}`,
                   };
-
-                  // const payload = {
-                  //   ...(existingAnnotationId
-                  //     ? { id: existingAnnotationId }
-                  //     : {}), // Only include ID if updating
-                  //   title: `${title || videoId} Notes`,
-                  //   data: annotationData,
-                  //   user_id: user.id,
-                  //   parent_resource_type: "youtube_video",
-                  //   parent_resource_id: videoId,
-                  // } as Annotation;
-
-                  // const saved = await saveAnnotation(payload);
-                  // if (!existingAnnotationId && saved?.id) {
-                  //   setExistingAnnotationId(saved.id);
-                  // }
 
                   // Notify Resource Manager to refresh annotations
                   window.dispatchEvent(new CustomEvent("annotationsUpdated"));
