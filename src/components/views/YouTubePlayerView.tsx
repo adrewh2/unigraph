@@ -133,6 +133,8 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
   const [hasLoggedAccess, setHasLoggedAccess] = useState<boolean>(false);
   const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
   const watchTimeRef = useRef<number>(0);
+  const timeTrackingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isPlayingRef = useRef<boolean>(false);
 
   // Function to log YouTube video access activity
   const logVideoAccess = async () => {
@@ -193,50 +195,58 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
   const onPlayerStateChange = (event: any) => {
     console.log("YouTube player state change:", event.data);
 
-    // Update current time periodically when playing
+    // Clear any existing interval first
+    if (timeTrackingIntervalRef.current) {
+      clearInterval(timeTrackingIntervalRef.current);
+      timeTrackingIntervalRef.current = null;
+    }
+
     if (event.data === 1) {
-      // Playing - start tracking watch time
+      // Playing state
+      isPlayingRef.current = true;
+      
+      // Start tracking watch time if not already started
       if (watchStartTime === null) {
         const startTime = Date.now();
         setWatchStartTime(startTime);
+        watchTimeRef.current = 0; // Reset watch time
         console.log("Started tracking watch time:", startTime);
       }
 
-      const interval = setInterval(() => {
-        if (playerRef.current && playerRef.current.getCurrentTime) {
-          const time = playerRef.current.getCurrentTime();
-          currentTimeRef.current = time;
+      // Create new interval for tracking
+      timeTrackingIntervalRef.current = setInterval(() => {
+        if (playerRef.current && playerRef.current.getCurrentTime && isPlayingRef.current) {
+          const currentTime = playerRef.current.getCurrentTime();
+          currentTimeRef.current = currentTime;
 
-          // Track total watch time
-          if (watchStartTime) {
-            const elapsedMs = Date.now() - watchStartTime;
-            const elapsedSeconds = Math.floor(elapsedMs / 1000);
-            watchTimeRef.current = elapsedSeconds;
+          // Increment watch time (1 second per interval)
+          watchTimeRef.current += 1;
 
-            console.log("Watch time tracking:", {
-              elapsedSeconds,
-              hasLoggedAccess,
-              userId: user?.id,
-            });
+          console.log("Watch time tracking:", {
+            watchTimeSeconds: watchTimeRef.current,
+            currentVideoTime: currentTime,
+            hasLoggedAccess,
+            userId: user?.id,
+          });
 
-            // Log activity after 10 seconds of watching
-            if (elapsedSeconds >= 10 && !hasLoggedAccess) {
-              console.log("10 seconds reached, calling logVideoAccess");
-              logVideoAccess();
+          // Log activity after 10 seconds of actual watching (only once)
+          if (watchTimeRef.current >= 10 && !hasLoggedAccess && user?.id) {
+            console.log("10 seconds of watch time reached, calling logVideoAccess");
+            logVideoAccess();
+            // Clear the interval since we no longer need to track for logging purposes
+            if (timeTrackingIntervalRef.current) {
+              clearInterval(timeTrackingIntervalRef.current);
+              timeTrackingIntervalRef.current = null;
+              console.log("Cleared watch time tracking interval after logging");
             }
           }
         }
-      }, 1000); // Back to 1 second for accurate tracking
+      }, 1000);
 
-      // Store interval ID to clear later
-      (event.target as any)._timeInterval = interval;
     } else {
-      // Paused/stopped - pause watch time tracking but don't reset
-      if (event.target._timeInterval) {
-        clearInterval(event.target._timeInterval);
-        delete event.target._timeInterval;
-        console.log("Paused watch time tracking");
-      }
+      // Paused, stopped, or other state
+      isPlayingRef.current = false;
+      console.log("Video paused/stopped - paused watch time tracking");
     }
   };
 
@@ -313,8 +323,25 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
     setHasLoggedAccess(false);
     setWatchStartTime(null);
     watchTimeRef.current = 0;
+    isPlayingRef.current = false;
     initializationRef.current = false;
+    
+    // Clear any existing interval
+    if (timeTrackingIntervalRef.current) {
+      clearInterval(timeTrackingIntervalRef.current);
+      timeTrackingIntervalRef.current = null;
+    }
   }, [videoId]);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (timeTrackingIntervalRef.current) {
+        clearInterval(timeTrackingIntervalRef.current);
+        timeTrackingIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   // Test function to manually trigger activity logging (for debugging)
   const testActivityLogging = React.useCallback(async () => {
