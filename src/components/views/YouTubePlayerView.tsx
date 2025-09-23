@@ -155,8 +155,6 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
           currentTimeRef.current,
           {
             video_title: title,
-            watch_duration: watchTimeRef.current,
-            timestamp_accessed: new Date().toISOString(),
           }
         );
         setHasLoggedAccess(true);
@@ -204,7 +202,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
     if (event.data === 1) {
       // Playing state
       isPlayingRef.current = true;
-      
+
       // Start tracking watch time if not already started
       if (watchStartTime === null) {
         const startTime = Date.now();
@@ -215,7 +213,11 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
 
       // Create new interval for tracking
       timeTrackingIntervalRef.current = setInterval(() => {
-        if (playerRef.current && playerRef.current.getCurrentTime && isPlayingRef.current) {
+        if (
+          playerRef.current &&
+          playerRef.current.getCurrentTime &&
+          isPlayingRef.current
+        ) {
           const currentTime = playerRef.current.getCurrentTime();
           currentTimeRef.current = currentTime;
 
@@ -231,7 +233,9 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
 
           // Log activity after 10 seconds of actual watching (only once)
           if (watchTimeRef.current >= 10 && !hasLoggedAccess && user?.id) {
-            console.log("10 seconds of watch time reached, calling logVideoAccess");
+            console.log(
+              "10 seconds of watch time reached, calling logVideoAccess"
+            );
             logVideoAccess();
             // Clear the interval since we no longer need to track for logging purposes
             if (timeTrackingIntervalRef.current) {
@@ -242,7 +246,6 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
           }
         }
       }, 1000);
-
     } else {
       // Paused, stopped, or other state
       isPlayingRef.current = false;
@@ -325,7 +328,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
     watchTimeRef.current = 0;
     isPlayingRef.current = false;
     initializationRef.current = false;
-    
+
     // Clear any existing interval
     if (timeTrackingIntervalRef.current) {
       clearInterval(timeTrackingIntervalRef.current);

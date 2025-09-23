@@ -1,17 +1,27 @@
 import { supabase } from "../utils/supabaseClient";
 
+export interface ResourceReference {
+  resourceType: string;
+  resourceId: string;
+}
+
+export interface UserActivityContext {
+  [key: string]: any;
+  resource?: ResourceReference;
+}
+
 export interface UserActivity {
   id: string;
   user_id: string;
   timestamp: string;
   activity_id: string;
-  context?: any; // JSONB field for additional context data
+  context?: UserActivityContext; // JSONB field for additional context data
   log?: string;
 }
 
 export interface CreateUserActivityParams {
   activity_id: string;
-  context?: any;
+  context?: UserActivityContext;
   log?: string;
   user_id?: string; // Optional, will use auth.uid() if not provided
 }
@@ -19,7 +29,7 @@ export interface CreateUserActivityParams {
 export interface UpdateUserActivityParams {
   id: string;
   activity_id?: string;
-  context?: any;
+  context?: UserActivityContext;
   log?: string;
 }
 
@@ -313,7 +323,7 @@ export async function getUserActivityStats(
 export async function logActivity(
   activityId: string,
   log?: string,
-  context?: any
+  context?: UserActivityContext
 ): Promise<UserActivity> {
   return createUserActivity({
     activity_id: activityId,
@@ -327,8 +337,16 @@ export async function logYouTubeActivity(
   activityId: string,
   videoId: string,
   timestamp?: number,
-  context?: any
+  context?: UserActivityContext
 ): Promise<UserActivity> {
+  if (!context) {
+    context = {};
+  }
+
+  if (!context.resource) {
+    context.resource = { resourceType: "youtube_video", resourceId: videoId };
+  }
+
   console.log("logYouTubeActivity called with:", {
     activityId,
     videoId,
