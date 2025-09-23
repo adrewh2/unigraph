@@ -80,7 +80,17 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
             title: `${title || videoId} Notes`,
             content: annotationContent || "",
             extension: "txt",
-            metadata: { type: "youtube_note", videoId },
+            metadata: {
+              type: "youtube_note",
+              references: [
+                {
+                  referenceEntityType: "youtube_video",
+                  referenceId: videoId,
+                  referenceTags: [],
+                  referenceRelationType: "parent",
+                },
+              ],
+            },
             data: {},
           });
           existingDocId = newDoc.id;
