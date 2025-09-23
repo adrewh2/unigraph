@@ -1,10 +1,10 @@
 import { Edit2, Plus, Save, Tag, X } from "lucide-react";
 import React, { useState } from "react";
-import { 
-  Annotation, 
-  saveAnnotation, 
-  TextSelectionAnnotationData, 
-  ImageAnnotationData 
+import {
+  Annotation,
+  saveAnnotation,
+  TextSelectionAnnotationData,
+  ImageAnnotationData,
 } from "../../api/annotationsApi";
 import { addNotification } from "../../store/notificationStore";
 
@@ -47,10 +47,11 @@ const EditableAnnotationCard: React.FC<EditableAnnotationCardProps> = ({
   const handleSave = async () => {
     try {
       let updatedData: TextSelectionAnnotationData | ImageAnnotationData;
-      
+
       if (editedData.type === "text_selection") {
         updatedData = {
-          selected_text: (annotation.data as TextSelectionAnnotationData).selected_text,
+          selected_text: (annotation.data as TextSelectionAnnotationData)
+            .selected_text,
           comment: editedData.comment,
           secondary_comment: editedData.secondaryComment || undefined,
           tags: editedData.tags.length > 0 ? editedData.tags : undefined,

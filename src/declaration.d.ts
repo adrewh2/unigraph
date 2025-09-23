@@ -40,15 +40,15 @@ declare module "*.png";
 // Lucide React type declarations
 declare module "lucide-react" {
   import { ComponentType, SVGProps } from "react";
-  
+
   export interface LucideProps extends SVGProps<SVGSVGElement> {
     size?: number | string;
     strokeWidth?: number | string;
     absoluteStrokeWidth?: boolean;
   }
-  
+
   export type LucideIcon = ComponentType<LucideProps>;
-  
+
   // Export all the icons as LucideIcon type
   export const AlertTriangle: LucideIcon;
   export const ArrowUpRight: LucideIcon;
@@ -170,7 +170,7 @@ declare module "lucide-react" {
   export const Square: LucideIcon;
   export const MapPin: LucideIcon;
   export const Zap: LucideIcon;
-  
+
   // Add any other icons as needed - this covers the main ones used in the codebase
 }
 
@@ -188,18 +188,21 @@ declare module "pdfjs-dist/types/src/display/api" {
     numPages: number;
     getPage(pageNumber: number): Promise<PDFPageProxy>;
   }
-  
+
   export interface PDFPageProxy {
     getViewport(params: { scale: number }): PDFPageViewport;
-    render(params: { canvasContext: CanvasRenderingContext2D; viewport: PDFPageViewport }): any;
+    render(params: {
+      canvasContext: CanvasRenderingContext2D;
+      viewport: PDFPageViewport;
+    }): any;
     getTextContent(): Promise<any>;
   }
-  
+
   export interface PDFPageViewport {
     width: number;
     height: number;
   }
-  
+
   export interface TextItem {
     str: string;
     transform: number[];
