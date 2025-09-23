@@ -257,12 +257,24 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
                   borderRadius: "4px",
                   cursor: "pointer",
                 }}
-                title="Insert current timestamp"
+                title="Insert current timestamp (timestamps can be deleted with Delete/Backspace keys)"
               >
                 Insert Timestamp
               </button>
             </div>
           )}
+        </div>
+        <div
+          style={{
+            padding: "4px 12px",
+            fontSize: "11px",
+            color: getColor(theme.colors, "textSecondary"),
+            backgroundColor: getColor(theme.colors, "surface"),
+            borderBottom: `1px solid ${getColor(theme.colors, "border")}`,
+          }}
+        >
+          💡 Tip: Timestamps can be deleted using Delete or Backspace keys when
+          selected
         </div>
         <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
           {documentId ? (

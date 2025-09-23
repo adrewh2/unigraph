@@ -3,6 +3,9 @@ import {
   $createTextNode,
   $getSelection,
   $isRangeSelection,
+  COMMAND_PRIORITY_LOW,
+  KEY_BACKSPACE_COMMAND,
+  KEY_DELETE_COMMAND,
   LexicalEditor,
   NodeKey,
   TextNode,
@@ -55,6 +58,8 @@ export class TimestampNode extends TextNode {
       border: 1px solid #bbdefb;
       cursor: pointer;
       user-select: none;
+      position: relative;
+      display: inline-block;
     `;
 
     // Add click handler to make timestamps clickable
@@ -68,6 +73,19 @@ export class TimestampNode extends TextNode {
       document.dispatchEvent(event);
     });
 
+    // Add hover effect to indicate it's deletable
+    span.addEventListener("mouseenter", () => {
+      span.style.backgroundColor = "#ffebee";
+      span.style.borderColor = "#f44336";
+      span.style.color = "#d32f2f";
+    });
+
+    span.addEventListener("mouseleave", () => {
+      span.style.backgroundColor = "#e3f2fd";
+      span.style.borderColor = "#bbdefb";
+      span.style.color = "#1976d2";
+    });
+
     return span;
   }
 
@@ -76,6 +94,21 @@ export class TimestampNode extends TextNode {
   }
 
   isInline(): true {
+    return true;
+  }
+
+  // Override canInsertTextBefore to prevent text insertion before timestamps
+  canInsertTextBefore(): boolean {
+    return false;
+  }
+
+  // Override canInsertTextAfter to prevent text insertion after timestamps
+  canInsertTextAfter(): boolean {
+    return false;
+  }
+
+  // Override isSegmented to make timestamps behave as single units
+  isSegmented(): boolean {
     return true;
   }
 
@@ -96,6 +129,11 @@ export class TimestampNode extends TextNode {
 // Helper function to create a timestamp node
 export function $createTimestampNode(timestamp: string): TimestampNode {
   return new TimestampNode(timestamp);
+}
+
+// Helper function to check if a node is a timestamp node
+export function $isTimestampNode(node: any): node is TimestampNode {
+  return node instanceof TimestampNode;
 }
 
 // Plugin component
@@ -127,6 +165,55 @@ export const TimestampPlugin: React.FC<TimestampPluginProps> = ({
     },
     [editor]
   );
+
+  // Handle keyboard deletion of timestamps
+  useEffect(() => {
+    // Register keyboard commands for deletion
+    const removeDeleteListener = editor.registerCommand(
+      KEY_DELETE_COMMAND,
+      () => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const nodes = selection.getNodes();
+          const timestampNodes = nodes.filter($isTimestampNode);
+
+          if (timestampNodes.length > 0) {
+            timestampNodes.forEach((node) => {
+              node.remove();
+            });
+            return true;
+          }
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+
+    const removeBackspaceListener = editor.registerCommand(
+      KEY_BACKSPACE_COMMAND,
+      () => {
+        const selection = $getSelection();
+        if ($isRangeSelection(selection)) {
+          const nodes = selection.getNodes();
+          const timestampNodes = nodes.filter($isTimestampNode);
+
+          if (timestampNodes.length > 0) {
+            timestampNodes.forEach((node) => {
+              node.remove();
+            });
+            return true;
+          }
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+
+    return () => {
+      removeDeleteListener();
+      removeBackspaceListener();
+    };
+  }, [editor]);
 
   // Expose the insert function to parent components
   useEffect(() => {
