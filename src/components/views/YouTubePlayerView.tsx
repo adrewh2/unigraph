@@ -1,11 +1,54 @@
 import { getColor, useTheme } from "@aesgraph/app-shell";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import YouTube from "react-youtube";
 import { Annotation, listAnnotations } from "../../api/annotationsApi";
 import { createDocument, updateDocument } from "../../api/documentsApi";
 import { logYouTubeActivity } from "../../api/userActivitiesApi";
 import { useAuth } from "../../hooks/useAuth";
 import LexicalEditorV3 from "../applets/Lexical/LexicalEditorV3";
+
+// Separate component for timestamp display to avoid re-renders
+const TimestampDisplay: React.FC<{
+  playerRef: React.RefObject<any>;
+  playerReady: boolean;
+  formatTimestamp: (seconds: number) => string;
+  textSecondaryColor: string;
+}> = ({ playerRef, playerReady, formatTimestamp, textSecondaryColor }) => {
+  const [displayTime, setDisplayTime] = useState<number>(0);
+
+  useEffect(() => {
+    if (!playerReady || !playerRef.current) return;
+
+    const interval = setInterval(() => {
+      if (playerRef.current && playerRef.current.getCurrentTime) {
+        const time = playerRef.current.getCurrentTime();
+        setDisplayTime(Math.floor(time));
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [playerReady, playerRef]);
+
+  if (!playerReady) return null;
+
+  return (
+    <span
+      style={{
+        fontSize: "12px",
+        color: textSecondaryColor,
+        fontFamily: "monospace",
+      }}
+    >
+      {formatTimestamp(displayTime)}
+    </span>
+  );
+};
 
 export interface YouTubePlayerViewProps {
   videoId: string;
@@ -16,6 +59,8 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
   videoId,
   title,
 }) => {
+  // console.log("YouTubePlayerView render:", { videoId, title });
+
   const { theme } = useTheme();
   const { user } = useAuth();
 
@@ -24,13 +69,65 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
     string | null
   >(null);
   const storageKey = useMemo(() => `youtube-note-doc-${videoId}`, [videoId]);
+  const initializationRef = useRef<boolean>(false);
 
   // YouTube player state tracking
-  const [currentTime, setCurrentTime] = useState<number>(0);
+  const currentTimeRef = useRef<number>(0);
   const [_duration, _setDuration] = useState<number>(0);
   const [playerReady, setPlayerReady] = useState<boolean>(false);
   const playerRef = useRef<any>(null);
   const insertTimestampRef = useRef<((timestamp: string) => void) | null>(null);
+
+  // Memoize the onTimestampInsert callback to prevent LexicalEditorV3 re-initialization
+  const handleTimestampInsert = useCallback(
+    (insertFn: (timestamp: string) => void) => {
+      // console.log("handleTimestampInsert called");
+      insertTimestampRef.current = insertFn;
+    },
+    []
+  );
+
+  // Memoize the onChange callback to prevent LexicalEditorV3 re-initialization
+  const handleEditorChange = useCallback(
+    async (text: string, serializedState?: string) => {
+      // console.log("handleEditorChange called");
+      try {
+        if (!user?.id) {
+          // Not signed in; skip saving to avoid invisible rows
+          return;
+        }
+
+        // Create annotation payload with proper structure (commented out for now)
+        const _annotationData = {
+          type: "text_selection" as const,
+          comment: serializedState || text, // Save full Lexical serialization, fallback to text
+          tags: [],
+          page_url: `https://www.youtube.com/watch?v=${videoId}`,
+        };
+
+        // Notify Resource Manager to refresh annotations
+        window.dispatchEvent(new CustomEvent("annotationsUpdated"));
+      } catch (e) {
+        console.warn("Failed to save YouTube note annotation:", e);
+      }
+    },
+    [user?.id, videoId]
+  );
+
+  // Debug: Log when callbacks are recreated
+  // useEffect(() => {
+  //   console.log("YouTubePlayerView: Callbacks recreated", {
+  //     userId: user?.id,
+  //     videoId,
+  //     documentId,
+  //   });
+  // }, [
+  //   handleTimestampInsert,
+  //   handleEditorChange,
+  //   user?.id,
+  //   videoId,
+  //   documentId,
+  // ]);
 
   // Activity logging state
   const [hasLoggedAccess, setHasLoggedAccess] = useState<boolean>(false);
@@ -43,7 +140,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
       hasLoggedAccess,
       userId: user?.id,
       videoId,
-      currentTime,
+      currentTime: currentTimeRef.current,
       watchTime: watchTimeRef.current,
     });
 
@@ -53,7 +150,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
         const result = await logYouTubeActivity(
           "youtube_video_accessed",
           videoId,
-          currentTime,
+          currentTimeRef.current,
           {
             video_title: title,
             watch_duration: watchTimeRef.current,
@@ -108,7 +205,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
       const interval = setInterval(() => {
         if (playerRef.current && playerRef.current.getCurrentTime) {
           const time = playerRef.current.getCurrentTime();
-          setCurrentTime(time);
+          currentTimeRef.current = time;
 
           // Track total watch time
           if (watchStartTime) {
@@ -129,7 +226,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
             }
           }
         }
-      }, 1000);
+      }, 1000); // Back to 1 second for accurate tracking
 
       // Store interval ID to clear later
       (event.target as any)._timeInterval = interval;
@@ -177,7 +274,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
       if (playerRef.current && playerRef.current.seekTo) {
         console.log(`Jumping to timestamp: ${timestamp} (${seconds}s)`);
         playerRef.current.seekTo(seconds, true);
-        setCurrentTime(seconds);
+        currentTimeRef.current = seconds;
 
         // Log timestamp navigation activity
         if (user?.id) {
@@ -216,6 +313,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
     setHasLoggedAccess(false);
     setWatchStartTime(null);
     watchTimeRef.current = 0;
+    initializationRef.current = false;
   }, [videoId]);
 
   // Test function to manually trigger activity logging (for debugging)
@@ -266,9 +364,29 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
   }, []);
 
   useEffect(() => {
+    console.log("YouTubePlayerView useEffect triggered with:", {
+      storageKey,
+      title,
+      videoId,
+      userId: user?.id,
+      isInitialized: initializationRef.current,
+    });
+
     let isMounted = true;
     (async () => {
       try {
+        // Only proceed if we have a videoId
+        if (!videoId) {
+          console.log("No videoId, skipping document initialization");
+          return;
+        }
+
+        // Skip if already initialized for this video
+        if (initializationRef.current) {
+          console.log("Already initialized, skipping document initialization");
+          return;
+        }
+
         // Load existing annotation for this video
         const annotations = (await listAnnotations({
           userId: user?.id,
@@ -301,6 +419,7 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
         // Ensure a backing document exists for LexicalEditorV3
         let existingDocId = localStorage.getItem(storageKey);
         if (!existingDocId) {
+          console.log("Creating new document for video:", videoId);
           const newDoc = await createDocument({
             title: `${title || videoId} Notes`,
             content: annotationContent || "",
@@ -320,15 +439,21 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
           });
           existingDocId = newDoc.id;
           localStorage.setItem(storageKey, existingDocId);
+          console.log("Created new document with ID:", existingDocId);
         } else if (annotationContent) {
           // Sync annotation content into existing doc if present
+          console.log("Updating existing document with annotation content");
           await updateDocument({
             id: existingDocId,
             content: annotationContent,
           });
         }
 
-        if (isMounted) setDocumentId(existingDocId);
+        if (isMounted) {
+          console.log("Setting documentId:", existingDocId);
+          setDocumentId(existingDocId);
+          initializationRef.current = true;
+        }
       } catch (err) {
         console.error("YouTube notes init failed:", err);
       }
@@ -411,18 +536,15 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
           <span>Notes</span>
           {playerReady && (
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: getColor(theme.colors, "textSecondary"),
-                  fontFamily: "monospace",
-                }}
-              >
-                {formatTimestamp(currentTime)}
-              </span>
+              <TimestampDisplay
+                playerRef={playerRef}
+                playerReady={playerReady}
+                formatTimestamp={formatTimestamp}
+                textSecondaryColor={getColor(theme.colors, "textSecondary")}
+              />
               <button
                 onClick={() => {
-                  const timestamp = formatTimestamp(currentTime);
+                  const timestamp = formatTimestamp(currentTimeRef.current);
                   if (insertTimestampRef.current) {
                     insertTimestampRef.current(timestamp);
                   }
@@ -457,33 +579,20 @@ const YouTubePlayerView: React.FC<YouTubePlayerViewProps> = ({
         </div>
         <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
           {documentId ? (
-            <LexicalEditorV3
-              documentId={documentId}
-              onTimestampInsert={(insertFn) => {
-                insertTimestampRef.current = insertFn;
-              }}
-              onChange={async (text, serializedState) => {
-                try {
-                  if (!user?.id) {
-                    // Not signed in; skip saving to avoid invisible rows
-                    return;
-                  }
-
-                  // Create annotation payload with proper structure (commented out for now)
-                  const _annotationData = {
-                    type: "text_selection" as const,
-                    comment: serializedState || text, // Save full Lexical serialization, fallback to text
-                    tags: [],
-                    page_url: `https://www.youtube.com/watch?v=${videoId}`,
-                  };
-
-                  // Notify Resource Manager to refresh annotations
-                  window.dispatchEvent(new CustomEvent("annotationsUpdated"));
-                } catch (e) {
-                  console.warn("Failed to save YouTube note annotation:", e);
-                }
-              }}
-            />
+            (() => {
+              // console.log(
+              //   "Rendering LexicalEditorV3 with documentId:",
+              //   documentId
+              // );
+              return (
+                <LexicalEditorV3
+                  key={documentId} // Use documentId as key to force re-mount when document changes
+                  documentId={documentId}
+                  onTimestampInsert={handleTimestampInsert}
+                  onChange={handleEditorChange}
+                />
+              );
+            })()
           ) : (
             <div style={{ padding: 12, color: getColor(theme.colors, "text") }}>
               Loading notes...
