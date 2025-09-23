@@ -1,4 +1,3 @@
-import { listUserActivities, UserActivity } from "@/api/userActivitiesApi";
 import { addViewAsTab, useTheme } from "@aesgraph/app-shell";
 import { RefreshCw } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
@@ -9,6 +8,7 @@ import {
   listDocuments,
   savePdfDocument,
 } from "../../api/documentsApi";
+import { listUserActivities, UserActivity } from "../../api/userActivitiesApi";
 import {
   checkWebpagesContent,
   listWebpages,
@@ -22,6 +22,10 @@ import { useAuth } from "../../hooks/useAuth";
 import useAppConfigStore from "../../store/appConfigStore";
 import { useDocumentEventsStore } from "../../store/documentEventsStore";
 import { useTagStore } from "../../store/tagStore";
+import {
+  UserActivityCache,
+  userActivityCache,
+} from "../../utils/userActivityCache";
 import EntityTableV2 from "../common/EntityTableV2";
 
 type ResourceManagerViewProps = Record<string, never>;
@@ -45,7 +49,10 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [youtubeVideos, setYouTubeVideos] = useState<YouTubeVideo[]>([]);
-  const [userActivities, setUserActivities] = useState<UserActivity[]>([]);
+  const [_userActivities, setUserActivities] = useState<UserActivity[]>([]);
+  const [accessTimeCache, setAccessTimeCache] = useState<UserActivityCache>(
+    new UserActivityCache()
+  );
   const [loading, setLoading] = useState(true);
   const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
@@ -62,6 +69,11 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
   // Ref to access the EntityTableV2 grid API for silent refresh
   // const entityTableRef = useRef<any>(null);
+
+  useEffect(() => {
+    const accessCache = new UserActivityCache();
+    accessCache.updateCache(_userActivities);
+  }, [_userActivities]);
 
   // Cache for storing fetched data
   const [dataCache, setDataCache] = useState<{
@@ -262,6 +274,10 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
         // Collect tags from YouTube videos (handle CSV or JSON array stored in text)
         (youTubeVideosData || []).forEach((video: YouTubeVideo) => {
+          const lastAccessTime = accessTimeCache.getLastAccessTime(video.id);
+          if (lastAccessTime) {
+            video.lastAccessTime = lastAccessTime;
+          }
           let tags: string[] = [];
           const t = video.tags;
           if (Array.isArray(t)) {
@@ -289,6 +305,16 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         setWebpageContentAvailability(contentAvailability);
         setYouTubeVideos(youTubeVideosData || []);
         setTagCache(newTagCache);
+
+        // Update user activity cache
+        if (activitiesData && activitiesData.length > 0) {
+          userActivityCache.updateCache(activitiesData);
+          console.log(
+            "User activity cache updated with",
+            activitiesData.length,
+            "activities"
+          );
+        }
 
         // Update cache
         setDataCache({
@@ -486,6 +512,10 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
       // Collect tags from YouTube videos
       (youTubeVideosData || []).forEach((video) => {
+        const lastAccessTime = accessTimeCache.getLastAccessTime(video.id);
+        if (lastAccessTime) {
+          video.lastAccessTime = lastAccessTime;
+        }
         let tags: string[] = [];
         const t = (video as any).tags as unknown;
         if (Array.isArray(t)) {
@@ -512,6 +542,16 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       setWebpageContentAvailability(contentAvailability);
       setYouTubeVideos(youTubeVideosData || []);
       setTagCache(newTagCache);
+
+      // Update user activity cache
+      if (activitiesData && activitiesData.length > 0) {
+        userActivityCache.updateCache(activitiesData);
+        console.log(
+          "User activity cache updated (silent) with",
+          activitiesData.length,
+          "activities"
+        );
+      }
 
       // Update cache
       setDataCache({
@@ -819,6 +859,8 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   // Create container for YouTube videos
   const youtubeVideosContainer = new EntitiesContainer(
     youtubeVideos.map((video) => {
+      // Get last access time from cache
+      const lastAccessTime = userActivityCache.getLastAccessTime(video.id);
       // Normalize tags from possible CSV string or JSON array in text column
       let tags: string[] = [];
       const rawTags = (video as any).tags as unknown;
@@ -862,6 +904,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           thumbnail_default_url: video.thumbnail_default_url,
           thumbnail_medium_url: video.thumbnail_medium_url,
           thumbnail_high_url: video.thumbnail_high_url,
+          lastAccessTime: lastAccessTime,
           userData: video,
         }),
         getEntityType: () => "node",
