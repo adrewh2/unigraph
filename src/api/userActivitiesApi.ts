@@ -357,9 +357,9 @@ export async function logYouTubeActivity(
   const activityData = {
     activity_id: activityId,
     context: {
+      ...context,
       video_id: videoId,
       timestamp,
-      ...context,
     },
     log: `YouTube ${activityId} - Video: ${videoId}${timestamp ? ` at ${timestamp}s` : ""}`,
   };

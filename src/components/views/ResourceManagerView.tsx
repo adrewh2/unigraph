@@ -24,7 +24,6 @@ import { useDocumentEventsStore } from "../../store/documentEventsStore";
 import { useTagStore } from "../../store/tagStore";
 import {
   getDocumentLastAccessTime,
-  UserActivityCache,
   userActivityCache,
 } from "../../utils/userActivityCache";
 import EntityTableV2 from "../common/EntityTableV2";
@@ -51,9 +50,6 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [youtubeVideos, setYouTubeVideos] = useState<YouTubeVideo[]>([]);
   const [_userActivities, setUserActivities] = useState<UserActivity[]>([]);
-  const [accessTimeCache, _setAccessTimeCache] = useState<UserActivityCache>(
-    new UserActivityCache()
-  );
   const [loading, setLoading] = useState(true);
   const [webpageContentAvailability, setWebpageContentAvailability] = useState<{
     [id: string]: { hasHtml: boolean; hasScreenshot: boolean };
@@ -70,11 +66,6 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
   // Ref to access the EntityTableV2 grid API for silent refresh
   // const entityTableRef = useRef<any>(null);
-
-  useEffect(() => {
-    const accessCache = new UserActivityCache();
-    accessCache.updateCache(_userActivities);
-  }, [_userActivities]);
 
   // Cache for storing fetched data
   const [dataCache, setDataCache] = useState<{
@@ -275,7 +266,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
         // Collect tags from YouTube videos (handle CSV or JSON array stored in text)
         (youTubeVideosData || []).forEach((video: YouTubeVideo) => {
-          const lastAccessTime = accessTimeCache.getLastAccessTime(video.id);
+          const lastAccessTime = userActivityCache.getLastAccessTime(video.id);
           if (lastAccessTime) {
             video.lastAccessTime = lastAccessTime;
           }
@@ -333,7 +324,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         setLoading(false);
       }
     },
-    [user?.id, dataCache, accessTimeCache]
+    [user?.id, dataCache]
   );
 
   useEffect(() => {
@@ -513,7 +504,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
       // Collect tags from YouTube videos
       (youTubeVideosData || []).forEach((video) => {
-        const lastAccessTime = accessTimeCache.getLastAccessTime(video.id);
+        const lastAccessTime = userActivityCache.getLastAccessTime(video.id);
         if (lastAccessTime) {
           video.lastAccessTime = lastAccessTime;
         }
@@ -572,7 +563,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
     } catch (error) {
       console.error("Error during silent refresh:", error);
     }
-  }, [user?.id, accessTimeCache]);
+  }, [user?.id]);
 
   // Targeted refresh: only annotations slice (avoid refreshing entire resource manager)
   const refreshAnnotationsOnly = useCallback(async () => {
