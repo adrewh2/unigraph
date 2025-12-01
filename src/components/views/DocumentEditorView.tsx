@@ -973,7 +973,7 @@ export const DocumentEditorView: React.FC<DocumentEditorViewProps> = ({
         }
       },
     }),
-    [userId, projectId, filename] // Removed currentDocumentId to prevent unnecessary FileTreeView re-renders
+    [userId, projectId, filename, user?.id] // Removed currentDocumentId to prevent unnecessary FileTreeView re-renders
   );
 
   // Removed Sandpack-related code
