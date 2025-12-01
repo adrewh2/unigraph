@@ -161,15 +161,13 @@ export async function listUserActivities(
     query = query.lte("timestamp", params.endDate);
   }
 
-  if (params.limit) {
+  if (params.offset !== undefined) {
+    // Use range() when offset is provided (handles both offset and limit)
+    const limit = params.limit || 50;
+    query = query.range(params.offset, params.offset + limit - 1);
+  } else if (params.limit) {
+    // Use limit() only when no offset is provided
     query = query.limit(params.limit);
-  }
-
-  if (params.offset) {
-    query = query.range(
-      params.offset,
-      params.offset + (params.limit || 50) - 1
-    );
   }
 
   const { data, error } = await query;
@@ -395,8 +393,8 @@ export async function logDocumentActivity(
   const activityData = {
     activity_id: activityId,
     context: {
-      document_id: documentId,
       ...context,
+      document_id: documentId,
     },
     log: `Document ${activityId} - ID: ${documentId}`,
   };
