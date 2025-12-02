@@ -90,7 +90,9 @@ export default function SignIn() {
 
     // For popup, redirect back to the same page after OAuth
     // For regular page, redirect to main app
-    const redirectTo = isPopup
+    // Check window.opener directly to avoid race condition with isPopup state
+    const isPopupWindow = window.opener !== null;
+    const redirectTo = isPopupWindow
       ? window.location.origin + "/signin" // Stay in popup for OAuth
       : window.location.origin + "/"; // Redirect to main app if not popup
 
