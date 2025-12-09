@@ -71,6 +71,14 @@ export async function callLiveChatAPI(
   if (!liveChatUrl) {
     throw new Error("Live chat URL not configured");
   }
+
+  // Ensure the URL is absolute (has protocol) to prevent browser from treating it as relative
+  let apiUrl = liveChatUrl.trim();
+  if (!apiUrl.startsWith("http://") && !apiUrl.startsWith("https://")) {
+    // If no protocol, assume https://
+    apiUrl = `https://${apiUrl}`;
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -89,7 +97,9 @@ export async function callLiveChatAPI(
       throw new Error("Authentication failed");
     }
   }
-  const response = await fetch(liveChatUrl, {
+
+  // Always use the live unigraph route
+  const response = await fetch(apiUrl, {
     method: "POST",
     headers,
     body: JSON.stringify({
