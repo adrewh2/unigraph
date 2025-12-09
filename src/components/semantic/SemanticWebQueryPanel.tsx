@@ -11,6 +11,7 @@ import { Parser as SparqlParser } from "sparqljs";
 import { useApiProvider } from "../../context/ApiProviderContext";
 import { useComponentLogger } from "../../hooks/useLogger";
 import useAppConfigStore from "../../store/appConfigStore";
+import { useUserStore } from "../../store/userStore";
 import { createThemedAgGridContainer } from "../../utils/aggridThemeUtils";
 import { sendAIMessage } from "../ai/aiQueryLogic";
 import { SEMANTIC_QUERY_TOOL, parseToolCallArguments } from "../ai/aiTools";
@@ -133,6 +134,9 @@ const SemanticWebQueryPanel: React.FC<SemanticWebQueryPanelProps> = ({
   // Use API provider context
   const { apiProvider, openaiApiKey, liveChatUrl, isCustomEndpoint } =
     useApiProvider();
+
+  // Use user store for authentication
+  const { user, isSignedIn } = useUserStore();
 
   // Determine if dark mode based on app-shell theme or legacy props
   const isThemeDark = hasAppShellTheme
@@ -515,8 +519,8 @@ Return only the complete SPARQL query with prefixes, no explanations.`,
         openaiApiKey,
         liveChatUrl,
         isCustomEndpoint,
-        isSignedIn: false, // Not needed for SPARQL generation
-        user: null,
+        isSignedIn,
+        user,
         temperature: 0.7,
         tools: [SEMANTIC_QUERY_TOOL],
       });
