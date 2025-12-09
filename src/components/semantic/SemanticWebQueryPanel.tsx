@@ -1009,7 +1009,7 @@ SELECT ?subject ?predicate ?object WHERE {
                       new Date(b.timestamp).getTime() -
                       new Date(a.timestamp).getTime()
                   )
-                  .map((entry) => {
+                  .map((entry, index) => {
                     // Check if this is an example query by matching with EXAMPLE_QUERIES
                     const exampleQuery = EXAMPLE_QUERIES.find(
                       (ex) =>
@@ -1017,16 +1017,19 @@ SELECT ?subject ?predicate ?object WHERE {
                         ex.endpoint === entry.endpoint
                     );
 
+                    // Use both ID and index as key to ensure uniqueness even if IDs are duplicated
+                    const uniqueKey = `${entry.id}-${index}`;
+
                     if (exampleQuery) {
                       return (
-                        <option key={entry.id} value={entry.id}>
+                        <option key={uniqueKey} value={entry.id}>
                           📚 {exampleQuery.label}
                         </option>
                       );
                     }
 
                     return (
-                      <option key={entry.id} value={entry.id}>
+                      <option key={uniqueKey} value={entry.id}>
                         {entry.timestamp.toLocaleString()} -{" "}
                         {entry.query.substring(0, 50)}...
                       </option>
