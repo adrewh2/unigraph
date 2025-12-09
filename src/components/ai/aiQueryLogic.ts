@@ -3,6 +3,8 @@ import { supabase } from "../../utils/supabaseClient";
 import { callLLMStudioAPI } from "../applets/ChatGptImporter/services/llmStudioService";
 import { OpenAITool, ToolCall } from "./aiTools";
 
+//TODO: Refactor
+
 export type ApiProvider = "openai" | "llm-studio" | "live-chat";
 
 export interface AIResponse {
