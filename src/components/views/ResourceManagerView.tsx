@@ -46,7 +46,7 @@ interface TabData {
 const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const { currentSceneGraph } = useAppConfigStore();
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, isSignedIn } = useAuth();
   const { setTagMetadata, getTagColor, getTagMetadata } = useTagStore();
   const [activeTab, setActiveTab] = useState<string>("nodes");
   const [webpages, setWebpages] = useState<Webpage[]>([]);
@@ -344,6 +344,13 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Auto-refresh when user logs in or out
+  useEffect(() => {
+    // Force refresh when user authentication state changes
+    fetchData(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, isSignedIn]);
 
   // Listen for document events and refresh documents tab
   useEffect(() => {
