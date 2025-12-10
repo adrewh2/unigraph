@@ -2156,6 +2156,78 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
                 );
               }
             })();
+          } else if (entityType === "documents") {
+            // For documents, show confirmation dialog
+            const title =
+              entityData.label ||
+              entityData.title ||
+              entityData.filename ||
+              "this document";
+            const confirmed = window.confirm(
+              `Are you sure you want to delete "${title}"? This will permanently remove this document.`
+            );
+
+            if (!confirmed) {
+              return;
+            }
+
+            // Store original data for potential revert
+            const originalEntity = props.data;
+
+            // Optimistically remove from the table immediately
+            if (gridRef.current?.api) {
+              gridRef.current.api.applyTransaction({
+                remove: [props.data],
+              });
+            }
+
+            // Delete from the graph immediately
+            const nodeId = entityId as NodeId;
+            if (nodeId) {
+              console.log(`Deleting node: ${nodeId}`);
+              sceneGraph.getGraph().deleteNode(nodeId);
+              sceneGraph.notifyGraphChanged();
+            }
+
+            // Then delete from Supabase in the background
+            (async () => {
+              try {
+                const { deleteDocument } = await import(
+                  "../../api/documentsApi"
+                );
+                await deleteDocument(entityId);
+                console.log(`Deleted document from Supabase: ${entityId}`);
+              } catch (error) {
+                console.error(
+                  `Error deleting document from Supabase: ${entityId}`,
+                  error
+                );
+
+                // Revert the optimistic change if Supabase deletion failed
+                if (gridRef.current?.api) {
+                  // Add the row back to the grid
+                  gridRef.current.api.applyTransaction({
+                    add: [originalEntity],
+                  });
+                }
+
+                // Restore the node in the graph
+                if (nodeId) {
+                  const entityData = originalEntity.getData();
+                  const { id: _id, ...nodeData } = entityData; // Remove id from data to avoid duplication
+                  const restoredNode = new ModelNode({
+                    id: nodeId,
+                    ...nodeData,
+                  });
+                  sceneGraph.getGraph().addNode(restoredNode);
+                  sceneGraph.notifyGraphChanged();
+                }
+
+                alert(
+                  "Failed to delete document from server. The item has been restored."
+                );
+              }
+            })();
           } else {
             // For non-web resources, use the original delete logic
             try {
