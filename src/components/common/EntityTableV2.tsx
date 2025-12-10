@@ -128,6 +128,41 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
     );
 
     // Value formatting
+    // Format ISO 8601 duration (PT8M26S) to human-readable format (8:26)
+    const formatYouTubeDuration = useCallback((duration: string): string => {
+      if (!duration || typeof duration !== "string") return "";
+
+      // Parse ISO 8601 duration format (PT8M26S, PT1H23M45S, etc.)
+      const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      if (!match) return duration; // Return original if parsing fails
+
+      const hours = parseInt(match[1] || "0", 10);
+      const minutes = parseInt(match[2] || "0", 10);
+      const seconds = parseInt(match[3] || "0", 10);
+
+      if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      }
+      return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    }, []);
+
+    // Format large numbers with K, M suffixes (e.g., 1200 -> "1.2K", 1500000 -> "1.5M")
+    const formatNumber = useCallback(
+      (value: number | string | null | undefined): string => {
+        if (value == null) return "";
+        const num = typeof value === "string" ? parseInt(value, 10) : value;
+        if (isNaN(num)) return String(value);
+
+        if (num >= 1000000) {
+          return `${(num / 1000000).toFixed(1)}M`;
+        } else if (num >= 1000) {
+          return `${(num / 1000).toFixed(1)}K`;
+        }
+        return num.toString();
+      },
+      []
+    );
+
     const formatValue = useCallback((value: any): string => {
       if (value === null) return "null";
       if (value === undefined) return "undefined";
@@ -1927,7 +1962,9 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             // Then delete from Supabase in the background
             (async () => {
               try {
-                const { deleteYouTubeVideo } = await import("../../api/youtubeVideosApi");
+                const { deleteYouTubeVideo } = await import(
+                  "../../api/youtubeVideosApi"
+                );
                 await deleteYouTubeVideo(entityId);
                 console.log(`Deleted YouTube video from Supabase: ${entityId}`);
               } catch (error) {
@@ -2237,6 +2274,16 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         EXCLUDED_COLUMNS = ["userData", "id", "type"];
         console.log("Tags configuration - COLUMN_ORDER:", COLUMN_ORDER);
         console.log("Tags configuration - EXCLUDED_COLUMNS:", EXCLUDED_COLUMNS);
+      } else if (entityType === "youtube-videos") {
+        // YouTube videos specific configuration
+        COLUMN_ORDER = [
+          "label",
+          "duration",
+          "viewCount",
+          "likeCount",
+          "publishedAt",
+        ];
+        EXCLUDED_COLUMNS = ["userData", "id", "type"];
       } else {
         // Default configuration for other entity types
         COLUMN_ORDER = [
@@ -2383,6 +2430,22 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             console.log(`Column ${col}:`, value, "Type:", typeof value);
           }
 
+          // Format duration for YouTube videos
+          if (col === "duration" && entityType === "youtube-videos" && value) {
+            return formatYouTubeDuration(value);
+          }
+
+          // Format viewCount, likeCount for YouTube videos
+          if (
+            (col === "viewCount" ||
+              col === "likeCount" ||
+              col === "commentCount") &&
+            entityType === "youtube-videos" &&
+            value != null
+          ) {
+            return formatNumber(value);
+          }
+
           if (col === "tags") {
             // console.log(
             //   "Tags valueGetter called - value:",
@@ -2429,7 +2492,15 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       // unfortunately there is an issue with the cell renderer dependencies
       // and forcegraph3d causing them to rerender on every mouse move
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [container, formatValue, searchInValue, getTagMetadata, entityType]);
+    }, [
+      container,
+      formatValue,
+      formatYouTubeDuration,
+      formatNumber,
+      searchInValue,
+      getTagMetadata,
+      entityType,
+    ]);
 
     // Default column definition
     const defaultColDef = useMemo(
