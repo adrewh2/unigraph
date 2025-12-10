@@ -724,7 +724,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const annotationsContainer = new EntitiesContainer(
     annotations.map((annotation) => {
       // Create a mock entity for annotations that implements the required interface
-      console.log("Raw annotation from database:", annotation);
+      // console.log("Raw annotation from database:", annotation);
       let annotationData = annotation.data;
 
       // If data is a string, try to parse it as JSON
@@ -762,16 +762,16 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       }
 
       // Debug logging to see what's in the data
-      console.log("Extracted annotation data:", {
-        id: annotation.id,
-        type: annotationType,
-        selected_text: selectedText,
-        image_url: imageUrl,
-        page_url: pageUrl,
-        comment: comment,
-        secondary_comment: secondaryComment,
-        tags: tags,
-      });
+      // console.log("Extracted annotation data:", {
+      //   id: annotation.id,
+      //   type: annotationType,
+      //   selected_text: selectedText,
+      //   image_url: imageUrl,
+      //   page_url: pageUrl,
+      //   comment: comment,
+      //   secondary_comment: secondaryComment,
+      //   tags: tags,
+      // });
 
       return {
         getId: () => annotation.id,
