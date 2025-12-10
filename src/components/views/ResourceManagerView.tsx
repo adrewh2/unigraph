@@ -647,8 +647,8 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
 
       // Extract tags from metadata
       let tags: string[] = [];
-      console.log("Webpage metadata:", webpage.metadata);
-      console.log("Webpage metadata type:", typeof webpage.metadata);
+      // console.log("Webpage metadata:", webpage.metadata);
+      // console.log("Webpage metadata type:", typeof webpage.metadata);
 
       let metadataObj = webpage.metadata;
 
@@ -663,27 +663,27 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           console.warn("Parse error:", "ignored");
         }
       } else {
-        console.log("Metadata is not a string, type:", typeof metadataObj);
+        // console.log("Metadata is not a string, type:", typeof metadataObj);
       }
 
       if (metadataObj && typeof metadataObj === "object") {
-        console.log("Metadata object keys:", Object.keys(metadataObj));
-        console.log("Full metadata object:", metadataObj);
+        // console.log("Metadata object keys:", Object.keys(metadataObj));
+        // console.log("Full metadata object:", metadataObj);
 
         // Try to extract tags from metadata.tags or metadata.tag or metadata.keywords
         const tagsFromTags = (metadataObj as any).tags;
         const tagsFromTag = (metadataObj as any).tag;
         const tagsFromKeywords = (metadataObj as any).keywords;
 
-        console.log("tags from .tags:", tagsFromTags);
-        console.log("tags from .tag:", tagsFromTag);
-        console.log("tags from .keywords:", tagsFromKeywords);
+        // console.log("tags from .tags:", tagsFromTags);
+        // console.log("tags from .tag:", tagsFromTag);
+        // console.log("tags from .keywords:", tagsFromKeywords);
 
         tags = tagsFromTags || tagsFromTag || tagsFromKeywords || [];
 
-        console.log("Final extracted tags:", tags);
-        console.log("Tags type:", typeof tags);
-        console.log("Is tags array:", Array.isArray(tags));
+        // console.log("Final extracted tags:", tags);
+        // console.log("Tags type:", typeof tags);
+        // console.log("Is tags array:", Array.isArray(tags));
 
         // Ensure tags is an array
         if (!Array.isArray(tags)) {
