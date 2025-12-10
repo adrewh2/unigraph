@@ -555,6 +555,7 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       setWebpageContentAvailability(contentAvailability);
       setYouTubeVideos(youTubeVideosData || []);
       setTagCache(newTagCache);
+      setTagUsageCounts(tagCountMap);
 
       // Update user activity cache
       if (activitiesData && activitiesData.length > 0) {
