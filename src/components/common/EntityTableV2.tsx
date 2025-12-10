@@ -196,6 +196,49 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           return documentMappings[col] || col;
         }
 
+        // Annotations column mappings
+        if (entityType === "annotations") {
+          const annotationMappings: Record<string, string> = {
+            label: "Annotation",
+            type: "Type",
+            tags: "Tags",
+            selected_text: "Selected Text",
+            image_url: "Image URL",
+            page_url: "Page URL",
+            comment: "Comment",
+            secondary_comment: "Secondary Comment",
+            id: "ID",
+            parent_resource_type: "Parent Resource Type",
+          };
+          return annotationMappings[col] || col;
+        }
+
+        // Web Resources column mappings
+        if (entityType === "web-resources") {
+          const webResourceMappings: Record<string, string> = {
+            label: "Title",
+            type: "Type",
+            tags: "Tags",
+            url: "URL",
+            html_content: "HTML Content",
+            screenshot_url: "Screenshot URL",
+            id: "ID",
+          };
+          return webResourceMappings[col] || col;
+        }
+
+        // Tags column mappings
+        if (entityType === "tags") {
+          const tagMappings: Record<string, string> = {
+            label: "Tag",
+            color: "Color",
+            description: "Description",
+            usage_count: "Usage Count",
+            id: "ID",
+          };
+          return tagMappings[col] || col;
+        }
+
         // Default: convert camelCase to Title Case
         return col
           .replace(/([A-Z])/g, " $1")
@@ -2156,7 +2199,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
         // Create data columns for annotations
         const dataColumns = finalColumns.map((col) => ({
-          headerName: col === "label" ? "Annotation" : col,
+          headerName: getColumnHeaderName(col, entityType),
           field: col,
           flex: col === "label" ? 2 : 1,
           minWidth: col === "label" ? 200 : 120,
