@@ -1215,24 +1215,93 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             borderBottom: `1px solid ${theme.colors.border}`,
           }}
         >
-          <button
-            style={{
-              border: "none",
-              background: theme.colors.primary,
-              color: theme.colors.textInverse,
-              padding: "6px 10px",
-              borderRadius: 4,
-              cursor: "pointer",
+          <div
+            style={{ position: "relative" }}
+            onMouseMove={(e) => {
+              if (!user?.id) {
+                const tooltip = e.currentTarget.querySelector(
+                  ".youtube-import-tooltip"
+                ) as HTMLElement;
+                if (tooltip) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  tooltip.style.opacity = "1";
+                  tooltip.style.left = `${e.clientX - rect.left + 12}px`;
+                  tooltip.style.top = `${e.clientY - rect.top - 8}px`;
+                  tooltip.style.transform = "none";
+                }
+              }
             }}
-            title="Import YouTube video from URL"
-            onClick={() => {
-              setYoutubeDialogError(null);
-              setYoutubeUrlInput("");
-              setYoutubeDialogOpen(true);
+            onMouseEnter={(e) => {
+              if (!user?.id) {
+                const tooltip = e.currentTarget.querySelector(
+                  ".youtube-import-tooltip"
+                ) as HTMLElement;
+                if (tooltip) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  tooltip.style.opacity = "1";
+                  tooltip.style.left = `${e.clientX - rect.left + 12}px`;
+                  tooltip.style.top = `${e.clientY - rect.top - 8}px`;
+                  tooltip.style.transform = "none";
+                }
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!user?.id) {
+                const tooltip = e.currentTarget.querySelector(
+                  ".youtube-import-tooltip"
+                ) as HTMLElement;
+                if (tooltip) {
+                  tooltip.style.opacity = "0";
+                }
+              }
             }}
           >
-            Import from URL
-          </button>
+            <button
+              style={{
+                border: "none",
+                background: theme.colors.primary,
+                color: theme.colors.textInverse,
+                padding: "6px 10px",
+                borderRadius: 4,
+                cursor: user?.id ? "pointer" : "not-allowed",
+                opacity: user?.id ? 1 : 0.6,
+              }}
+              title={user?.id ? "Import YouTube video from URL" : undefined}
+              onClick={() => {
+                if (!user?.id) {
+                  return;
+                }
+                setYoutubeDialogError(null);
+                setYoutubeUrlInput("");
+                setYoutubeDialogOpen(true);
+              }}
+            >
+              Import from URL
+            </button>
+            {!user?.id && (
+              <div
+                className="youtube-import-tooltip"
+                style={{
+                  position: "absolute",
+                  padding: "10px 14px",
+                  background: theme.colors.surface,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: 6,
+                  boxShadow: theme.sizes.shadow.md,
+                  color: theme.colors.text,
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  zIndex: 1000,
+                  pointerEvents: "none",
+                  opacity: 0,
+                  transition: "opacity 0.2s",
+                }}
+              >
+                Sign in first to import YouTube videos
+              </div>
+            )}
+          </div>
         </div>
       )}
       {activeTab === "documents" && (
