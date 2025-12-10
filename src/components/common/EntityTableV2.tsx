@@ -2868,6 +2868,59 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
               })();
             }
           }
+          // For TXT documents, double-click should open in document editor
+          else if (
+            entityType === "documents" &&
+            entityData &&
+            entityData.extension === "txt"
+          ) {
+            const documentId = entityData.id;
+
+            if (documentId) {
+              (async () => {
+                try {
+                  const { getDocument } = await import(
+                    "../../api/documentsApi"
+                  );
+                  const document = await getDocument(documentId);
+                  const actualTitle = document.title || "Text Document";
+
+                  const timestamp = Date.now();
+                  const tabId = `document-editor-${documentId}-${timestamp}`;
+
+                  addViewAsTab({
+                    viewId: "document-editor",
+                    pane: "center",
+                    tabId: tabId,
+                    title: `${actualTitle}.txt`,
+                    props: {
+                      documentId: documentId,
+                      filename: `${actualTitle}.txt`,
+                    },
+                    activate: true,
+                  });
+                } catch (error) {
+                  console.error("Error loading document title:", error);
+                  // Fallback to the entity data title
+                  const fallbackTitle = entityData.title || "Text Document";
+                  const timestamp = Date.now();
+                  const tabId = `document-editor-${documentId}-${timestamp}`;
+
+                  addViewAsTab({
+                    viewId: "document-editor",
+                    pane: "center",
+                    tabId: tabId,
+                    title: `${fallbackTitle}.txt`,
+                    props: {
+                      documentId: documentId,
+                      filename: `${fallbackTitle}.txt`,
+                    },
+                    activate: true,
+                  });
+                }
+              })();
+            }
+          }
           // For YouTube videos, double-click should open the YouTube player
           else if (entityType === "youtube-videos" && entityData) {
             const videoId = entityData.id;
