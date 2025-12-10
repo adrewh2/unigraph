@@ -1,4 +1,4 @@
-import { getEnvVar } from "../utils/envUtils";
+import { ENV, getEnvVar } from "../utils/envUtils";
 import { supabase } from "../utils/supabaseClient";
 
 export interface AccessLog {
@@ -133,7 +133,8 @@ interface YouTubeVideoMetadata {
 async function fetchYouTubeVideoMetadata(
   videoId: string
 ): Promise<YouTubeVideoMetadata | null> {
-  const apiKey = getEnvVar("VITE_YOUTUBE_API_KEY");
+  // Use the same pattern as VITE_LIVE_CHAT_URL - try ENV constant first, then getEnvVar
+  const apiKey = ENV.YOUTUBE_API_KEY || getEnvVar("VITE_YOUTUBE_API_KEY");
 
   if (!apiKey) {
     console.warn("YouTube API key not configured. Skipping metadata fetch.");
