@@ -1319,7 +1319,47 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             borderBottom: `1px solid ${theme.colors.border}`,
           }}
         >
-          <div style={{ position: "relative" }}>
+          <div
+            style={{ position: "relative" }}
+            onMouseMove={(e) => {
+              if (!user?.id) {
+                const tooltip = e.currentTarget.querySelector(
+                  ".doc-create-tooltip"
+                ) as HTMLElement;
+                if (tooltip) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  tooltip.style.opacity = "1";
+                  tooltip.style.left = `${e.clientX - rect.left + 12}px`;
+                  tooltip.style.top = `${e.clientY - rect.top - 8}px`;
+                  tooltip.style.transform = "none";
+                }
+              }
+            }}
+            onMouseEnter={(e) => {
+              if (!user?.id) {
+                const tooltip = e.currentTarget.querySelector(
+                  ".doc-create-tooltip"
+                ) as HTMLElement;
+                if (tooltip) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  tooltip.style.opacity = "1";
+                  tooltip.style.left = `${e.clientX - rect.left + 12}px`;
+                  tooltip.style.top = `${e.clientY - rect.top - 8}px`;
+                  tooltip.style.transform = "none";
+                }
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!user?.id) {
+                const tooltip = e.currentTarget.querySelector(
+                  ".doc-create-tooltip"
+                ) as HTMLElement;
+                if (tooltip) {
+                  tooltip.style.opacity = "0";
+                }
+              }
+            }}
+          >
             <button
               style={{
                 border: "none",
@@ -1327,10 +1367,14 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
                 color: theme.colors.textInverse,
                 padding: "6px 10px",
                 borderRadius: 4,
-                cursor: "pointer",
+                cursor: user?.id ? "pointer" : "not-allowed",
+                opacity: user?.id ? 1 : 0.6,
               }}
-              title="Create new document"
+              title={user?.id ? "Create new document" : undefined}
               onClick={() => {
+                if (!user?.id) {
+                  return;
+                }
                 const menu = document.getElementById("doc-create-menu");
                 if (menu) {
                   const isOpen = menu.getAttribute("data-open") === "true";
@@ -1341,6 +1385,29 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
             >
               Create new ▾
             </button>
+            {!user?.id && (
+              <div
+                className="doc-create-tooltip"
+                style={{
+                  position: "absolute",
+                  padding: "10px 14px",
+                  background: theme.colors.surface,
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: 6,
+                  boxShadow: theme.sizes.shadow.md,
+                  color: theme.colors.text,
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  whiteSpace: "nowrap",
+                  zIndex: 1000,
+                  pointerEvents: "none",
+                  opacity: 0,
+                  transition: "opacity 0.2s",
+                }}
+              >
+                Sign in first to create documents
+              </div>
+            )}
             <div
               id="doc-create-menu"
               data-open="false"
