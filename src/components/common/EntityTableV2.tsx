@@ -192,6 +192,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
             metadata: "Metadata",
             created_at: "Created",
             last_updated_at: "Last Updated",
+            lastAccessTime: "Last Access Time",
           };
           return documentMappings[col] || col;
         }
@@ -2411,7 +2412,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
         );
       } else if (entityType === "documents") {
         // Documents specific configuration
-        COLUMN_ORDER = ["label", "type", "extension", "project_id"];
+        COLUMN_ORDER = ["label", "extension", "project_id"];
         EXCLUDED_COLUMNS = [
           "userData",
           "metadata",
@@ -2419,6 +2420,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           "last_updated_at",
           "parent_id",
           "id",
+          "type",
         ];
         console.log("Documents configuration - COLUMN_ORDER:", COLUMN_ORDER);
         console.log(
