@@ -2283,7 +2283,19 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
           "likeCount",
           "publishedAt",
         ];
-        EXCLUDED_COLUMNS = ["userData", "id", "type"];
+        EXCLUDED_COLUMNS = [
+          "userData",
+          "id",
+          "type",
+          "title",
+          "categoryId",
+          "defaultLanguage",
+          "defaultAudioLanguage",
+          "liveBroadcastContent",
+          "thumbnail_default_url",
+          "thumbnail_medium_url",
+          "thumbnail_high_url",
+        ];
       } else {
         // Default configuration for other entity types
         COLUMN_ORDER = [
