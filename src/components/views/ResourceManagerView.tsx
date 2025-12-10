@@ -14,7 +14,11 @@ import {
   listWebpages,
   Webpage,
 } from "../../api/webpagesApi";
-import { listYouTubeVideos, YouTubeVideo } from "../../api/youtubeVideosApi";
+import {
+  importYouTubeVideo,
+  listYouTubeVideos,
+  YouTubeVideo,
+} from "../../api/youtubeVideosApi";
 import { Graph } from "../../core/model/Graph";
 import { SceneGraph } from "../../core/model/SceneGraph";
 import { EntitiesContainer } from "../../core/model/entity/entitiesContainer";
@@ -63,6 +67,14 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
   const [pdfTitleInput, setPdfTitleInput] = useState("");
   const [pdfDialogError, setPdfDialogError] = useState<string | null>(null);
   const [pdfCreating, setPdfCreating] = useState(false);
+
+  // YouTube video import dialog state
+  const [youtubeDialogOpen, setYoutubeDialogOpen] = useState(false);
+  const [youtubeUrlInput, setYoutubeUrlInput] = useState("");
+  const [youtubeDialogError, setYoutubeDialogError] = useState<string | null>(
+    null
+  );
+  const [youtubeImporting, setYoutubeImporting] = useState(false);
 
   // Ref to access the EntityTableV2 grid API for silent refresh
   // const entityTableRef = useRef<any>(null);
@@ -1192,6 +1204,37 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
       </div>
 
       {/* Tab Toolbar (below refresh, above table) */}
+      {activeTab === "youtube-videos" && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 16px",
+            backgroundColor: theme.colors.surface,
+            borderBottom: `1px solid ${theme.colors.border}`,
+          }}
+        >
+          <button
+            style={{
+              border: "none",
+              background: theme.colors.primary,
+              color: theme.colors.textInverse,
+              padding: "6px 10px",
+              borderRadius: 4,
+              cursor: "pointer",
+            }}
+            title="Import YouTube video from URL"
+            onClick={() => {
+              setYoutubeDialogError(null);
+              setYoutubeUrlInput("");
+              setYoutubeDialogOpen(true);
+            }}
+          >
+            Import from URL
+          </button>
+        </div>
+      )}
       {activeTab === "documents" && (
         <div
           style={{
@@ -1317,6 +1360,137 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
                   {opt.label}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* YouTube Import Dialog */}
+      {youtubeDialogOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2147483646,
+          }}
+          onClick={() => {
+            if (!youtubeImporting) setYoutubeDialogOpen(false);
+          }}
+        >
+          <div
+            style={{
+              width: 420,
+              maxWidth: "90vw",
+              background: theme.colors.surface,
+              border: `1px solid ${theme.colors.border}`,
+              borderRadius: 8,
+              boxShadow: theme.sizes.shadow.lg || theme.sizes.shadow.md,
+              padding: 16,
+              color: theme.colors.text,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: 0, marginBottom: 12 }}>
+              Import YouTube Video
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <label style={{ fontSize: 13 }}>YouTube URL</label>
+              <input
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={youtubeUrlInput}
+                onChange={(e) => setYoutubeUrlInput(e.target.value)}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: 6,
+                  border: `1px solid ${theme.colors.border}`,
+                  background: theme.colors.background,
+                  color: theme.colors.text,
+                }}
+              />
+              {youtubeDialogError && (
+                <div style={{ color: theme.colors.error, fontSize: 12 }}>
+                  {youtubeDialogError}
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                justifyContent: "flex-end",
+                marginTop: 16,
+              }}
+            >
+              <button
+                onClick={() => !youtubeImporting && setYoutubeDialogOpen(false)}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 6,
+                  border: `1px solid ${theme.colors.border}`,
+                  background: theme.colors.surface,
+                  color: theme.colors.text,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setYoutubeDialogError(null);
+                    if (!youtubeUrlInput.trim()) {
+                      setYoutubeDialogError("Please enter a YouTube URL");
+                      return;
+                    }
+                    setYoutubeImporting(true);
+                    const video = await importYouTubeVideo(
+                      youtubeUrlInput.trim()
+                    );
+                    await silentRefreshData();
+                    setYoutubeImporting(false);
+                    setYoutubeDialogOpen(false);
+
+                    // Optionally open the video in a new tab
+                    const tabId = `youtube-player-${video.id}`;
+                    addViewAsTab({
+                      viewId: "youtube-player",
+                      pane: "center",
+                      tabId,
+                      title: video.title || video.id,
+                      props: {
+                        videoId: video.id,
+                        title: video.title || video.id,
+                      },
+                      activate: true,
+                    });
+                  } catch (err) {
+                    console.error("Failed to import YouTube video", err);
+                    setYoutubeDialogError(
+                      err instanceof Error
+                        ? err.message
+                        : "Failed to import YouTube video"
+                    );
+                    setYoutubeImporting(false);
+                  }
+                }}
+                disabled={youtubeImporting}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 6,
+                  border: "none",
+                  background: theme.colors.primary,
+                  color: theme.colors.textInverse,
+                  cursor: youtubeImporting ? "default" : "pointer",
+                  opacity: youtubeImporting ? 0.7 : 1,
+                }}
+              >
+                {youtubeImporting ? "Importing..." : "Import"}
+              </button>
             </div>
           </div>
         </div>
