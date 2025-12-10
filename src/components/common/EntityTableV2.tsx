@@ -163,6 +163,48 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       []
     );
 
+    // Convert field names to human-readable column headers
+    const getColumnHeaderName = useCallback(
+      (col: string, entityType?: string): string => {
+        // YouTube videos column mappings
+        if (entityType === "youtube-videos") {
+          const youtubeMappings: Record<string, string> = {
+            label: "Title",
+            duration: "Duration",
+            viewCount: "Views",
+            likeCount: "Likes",
+            commentCount: "Comments",
+            publishedAt: "Published",
+            description: "Description",
+            url: "URL",
+          };
+          return youtubeMappings[col] || col;
+        }
+
+        // Documents column mappings
+        if (entityType === "documents") {
+          const documentMappings: Record<string, string> = {
+            label: "Title",
+            type: "Type",
+            extension: "Extension",
+            project_id: "Project ID",
+            content: "Content",
+            metadata: "Metadata",
+            created_at: "Created",
+            last_updated_at: "Last Updated",
+          };
+          return documentMappings[col] || col;
+        }
+
+        // Default: convert camelCase to Title Case
+        return col
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (str) => str.toUpperCase())
+          .trim();
+      },
+      []
+    );
+
     const formatValue = useCallback((value: any): string => {
       if (value === null) return "null";
       if (value === undefined) return "undefined";
@@ -2380,7 +2422,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
 
       // Create data columns
       const dataColumns = finalColumns.map((col) => ({
-        headerName: col,
+        headerName: getColumnHeaderName(col, entityType),
         field: col, // Add field property to match the column name
         flex: col === "label" ? 2 : col === "type" || col === "tags" ? 1.5 : 1,
         minWidth:
@@ -2509,6 +2551,7 @@ const EntityTableV2 = forwardRef<any, EntityTableV2Props>(
       formatValue,
       formatYouTubeDuration,
       formatNumber,
+      getColumnHeaderName,
       searchInValue,
       getTagMetadata,
       entityType,
