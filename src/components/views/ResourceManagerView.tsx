@@ -231,8 +231,10 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
           })) as Document[];
         }
 
-        // Fetch YouTube videos (no user filter, no order to avoid case-sensitive column issues)
-        const youTubeVideosData = await listYouTubeVideos();
+        // Fetch YouTube videos for the current user
+        const youTubeVideosData = await listYouTubeVideos({
+          userId: user?.id,
+        });
         console.log("YouTube videos fetched:", youTubeVideosData?.length || 0);
 
         // Collect tags during loading
@@ -466,8 +468,10 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
         })) as Document[];
       }
 
-      // Refresh YouTube videos (no user filter)
-      const youTubeVideosData = await listYouTubeVideos();
+      // Refresh YouTube videos for the current user
+      const youTubeVideosData = await listYouTubeVideos({
+        userId: user?.id,
+      });
       console.log(
         "YouTube videos fetched (silent):",
         youTubeVideosData?.length || 0
@@ -1516,9 +1520,17 @@ const ResourceManagerView: React.FC<ResourceManagerViewProps> = () => {
                       setYoutubeDialogError("Please enter a YouTube URL");
                       return;
                     }
+                    if (!user?.id) {
+                      setYoutubeDialogError(
+                        "You must be signed in to import videos"
+                      );
+                      setYoutubeImporting(false);
+                      return;
+                    }
                     setYoutubeImporting(true);
                     const video = await importYouTubeVideo(
-                      youtubeUrlInput.trim()
+                      youtubeUrlInput.trim(),
+                      user.id
                     );
                     await silentRefreshData();
                     setYoutubeImporting(false);

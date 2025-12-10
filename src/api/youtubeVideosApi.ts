@@ -7,6 +7,7 @@ export interface AccessLog {
 
 export interface YouTubeVideo {
   id: string;
+  user_id?: string | null;
   title?: string | null;
   description?: string | null;
   publishedAt?: string | null; // timestamp with time zone
@@ -29,16 +30,22 @@ export interface YouTubeVideo {
 
 // List YouTube videos with optional limit and ordering by published date
 export async function listYouTubeVideos({
+  userId,
   limit,
   orderBy = "publishedAt",
   ascending = false,
 }: {
+  userId?: string;
   limit?: number;
   orderBy?: keyof YouTubeVideo | string;
   ascending?: boolean;
 } = {}): Promise<YouTubeVideo[]> {
-  // Load across all users (table has no user_id per schema)
   let query = supabase.from("youtube_videos").select("*");
+
+  // Filter by user_id if provided
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
 
   // Order by provided column if present in table
   if (orderBy) {
@@ -56,13 +63,17 @@ export async function listYouTubeVideos({
 
 // Get a single YouTube video by id
 export async function getYouTubeVideo(
-  id: string
+  id: string,
+  userId?: string
 ): Promise<YouTubeVideo | null> {
-  const { data, error } = await supabase
-    .from("youtube_videos")
-    .select("*")
-    .eq("id", id)
-    .single();
+  let query = supabase.from("youtube_videos").select("*").eq("id", id);
+
+  // Filter by user_id if provided
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query.single();
 
   // Handle "no rows" error gracefully - this is expected when video doesn't exist
   if (error) {
@@ -176,7 +187,14 @@ async function fetchYouTubeVideoMetadata(
 }
 
 // Import YouTube video from URL
-export async function importYouTubeVideo(url: string): Promise<YouTubeVideo> {
+export async function importYouTubeVideo(
+  url: string,
+  userId: string
+): Promise<YouTubeVideo> {
+  if (!userId) {
+    throw new Error("User ID is required to import YouTube videos");
+  }
+
   const videoId = extractVideoId(url);
   console.log("calling import youtube video with url ", url);
   if (!videoId) {
@@ -185,11 +203,11 @@ export async function importYouTubeVideo(url: string): Promise<YouTubeVideo> {
     );
   }
 
-  // Check if video already exists
+  // Check if video already exists for this user
   console.log("here 1");
   let existing: YouTubeVideo | null = null;
   try {
-    existing = await getYouTubeVideo(videoId);
+    existing = await getYouTubeVideo(videoId, userId);
   } catch (error) {
     // If there's an unexpected error, log it but continue with import
     console.warn("Error checking for existing video:", error);
@@ -213,6 +231,7 @@ export async function importYouTubeVideo(url: string): Promise<YouTubeVideo> {
   // Prepare video data
   const videoData: any = {
     id: videoId,
+    user_id: userId,
     url: url,
   };
 
@@ -269,7 +288,7 @@ export async function importYouTubeVideo(url: string): Promise<YouTubeVideo> {
   if (error) {
     // If it's a duplicate key error, try to fetch the existing record
     if (error.code === "23505" || error.message?.includes("duplicate")) {
-      const existing = await getYouTubeVideo(videoId);
+      const existing = await getYouTubeVideo(videoId, userId);
       if (existing) {
         return existing;
       }
