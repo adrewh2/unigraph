@@ -238,7 +238,7 @@ const EditorStateInitializer: React.FC<{
 
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i];
-              
+
               // Detect timestamp patterns like [0:23] or [1:23:45] and convert them to TimestampNode
               const timestampPattern = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g;
               let lastIndex = 0;
@@ -247,7 +247,7 @@ const EditorStateInitializer: React.FC<{
 
               // Reset regex lastIndex for each line
               timestampPattern.lastIndex = 0;
-              
+
               while ((match = timestampPattern.exec(line)) !== null) {
                 hasTimestamps = true;
                 // Add text before the timestamp
@@ -257,15 +257,15 @@ const EditorStateInitializer: React.FC<{
                     paragraphNode.append($createTextNode(textBefore));
                   }
                 }
-                
+
                 // Create and append timestamp node
                 const timestampValue = match[1]; // Extract timestamp without brackets
                 const timestampNode = $createTimestampNode(timestampValue);
                 paragraphNode.append(timestampNode);
-                
+
                 lastIndex = match.index + match[0].length;
               }
-              
+
               // Add remaining text after the last timestamp
               if (lastIndex < line.length) {
                 const textAfter = line.substring(lastIndex);
@@ -273,12 +273,12 @@ const EditorStateInitializer: React.FC<{
                   paragraphNode.append($createTextNode(textAfter));
                 }
               }
-              
+
               // If no timestamps were found, add the whole line as text
               if (!hasTimestamps) {
                 paragraphNode.append($createTextNode(line));
               }
-              
+
               if (i < lines.length - 1) {
                 // Add line breaks between lines in the same paragraph
                 paragraphNode.append($createLineBreakNode());
