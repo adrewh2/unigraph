@@ -1,6 +1,10 @@
 import { WorkspaceState } from "@aesgraph/app-shell";
 import { AppConfig, DEFAULT_APP_CONFIG } from "../../AppConfig";
 import {
+  DEFAULT_REACTFLOW_CONFIG,
+  ReactFlowRenderConfig,
+} from "../../components/views/ReactFlow/ReactFlowConfigEditor";
+import {
   CLONE_RENDERING_CONFIG,
   GET_DEFAULT_RENDERING_CONFIG,
   RenderingConfig,
@@ -63,6 +67,7 @@ export const DEFAULT_SCENE_GRAPH_DATA = (): SceneGraphData => {
       cameraTarget: { x: 0, y: 0, z: 0 },
       initialZoom: 1,
     },
+    reactFlowDisplayConfig: DEFAULT_REACTFLOW_CONFIG,
     metadata: {},
     entityCache: new EntityCache(),
     committed_DisplayConfig: CLONE_RENDERING_CONFIG(displayConfig),
@@ -80,6 +85,7 @@ export type SceneGraphData = {
   savedLayouts?: ObjectOf<Layout>;
   displayConfigPresets?: ObjectOf<RenderingConfig>;
   forceGraphDisplayConfig: IForceGraphRenderConfig;
+  reactFlowDisplayConfig: ReactFlowRenderConfig;
   metadata: ISceneGraphMetadata;
   entityCache: EntityCache; // for storing additional non-graph entities
   defaultAppConfig?: AppConfig;
@@ -218,6 +224,14 @@ export class SceneGraph {
 
   setForceGraphRenderConfig(config: IForceGraphRenderConfig) {
     this.data.forceGraphDisplayConfig = config;
+  }
+
+  getReactFlowRenderConfig() {
+    return this.data.reactFlowDisplayConfig;
+  }
+
+  setReactFlowRenderConfig(config: ReactFlowRenderConfig) {
+    this.data.reactFlowDisplayConfig = config;
   }
 
   getGraph(): Graph {

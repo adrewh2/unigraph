@@ -273,7 +273,13 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     getReactFlowViewportState,
   } = useAppConfigStore();
   const sceneGraph = currentSceneGraph;
-  const reactFlowConfig = useReactFlowConfigStore((state) => state.config);
+  // Get ReactFlow config from sceneGraph, fallback to global store if not set
+  const reactFlowConfigFromSceneGraph = sceneGraph?.getReactFlowRenderConfig();
+  const reactFlowConfigFromStore = useReactFlowConfigStore(
+    (state) => state.config
+  );
+  const reactFlowConfig =
+    reactFlowConfigFromSceneGraph || reactFlowConfigFromStore;
   const { setActiveDocument } = useDocumentStore();
   const { selectedNodeIds, selectedEdgeIds, hoveredNodeIds } =
     useGraphInteractionStore();
@@ -467,10 +473,15 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
   // Handle config apply
   const handleApplyReactFlowConfig = useCallback(
     (config: ReactFlowRenderConfig) => {
+      // Save to sceneGraph if available
+      if (sceneGraph) {
+        sceneGraph.setReactFlowRenderConfig(config);
+      }
+      // Also update global store for backwards compatibility
       useReactFlowConfigStore.getState().setConfig(config);
       applyReactFlowConfig(config);
     },
-    []
+    [sceneGraph]
   );
 
   // Handle node drag stop - save positions to sceneGraph
@@ -638,6 +649,18 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
     },
     [getReactFlowViewportState]
   );
+
+  // Initialize ReactFlow config from sceneGraph when it loads
+  useEffect(() => {
+    if (sceneGraph) {
+      const sceneGraphConfig = sceneGraph.getReactFlowRenderConfig();
+      if (sceneGraphConfig) {
+        // Update global store to match sceneGraph config
+        useReactFlowConfigStore.getState().setConfig(sceneGraphConfig);
+        applyReactFlowConfig(sceneGraphConfig);
+      }
+    }
+  }, [sceneGraph]);
 
   // Subscribe to ReactFlowConfig changes
   useEffect(() => {
@@ -1206,7 +1229,9 @@ const ReactFlowPanelV2: React.FC<ReactFlowPanelV2Props> = ({
                 <ReactFlowConfigEditor
                   onApply={handleApplyReactFlowConfig}
                   isDarkMode={isDarkMode}
-                  initialConfig={reactFlowConfig}
+                  initialConfig={
+                    sceneGraph?.getReactFlowRenderConfig() || reactFlowConfig
+                  }
                 />
               </div>
             </div>

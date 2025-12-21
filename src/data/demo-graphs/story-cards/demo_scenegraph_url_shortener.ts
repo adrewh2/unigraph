@@ -1,4 +1,8 @@
 import { DEFAULT_APP_CONFIG } from "../../../AppConfig";
+import {
+  DEFAULT_REACTFLOW_CONFIG,
+  ReactFlowRenderConfig,
+} from "../../../components/views/ReactFlow/ReactFlowConfigEditor";
 import { PresetLayoutType } from "../../../core/layouts/layoutEngineTypes";
 import { Graph } from "../../../core/model/Graph";
 import { SceneGraph } from "../../../core/model/SceneGraph";
@@ -188,6 +192,13 @@ export const demo_URL_Shortener = () => {
       activeView: "ReactFlow",
     },
   });
+
+  // Set ReactFlow config with high edge width for better visibility
+  const reactFlowConfig: ReactFlowRenderConfig = {
+    ...DEFAULT_REACTFLOW_CONFIG,
+    edgeStrokeWidth: 5, // High edge width for better visibility
+  };
+  sceneGraph.setReactFlowRenderConfig(reactFlowConfig);
 
   return sceneGraph;
 };

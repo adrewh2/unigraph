@@ -63,14 +63,25 @@ export const exportGraphDataForReactFlow = (
         nodeData.classData = userData;
       }
 
+      // Get position from node's own data first, then from positions cache
+      // Nodes created with explicit positions (like in scenegraphs) store them in node.getData().position
+      // Layout-computed positions are stored in the positions cache
+      const nodePosition = node.getPosition();
+      const cachedPosition = positions?.[node.getId()];
+      
+      // Use node's position if it's not at the default (0,0), otherwise use cache
+      // This allows nodes with explicit positions to take precedence over layout cache
+      const finalPosition = 
+        (nodePosition.x !== 0 || nodePosition.y !== 0)
+          ? { x: nodePosition.x, y: nodePosition.y }
+          : cachedPosition
+          ? { x: cachedPosition.x, y: cachedPosition.y }
+          : { x: 0, y: 0 };
+
       return {
         id: node.getId(),
         color: getNodeColor(node),
-        position: positions
-          ? node.getId() in positions
-            ? positions[node.getId()]
-            : { x: 0, y: 0 }
-          : { x: 0, y: 0 },
+        position: finalPosition,
         data: nodeData,
         style: { border: `2px solid ${getNodeColor(node)}` },
         label: safeToString(node.getLabel()),
