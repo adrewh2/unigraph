@@ -3,6 +3,7 @@ import {
   DEFAULT_REACTFLOW_CONFIG,
   ReactFlowRenderConfig,
 } from "../../../components/views/ReactFlow/ReactFlowConfigEditor";
+import { RenderingConfig } from "../../../controllers/RenderingManager";
 import { PresetLayoutType } from "../../../core/layouts/layoutEngineTypes";
 import { Graph } from "../../../core/model/Graph";
 import { SceneGraph } from "../../../core/model/SceneGraph";
@@ -15,7 +16,7 @@ export const demo_URL_Shortener = () => {
   // Client (left)
   const client = graph.createNode({
     id: "Client",
-    type: "storyCard",
+    type: "client",
     position: { x: -600, y: 0, z: 0 },
     userData: {
       title: "Client",
@@ -28,7 +29,7 @@ export const demo_URL_Shortener = () => {
   // Edge/CDN (optional) (center-left)
   const edgeCdn = graph.createNode({
     id: "Edge/CDN (optional)",
-    type: "storyCard",
+    type: "cdn",
     position: { x: -200, y: 0, z: 0 },
     userData: {
       title: "Edge/CDN (optional)",
@@ -41,7 +42,7 @@ export const demo_URL_Shortener = () => {
   // Redirect Service (center)
   const redirectService = graph.createNode({
     id: "Redirect Service",
-    type: "storyCard",
+    type: "service",
     position: { x: 200, y: 0, z: 0 },
     userData: {
       title: "Redirect Service",
@@ -51,10 +52,10 @@ export const demo_URL_Shortener = () => {
     },
   });
 
-  // Redis Cache (top-right)
+  // Redis Cache (top-right) - This is a database/cache, so we'll use "database" type
   const redisCache = graph.createNode({
     id: "Redis Cache",
-    type: "storyCard",
+    type: "database",
     position: { x: 400, y: -300, z: 0 },
     userData: {
       title: "Redis Cache",
@@ -67,7 +68,7 @@ export const demo_URL_Shortener = () => {
   // KV Shard (bottom-right)
   const kvShard = graph.createNode({
     id: "KV Shard",
-    type: "storyCard",
+    type: "database",
     position: { x: 400, y: 300, z: 0 },
     userData: {
       title: "KV Shard",
@@ -80,7 +81,7 @@ export const demo_URL_Shortener = () => {
   // Event Queue (bottom-right, below KV Shard)
   const eventQueue = graph.createNode({
     id: "Event Queue",
-    type: "storyCard",
+    type: "queue",
     position: { x: 400, y: 500, z: 0 },
     userData: {
       title: "Event Queue",
@@ -95,28 +96,14 @@ export const demo_URL_Shortener = () => {
   // Synchronous flows (solid lines)
 
   // Client → Edge/CDN: GET /{code}
-  graph.createEdge(client.getId(), edgeCdn.getId(), {
-    type: "redirect",
-    label: "GET /{code}",
-  });
-
-  // Edge/CDN → Redirect Service: forward (or cache miss)
-  graph.createEdge(edgeCdn.getId(), redirectService.getId(), {
-    type: "redirect",
-    label: "forward (or cache miss)",
-  });
-
-  // Synchronous flows (solid lines)
-
-  // Client → Edge/CDN: GET /{code}
   graph.createEdgeIfMissing(client.getId(), edgeCdn.getId(), {
-    type: "redirect",
+    type: "request",
     label: "GET /{code}",
   });
 
   // Edge/CDN → Redirect Service: forward (or cache miss)
   graph.createEdgeIfMissing(edgeCdn.getId(), redirectService.getId(), {
-    type: "redirect",
+    type: "request",
     label: "forward (or cache miss)",
   });
 
@@ -125,38 +112,38 @@ export const demo_URL_Shortener = () => {
     redirectService.getId(),
     redisCache.getId(),
     {
-      type: "redirect",
+      type: "cache",
       label: "GET code",
     }
   );
 
   // Redis Cache → Redirect Service: hit: longURL or miss
   graph.createEdgeIfMissing(redisCache.getId(), redirectService.getId(), {
-    type: "redirect",
+    type: "cache",
     label: "hit: longURL or miss",
   });
 
   // Redirect Service → KV Shard: miss: read mapping
   graph.createEdgeIfMissing(redirectService.getId(), kvShard.getId(), {
-    type: "redirect",
+    type: "database",
     label: "miss: read mapping",
   });
 
   // KV Shard → Redirect Service: longURL + flags
   graph.createEdgeIfMissing(kvShard.getId(), redirectService.getId(), {
-    type: "redirect",
+    type: "database",
     label: "longURL + flags",
   });
 
   // Redirect Service → Edge/CDN: 302/301 + Location
   graph.createEdgeIfMissing(redirectService.getId(), edgeCdn.getId(), {
-    type: "redirect",
+    type: "response",
     label: "302/301 + Location",
   });
 
   // Edge/CDN → Client: redirect response
   graph.createEdgeIfMissing(edgeCdn.getId(), client.getId(), {
-    type: "redirect",
+    type: "response",
     label: "redirect response",
   });
 
@@ -179,8 +166,64 @@ export const demo_URL_Shortener = () => {
     label: "click event (async)",
   });
 
+  // Define custom rendering config with colors for each type
+  const customRenderingConfig: RenderingConfig = {
+    nodeConfig: {
+      types: {
+        client: {
+          color: "#3b82f6", // Blue - represents user/client
+          isVisible: true,
+        },
+        cdn: {
+          color: "#10b981", // Green - represents edge/CDN infrastructure
+          isVisible: true,
+        },
+        service: {
+          color: "#f59e0b", // Orange - represents application service
+          isVisible: true,
+        },
+        database: {
+          color: "#8b5cf6", // Purple - represents data storage
+          isVisible: true,
+        },
+        queue: {
+          color: "#ef4444", // Red - represents async processing/queue
+          isVisible: true,
+        },
+      },
+      tags: {},
+    },
+    edgeConfig: {
+      types: {
+        request: {
+          color: "#3b82f6", // Blue - matches client color for requests
+          isVisible: true,
+        },
+        response: {
+          color: "#10b981", // Green - represents successful responses
+          isVisible: true,
+        },
+        cache: {
+          color: "#f59e0b", // Orange - represents cache operations
+          isVisible: true,
+        },
+        database: {
+          color: "#8b5cf6", // Purple - matches database color
+          isVisible: true,
+        },
+        async: {
+          color: "#ef4444", // Red - represents asynchronous flows
+          isVisible: true,
+        },
+      },
+      tags: {},
+    },
+    mode: "type",
+  };
+
   const sceneGraph = new SceneGraph({
     graph,
+    displayConfig: customRenderingConfig,
     metadata: {
       name: "Redirect path deep dive (hot path)",
       description:
